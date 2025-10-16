@@ -1,0 +1,118 @@
+name: Get sources for Microsoft Dynamics Business Central Development Tools
+description: Get ..
+
+outputs:
+  sources:
+    description: Stringified JSON object of sources for the Microsoft Dynamics Business Central Development Tools
+    value: ${{ steps.get-bc-devtools.outputs.sources }}
+  tfm-netstandard21-version-lowest:
+    description: Lowest AL version for netstandard2.1
+    value: ${{ steps.get-bc-devtools.outputs.tfm_netstandard20_version_lowest }}
+  tfm-net80-version-lowest:
+    description: Lowest AL version for net8.0
+    value: ${{ steps.get-bc-devtools.outputs.tfm_net80_version_lowest }}
+
+runs:
+  using: composite
+  steps:
+    - name: Get sources for BC Dev Tools
+      id: get-bc-devtools
+      shell: pwsh
+      run: |
+        # Retrieve all sources
+        $sources = ${{github.action_path}}/Get-BC-DevTools.ps1 | ConvertFrom-Json
+        Write-Host "Retrieved $($sources.Count) sources for Microsoft Dynamics Business Central Development Tools."
+
+        # Deduplicate by version; prefer entries where type == 'NuGet'
+        $sources = $sources |
+            Group-Object version |
+            ForEach-Object {
+                $g = $_.Group
+                $nuget = $g | Where-Object { $_.type -eq 'NuGet' }
+                if ($nuget) { $nuget | Select-Object -First 1 } else { $g | Select-Object -First 1 }
+            } |
+            Sort-Object { [version]$_.version } -Descending
+
+        # Lowest source per TFM
+        $ns20 = $sources | Where-Object { $_.tfm -eq 'netstandard2.0' } |
+                  Sort-Object { [version]($_.version) } |
+                  Select-Object -First 1 -ExpandProperty version
+        Write-Host "Lowest netstandard2.0 version: $ns20"
+
+        $net80 = $sources | Where-Object { $_.tfm -eq 'net8.0' } |
+                  Sort-Object { [version]($_.version) } |
+                  Select-Object -First 1 -ExpandProperty version
+        Write-Host "Lowest net8.0 version: $net80"
+
+        # Emit outputs
+        $jsonCompressed = $sources | ConvertTo-Json -Compress
+        echo "sources=$jsonCompressed" >> $env:GITHUB_OUTPUT
+        echo "tfm_netstandard20_version_lowest=$ns20" >> $env:GITHUB_OUTPUT
+        echo "tfm_net80_version_lowest=$net80" >> $env:GITHUB_OUTPUT
+
+    - name: Display sources
+      shell: pwsh
+      env:
+        SOURCES: ${{ steps.get-bc-devtools.outputs.sources }}
+      run: |
+        $sources = $env:SOURCES | ConvertFrom-Json
+        Write-Host ""
+        Write-Host "### Microsoft Dynamics Business Central Development Tools Sources ###"
+        Write-Host ""
+
+        # Create table format with simplified version sorting
+        $tableData = $sources | ForEach-Object {
+            $status = ""
+            if ($_.isLatest -eq $true) { 
+                $status = "Latest" 
+            } elseif ($_.isPreview -eq $true) { 
+                $status = "Pre-Release" 
+            }
+            
+            [PSCustomObject]@{
+                version = $_.version
+                status = $status
+                packageType = $_.packagetype
+                packageVersion = $_.packageVersion
+                targetFramework = $_.tfm
+                source = $_.uri
+            }
+        }
+
+        # Calculate column widths for better markdown formatting
+        $versionWidth = ($tableData.version | Measure-Object -Property Length -Maximum).Maximum
+        $versionWidth = [Math]::Max($versionWidth, 7) # Minimum width for "Version" header
+
+        $statusWidth = ($tableData.status | Measure-Object -Property Length -Maximum).Maximum
+        $statusWidth = [Math]::Max($statusWidth, 6) # Minimum width for "Status" header
+
+        $packageTypeWidth = ($tableData.packagetype | Measure-Object -Property Length -Maximum).Maximum
+        $packageTypeWidth = [Math]::Max($packageTypeWidth, 4) # Minimum width for "Type" header
+
+        $packageVersionWidth = ($tableData.packageVersion | Measure-Object -Property Length -Maximum).Maximum
+        $packageVersionWidth = [Math]::Max($packageVersionWidth, 15) # Minimum width for "Package Version" header
+
+        $targetFrameworkWidth = ($tableData.targetFramework | Measure-Object -Property Length -Maximum).Maximum
+        $targetFrameworkWidth = [Math]::Max($targetFrameworkWidth, 3) # Minimum width for "TFM" header
+
+        # For source, use a reasonable max width to avoid extremely long lines
+        $sourceWidth = 60
+
+        # Create markdown table with proper alignment
+        $header = "| {0,-$versionWidth} | {1,-$statusWidth} | {2,-$packageTypeWidth} | {3,-$packageVersionWidth} | {4,-$targetFrameworkWidth} | {5,-$sourceWidth} |" -f "Version", "Status", "Type", "Package Version", "TFM", "Source"
+        $separator = "|{0}|{1}|{2}|{3}|{4}|{5}|" -f ("-" * ($versionWidth + 2)), ("-" * ($statusWidth + 2)), ("-" * ($packageTypeWidth + 2)), ("-" * ($packageVersionWidth + 2)), ("-" * ($targetFrameworkWidth + 2)), ("-" * ($sourceWidth + 2))
+
+        Write-Host ""
+        Write-Host $header
+        Write-Host $separator
+
+        foreach ($item in $tableData) {
+            $truncatedSource = if ($item.source.Length -gt $sourceWidth) { 
+                "..." + $item.source.Substring($item.source.Length - ($sourceWidth - 3))
+            } else { 
+                $item.source 
+            }
+            
+            $row = "| {0,-$versionWidth} | {1,-$statusWidth} | {2,-$packageTypeWidth} | {3,-$packageVersionWidth} | {4,-$targetFrameworkWidth} | {5,-$sourceWidth} |" -f $item.version, $item.status, $item.packagetype, $item.packageVersion, $item.targetFramework, $truncatedSource
+            Write-Host $row
+        }

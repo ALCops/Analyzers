@@ -1,0 +1,45 @@
+name: Setup Build Matrix
+description: Populate matrix for build job strategy
+
+inputs:
+  sources:
+    required: true
+    description: Stringified JSON object with VSIXPackages of the AL Language versions
+
+outputs:
+  matrix:
+    description: Stringified JSON object with matrix for build job strategy
+    value: ${{ steps.get-matrix.outputs.matrix }}
+  isempty:
+    description: Boolean 'true'/'false' if the matrix is an empty result
+    value: ${{ steps.get-matrix.outputs.isempty }}
+
+runs:
+  using: composite
+  steps:
+    - name: Get Matrix
+      id: get-matrix
+      shell: pwsh
+      env:
+        SOURCES: ${{ inputs.sources }}
+      run: |
+        $matrix = @()
+        $sources = $env:SOURCES | ConvertFrom-Json
+
+        # Deduplicate by version; prefer entries where type == 'NuGet'
+        $deduped = $sources |
+            Group-Object version |
+            ForEach-Object {
+                $g = $_.Group
+                $nuget = $g | Where-Object { $_.type -eq 'NuGet' }
+                if ($nuget) { $nuget | Select-Object -First 1 } else { $g | Select-Object -First 1 }
+            } |
+            Sort-Object { [version]$_.version } -Descending
+
+        # Remove specific unwanted versions
+        $unwantedVersions = @('16.0.21.41228', '16.0.21.42129', '16.0.21.53261', '16.0.21.57573')
+        $deduped = $deduped | Where-Object { $unwantedVersions -notcontains $_.version }
+
+        echo "isempty=$([string]($deduped.Count -eq 0).ToString().ToLower())" >> $env:GITHUB_OUTPUT
+        $matrix = @{'include' = $deduped } | ConvertTo-Json -Compress
+        echo "matrix=$($matrix)" >> $env:GITHUB_OUTPUT

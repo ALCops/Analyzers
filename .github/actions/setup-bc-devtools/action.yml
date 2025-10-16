@@ -1,0 +1,135 @@
+name: Setup BC Dev Tools
+description: Downloads and extracts BC Development Tools assets to specified folder
+
+inputs:
+  sources:
+    description: JSON string containing BC DevTools sources
+    required: true
+  version-number:
+    description: Specify specific version to download
+    required: true
+  target-path:
+    description: Target path to extract files
+    required: false
+    default: Microsoft.Dynamics.BusinessCentral.Development.Tools
+
+runs:
+  using: composite
+  steps:
+    - name: Determine BC DevTools asset
+      id: determine-bc-devtools-asset
+      shell: pwsh
+      env:
+        SOURCES: ${{ inputs.sources }}
+        VERSION_NUMBER: ${{ inputs.version-number }}
+      run: |
+        # Parse the sources JSON
+        $sources = $env:SOURCES | ConvertFrom-Json
+        $versionNumber = $env:VERSION_NUMBER
+
+        Write-Output "Looking for version: $versionNumber"
+        # Find the exact version match
+        $selectedSource = $sources | Where-Object { $_.version -eq $versionNumber }
+
+        if (-not $selectedSource) {
+            Write-Error "No source found for version: $versionNumber"
+            exit 1
+        }
+
+        Write-Output "Selected source: $($selectedSource.version) from $($selectedSource.source)"
+        Write-Output "Package Type: $($selectedSource.packageType)"
+
+        # Set outputs
+        echo "asset-uri=$($selectedSource.uri)" >> $env:GITHUB_OUTPUT
+        echo "asset-type=$($selectedSource.packageType)" >> $env:GITHUB_OUTPUT
+
+    # - name: Get BC DevTools asset from cache
+    #   id: download-bc-devtools-asset
+    #   uses: actions/cache/restore@v4
+    #   with:
+    #     path: ${{ inputs.target-path }}
+    #     key: al-platform-artifact-${{ inputs.version-number }}
+    #     fail-on-cache-miss: false
+
+    - name: Download BC DevTools asset
+      id: download-bc-devtools-asset
+      # if: steps.get_platform_artifact.outputs.cache-hit != 'true'
+      shell: pwsh
+      env:
+        ASSET_URI: ${{ steps.determine-bc-devtools-asset.outputs.asset-uri }}
+        RUNNER_TEMP: ${{ runner.temp }}
+      run: |
+        Write-Output "Starting BC DevTools asset download..."
+        Write-Output "Asset URI: $($env:ASSET_URI)"
+
+        try {
+          $uri = [System.Uri]$env:ASSET_URI
+          $fileName = Split-Path $uri.AbsolutePath -Leaf
+          $downloadFilePath = Join-Path $env:RUNNER_TEMP $fileName
+          
+          Write-Output "Target file: $fileName"
+          Write-Output "Download path: $downloadFilePath"
+          Write-Output "Temp directory: $($env:RUNNER_TEMP)"
+          
+          # Check if temp directory exists
+          if (-not (Test-Path $env:RUNNER_TEMP)) {
+            Write-Output "Creating temp directory: $($env:RUNNER_TEMP)"
+            New-Item -ItemType Directory -Path $env:RUNNER_TEMP -Force | Out-Null
+          }
+          
+          Write-Output "Initiating download..."
+          $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+          
+          Invoke-WebRequest $env:ASSET_URI -OutFile $downloadFilePath -Verbose
+          
+          $stopwatch.Stop()
+          
+          # Verify download
+          if (Test-Path $downloadFilePath) {
+            $fileSize = (Get-Item $downloadFilePath).Length
+            $fileSizeMB = [math]::Round($fileSize / 1MB, 2)
+            Write-Output "✅ Download completed successfully!"
+            Write-Output "File size: $fileSizeMB MB ($fileSize bytes)"
+            Write-Output "Download time: $($stopwatch.Elapsed.TotalSeconds) seconds"
+          } else {
+            Write-Error "❌ Download failed - file not found at expected path"
+            exit 1
+          }
+          
+          echo "path=$($downloadFilePath)" >> $env:GITHUB_OUTPUT
+        }
+        catch {
+          Write-Error "❌ Download failed with error: $($_.Exception.Message)"
+          Write-Error "Stack trace: $($_.ScriptStackTrace)"
+          exit 1
+        }
+
+    - name: Extract BC DevTools asset
+      # if: steps.get_platform_artifact.outputs.cache-hit != 'true'
+      shell: pwsh
+      env:
+        ARCHIVE_PATH: ${{ steps.download-bc-devtools-asset.outputs.path }}
+        ASSET_TYPE: ${{ steps.determine-bc-devtools-asset.outputs.asset-type }}
+        TARGET_PATH: ${{ inputs.target-path }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        $pathInArchive = switch ($env:ASSET_TYPE) {
+          'VSIX' { 'extension/bin/Analyzers' }
+          'NuGet' { 'tools/net8.0/any' }
+          default { 
+            Write-Error "Invalid asset-type: $($env:ASSET_TYPE). Must be 'VSIX' or 'NuGet'."
+            exit 1
+          }
+        }
+
+        Write-Output "Extracting $($env:ASSET_TYPE) from path: $pathInArchive"
+
+        & "$env:ACTION_PATH\Extract-RequiredFiles.ps1" -DestinationPath $env:TARGET_PATH -ArchivePath $env:ARCHIVE_PATH -PathInArchive $pathInArchive
+
+    # - name: Add platform artifact to cache
+    #   id: add_hash
+    #   if: steps.get_platform_artifact.outputs.cache-hit != 'true'
+    #   uses: actions/cache/save@v4
+    #   with:
+    #     path: ${{ inputs.target-path }}
+    #     key: al-platform-artifact-${{ inputs.version-number }}

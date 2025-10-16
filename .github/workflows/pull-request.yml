@@ -1,0 +1,38 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - "release/**"
+    paths:
+      - "src/**"
+      - "**/*.sln"
+      - "**/*.csproj"
+      - "**/*.props"
+      - "**/*.targets"
+      - "Directory.Packages.props"
+      - "Directory.Build.props"
+      - "global.json"
+      - "nuget.config"
+      - "GitVersion.yml"
+      - ".config/dotnet-tools.json"
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - "!**/*.md"
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  build-and-test:
+    # Skip workflow when merging from release branch into main
+    if: |
+      !(github.base_ref == 'main' && startsWith(github.head_ref, 'release/'))
+    uses: ./.github/workflows/build-test.yml
+    with:
+      draft-check: true

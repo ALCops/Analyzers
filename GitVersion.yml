@@ -1,0 +1,7 @@
+workflow: GitHubFlow/v1
+
+branches:
+  # Customize release branch to support tags
+  release:
+    prevent-increment:
+      when-current-commit-tagged: true # Use tag value when tagged on release branch

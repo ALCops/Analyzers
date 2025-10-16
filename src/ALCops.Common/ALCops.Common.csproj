@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+        <TargetFrameworks Condition="'$(ContinuousIntegrationBuild)' != 'true'">net8.0</TargetFrameworks>
+        <TargetFrameworks Condition="'$(ContinuousIntegrationBuild)' == 'true'">netstandard2.1;net8.0</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>Latest</LangVersion>
+        <WarningsAsErrors>CS8600;CS8602;CS8603;CS8604;CS8605</WarningsAsErrors>
+        <GenerateFullPaths>true</GenerateFullPaths>
+        
+        <!-- Path to BC dev tools may be overridden by /p:BcDevToolsDir= -->
+        <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="Microsoft.Dynamics.Nav.CodeAnalysis">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.CodeAnalysis.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+</Project>

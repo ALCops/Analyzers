@@ -1,0 +1,184 @@
+name: Build and Test
+
+on:
+  workflow_call:
+    inputs:
+      draft-check:
+        description: "Whether to check if PR is draft"
+        required: false
+        type: boolean
+        default: true
+    outputs:
+      bc-devtools-sources:
+        description: "BC DevTools sources"
+        value: ${{ jobs.setup.outputs.bc-devtools-sources }}
+      tfm-netstandard21-version-lowest:
+        description: "Target framework netstandard2.1 lowest version"
+        value: ${{ jobs.setup.outputs.tfm-netstandard21-version-lowest }}
+      tfm-net80-version-lowest:
+        description: "Target framework net8.0 lowest version"
+        value: ${{ jobs.setup.outputs.tfm-net80-version-lowest }}
+
+env:
+  DOTNET_NOLOGO: true
+
+jobs:
+  setup:
+    if: ${{ !inputs.draft-check || github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+    name: Setup
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get BC DevTools
+        id: get-bc-devtools
+        uses: ./.github/actions/get-bc-devtools
+
+      - name: Setup matrix for test
+        id: setup-test-matrix
+        uses: ./.github/actions/setup-test-matrix
+        with:
+          sources: ${{ steps.get-bc-devtools.outputs.sources }}
+
+    outputs:
+      bc-devtools-sources: ${{ steps.get-bc-devtools.outputs.sources }}
+      tfm-netstandard21-version-lowest: ${{ steps.get-bc-devtools.outputs.tfm-netstandard21-version-lowest }}
+      tfm-net80-version-lowest: ${{ steps.get-bc-devtools.outputs.tfm-net80-version-lowest }}
+      matrix: ${{ steps.setup-test-matrix.outputs.matrix }}
+
+  build:
+    if: ${{ !inputs.draft-check || github.event.pull_request.draft == false }}
+    needs: setup
+    runs-on: ubuntu-latest
+    name: Build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup BC DevTools (v${{ needs.setup.outputs.tfm-netstandard21-version-lowest }})
+        uses: ./.github/actions/setup-bc-devtools
+        with:
+          sources: ${{ needs.setup.outputs.bc-devtools-sources }}
+          version-number: ${{ needs.setup.outputs.tfm-netstandard21-version-lowest }}
+          target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/netstandard2.1
+
+      - name: Setup BC DevTools (v${{ needs.setup.outputs.tfm-net80-version-lowest }})
+        uses: ./.github/actions/setup-bc-devtools
+        with:
+          sources: ${{ needs.setup.outputs.bc-devtools-sources }}
+          version-number: ${{ needs.setup.outputs.tfm-net80-version-lowest }}
+          target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net8.0
+
+      # ALCops.Common
+      - name: Restore ALCops.Common
+        run: dotnet restore ./src/ALCops.Common/ALCops.Common.csproj
+
+      - name: Build ALCops.Common
+        run: dotnet build ./src/ALCops.Common/ALCops.Common.csproj --configuration Release --no-restore
+
+      - name: Upload ALCops.Common artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ALCops.Common
+          path: ./src/ALCops.Common/bin/Release/
+
+      # ALCops.ApplicationCop
+      - name: Restore ALCops.ApplicationCop
+        run: dotnet restore ./src/ALCops.ApplicationCop/ALCops.ApplicationCop.csproj
+
+      - name: Build ALCops.ApplicationCop
+        run: dotnet build ./src/ALCops.ApplicationCop/ALCops.ApplicationCop.csproj --configuration Release --no-restore
+
+      - name: Upload ALCops.ApplicationCop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ALCops.ApplicationCop
+          path: ./src/ALCops.ApplicationCop/bin/Release/
+
+  test:
+    if: ${{ !inputs.draft-check || github.event.pull_request.draft == false }}
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
+      fail-fast: false
+    name: Test AL v${{ matrix.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup BC v${{ matrix.version }} DevTools
+        id: setup-bc-devtools
+        uses: ./.github/actions/setup-bc-devtools
+        with:
+          sources: ${{ needs.setup.outputs.bc-devtools-sources }}
+          version-number: ${{ matrix.version }}
+          target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net8.0 # Always use net8.0 target folder for testing
+
+      - name: Download ALCops.Common biniaries
+        uses: actions/download-artifact@v4
+        with:
+          name: ALCops.Common
+          path: ./src/ALCops.Common/bin/Release/
+
+      - name: Download ALCops.ApplicationCop biniaries
+        uses: actions/download-artifact@v4
+        with:
+          name: ALCops.ApplicationCop
+          path: ./src/ALCops.ApplicationCop/bin/Release/
+
+      - name: Restore ALCops.ApplicationCop.Test
+        run: dotnet restore ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.ApplicationCop.Test
+        run: >
+          dotnet test ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=TestResults_AL_${{ matrix.version }}.trx"
+          --logger "html;LogFileName=TestResults_AL_${{ matrix.version }}.html"
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-al-${{ matrix.version }}
+          path: |
+            **/TestResults_AL_${{ matrix.version }}.trx
+            **/TestResults_AL_${{ matrix.version }}.html
+
+  report:
+    if: ${{ !inputs.draft-check || github.event.pull_request.draft == false }}
+    needs: [setup, build, test]
+    runs-on: ubuntu-latest
+    name: Report
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-*
+          merge-multiple: true
+
+      - name: Publish unified test report
+        uses: dorny/test-reporter@v1
+        with:
+          name: Test results
+          path: "**/*.trx"
+          reporter: dotnet-trx

@@ -1,0 +1,86 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <GenerateFullPaths>true</GenerateFullPaths>
+        <LangVersion>latest</LangVersion>
+
+        <!-- Feature flags -->
+        <DefineConstants>$(DefineConstants)</DefineConstants>
+        <DefineConstants Condition="'$(FeatureFlags)'!=''">$(DefineConstants);$([System.String]::Copy('$(FeatureFlags)').Replace('#',';'))</DefineConstants>
+
+        <!-- Input knobs -->
+        <NavTargetFramework Condition="'$(NavTargetFramework)'==''">net8.0</NavTargetFramework>
+
+         <!-- Derived booleans -->
+        <IsLegacyNavTfm Condition="'$(NavTargetFramework)'=='netstandard2.0' Or '$(NavTargetFramework)'=='netstandard2.1'">true</IsLegacyNavTfm>
+
+        <!-- Normalized TFM used for binary refs -->
+        <NavBinaryTfm Condition="'$(IsLegacyNavTfm)'=='true'">netstandard2.1</NavBinaryTfm>
+        <NavBinaryTfm Condition="'$(IsLegacyNavTfm)'!='true'">net8.0</NavBinaryTfm>
+
+        <!-- Path to BC dev tools may be overridden by /p:BcDevToolsDir= -->
+        <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>
+    </PropertyGroup>
+
+    <!-- Test/runtime infra -->
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.14.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+        <PackageReference Include="NUnit" Version="4.1.0" />
+        <PackageReference Include="NUnit3TestAdapter" Version="5.1.0" />
+        <PackageReference Include="NUnit.Analyzers" Version="4.2.0" />
+        <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+        <Using Include="NUnit.Framework" />
+    </ItemGroup>
+
+    <!-- Direct project references when not in CI -->
+    <ItemGroup Condition="'$(ContinuousIntegrationBuild)' != 'true'">
+        <ProjectReference Include="../ALCops.Common/ALCops.Common.csproj" />
+        <ProjectReference Include="../ALCops.ApplicationCop/ALCops.ApplicationCop.csproj" />
+    </ItemGroup>
+
+    <!-- Binary dependencies; definition driven by NavBinaryTfm and Configuration -->
+    <ItemGroup Condition="'$(ContinuousIntegrationBuild)' == 'true'">
+        <Reference Include="ALCop.Common">
+            <HintPath>../ALCops.Common/bin/$(Configuration)/$(NavBinaryTfm)/ALCops.Common.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
+        <Reference Include="ALCop.ApplicationCop">
+            <HintPath>../ALCops.ApplicationCop/bin/$(Configuration)/$(NavBinaryTfm)/ALCops.ApplicationCop.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
+    </ItemGroup>
+
+    <!-- RoslynTestKit -->
+    <ItemGroup Condition="'$(IsLegacyNavTfm)'!='true'">
+        <PackageReference Include="ALCops.RoslynTestKit" Version="0.3.0" />
+    </ItemGroup>
+
+    <!-- On legacy NAV TFMs, suppress package assets and directly reference the netstandard2.1 DLL -->
+    <ItemGroup Condition="'$(IsLegacyNavTfm)'=='true'">
+        <PackageReference Include="ALCops.RoslynTestKit" Version="0.3.0"
+                            ExcludeAssets="all"
+                            IncludeAssets="none"
+                            GeneratePathProperty="true" />
+        <Reference Include="$(PkgALCops_RoslynTestKit)\lib\netstandard2.1\RoslynTestKit.dll">
+            <Private>True</Private>
+        </Reference>
+    </ItemGroup>
+
+    <!-- BC Dev Tools -->
+    <ItemGroup>
+        <Reference Include="Microsoft.Dynamics.Nav.CodeAnalysis">
+            <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.CodeAnalysis.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
+        <Reference Include="Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces">
+            <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
+    </ItemGroup>
+</Project>
