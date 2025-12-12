@@ -99,6 +99,71 @@ jobs:
           name: ALCops.ApplicationCop
           path: ./src/ALCops.ApplicationCop/bin/Release/
 
+      # ALCops.DocumentationCop
+      - name: Restore ALCops.DocumentationCop
+        run: dotnet restore ./src/ALCops.DocumentationCop/ALCops.DocumentationCop.csproj
+
+      - name: Build ALCops.DocumentationCop
+        run: dotnet build ./src/ALCops.DocumentationCop/ALCops.DocumentationCop.csproj --configuration Release --no-restore
+
+      - name: Upload ALCops.DocumentationCop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ALCops.DocumentationCop
+          path: ./src/ALCops.DocumentationCop/bin/Release/
+
+      # ALCops.FormattingCop
+      - name: Restore ALCops.FormattingCop
+        run: dotnet restore ./src/ALCops.FormattingCop/ALCops.FormattingCop.csproj
+
+      - name: Build ALCops.FormattingCop
+        run: dotnet build ./src/ALCops.FormattingCop/ALCops.FormattingCop.csproj --configuration Release --no-restore
+
+      - name: Upload ALCops.FormattingCop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ALCops.FormattingCop
+          path: ./src/ALCops.FormattingCop/bin/Release/
+
+      # ALCops.LinterCop
+      - name: Restore ALCops.LinterCop
+        run: dotnet restore ./src/ALCops.LinterCop/ALCops.LinterCop.csproj
+
+      - name: Build ALCops.LinterCop
+        run: dotnet build ./src/ALCops.LinterCop/ALCops.LinterCop.csproj --configuration Release --no-restore
+
+      - name: Upload ALCops.LinterCop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ALCops.LinterCop
+          path: ./src/ALCops.LinterCop/bin/Release/          
+
+      # ALCops.PlatformCop
+      - name: Restore ALCops.PlatformCop
+        run: dotnet restore ./src/ALCops.PlatformCop/ALCops.PlatformCop.csproj
+
+      - name: Build ALCops.PlatformCop
+        run: dotnet build ./src/ALCops.PlatformCop/ALCops.PlatformCop.csproj --configuration Release --no-restore
+
+      - name: Upload ALCops.PlatformCop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ALCops.PlatformCop
+          path: ./src/ALCops.PlatformCop/bin/Release/
+
+      # ALCops.TestAutomationCop
+      - name: Restore ALCops.TestAutomationCop
+        run: dotnet restore ./src/ALCops.TestAutomationCop/ALCops.TestAutomationCop.csproj
+
+      - name: Build ALCops.TestAutomationCop
+        run: dotnet build ./src/ALCops.TestAutomationCop/ALCops.TestAutomationCop.csproj --configuration Release --no-restore
+
+      - name: Upload ALCops.TestAutomationCop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ALCops.TestAutomationCop
+          path: ./src/ALCops.TestAutomationCop/bin/Release/          
+
   test:
     if: ${{ !inputs.draft-check || github.event.pull_request.draft == false }}
     needs: [setup, build]
@@ -129,6 +194,7 @@ jobs:
           name: ALCops.Common
           path: ./src/ALCops.Common/bin/Release/
 
+      # ALCops.ApplicationCop
       - name: Download ALCops.ApplicationCop biniaries
         uses: actions/download-artifact@v4
         with:
@@ -145,8 +211,108 @@ jobs:
           --no-restore
           --configuration Release
           --logger "console;verbosity=normal"
-          --logger "trx;LogFileName=TestResults_AL_${{ matrix.version }}.trx"
-          --logger "html;LogFileName=TestResults_AL_${{ matrix.version }}.html"
+          --logger "trx;LogFileName=TestResults_ApplicationCop_AL_${{ matrix.version }}.trx"
+          --logger "html;LogFileName=TestResults_ApplicationCop_AL_${{ matrix.version }}.html"
+
+      # ALCops.DocumentationCop
+      - name: Download ALCops.DocumentationCop biniaries
+        uses: actions/download-artifact@v4
+        with:
+          name: ALCops.DocumentationCop
+          path: ./src/ALCops.DocumentationCop/bin/Release/
+
+      - name: Restore ALCops.DocumentationCop.Test
+        run: dotnet restore ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.DocumentationCop.Test
+        run: >
+          dotnet test ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=TestResults_DocumentationCop_AL_${{ matrix.version }}.trx"
+          --logger "html;LogFileName=TestResults_DocumentationCop_AL_${{ matrix.version }}.html"
+
+      # ALCops.FormattingCop
+      - name: Download ALCops.FormattingCop biniaries
+        uses: actions/download-artifact@v4
+        with:
+          name: ALCops.FormattingCop
+          path: ./src/ALCops.FormattingCop/bin/Release/
+
+      - name: Restore ALCops.FormattingCop.Test
+        run: dotnet restore ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.FormattingCop.Test
+        run: >
+          dotnet test ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=TestResults_FormattingCop_AL_${{ matrix.version }}.trx"
+          --logger "html;LogFileName=TestResults_FormattingCop_AL_${{ matrix.version }}.html"          
+
+      # ALCops.LinterCop
+      - name: Download ALCops.LinterCop biniaries
+        uses: actions/download-artifact@v4
+        with:
+          name: ALCops.LinterCop
+          path: ./src/ALCops.LinterCop/bin/Release/
+
+      - name: Restore ALCops.LinterCop.Test
+        run: dotnet restore ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.LinterCop.Test
+        run: >
+          dotnet test ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=TestResults_LinterCop_AL_${{ matrix.version }}.trx"
+          --logger "html;LogFileName=TestResults_LinterCop_AL_${{ matrix.version }}.html"
+
+      # ALCops.PlatformCop
+      - name: Download ALCops.PlatformCop biniaries
+        uses: actions/download-artifact@v4
+        with:
+          name: ALCops.PlatformCop
+          path: ./src/ALCops.PlatformCop/bin/Release/
+
+      - name: Restore ALCops.PlatformCop.Test
+        run: dotnet restore ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.PlatformCop.Test
+        run: >
+          dotnet test ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=TestResults_PlatformCop_AL_${{ matrix.version }}.trx"
+          --logger "html;LogFileName=TestResults_PlatformCop_AL_${{ matrix.version }}.html"          
+
+      # ALCops.TestAutomationCop
+      - name: Download ALCops.TestAutomationCop biniaries
+        uses: actions/download-artifact@v4
+        with:
+          name: ALCops.TestAutomationCop
+          path: ./src/ALCops.TestAutomationCop/bin/Release/
+
+      - name: Restore ALCops.TestAutomationCop.Test
+        run: dotnet restore ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.TestAutomationCop.Test
+        run: >
+          dotnet test ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=TestResults_TestAutomationCop_AL_${{ matrix.version }}.trx"
+          --logger "html;LogFileName=TestResults_TestAutomationCop_AL_${{ matrix.version }}.html"
 
       - name: Upload Test Results
         if: always()
@@ -154,8 +320,18 @@ jobs:
         with:
           name: test-results-al-${{ matrix.version }}
           path: |
-            **/TestResults_AL_${{ matrix.version }}.trx
-            **/TestResults_AL_${{ matrix.version }}.html
+            **/TestResults_ApplicationCop_AL_${{ matrix.version }}.trx
+            **/TestResults_ApplicationCop_AL_${{ matrix.version }}.html
+            **/TestResults_DocumentationCop_AL_${{ matrix.version }}.trx
+            **/TestResults_DocumentationCop_AL_${{ matrix.version }}.html
+            **/TestResults_FormattingCop_AL_${{ matrix.version }}.trx
+            **/TestResults_FormattingCop_AL_${{ matrix.version }}.html
+            **/TestResults_LinterCop_AL_${{ matrix.version }}.trx
+            **/TestResults_LinterCop_AL_${{ matrix.version }}.html
+            **/TestResults_PlatformCop_AL_${{ matrix.version }}.trx
+            **/TestResults_PlatformCop_AL_${{ matrix.version }}.html
+            **/TestResults_TestAutomationCop_AL_${{ matrix.version }}.trx
+            **/TestResults_TestAutomationCop_AL_${{ matrix.version }}.html
 
   report:
     if: ${{ !inputs.draft-check || github.event.pull_request.draft == false }}
