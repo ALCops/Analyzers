@@ -171,7 +171,7 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
       fail-fast: false
-    name: Test AL v${{ matrix.version }}
+    name: Test v${{ matrix.version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -250,15 +250,11 @@ jobs:
         run: >
           dotnet test ./ALCops.CI.Test.sln
           -p:NavTargetFramework=${{ matrix.tfm }}
+          -p:BuildInParallel=false
           --configuration Release
           --logger "console;verbosity=normal"
           --results-directory ./TestResults
-          --logger "trx;LogFileName={assembly}_AL_${{ matrix.version }}.trx"
-
-      - name: Merge Test Results
-        run: |
-          dotnet tool install --global dotnet-trx-merge
-          trx-merge --input ./TestResults/*.trx --output ./TestResults_${{ matrix.version }}.trx
+          --logger "trx;LogFileName=TestResults_${{ matrix.version }}.trx"
 
       - name: Upload Test Results
         if: always()
