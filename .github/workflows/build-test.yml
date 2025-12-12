@@ -317,7 +317,7 @@ jobs:
       - name: Merge Test Results
         run: |
           dotnet tool install --global dotnet-trx-merge
-          trx-merge --input ./TestResults/*.trx --output ./TestResults_${{ matrix.version }}.trx
+          trx-merge --dir ./TestResults --output ./TestResults_${{ matrix.version }}.trx
           
       - name: Upload Test Results
         if: always()
