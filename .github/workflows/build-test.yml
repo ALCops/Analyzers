@@ -239,12 +239,12 @@ jobs:
       - name: Create Solution
         run: |
           dotnet new sln -n ALCops.CI.Test
-          dotnet sln ALCops.CI.Test add ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj
-          dotnet sln ALCops.CI.Test add ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj
-          dotnet sln ALCops.CI.Test add ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj
-          dotnet sln ALCops.CI.Test add ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj
-          dotnet sln ALCops.CI.Test add ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj
-          dotnet sln ALCops.CI.Test add ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj
+          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj
+          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj
+          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj
+          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj
+          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj
+          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj
 
       - name: Restore
         run: |
