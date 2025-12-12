@@ -246,15 +246,10 @@ jobs:
           dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj
           dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj
 
-      - name: Restore
-        run: |
-          dotnet restore ./ALCops.CI.Test.sln
-
       - name: Run Tests
         run: >
           dotnet test ./ALCops.CI.Test.sln
           -p:NavTargetFramework=${{ matrix.tfm }}
-          --no-restore
           --configuration Release
           --logger "console;verbosity=normal"
           --results-directory ./TestResults
