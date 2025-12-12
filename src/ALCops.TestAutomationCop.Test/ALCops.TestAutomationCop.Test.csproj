@@ -67,7 +67,7 @@
                             ExcludeAssets="all"
                             IncludeAssets="none"
                             GeneratePathProperty="true" />
-        <Reference Include="$(PkgALCops_RoslynTestKit)\lib\netstandard2.1\RoslynTestKit.dll">
+        <Reference Include="$(PkgALCops_RoslynTestKit)/lib/netstandard2.1/RoslynTestKit.dll">
             <Private>True</Private>
         </Reference>
     </ItemGroup>
