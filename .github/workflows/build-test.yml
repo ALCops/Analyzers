@@ -253,16 +253,20 @@ jobs:
           --configuration Release
           --logger "console;verbosity=normal"
           --results-directory ./TestResults
-          --logger "trx;LogFileName=TestResults_AL_${{ matrix.version }}.trx"
-          --logger "html;LogFileName=TestResults_AL_${{ matrix.version }}.html"
+          --logger "trx;LogFileName={assembly}_AL_${{ matrix.version }}.trx"
+
+      - name: Merge Test Results
+        run: |
+          dotnet tool install --global dotnet-trx-merge
+          trx-merge --input ./TestResults/*.trx --output ./TestResults_${{ matrix.version }}.trx
 
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-al-${{ matrix.version }}
-          path: ./TestResults/
-
+          name: test-results-${{ matrix.version }}
+          path: |
+            **/TestResults_${{ matrix.version }}.trx
   report:
     if: ${{ !inputs.draft-check || github.event.pull_request.draft == false }}
     needs: [setup, build, test]
