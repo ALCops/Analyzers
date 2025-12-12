@@ -1,5 +1,11 @@
 [
   {
+    "version": "17.0.29.57863",
+    "packageType": "NuGet",
+    "packageVersion": "17.0.29.57863-beta",
+    "targetFramework": "net8.0"
+  },
+  {
     "version": "17.0.29.44223",
     "packageType": "NuGet",
     "packageVersion": "17.0.29.44223-beta",
@@ -133,14 +139,14 @@
   },
   {
     "version": "16.0.22.52049",
-    "packageType": "VSIX",
-    "packageVersion": "16.0.1493797",
+    "packageType": "NuGet",
+    "packageVersion": "16.0.22.52049-beta",
     "targetFramework": "net8.0"
   },
   {
     "version": "16.0.22.52049",
-    "packageType": "NuGet",
-    "packageVersion": "16.0.22.52049-beta",
+    "packageType": "VSIX",
+    "packageVersion": "16.0.1493797",
     "targetFramework": "net8.0"
   },
   {

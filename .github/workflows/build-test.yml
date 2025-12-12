@@ -236,16 +236,29 @@ jobs:
           name: ALCops.TestAutomationCop
           path: ./src/ALCops.TestAutomationCop/bin/Release/
 
-      - name: Restore 
-        run: dotnet restore /p:NavTargetFramework=${{ matrix.tfm }}
+      - name: Restore
+        run: |
+          dotnet restore ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+          dotnet restore ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+          dotnet restore ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+          dotnet restore ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+          dotnet restore ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+          dotnet restore ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
       - name: Run Tests
         run: >
           dotnet test
+          ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj
+          ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj
+          ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj
+          ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj
+          ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj
+          ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
           --no-restore
           --configuration Release
           --logger "console;verbosity=normal"
+          --results-directory ./TestResults
           --logger "trx;LogFileName=TestResults_AL_${{ matrix.version }}.trx"
           --logger "html;LogFileName=TestResults_AL_${{ matrix.version }}.html"
 
@@ -254,9 +267,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-al-${{ matrix.version }}
-          path: |
-            **/TestResults_AL_${{ matrix.version }}.trx
-            **/TestResults_AL_${{ matrix.version }}.html
+          path: ./TestResults/
 
   report:
     if: ${{ !inputs.draft-check || github.event.pull_request.draft == false }}
