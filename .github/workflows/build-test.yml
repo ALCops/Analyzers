@@ -314,10 +314,13 @@ jobs:
           --logger "console;verbosity=normal"
           --logger "trx;LogFileName=TestAutomationCop_AL_${{ matrix.version }}.trx"              
 
-      - name: Merge Test Results
+      - name: Install dotnet-trx-merge
         run: |
           dotnet tool install --global dotnet-trx-merge
-          trx-merge --dir ./TestResults --output ./TestResults_${{ matrix.version }}.trx
+
+      - name: Merge Test Results
+        run: |
+          trx-merge --dir ./TestResults/ --output ./TestResults_${{ matrix.version }}.trx
           
       - name: Upload Test Results
         if: always()
