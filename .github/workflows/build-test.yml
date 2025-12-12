@@ -201,6 +201,19 @@ jobs:
           name: ALCops.ApplicationCop
           path: ./src/ALCops.ApplicationCop/bin/Release/
 
+      - name: Restore ALCops.ApplicationCop.Test
+        run: dotnet restore ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.ApplicationCop.Test
+        run: >
+          dotnet test ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --results-directory ./TestResults
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=ApplicationCop_AL_${{ matrix.version }}.trx"
+
       # ALCops.DocumentationCop
       - name: Download ALCops.DocumentationCop biniaries
         uses: actions/download-artifact@v4
@@ -208,12 +221,38 @@ jobs:
           name: ALCops.DocumentationCop
           path: ./src/ALCops.DocumentationCop/bin/Release/
 
+      - name: Restore ALCops.DocumentationCop.Test
+        run: dotnet restore ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.DocumentationCop.Test
+        run: >
+          dotnet test ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --results-directory ./TestResults
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=DocumentationCop_AL_${{ matrix.version }}.trx"
+          
       # ALCops.FormattingCop
       - name: Download ALCops.FormattingCop biniaries
         uses: actions/download-artifact@v4
         with:
           name: ALCops.FormattingCop
           path: ./src/ALCops.FormattingCop/bin/Release/
+
+      - name: Restore ALCops.FormattingCop.Test
+        run: dotnet restore ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.FormattingCop.Test
+        run: >
+          dotnet test ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --results-directory ./TestResults
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=FormattingCop_AL_${{ matrix.version }}.trx"
 
       # ALCops.LinterCop
       - name: Download ALCops.LinterCop biniaries
@@ -222,12 +261,38 @@ jobs:
           name: ALCops.LinterCop
           path: ./src/ALCops.LinterCop/bin/Release/
 
+      - name: Restore ALCops.LinterCop.Test
+        run: dotnet restore ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.LinterCop.Test
+        run: >
+          dotnet test ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --results-directory ./TestResults
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=LinterCop_AL_${{ matrix.version }}.trx"          
+
       # ALCops.PlatformCop
       - name: Download ALCops.PlatformCop biniaries
         uses: actions/download-artifact@v4
         with:
           name: ALCops.PlatformCop
           path: ./src/ALCops.PlatformCop/bin/Release/
+
+      - name: Restore ALCops.PlatformCop.Test
+        run: dotnet restore ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.PlatformCop.Test
+        run: >
+          dotnet test ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --results-directory ./TestResults
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=PlatformCop_AL_${{ matrix.version }}.trx"    
 
       # ALCops.TestAutomationCop
       - name: Download ALCops.TestAutomationCop biniaries
@@ -236,26 +301,24 @@ jobs:
           name: ALCops.TestAutomationCop
           path: ./src/ALCops.TestAutomationCop/bin/Release/
 
-      - name: Create Solution
-        run: |
-          dotnet new sln -n ALCops.CI.Test
-          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj
-          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj
-          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj
-          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj
-          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj
-          dotnet sln ./ALCops.CI.Test.sln add ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj
+      - name: Restore ALCops.TestAutomationCop.Test
+        run: dotnet restore ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
-      - name: Run Tests
+      - name: Run ALCops.TestAutomationCop.Test
         run: >
-          dotnet test ./ALCops.CI.Test.sln
+          dotnet test ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
-          -p:BuildInParallel=false
+          --no-restore
           --configuration Release
-          --logger "console;verbosity=normal"
           --results-directory ./TestResults
-          --logger "trx;LogFileName=TestResults_${{ matrix.version }}.trx"
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=TestAutomationCop_AL_${{ matrix.version }}.trx"              
 
+      - name: Merge Test Results
+        run: |
+          dotnet tool install --global dotnet-trx-merge
+          trx-merge --input ./TestResults/*.trx --output ./TestResults_${{ matrix.version }}.trx
+          
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
