@@ -1,3 +1,4 @@
+using ALCops.PlatformCop.Analyzer;
 using ALCops.PlatformCop.CodeFixer;
 using RoslynTestKit;
 
@@ -7,13 +8,13 @@ namespace ALCops.PlatformCop.Test
     public class EditableFlowField : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
-        private static readonly Analyzer.EditableFlowFieldAnalyzer _analyzer = new();
+        private static readonly EditableFlowFieldAnalyzer _analyzer = new();
         private string _testCasePath;
 
         [SetUp]
         public void Setup()
         {
-            _fixture = RoslynFixtureFactory.Create<Analyzer.EditableFlowFieldAnalyzer>();
+            _fixture = RoslynFixtureFactory.Create<EditableFlowFieldAnalyzer>();
 
             _testCasePath = Path.Combine(
                 Directory.GetParent(
