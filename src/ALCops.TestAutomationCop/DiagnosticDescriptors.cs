@@ -5,15 +5,15 @@ namespace ALCops.TestAutomationCop;
 
 public static class DiagnosticDescriptors
 {
-    public static readonly DiagnosticDescriptor MethodRequiresTestAttribute = new(
-        id: DiagnosticIds.MethodRequiresTestAttribute,
-        title: TestAutomationCopAnalyzers.MethodRequiresTestAttributeTitle,
-        messageFormat: TestAutomationCopAnalyzers.MethodRequiresTestAttributeFormat,
+    public static readonly DiagnosticDescriptor GlobalMethodRequiresTestAttribute = new(
+        id: DiagnosticIds.GlobalMethodRequiresTestAttribute,
+        title: TestAutomationCopAnalyzers.GlobalMethodRequiresTestAttributeTitle,
+        messageFormat: TestAutomationCopAnalyzers.GlobalMethodRequiresTestAttributeFormat,
         category: Category.Design,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        description: TestAutomationCopAnalyzers.MethodRequiresTestAttributeDescription,
-        helpLinkUri: GetHelpUri(DiagnosticIds.MethodRequiresTestAttribute));
+        description: TestAutomationCopAnalyzers.GlobalMethodRequiresTestAttributeDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.GlobalMethodRequiresTestAttribute));
 
     public static string GetHelpUri(string identifier)
     {

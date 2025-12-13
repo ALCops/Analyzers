@@ -6,13 +6,13 @@ namespace ALCops.TestAutomationCop.Test
     public class MethodRequiresTestAttribute : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
-        private static readonly Analyzer.MethodRequiresTestAttribute _analyzer = new();
+        private static readonly Analyzer.GlobalMethodRequiresTestAttributeAnalyzer _analyzer = new();
         private string _testCasePath;
 
         [SetUp]
         public void Setup()
         {
-            _fixture = RoslynFixtureFactory.Create<Analyzer.MethodRequiresTestAttribute>();
+            _fixture = RoslynFixtureFactory.Create<Analyzer.GlobalMethodRequiresTestAttributeAnalyzer>();
 
             _testCasePath = Path.Combine(
                 Directory.GetParent(
@@ -27,7 +27,7 @@ namespace ALCops.TestAutomationCop.Test
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
-            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.MethodRequiresTestAttribute);
+            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.GlobalMethodRequiresTestAttribute);
         }
 
         [Test]
@@ -39,7 +39,7 @@ namespace ALCops.TestAutomationCop.Test
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
-            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.MethodRequiresTestAttribute);
+            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.GlobalMethodRequiresTestAttribute);
         }
     }
 }

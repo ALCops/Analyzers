@@ -2,5 +2,5 @@ namespace ALCops.TestAutomationCop;
 
 public static class DiagnosticIds
 {
-    public static readonly string MethodRequiresTestAttribute = "TA0001";
+    public static readonly string GlobalMethodRequiresTestAttribute = "TA0001";
 }

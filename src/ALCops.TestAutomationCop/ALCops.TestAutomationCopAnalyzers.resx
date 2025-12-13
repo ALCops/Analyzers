@@ -117,16 +117,16 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="MethodRequiresTestAttributeTitle" xml:space="preserve">
-    <value>Global procedure in test codeunit requires test attribute</value>
+  <data name="GlobalMethodRequiresTestAttributeTitle" xml:space="preserve">
+    <value>Global procedures in test codeunits must be test methods</value>
     <comment/>
   </data>
-  <data name="MethodRequiresTestAttributeFormat" xml:space="preserve">
-    <value>Global procedure 0 in test codeunit requires [Test] attribute"</value>
+  <data name="GlobalMethodRequiresTestAttributeFormat" xml:space="preserve">
+    <value>Global procedure '{0}' declared in a test codeunit without a [Test] attribute. Test codeunits may expose only test procedures; mark this procedure with [Test], make it local, or move shared logic to a library codeunit.</value>
     <comment/>
   </data>
-  <data name="MethodRequiresTestAttributeDescription" xml:space="preserve">
-    <value>Global procedure in test codeunit requires test attribute. Use e.g. library codeunits for public procedures.</value>
+  <data name="GlobalMethodRequiresTestAttributeDescription" xml:space="preserve">
+    <value>Codeunits with Subtype = Test define the executable surface for automated tests and must contain only explicit test entry points. Any global procedure declared in a test codeunit is implicitly exposed as callable logic and therefore must represent an actual test, explicitly marked with the [Test] attribute. A global procedure without this attribute indicates either an incomplete test or misplaced reusable logic.</value>
     <comment/>
   </data>
 </root>

@@ -58,29 +58,29 @@ namespace ALCops.TestAutomationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Global procedure in test codeunit requires test attribute. Use e.g. library codeunits for public procedures..
+        ///   Looks up a localized string similar to Codeunits with Subtype = Test define the executable surface for automated tests and must contain only explicit test entry points. Any global procedure declared in a test codeunit is implicitly exposed as callable logic and therefore must represent an actual test, explicitly marked with the [Test] attribute. A global procedure without this attribute indicates either an incomplete test or misplaced reusable logic..
         /// </summary>
-        internal static string MethodRequiresTestAttributeDescription {
+        internal static string GlobalMethodRequiresTestAttributeDescription {
             get {
-                return ResourceManager.GetString("MethodRequiresTestAttributeDescription", resourceCulture);
+                return ResourceManager.GetString("GlobalMethodRequiresTestAttributeDescription", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Global procedure 0 in test codeunit requires [Test] attribute&quot;.
+        ///   Looks up a localized string similar to Global procedure &apos;{0}&apos; declared in a test codeunit without a [Test] attribute. Test codeunits may expose only test procedures; mark this procedure with [Test], make it local, or move shared logic to a library codeunit..
         /// </summary>
-        internal static string MethodRequiresTestAttributeFormat {
+        internal static string GlobalMethodRequiresTestAttributeFormat {
             get {
-                return ResourceManager.GetString("MethodRequiresTestAttributeFormat", resourceCulture);
+                return ResourceManager.GetString("GlobalMethodRequiresTestAttributeFormat", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Global procedure in test codeunit requires test attribute.
+        ///   Looks up a localized string similar to Global procedures in test codeunits must be test methods.
         /// </summary>
-        internal static string MethodRequiresTestAttributeTitle {
+        internal static string GlobalMethodRequiresTestAttributeTitle {
             get {
-                return ResourceManager.GetString("MethodRequiresTestAttributeTitle", resourceCulture);
+                return ResourceManager.GetString("GlobalMethodRequiresTestAttributeTitle", resourceCulture);
             }
         }
     }

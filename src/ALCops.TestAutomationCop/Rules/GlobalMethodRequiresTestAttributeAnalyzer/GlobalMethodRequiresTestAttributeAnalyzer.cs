@@ -7,11 +7,11 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.InternalSyntax;
 namespace ALCops.TestAutomationCop.Analyzer;
 
 [DiagnosticAnalyzer]
-public class MethodRequiresTestAttribute : DiagnosticAnalyzer
+public class GlobalMethodRequiresTestAttributeAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
-            DiagnosticDescriptors.MethodRequiresTestAttribute
+            DiagnosticDescriptors.GlobalMethodRequiresTestAttribute
         );
 
     public override void Initialize(AnalysisContext context)
@@ -36,7 +36,7 @@ public class MethodRequiresTestAttribute : DiagnosticAnalyzer
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(
-            DiagnosticDescriptors.MethodRequiresTestAttribute,
+            DiagnosticDescriptors.GlobalMethodRequiresTestAttribute,
             ctx.Symbol.GetLocation(),
             method.Name
         ));
