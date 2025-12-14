@@ -155,12 +155,16 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.LocalVariable)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _method =
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Method)));
+        private static readonly Lazy<NavCodeAnalysis.SymbolKind> _page =
+            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Page)));
+
 
         public static NavCodeAnalysis.SymbolKind Codeunit => _codeunit.Value;
         public static NavCodeAnalysis.SymbolKind Field => _field.Value;
         public static NavCodeAnalysis.SymbolKind GlobalVariable => _globalVariable.Value;
         public static NavCodeAnalysis.SymbolKind LocalVariable => _localVariable.Value;
         public static NavCodeAnalysis.SymbolKind Method => _method.Value;
+        public static NavCodeAnalysis.SymbolKind Page => _page.Value;
     }
 
     /// <summary>
