@@ -1,6 +1,5 @@
 ﻿[|table 50100 MyTable|]
 {
-    LookupPageId = MyPage;
     DrillDownPageId = MyPage;
 
     fields
