@@ -58,7 +58,7 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Property &quot;LookupPageId&quot; and &quot;DrillDownPageId&quot; must be filled in table because it is used in list page.
+        ///   Looks up a localized string similar to When a table is used as the source for a list page, users expect to be able to drill down into records and open lookups in a consistent and predictable way. The DrillDownPageId and LookupPageId table properties define which pages are used for these interactions..
         /// </summary>
         internal static string LookupPageIdAndDrillDownPageIdDescription {
             get {
@@ -67,7 +67,7 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Property &quot;LookupPageId&quot; and &quot;DrillDownPageId&quot; must be filled in table because it is used in list page.
+        ///   Looks up a localized string similar to Table &apos;{0}&apos; is used in a list page but does not define both the DrillDownPageId and LookupPageId properties..
         /// </summary>
         internal static string LookupPageIdAndDrillDownPageIdFormat {
             get {
@@ -76,7 +76,7 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Property &quot;LookupPageId&quot; and &quot;DrillDownPageId&quot; must be filled in table because it is used in list page.
+        ///   Looks up a localized string similar to DrillDownPageId and LookupPageId property must be defined for tables used in list pages.
         /// </summary>
         internal static string LookupPageIdAndDrillDownPageIdTitle {
             get {

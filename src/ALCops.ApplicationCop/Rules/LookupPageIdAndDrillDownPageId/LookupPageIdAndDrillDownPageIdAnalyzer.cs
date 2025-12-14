@@ -3,7 +3,6 @@ using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
-using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 
 namespace ALCops.ApplicationCop.Analyzer;
 
@@ -50,7 +49,7 @@ public class LookupPageIdAndDrillDownPageIdAnalyzer : DiagnosticAnalyzer
             Diagnostic.Create(
                 DiagnosticDescriptors.LookupPageIdAndDrillDownPageId,
                 table.GetLocation(),
-                table.Name.ToString().QuoteIdentifierIfNeeded(),
-                context.Symbol.Name.ToString().QuoteIdentifierIfNeeded()));
+                table.Name.ToString().QuoteIdentifierIfNeededWithReflection(),
+                context.Symbol.Name.ToString().QuoteIdentifierIfNeededWithReflection()));
     }
 }
