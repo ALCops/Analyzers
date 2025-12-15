@@ -148,18 +148,27 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.FalseKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _lineCommentTrivia =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LineCommentTrivia)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _methodDeclaration =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.MethodDeclaration)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _none =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.None)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _optionDataType =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.OptionDataType)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _parameter =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Parameter)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _returnValue =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReturnValue)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _triggerDeclaration =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.TriggerDeclaration)));
 
         public static NavCodeAnalysis.SyntaxKind FalseKeyword => _falseKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind LineCommentTrivia => _lineCommentTrivia.Value;
+        public static NavCodeAnalysis.SyntaxKind MethodDeclaration => _methodDeclaration.Value;
+        public static NavCodeAnalysis.SyntaxKind None => _none.Value;
         public static NavCodeAnalysis.SyntaxKind OptionDataType => _optionDataType.Value;
         public static NavCodeAnalysis.SyntaxKind Parameter => _parameter.Value;
         public static NavCodeAnalysis.SyntaxKind ReturnValue => _returnValue.Value;
+        public static NavCodeAnalysis.SyntaxKind TriggerDeclaration => _triggerDeclaration.Value;
     }
 
     /// <summary>
