@@ -12,7 +12,8 @@ public class RecordInstanceIsolationLevel : DiagnosticAnalyzer
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.RecordInstanceIsolationLevel);
 
-    public override VersionCompatibility SupportedVersions => VersionCompatibility.Spring2023OrGreater;
+    public override VersionCompatibility SupportedVersions =>
+        VersionProvider.VersionCompatibility.Spring2023OrGreater;
 
     public override void Initialize(AnalysisContext context) =>
         context.RegisterOperationAction(new Action<OperationAnalysisContext>(this.CheckLockTable), EnumProvider.OperationKind.InvocationExpression);
