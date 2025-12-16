@@ -4,7 +4,6 @@ using RoslynTestKit;
 
 namespace ALCops.PlatformCop.Test
 {
-
     public class EditableFlowField : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;

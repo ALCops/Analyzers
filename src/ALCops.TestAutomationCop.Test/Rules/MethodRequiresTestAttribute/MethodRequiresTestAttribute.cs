@@ -2,11 +2,9 @@ using RoslynTestKit;
 
 namespace ALCops.TestAutomationCop.Test
 {
-
     public class MethodRequiresTestAttribute : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
-        private static readonly Analyzer.GlobalMethodRequiresTestAttributeAnalyzer _analyzer = new();
         private string _testCasePath;
 
         [SetUp]

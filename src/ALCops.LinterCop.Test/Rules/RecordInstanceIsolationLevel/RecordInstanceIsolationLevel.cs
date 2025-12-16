@@ -1,3 +1,4 @@
+using ALCops.LinterCop.CodeFixer;
 using RoslynTestKit;
 
 namespace ALCops.LinterCop.Test
@@ -5,6 +6,7 @@ namespace ALCops.LinterCop.Test
     public class RecordInstanceIsolationLevel : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
+        private static readonly Analyzer.RecordInstanceIsolationLevel _analyzer = new();
         private string _testCasePath;
 
         [SetUp]
@@ -36,5 +38,25 @@ namespace ALCops.LinterCop.Test
 
         //     _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.RecordInstanceIsolationLevel);
         // }
+
+        [Test]
+        [TestCase("ReplaceLockTableWithReadIsolation")]
+        [TestCase("ReplaceLockTableWithReadIsolationUsingRec")]
+        public async Task HasFix(string testCase)
+        {
+            var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
+                .ConfigureAwait(false);
+
+            var expectedCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "expected.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<RecordInstanceIsolationLevelCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.RecordInstanceIsolationLevel);
+        }
     }
 }

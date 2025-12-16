@@ -144,6 +144,10 @@ public static class EnumProvider
     /// </summary>
     public static class SyntaxKind
     {
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _colonColonToken =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ColonColonToken)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _dotToken =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.DotToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _falseKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.FalseKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _lineCommentTrivia =
@@ -161,6 +165,8 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _triggerDeclaration =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.TriggerDeclaration)));
 
+        public static NavCodeAnalysis.SyntaxKind ColonColonToken => _colonColonToken.Value;
+        public static NavCodeAnalysis.SyntaxKind DotToken => _dotToken.Value;
         public static NavCodeAnalysis.SyntaxKind FalseKeyword => _falseKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind LineCommentTrivia => _lineCommentTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind MethodDeclaration => _methodDeclaration.Value;
