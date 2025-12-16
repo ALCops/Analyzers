@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Reflection;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
@@ -25,27 +24,9 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
             Func<CancellationToken, Task<Document>> createChangedDocument, string equivalenceKey, bool generateFixAll)
             : base(title, createChangedDocument, equivalenceKey)
         {
-            // Use reflection to safely set properties that may not exist in all versions of the API
-            SetPropertyIfExists("SupportsFixAll", generateFixAll);
-            SetPropertyIfExists("FixAllSingleInstanceTitle", string.Empty);
-            SetPropertyIfExists("FixAllTitle", Title);
-        }
-
-        private void SetPropertyIfExists(string propertyName, object value)
-        {
-            try
-            {
-                var propertyInfo = GetType().BaseType?.GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                if (propertyInfo != null && propertyInfo.CanWrite)
-                {
-                    propertyInfo.SetValue(this, value);
-                }
-            }
-            catch (Exception)
-            {
-                // Silently ignore if property doesn't exist or can't be set
-                // This maintains compatibility across different API versions
-            }
+            this.SetPropertyIfExists("SupportsFixAll", generateFixAll);
+            this.SetPropertyIfExists("FixAllSingleInstanceTitle", string.Empty);
+            this.SetPropertyIfExists("FixAllTitle", Title);
         }
     }
 
@@ -71,11 +52,10 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
         ctx.RegisterCodeFix(CreateCodeAction(node, document, true), ctx.Diagnostics[0]);
     }
 
-    private static RecordInstanceIsolationLevelCodeAction CreateCodeAction(SyntaxNode node, Document document,
-        bool generateFixAll)
+    private static RecordInstanceIsolationLevelCodeAction CreateCodeAction(SyntaxNode node, Document document, bool generateFixAll)
     {
         return new RecordInstanceIsolationLevelCodeAction(
-            "TODO: Title",
+            LinterCopAnalyzers.RecordInstanceIsolationLevelCodeActionTitle,
             ct => ReplaceLockTableWithReadIsolation(document, node, ct),
             nameof(RecordInstanceIsolationLevelCodeFixProvider),
             generateFixAll);

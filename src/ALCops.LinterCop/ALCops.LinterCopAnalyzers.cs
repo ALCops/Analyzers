@@ -58,6 +58,15 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Replace LockTable() with ReadIsolation.
+        /// </summary>
+        internal static string RecordInstanceIsolationLevelCodeActionTitle {
+            get {
+                return ResourceManager.GetString("RecordInstanceIsolationLevelCodeActionTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use the ReadIsolation method to control isolation level on database transactions instead of the LockTable method..
         /// </summary>
         internal static string RecordInstanceIsolationLevelDescription {

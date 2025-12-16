@@ -129,4 +129,8 @@
     <value>Use the ReadIsolation method to control isolation level on database transactions instead of the LockTable method.</value>
     <comment/>
   </data>
+  <data name="RecordInstanceIsolationLevelCodeActionTitle" xml:space="preserve">
+    <value>Replace LockTable() with ReadIsolation</value>
+    <comment/>
+  </data>
 </root>
