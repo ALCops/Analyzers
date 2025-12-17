@@ -12,6 +12,22 @@ namespace ALCops.LinterCop.CodeFixes;
 [CodeFixProvider(nameof(ObjectIdInDeclarationCodeFixProvider))]
 public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
 {
+    private sealed record CodeFixProperties(string NamespaceName, string IdentifierName)
+    {
+        public static CodeFixProperties? TryParse(ImmutableDictionary<string, string>? properties)
+        {
+            if (properties is null)
+                return null;
+
+            if (!properties.TryGetValue(nameof(IdentifierName), out var identifierName) || string.IsNullOrEmpty(identifierName))
+                return null;
+
+            properties.TryGetValue(nameof(NamespaceName), out var namespaceName);
+
+            return new CodeFixProperties(namespaceName ?? string.Empty, identifierName);
+        }
+    }
+
     private class ObjectIdInDeclarationCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
@@ -49,30 +65,42 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
         var diagnostic = ctx.Diagnostics
             .FirstOrDefault(d => d.Id == DiagnosticDescriptors.ObjectIdInDeclaration.Id);
 
-        if (diagnostic is null || !diagnostic.Properties.TryGetValue("IdentifierName", out var replacementIdentifierName) || string.IsNullOrEmpty(replacementIdentifierName))
+        var properties = CodeFixProperties.TryParse(diagnostic?.Properties);
+        if (properties is null)
             return;
 
-        ctx.RegisterCodeFix(CreateCodeAction(node, document, SyntaxFactory.IdentifierName(replacementIdentifierName), true), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(node, document, properties, true), ctx.Diagnostics[0]);
     }
 
-    private static ObjectIdInDeclarationCodeAction CreateCodeAction(SyntaxNode node, Document document, IdentifierNameSyntax replacementIdentifierName, bool generateFixAll)
+    private static ObjectIdInDeclarationCodeAction CreateCodeAction(SyntaxNode node, Document document, CodeFixProperties properties, bool generateFixAll)
     {
         return new ObjectIdInDeclarationCodeAction(
             LinterCopAnalyzers.ObjectIdInDeclarationActionTitle,
-            ct => ReplaceObjectIdWithObjectName(document, node, replacementIdentifierName, ct),
+            ct => ReplaceObjectIdWithObjectName(document, node, properties, ct),
             nameof(ObjectIdInDeclarationCodeFixProvider),
             generateFixAll);
     }
 
-    private static async Task<Document> ReplaceObjectIdWithObjectName(Document document, SyntaxNode node, IdentifierNameSyntax replacementIdentifierName, CancellationToken cancellationToken)
+    private static async Task<Document> ReplaceObjectIdWithObjectName(Document document, SyntaxNode node, CodeFixProperties properties, CancellationToken cancellationToken)
     {
         var syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 
         if (node is not ObjectNameOrIdSyntax objectNameOrIdSyntax)
             return document;
 
-        var newObjectNameOrIdSyntax = SyntaxFactory.ObjectNameOrId(replacementIdentifierName);
+        var newObjectNameOrIdSyntax = SyntaxFactory.ObjectNameOrId(CreateIdentifierName(properties));
         var newRoot = syntaxRoot.ReplaceNode(objectNameOrIdSyntax, newObjectNameOrIdSyntax);
         return document.WithSyntaxRoot(newRoot);
+    }
+
+    private static NameSyntax CreateIdentifierName(CodeFixProperties properties)
+    {
+        if (string.IsNullOrEmpty(properties.NamespaceName))
+            return SyntaxFactory.IdentifierName(properties.IdentifierName);
+
+        return SyntaxFactory.QualifiedName(
+            SyntaxFactory.IdentifierName(properties.NamespaceName),
+            SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
+            SyntaxFactory.IdentifierName(properties.IdentifierName));
     }
 }

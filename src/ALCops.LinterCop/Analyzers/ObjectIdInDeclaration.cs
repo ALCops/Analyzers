@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.Reflection;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -44,8 +43,17 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
         if (applicationObjectTypeSymbol == null)
             return;
 
+        string? namespaceName = null;
+        var containingNamespace = ctx.ContainingSymbol.GetContainingNamespaceQualifiedNameWithReflection();
+        var appObjectNamespace = applicationObjectTypeSymbol.GetContainingNamespaceQualifiedNameWithReflection();
+        if (containingNamespace != appObjectNamespace)
+        {
+            namespaceName = appObjectNamespace;
+        }
+
         var properties = ImmutableDictionary<string, string>.Empty
-            .Add("IdentifierName", applicationObjectTypeSymbol.Name.QuoteIdentifierIfNeededWithReflection());
+            .Add("NamespaceName", namespaceName ?? string.Empty)
+            .Add("IdentifierName", applicationObjectTypeSymbol.Name);
 
         ctx.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.ObjectIdInDeclaration,
@@ -79,5 +87,21 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
             SubtypedDataTypeSyntax sdts => sdts.TypeName.Kind,
             _ => null
         };
+    }
+
+    private static string GetQualifiedIdentifierName(ISymbol containingSymbol, IApplicationObjectTypeSymbol applicationObjectTypeSymbol)
+    {
+        // string qualifiedIdentifierName = applicationObjectTypeSymbol.Name.QuoteIdentifierIfNeededWithReflection();
+        string qualifiedIdentifierName = applicationObjectTypeSymbol.Name;
+
+        var containingNamespaceQualifiedName = containingSymbol.GetContainingNamespaceQualifiedNameWithReflection();
+        var applicationObjectNamespaceQualifiedName = applicationObjectTypeSymbol.GetContainingNamespaceQualifiedNameWithReflection();
+        if (string.IsNullOrEmpty(containingNamespaceQualifiedName) && string.IsNullOrEmpty(applicationObjectNamespaceQualifiedName))
+            return qualifiedIdentifierName;
+
+        if (containingNamespaceQualifiedName != applicationObjectNamespaceQualifiedName)
+            return applicationObjectNamespaceQualifiedName + "." + qualifiedIdentifierName;
+
+        return qualifiedIdentifierName;
     }
 }
