@@ -84,6 +84,7 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
         return parent switch
         {
             PermissionSyntax ps => ps.ObjectType.Kind,
+            ReportDataItemSyntax => SyntaxKind.TableKeyword,
             SubtypedDataTypeSyntax sdts => GetSyntaxKindFromSubtypedDataType(sdts),
             _ => null
         };
