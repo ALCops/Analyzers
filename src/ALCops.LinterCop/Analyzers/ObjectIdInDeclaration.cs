@@ -83,8 +83,9 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
     {
         return parent switch
         {
+            PagePartSyntax pps => EnumProvider.SyntaxKind.PageKeyword,
             PermissionSyntax ps => ps.ObjectType.Kind,
-            ReportDataItemSyntax => SyntaxKind.TableKeyword,
+            ReportDataItemSyntax => EnumProvider.SyntaxKind.TableKeyword,
             SubtypedDataTypeSyntax sdts => GetSyntaxKindFromSubtypedDataType(sdts),
             _ => null
         };

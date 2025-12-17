@@ -23,6 +23,7 @@ namespace ALCops.LinterCop.Test
         [Test]
         [TestCase("GlobalVariable")]
         [TestCase("LocalVariable")]
+        [TestCase("PagePart")]
         [TestCase("ReportDataItem")]
         public async Task HasDiagnostic(string testCase)
         {
@@ -46,6 +47,7 @@ namespace ALCops.LinterCop.Test
         [Test]
         [TestCase("GlobalVariable")]
         [TestCase("LocalVariable")]
+        [TestCase("PagePart")]
         [TestCase("ReportDataItem")]
         public async Task HasFix(string testCase)
         {
