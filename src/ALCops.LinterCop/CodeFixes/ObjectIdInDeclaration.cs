@@ -95,12 +95,12 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
 
     private static NameSyntax CreateIdentifierName(CodeFixProperties properties)
     {
-        if (string.IsNullOrEmpty(properties.NamespaceName))
-            return SyntaxFactory.IdentifierName(properties.IdentifierName);
+        // if (string.IsNullOrEmpty(properties.NamespaceName))
+        return SyntaxFactory.IdentifierName(properties.IdentifierName);
 
-        return SyntaxFactory.QualifiedName(
-            SyntaxFactory.IdentifierName(properties.NamespaceName),
-            SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
-            SyntaxFactory.IdentifierName(properties.IdentifierName));
+        // return SyntaxFactory.QualifiedName(
+        //     SyntaxFactory.IdentifierName(properties.NamespaceName),
+        //     SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
+        //     SyntaxFactory.IdentifierName(properties.IdentifierName));
     }
 }
