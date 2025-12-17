@@ -112,17 +112,16 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
 
     private static string GetQualifiedIdentifierName(ISymbol containingSymbol, IApplicationObjectTypeSymbol applicationObjectTypeSymbol)
     {
-        // string qualifiedIdentifierName = applicationObjectTypeSymbol.Name.QuoteIdentifierIfNeededWithReflection();
-        string qualifiedIdentifierName = applicationObjectTypeSymbol.Name;
-
         var containingNamespaceQualifiedName = containingSymbol.GetContainingNamespaceQualifiedNameWithReflection();
         var applicationObjectNamespaceQualifiedName = applicationObjectTypeSymbol.GetContainingNamespaceQualifiedNameWithReflection();
-        if (string.IsNullOrEmpty(containingNamespaceQualifiedName) && string.IsNullOrEmpty(applicationObjectNamespaceQualifiedName))
-            return qualifiedIdentifierName;
+        if (
+            (string.IsNullOrEmpty(containingNamespaceQualifiedName) &&
+            string.IsNullOrEmpty(applicationObjectNamespaceQualifiedName)) ||
+            containingNamespaceQualifiedName == applicationObjectNamespaceQualifiedName)
+        {
+            return applicationObjectTypeSymbol.Name;
+        }
 
-        if (containingNamespaceQualifiedName != applicationObjectNamespaceQualifiedName)
-            return applicationObjectNamespaceQualifiedName + "." + qualifiedIdentifierName;
-
-        return qualifiedIdentifierName;
+        return applicationObjectNamespaceQualifiedName + "." + applicationObjectTypeSymbol.Name;
     }
 }

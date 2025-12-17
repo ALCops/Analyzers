@@ -6,7 +6,7 @@ page 50101 "My Page"
     {
         area(content)
         {
-            part(MyPart; MyTable) { }
+            part(MyPart; MyPage) { }
         }
     }
 }
