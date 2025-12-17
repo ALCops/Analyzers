@@ -13,6 +13,8 @@ namespace ALCops.LinterCop.CodeFixes;
 public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
 {
 #if NETSTANDARD2_1
+    // C# 9 records require 'System.Runtime.CompilerServices.IsExternalInit' which doesn't exist in netstandard2.1.
+    // We use a regular class for netstandard2.1 and a record for .NET 8+ to maintain compatibility with both targets.
     private sealed class CodeFixProperties
     {
         public string NamespaceName { get; }

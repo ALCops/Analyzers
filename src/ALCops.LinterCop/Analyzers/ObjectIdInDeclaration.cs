@@ -84,7 +84,26 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
         return parent switch
         {
             PermissionSyntax ps => ps.ObjectType.Kind,
-            SubtypedDataTypeSyntax sdts => sdts.TypeName.Kind,
+            SubtypedDataTypeSyntax sdts => GetSyntaxKindFromSubtypedDataType(sdts),
+            _ => null
+        };
+    }
+
+    private static SyntaxKind? GetSyntaxKindFromSubtypedDataType(SubtypedDataTypeSyntax sdts)
+    {
+        var kind = sdts.TypeName.Kind;
+
+        if (kind == EnumProvider.SyntaxKind.IdentifierToken)
+            return GetSyntaxKindFromIdentifier(sdts.TypeName.Value as string);
+
+        return kind;
+    }
+
+    private static SyntaxKind? GetSyntaxKindFromIdentifier(string? identifier)
+    {
+        return identifier switch
+        {
+            "Record" => EnumProvider.SyntaxKind.TableKeyword,
             _ => null
         };
     }
