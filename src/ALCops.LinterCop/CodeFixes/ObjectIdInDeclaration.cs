@@ -12,6 +12,34 @@ namespace ALCops.LinterCop.CodeFixes;
 [CodeFixProvider(nameof(ObjectIdInDeclarationCodeFixProvider))]
 public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
 {
+#if NETSTANDARD2_1
+    private sealed class CodeFixProperties
+    {
+        public string NamespaceName { get; }
+        public string IdentifierName { get; }
+
+        private CodeFixProperties(string namespaceName, string identifierName)
+        {
+            NamespaceName = namespaceName;
+            IdentifierName = identifierName;
+        }
+
+        public static CodeFixProperties? TryParse(ImmutableDictionary<string, string>? properties)
+        {
+            if (properties is null)
+                return null;
+
+            if (!properties.TryGetValue(nameof(IdentifierName), out var identifierName) || string.IsNullOrEmpty(identifierName))
+                return null;
+
+            properties.TryGetValue(nameof(NamespaceName), out var namespaceName);
+
+            return new CodeFixProperties(namespaceName ?? string.Empty, identifierName);
+        }
+    }
+#endif
+
+#if NET8_0_OR_GREATER
     private sealed record CodeFixProperties(string NamespaceName, string IdentifierName)
     {
         public static CodeFixProperties? TryParse(ImmutableDictionary<string, string>? properties)
@@ -27,6 +55,7 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
             return new CodeFixProperties(namespaceName ?? string.Empty, identifierName);
         }
     }
+#endif
 
     private class ObjectIdInDeclarationCodeAction : CodeAction.DocumentChangeAction
     {
