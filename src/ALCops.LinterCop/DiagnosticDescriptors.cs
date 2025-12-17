@@ -5,6 +5,17 @@ namespace ALCops.LinterCop;
 
 public static class DiagnosticDescriptors
 {
+
+    public static readonly DiagnosticDescriptor ObjectIdInDeclaration = new(
+        id: DiagnosticIds.ObjectIdInDeclaration,
+        title: LinterCopAnalyzers.ObjectIdInDeclarationTitle,
+        messageFormat: LinterCopAnalyzers.ObjectIdInDeclarationFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.ObjectIdInDeclarationDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ObjectIdInDeclaration));
+
     public static readonly DiagnosticDescriptor RecordInstanceIsolationLevel = new(
         id: DiagnosticIds.RecordInstanceIsolationLevel,
         title: LinterCopAnalyzers.RecordInstanceIsolationLevelTitle,

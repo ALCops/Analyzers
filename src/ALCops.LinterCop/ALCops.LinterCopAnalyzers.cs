@@ -58,6 +58,42 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Replace id with name of object reference.
+        /// </summary>
+        internal static string ObjectIdInDeclarationActionTitle {
+            get {
+                return ResourceManager.GetString("ObjectIdInDeclarationActionTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Using Object IDs in variable or property declarations reduces readability and prevents safe renaming. Object IDs are numeric and provide no semantic meaning, making the code harder to understand and maintain. Declare variables and properties using the resolved object name rather than a numeric Object ID..
+        /// </summary>
+        internal static string ObjectIdInDeclarationDescription {
+            get {
+                return ResourceManager.GetString("ObjectIdInDeclarationDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Object ID &apos;{0}&apos; used as object reference. Use the object name &apos;{1}&apos; instead..
+        /// </summary>
+        internal static string ObjectIdInDeclarationFormat {
+            get {
+                return ResourceManager.GetString("ObjectIdInDeclarationFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Do not use Object IDs as object references.
+        /// </summary>
+        internal static string ObjectIdInDeclarationTitle {
+            get {
+                return ResourceManager.GetString("ObjectIdInDeclarationTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Replace LockTable() with ReadIsolation.
         /// </summary>
         internal static string RecordInstanceIsolationLevelCodeActionTitle {
