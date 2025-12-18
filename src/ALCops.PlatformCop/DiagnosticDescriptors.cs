@@ -25,6 +25,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.EditableFlowFieldDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.EditableFlowField));
 
+    public static readonly DiagnosticDescriptor SetRangeWithFilterOperators = new(
+        id: DiagnosticIds.SetRangeWithFilterOperators,
+        title: PlatformCopAnalyzers.SetRangeWithFilterOperatorsTitle,
+        messageFormat: PlatformCopAnalyzers.SetRangeWithFilterOperatorsFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.SetRangeWithFilterOperatorsDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.SetRangeWithFilterOperators));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLower());

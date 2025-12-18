@@ -136,6 +136,18 @@
     <value>FlowFields are calculated fields whose values are derived from other data and are not stored on the record itself. Allowing a FlowField to be editable exposes an input surface that the platform does not process by default. User-entered values are neither validated nor persisted unless custom logic is explicitly implemented.</value>
   </data>
   <data name="EditableFlowFieldCodeAction" xml:space="preserve">
-    <value>Set Editable property to false</value>
+    <value>ALCops: Set Editable property to false</value>
+  </data>
+  <data name="SetRangeWithFilterOperatorsTitle" xml:space="preserve">
+    <value>Filter operators should not be used in SetRange</value>
+  </data>
+  <data name="SetRangeWithFilterOperatorsFormat" xml:space="preserve">
+    <value>SetRange is called with a filter expression. Use SetFilter instead.</value>
+  </data>
+  <data name="SetRangeWithFilterOperatorsDescription" xml:space="preserve">
+    <value>SetRange is intended for simple value-based range filtering. When filter operators such as &lt;&gt;, .., *, &amp;, or | are used, the call represents a filter expression and may lead to unintended behavior. In such cases, SetFilter must be used to express the filter explicitly and correctly.</value>
+  </data>
+  <data name="SetRangeWithFilterOperatorsCodeAction" xml:space="preserve">
+    <value>ALCops: Replace SetRange with SetFilter</value>
   </data>
 </root>

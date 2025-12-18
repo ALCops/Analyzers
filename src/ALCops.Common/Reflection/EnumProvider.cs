@@ -77,12 +77,18 @@ public static class EnumProvider
     public static class NavTypeKind
     {
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dotNet =
-            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DotNet)));
+    new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DotNet)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _joker =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Joker)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _option =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Option)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _string =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.String)));
 
         public static NavCodeAnalysis.NavTypeKind DotNet => _dotNet.Value;
+        public static NavCodeAnalysis.NavTypeKind Joker => _joker.Value;
         public static NavCodeAnalysis.NavTypeKind Option => _option.Value;
+        public static NavCodeAnalysis.NavTypeKind String => _string.Value;
     }
 
     /// <summary>
@@ -164,6 +170,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Int32LiteralToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _lineCommentTrivia =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LineCommentTrivia)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _literalExpression =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LiteralExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _methodDeclaration =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.MethodDeclaration)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _none =
@@ -198,6 +206,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind IdentifierToken => _identifierToken.Value;
         public static NavCodeAnalysis.SyntaxKind Int32LiteralToken => _int32LiteralToken.Value;
         public static NavCodeAnalysis.SyntaxKind LineCommentTrivia => _lineCommentTrivia.Value;
+        public static NavCodeAnalysis.SyntaxKind LiteralExpression => _literalExpression.Value;
         public static NavCodeAnalysis.SyntaxKind MethodDeclaration => _methodDeclaration.Value;
         public static NavCodeAnalysis.SyntaxKind None => _none.Value;
         public static NavCodeAnalysis.SyntaxKind ObjectReference => _objectReference.Value;

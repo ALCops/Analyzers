@@ -67,7 +67,7 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to AutoIncrement is used in a table with TableType = Temporary which will cause a runtime error. Remove AutoIncrement or make the table non-temporary..
+        ///   Looks up a localized string similar to AutoIncrement is used in a table with TableType = Temporary, which will cause a runtime error. Remove AutoIncrement or make the table non-temporary..
         /// </summary>
         internal static string AutoIncrementInTemporaryTableFormat {
             get {
@@ -76,7 +76,7 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to AutoIncrement on fields is not supported in temporary tables.
+        ///   Looks up a localized string similar to AutoIncrement fields are not supported in temporary tables.
         /// </summary>
         internal static string AutoIncrementInTemporaryTableTitle {
             get {
@@ -85,7 +85,7 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Set Editable property to false.
+        ///   Looks up a localized string similar to ALCops: Set Editable property to false.
         /// </summary>
         internal static string EditableFlowFieldCodeAction {
             get {
@@ -117,6 +117,42 @@ namespace ALCops.PlatformCop {
         internal static string EditableFlowFieldTitle {
             get {
                 return ResourceManager.GetString("EditableFlowFieldTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ALCops: Replace SetRange with SetFilter.
+        /// </summary>
+        internal static string SetRangeWithFilterOperatorsCodeAction {
+            get {
+                return ResourceManager.GetString("SetRangeWithFilterOperatorsCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SetRange is intended for simple value-based range filtering. When filter operators such as &lt;&gt;, .., *, &amp;, or | are used, the call represents a filter expression and may lead to unintended behavior. In such cases, SetFilter must be used to express the filter explicitly and correctly..
+        /// </summary>
+        internal static string SetRangeWithFilterOperatorsDescription {
+            get {
+                return ResourceManager.GetString("SetRangeWithFilterOperatorsDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SetRange is called with a filter expression. Use SetFilter instead..
+        /// </summary>
+        internal static string SetRangeWithFilterOperatorsFormat {
+            get {
+                return ResourceManager.GetString("SetRangeWithFilterOperatorsFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Filter operators should not be used in SetRange.
+        /// </summary>
+        internal static string SetRangeWithFilterOperatorsTitle {
+            get {
+                return ResourceManager.GetString("SetRangeWithFilterOperatorsTitle", resourceCulture);
             }
         }
     }
