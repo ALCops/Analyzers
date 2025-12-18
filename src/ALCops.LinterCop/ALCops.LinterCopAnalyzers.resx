@@ -119,26 +119,38 @@
   </resheader>
   <data name="ObjectIdInDeclarationTitle" xml:space="preserve">
     <value>Do not use Object IDs as object references</value>
+    <comment/>
   </data>
   <data name="ObjectIdInDeclarationFormat" xml:space="preserve">
     <value>Object ID '{0}' used as object reference. Use the object name '{1}' instead.</value>
+    <comment/>
+  </data>
+  <data name="ObjectIdInDeclarationFormatWithoutCodeFix" xml:space="preserve">
+    <value>Object ID '{0}' used as object reference.</value>
+    <comment/>
   </data>
   <data name="ObjectIdInDeclarationDescription" xml:space="preserve">
     <value>Using Object IDs in variable or property declarations reduces readability and prevents safe renaming. Object IDs are numeric and provide no semantic meaning, making the code harder to understand and maintain. Declare variables and properties using the resolved object name rather than a numeric Object ID.</value>
+    <comment/>
   </data>
   <data name="ObjectIdInDeclarationActionTitle" xml:space="preserve">
-    <value>Replace id with name of object reference</value>
+    <value>ALCops: Replace id with name of object reference</value>
+    <comment/>
   </data>
   <data name="RecordInstanceIsolationLevelTitle" xml:space="preserve">
     <value>Use ReadIsolation instead of LockTable</value>
+    <comment/>
   </data>
   <data name="RecordInstanceIsolationLevelFormat" xml:space="preserve">
     <value>Use ReadIsolation(IsolationLevel::UpdLock) instead of LockTable().</value>
+    <comment/>
   </data>
   <data name="RecordInstanceIsolationLevelDescription" xml:space="preserve">
     <value>Use the ReadIsolation method to control isolation level on database transactions instead of the LockTable method.</value>
+    <comment/>
   </data>
   <data name="RecordInstanceIsolationLevelCodeActionTitle" xml:space="preserve">
     <value>Replace LockTable() with ReadIsolation</value>
+    <comment/>
   </data>
 </root>

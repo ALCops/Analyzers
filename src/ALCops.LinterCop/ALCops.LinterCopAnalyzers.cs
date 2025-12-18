@@ -58,7 +58,7 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Replace id with name of object reference.
+        ///   Looks up a localized string similar to ALCops: Replace id with name of object reference.
         /// </summary>
         internal static string ObjectIdInDeclarationActionTitle {
             get {
@@ -81,6 +81,15 @@ namespace ALCops.LinterCop {
         internal static string ObjectIdInDeclarationFormat {
             get {
                 return ResourceManager.GetString("ObjectIdInDeclarationFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Object ID &apos;{0}&apos; used as object reference..
+        /// </summary>
+        internal static string ObjectIdInDeclarationFormatWithoutCodeFix {
+            get {
+                return ResourceManager.GetString("ObjectIdInDeclarationFormatWithoutCodeFix", resourceCulture);
             }
         }
         

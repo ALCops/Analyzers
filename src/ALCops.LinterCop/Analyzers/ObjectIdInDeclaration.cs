@@ -37,7 +37,13 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
 
         SymbolKind symbolKind = GetSymbolKind(ctx.Node.Parent);
         if (symbolKind == EnumProvider.SymbolKind.Undefined)
+        {
+            ctx.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.ObjectIdInDeclarationWithoutCodeFix,
+                ctx.Node.GetLocation(),
+                id));
             return;
+        }
 
         var applicationObjectTypeSymbol = ctx.SemanticModel.Compilation.GetApplicationObjectTypeSymbolsByIdAcrossModulesWithReflection(symbolKind, id).FirstOrDefault();
         if (applicationObjectTypeSymbol == null)
