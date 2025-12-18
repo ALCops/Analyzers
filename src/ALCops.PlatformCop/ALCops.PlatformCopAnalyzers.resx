@@ -117,20 +117,25 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AutoIncrementInTemporaryTableTitle" xml:space="preserve">
+    <value>AutoIncrement fields are not supported in temporary tables</value>
+  </data>
+  <data name="AutoIncrementInTemporaryTableFormat" xml:space="preserve">
+    <value>AutoIncrement is used in a table with TableType = Temporary, which will cause a runtime error. Remove AutoIncrement or make the table non-temporary.</value>
+  </data>
+  <data name="AutoIncrementInTemporaryTableDescription" xml:space="preserve">
+    <value>AutoIncrement relies on SQL Server to generate the next value when inserting records. Temporary tables are only in-memory in Business Central and are not created on SQL Server, so SQL Server cannot generate AutoIncrement values. This results in runtime failures when code inserts into the temporary table.</value>
+  </data>
   <data name="EditableFlowFieldTitle" xml:space="preserve">
     <value>FlowFields should not be editable</value>
-    <comment/>
   </data>
   <data name="EditableFlowFieldFormat" xml:space="preserve">
     <value>Field '{0}' is editable, which is uncommon for a FlowField. Set Editable = false, or add a comment to justify why editing is intentional.</value>
-    <comment/>
   </data>
   <data name="EditableFlowFieldDescription" xml:space="preserve">
     <value>FlowFields are calculated fields whose values are derived from other data and are not stored on the record itself. Allowing a FlowField to be editable exposes an input surface that the platform does not process by default. User-entered values are neither validated nor persisted unless custom logic is explicitly implemented.</value>
-    <comment/>
   </data>
   <data name="EditableFlowFieldCodeAction" xml:space="preserve">
     <value>Set Editable property to false</value>
-    <comment/>
   </data>
 </root>

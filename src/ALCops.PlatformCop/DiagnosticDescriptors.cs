@@ -5,6 +5,16 @@ namespace ALCops.PlatformCop;
 
 public static class DiagnosticDescriptors
 {
+    public static readonly DiagnosticDescriptor AutoIncrementInTemporaryTable = new(
+        id: DiagnosticIds.AutoIncrementInTemporaryTable,
+        title: PlatformCopAnalyzers.AutoIncrementInTemporaryTableTitle,
+        messageFormat: PlatformCopAnalyzers.AutoIncrementInTemporaryTableFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.AutoIncrementInTemporaryTableDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.AutoIncrementInTemporaryTable));
+
     public static readonly DiagnosticDescriptor EditableFlowField = new(
         id: DiagnosticIds.EditableFlowField,
         title: PlatformCopAnalyzers.EditableFlowFieldTitle,

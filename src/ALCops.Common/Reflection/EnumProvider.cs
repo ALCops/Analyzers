@@ -124,6 +124,8 @@ public static class EnumProvider
     /// </summary>
     public static class PropertyKind
     {
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _autoIncrement =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.AutoIncrement)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _editable =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Editable)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _drillDownPageId =
@@ -135,6 +137,7 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _subtype =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Subtype)));
 
+        public static NavCodeAnalysis.PropertyKind AutoIncrement => _autoIncrement.Value;
         public static NavCodeAnalysis.PropertyKind Editable => _editable.Value;
         public static NavCodeAnalysis.PropertyKind DrillDownPageId => _drillDownPageId.Value;
         public static NavCodeAnalysis.PropertyKind LookupPageId => _lookupPageId.Value;

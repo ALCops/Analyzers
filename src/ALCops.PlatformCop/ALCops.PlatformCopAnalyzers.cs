@@ -58,6 +58,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to AutoIncrement relies on SQL Server to generate the next value when inserting records. Temporary tables are only in-memory in Business Central and are not created on SQL Server, so SQL Server cannot generate AutoIncrement values. This results in runtime failures when code inserts into the temporary table..
+        /// </summary>
+        internal static string AutoIncrementInTemporaryTableDescription {
+            get {
+                return ResourceManager.GetString("AutoIncrementInTemporaryTableDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AutoIncrement is used in a table with TableType = Temporary which will cause a runtime error. Remove AutoIncrement or make the table non-temporary..
+        /// </summary>
+        internal static string AutoIncrementInTemporaryTableFormat {
+            get {
+                return ResourceManager.GetString("AutoIncrementInTemporaryTableFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AutoIncrement on fields is not supported in temporary tables.
+        /// </summary>
+        internal static string AutoIncrementInTemporaryTableTitle {
+            get {
+                return ResourceManager.GetString("AutoIncrementInTemporaryTableTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Set Editable property to false.
         /// </summary>
         internal static string EditableFlowFieldCodeAction {
