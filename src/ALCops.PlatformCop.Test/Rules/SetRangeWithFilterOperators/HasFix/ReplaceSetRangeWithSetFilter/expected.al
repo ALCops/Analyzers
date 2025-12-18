@@ -5,7 +5,7 @@ codeunit 50100 MyCodeunit
         MyTable: Record MyTable;
         MyCode: Code[20];
     begin
-        [|MyTable.SetFilter(MyField, '<>%1', MyCode)|];
+        MyTable.SetFilter(MyField, '<>%1', MyCode);
     end;
 }
 
