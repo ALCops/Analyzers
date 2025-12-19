@@ -35,6 +35,13 @@ namespace ALCops.LinterCop.Test
         [TestCase("ReportDataItem")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["DataTypeQuery"],
+                testCase,
+                "13.1.16",
+                "error AL0132: 'Query' does not contain a definition for 'SaveAsJson'"
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
