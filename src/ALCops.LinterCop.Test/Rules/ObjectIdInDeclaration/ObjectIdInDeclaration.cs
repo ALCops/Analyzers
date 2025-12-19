@@ -38,7 +38,7 @@ namespace ALCops.LinterCop.Test
             SkipTestIfVersionIsTooLow(
                 ["DataTypeQuery"],
                 testCase,
-                "13.1.16.16524",
+                "14.0",
                 "error AL0132: 'Query' does not contain a definition for 'SaveAsJson'"
             );
 
