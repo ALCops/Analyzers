@@ -34,10 +34,7 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
         if (ctx.IsObsolete())
             return;
 
-        if (ctx.Node is not ObjectNameOrIdSyntax node)
-            return;
-
-        if (node.Identifier is not ObjectIdSyntax identifier)
+        if (ctx.Node is not ObjectNameOrIdSyntax { Identifier: ObjectIdSyntax identifier })
             return;
 
         if (identifier.Value.Kind != EnumProvider.SyntaxKind.Int32LiteralToken)
@@ -77,20 +74,20 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
         if (targetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
             return;
 
-        // Only allow RecordRef instances
-        if (invocation.Instance is IOperation instance &&
-            instance.Type.NavTypeKind != EnumProvider.NavTypeKind.RecordRef)
-            return;
-
-        // Exlcude methods that don't accept any parameters
+        // Exclude methods that don't accept any parameters
         if (targetMethod.Parameters.Length == 0)
             return;
 
-        // Skip if the method does not have an first parameter set
+        // Skip if the method does not have a first parameter set
         if (invocation.Arguments.Length == 0)
             return;
 
         if (targetMethod.Parameters[0].ParameterType.NavTypeKind != EnumProvider.NavTypeKind.Integer)
+            return;
+
+        // Only allow RecordRef instances (more expensive check moved down)
+        if (invocation.Instance is IOperation instance &&
+            instance.Type.NavTypeKind != EnumProvider.NavTypeKind.RecordRef)
             return;
 
         if (invocation.Syntax is not InvocationExpressionSyntax invocationSyntax)
@@ -108,11 +105,11 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
         if (invocationSyntax.Expression is not MemberAccessExpressionSyntax memberAccess)
             return;
 
-        var SymbolKindAsText = memberAccess.Expression.GetIdentifierOrLiteralValue();
-        if (SymbolKindAsText is null)
+        var symbolKindAsText = memberAccess.Expression.GetIdentifierOrLiteralValue();
+        if (symbolKindAsText is null)
             return;
 
-        var symbolKindText = SymbolKindAsText.ToString();
+        var symbolKindText = symbolKindAsText.ToString();
         // Special treatment for RecordRef where we only want to analyze Open method calls
         if (string.Equals(symbolKindText, "RecordRef", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(targetMethod.Name, "Open", StringComparison.OrdinalIgnoreCase))
