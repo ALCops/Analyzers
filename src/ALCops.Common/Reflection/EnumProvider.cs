@@ -76,19 +76,40 @@ public static class EnumProvider
     /// </summary>
     public static class NavTypeKind
     {
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _codeunit =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Codeunit)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dotNet =
-    new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DotNet)));
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DotNet)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _integer =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Integer)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _joker =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Joker)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _option =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Option)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _page =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Page)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _query =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Query)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _recordRef =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.RecordRef)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _report =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Report)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _string =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.String)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _xmlPort =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.XmlPort)));
 
+        public static NavCodeAnalysis.NavTypeKind Codeunit => _codeunit.Value;
         public static NavCodeAnalysis.NavTypeKind DotNet => _dotNet.Value;
+        public static NavCodeAnalysis.NavTypeKind Integer => _integer.Value;
         public static NavCodeAnalysis.NavTypeKind Joker => _joker.Value;
         public static NavCodeAnalysis.NavTypeKind Option => _option.Value;
+        public static NavCodeAnalysis.NavTypeKind Page => _page.Value;
+        public static NavCodeAnalysis.NavTypeKind Query => _query.Value;
+        public static NavCodeAnalysis.NavTypeKind RecordRef => _recordRef.Value;
+        public static NavCodeAnalysis.NavTypeKind Report => _report.Value;
         public static NavCodeAnalysis.NavTypeKind String => _string.Value;
+        public static NavCodeAnalysis.NavTypeKind XmlPort => _xmlPort.Value;
     }
 
     /// <summary>
@@ -164,56 +185,77 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.DotToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _falseKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.FalseKeyword)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _identifierName =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.IdentifierName)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _identifierToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.IdentifierToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _int32LiteralToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Int32LiteralToken)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _int32SignedLiteralValue =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Int32SignedLiteralValue)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _invocationExpression =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.InvocationExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _lineCommentTrivia =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LineCommentTrivia)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _literalAttributeArgument =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LiteralAttributeArgument)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _literalExpression =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LiteralExpression)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _memberAccessExpression =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.MemberAccessExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _methodDeclaration =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.MethodDeclaration)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _none =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.None)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _objectReference =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ObjectReference)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _optionAccessExpression =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.OptionAccessExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _optionDataType =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.OptionDataType)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageKeyword)));
-        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _queryKeyword =
-            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.QueryKeyword)));
-        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _reportKeyword =
-            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReportKeyword)));
-        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _tableKeyword =
-            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.TableKeyword)));
-        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _xmlPortKeyword =
-            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.XmlPortKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _parameter =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Parameter)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _permissionValue =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PermissionValue)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _qualifiedName =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.QualifiedName)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _queryKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.QueryKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _returnValue =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReturnValue)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _reportKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReportKeyword)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _tableKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.TableKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _triggerDeclaration =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.TriggerDeclaration)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _xmlPortKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.XmlPortKeyword)));
 
         public static NavCodeAnalysis.SyntaxKind CodeunitKeyword => _codeunitKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind ColonColonToken => _colonColonToken.Value;
         public static NavCodeAnalysis.SyntaxKind DotToken => _dotToken.Value;
         public static NavCodeAnalysis.SyntaxKind FalseKeyword => _falseKeyword.Value;
+        public static NavCodeAnalysis.SyntaxKind IdentifierName => _identifierName.Value;
         public static NavCodeAnalysis.SyntaxKind IdentifierToken => _identifierToken.Value;
         public static NavCodeAnalysis.SyntaxKind Int32LiteralToken => _int32LiteralToken.Value;
+        public static NavCodeAnalysis.SyntaxKind Int32SignedLiteralValue => _int32SignedLiteralValue.Value;
+        public static NavCodeAnalysis.SyntaxKind InvocationExpression => _invocationExpression.Value;
         public static NavCodeAnalysis.SyntaxKind LineCommentTrivia => _lineCommentTrivia.Value;
+        public static NavCodeAnalysis.SyntaxKind LiteralAttributeArgument => _literalAttributeArgument.Value;
         public static NavCodeAnalysis.SyntaxKind LiteralExpression => _literalExpression.Value;
+        public static NavCodeAnalysis.SyntaxKind MemberAccessExpression => _memberAccessExpression.Value;
         public static NavCodeAnalysis.SyntaxKind MethodDeclaration => _methodDeclaration.Value;
         public static NavCodeAnalysis.SyntaxKind None => _none.Value;
         public static NavCodeAnalysis.SyntaxKind ObjectReference => _objectReference.Value;
+        public static NavCodeAnalysis.SyntaxKind OptionAccessExpression => _optionAccessExpression.Value;
         public static NavCodeAnalysis.SyntaxKind OptionDataType => _optionDataType.Value;
         public static NavCodeAnalysis.SyntaxKind PageKeyword => _pageKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind Parameter => _parameter.Value;
         public static NavCodeAnalysis.SyntaxKind PermissionValue => _permissionValue.Value;
+        public static NavCodeAnalysis.SyntaxKind QualifiedName => _qualifiedName.Value;
         public static NavCodeAnalysis.SyntaxKind QueryKeyword => _queryKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind ReturnValue => _returnValue.Value;
         public static NavCodeAnalysis.SyntaxKind ReportKeyword => _reportKeyword.Value;
@@ -285,6 +327,8 @@ public static class EnumProvider
     {
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _confirmHandler =
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.ConfirmHandler)));
+        private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _eventSubscriber =
+            new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.EventSubscriber)));
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _filterPageHandler =
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.FilterPageHandler)));
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _hyperlinkHandler =
@@ -311,6 +355,7 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.Test)));
 
         public static NavCodeAnalysis.InternalSyntax.AttributeKind ConfirmHandler => _confirmHandler.Value;
+        public static NavCodeAnalysis.InternalSyntax.AttributeKind EventSubscriber => _eventSubscriber.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind FilterPageHandler => _filterPageHandler.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind HyperlinkHandler => _hyperlinkHandler.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind MessageHandler => _messageHandler.Value;

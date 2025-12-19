@@ -103,7 +103,7 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Replace LockTable() with ReadIsolation.
+        ///   Looks up a localized string similar to ALCops: Replace LockTable() with ReadIsolation.
         /// </summary>
         internal static string RecordInstanceIsolationLevelCodeActionTitle {
             get {

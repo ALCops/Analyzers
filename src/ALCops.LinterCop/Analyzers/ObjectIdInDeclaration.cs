@@ -4,6 +4,7 @@ using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 
 namespace ALCops.LinterCop.Analyzers;
 
@@ -13,10 +14,20 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.ObjectIdInDeclaration);
 
-    public override void Initialize(AnalysisContext context) =>
+    private static readonly Lazy<ImmutableDictionary<string, string>> SymbolKindDictionary = new(GenerateSymbolKindDictionary);
+
+    public override void Initialize(AnalysisContext context)
+    {
         context.RegisterSyntaxNodeAction(new Action<SyntaxNodeAnalysisContext>(this.AnalyzeSyntaxNode),
             EnumProvider.SyntaxKind.ObjectReference,
             EnumProvider.SyntaxKind.PermissionValue);
+
+        context.RegisterOperationAction(new Action<OperationAnalysisContext>(this.AnalyzeBuiltInInvocation),
+            EnumProvider.OperationKind.InvocationExpression);
+
+        context.RegisterSymbolAction(new Action<SymbolAnalysisContext>(this.AnalyzeEventSubscriber),
+            EnumProvider.SymbolKind.Method);
+    }
 
     private void AnalyzeSyntaxNode(SyntaxNodeAnalysisContext ctx)
     {
@@ -32,7 +43,7 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
         if (identifier.Value.Kind != EnumProvider.SyntaxKind.Int32LiteralToken)
             return;
 
-        if (identifier.Value.Value is not int id)
+        if (identifier.Value.Value is not int objectId)
             return;
 
         SymbolKind symbolKind = GetSymbolKind(ctx.Node.Parent);
@@ -41,32 +52,168 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.ObjectIdInDeclarationWithoutCodeFix,
                 ctx.Node.GetLocation(),
-                id));
+                objectId));
             return;
         }
 
-        var applicationObjectTypeSymbol = ctx.SemanticModel.Compilation.GetApplicationObjectTypeSymbolsByIdAcrossModulesWithReflection(symbolKind, id).FirstOrDefault();
-        if (applicationObjectTypeSymbol == null)
+        var referencedApplicationObject = ctx.SemanticModel.Compilation.GetApplicationObjectTypeSymbolsByIdAcrossModulesWithReflection(symbolKind, objectId).FirstOrDefault();
+        if (referencedApplicationObject == null)
             return;
 
-        string? namespaceName = null;
-        var containingNamespace = ctx.ContainingSymbol.GetContainingNamespaceQualifiedNameWithReflection();
-        var appObjectNamespace = applicationObjectTypeSymbol.GetContainingNamespaceQualifiedNameWithReflection();
-        if (containingNamespace != appObjectNamespace)
+        ctx.ReportDiagnostic(
+            CreateDiagnostic(
+                ctx.ContainingSymbol,
+                referencedApplicationObject,
+                objectId,
+                ctx.Node.GetLocation()));
+    }
+
+    private void AnalyzeBuiltInInvocation(OperationAnalysisContext ctx)
+    {
+        if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression invocation)
+            return;
+
+        var targetMethod = invocation.TargetMethod;
+        if (targetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
+            return;
+
+        // Only allow RecordRef instances
+        if (invocation.Instance is IOperation instance &&
+            instance.Type.NavTypeKind != EnumProvider.NavTypeKind.RecordRef)
+            return;
+
+        // Exlcude methods that don't accept any parameters
+        if (targetMethod.Parameters.Length == 0)
+            return;
+
+        // Skip if the method does not have an first parameter set
+        if (invocation.Arguments.Length == 0)
+            return;
+
+        if (targetMethod.Parameters[0].ParameterType.NavTypeKind != EnumProvider.NavTypeKind.Integer)
+            return;
+
+        if (invocation.Syntax is not InvocationExpressionSyntax invocationSyntax)
+            return;
+
+        if (invocationSyntax.ArgumentList.Arguments[0] is not LiteralExpressionSyntax literalExpr)
+            return;
+
+        if (literalExpr.Literal is not Int32SignedLiteralValueSyntax intLiteral)
+            return;
+
+        if (!int.TryParse(intLiteral.Number.ValueText, out var objectId))
+            return;
+
+        if (invocationSyntax.Expression is not MemberAccessExpressionSyntax memberAccess)
+            return;
+
+        var SymbolKindAsText = memberAccess.Expression.GetIdentifierOrLiteralValue();
+        if (SymbolKindAsText is null)
+            return;
+
+        var symbolKindText = SymbolKindAsText.ToString();
+        // Special treatment for RecordRef where we only want to analyze Open method calls
+        if (string.Equals(symbolKindText, "RecordRef", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(targetMethod.Name, "Open", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        // Map RecordRef to Table Data Type
+        if (string.Equals(symbolKindText, "RecordRef", StringComparison.OrdinalIgnoreCase))
+            symbolKindText = "Table";
+
+        if (!Enum.TryParse(symbolKindText, ignoreCase: true, out SymbolKind symbolKind))
+            return;
+
+        // Page.Run(0) is a valid use case
+        if (symbolKind == EnumProvider.SymbolKind.Page && objectId == 0)
+            return;
+
+        var referencedApplicationObject = ctx.Compilation
+            .GetApplicationObjectTypeSymbolsByIdAcrossModulesWithReflection(symbolKind, objectId)
+            .FirstOrDefault();
+
+        if (referencedApplicationObject == null)
         {
-            namespaceName = appObjectNamespace;
+            ctx.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.ObjectIdInDeclarationWithoutCodeFix,
+                literalExpr.GetLocation(),
+                objectId));
+            return;
         }
+
+        ctx.ReportDiagnostic(
+            CreateDiagnostic(
+                ctx.ContainingSymbol,
+                referencedApplicationObject,
+                objectId,
+                literalExpr.GetLocation(),
+                referencedApplicationObject.Kind
+                ));
+    }
+
+    private void AnalyzeEventSubscriber(SymbolAnalysisContext ctx)
+    {
+        if (ctx.IsObsolete() || ctx.Symbol is not IMethodSymbol method)
+            return;
+
+        if (method.Attributes.Length == 0)
+            return;
+
+        var eventSubscriberAttribute = method.Attributes.FirstOrDefault(attr => attr.AttributeKind == EnumProvider.AttributeKind.EventSubscriber);
+        if (eventSubscriberAttribute == null)
+            return;
+
+        if (eventSubscriberAttribute.Arguments[1].DeclaringSyntaxReference?.GetSyntax().Kind != EnumProvider.SyntaxKind.LiteralAttributeArgument ||
+            !int.TryParse(
+                eventSubscriberAttribute.Arguments[1].ValueText,
+                out int objectId))
+        {
+            return;
+        }
+
+        var referencedApplicationObject = eventSubscriberAttribute.GetReferencedApplicationObject();
+        if (referencedApplicationObject == null)
+            return;
+
+        ctx.ReportDiagnostic(
+            CreateDiagnostic(
+                ctx.Symbol,
+                referencedApplicationObject,
+                objectId,
+                eventSubscriberAttribute.Arguments[1].GetLocation(),
+                referencedApplicationObject.Kind
+                ));
+    }
+
+    private static Diagnostic CreateDiagnostic(ISymbol ContainingSymbol, IApplicationObjectTypeSymbol ReferencedApplicationObject, int ObjectId, Location Location) =>
+        CreateDiagnostic(ContainingSymbol, ReferencedApplicationObject, ObjectId, Location, null);
+
+    private static Diagnostic CreateDiagnostic(ISymbol ContainingSymbol, IApplicationObjectTypeSymbol ReferencedApplicationObject, int ObjectId, Location Location, SymbolKind? symbolKind)
+    {
+        string? namespaceName = null;
+        var containingNamespace = ContainingSymbol.GetContainingNamespaceQualifiedNameWithReflection();
+        var RefAppNamespace = ReferencedApplicationObject.GetContainingNamespaceQualifiedNameWithReflection();
+        if (containingNamespace != RefAppNamespace)
+        {
+            namespaceName = RefAppNamespace;
+        }
+
+        var symbolKindText = symbolKind.ToString() ?? string.Empty;
+        if (!string.IsNullOrEmpty(symbolKindText) && SymbolKindDictionary.Value.TryGetValue(symbolKindText, out var mapped))
+            symbolKindText = mapped;
 
         var properties = ImmutableDictionary<string, string>.Empty
+            .Add("SymbolKind", symbolKindText)
             .Add("NamespaceName", namespaceName ?? string.Empty)
-            .Add("IdentifierName", applicationObjectTypeSymbol.Name);
+            .Add("IdentifierName", ReferencedApplicationObject.Name);
 
-        ctx.ReportDiagnostic(Diagnostic.Create(
+        return Diagnostic.Create(
             DiagnosticDescriptors.ObjectIdInDeclaration,
-            ctx.Node.GetLocation(),
+            Location,
             properties,
-            id,
-            applicationObjectTypeSymbol.Name));
+            ObjectId,
+            ReferencedApplicationObject.Name);
     }
 
     private static SymbolKind GetSymbolKind(SyntaxNode node)
@@ -89,6 +236,7 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
     {
         return parent switch
         {
+            ObjectReferencePropertyValueSyntax orpvs => GetSyntaxKindFromObjectReferencePropertyValue(orpvs),
             PagePartSyntax pps => EnumProvider.SyntaxKind.PageKeyword,
             PermissionSyntax ps => ps.ObjectType.Kind,
             ReportDataItemSyntax => EnumProvider.SyntaxKind.TableKeyword,
@@ -97,6 +245,14 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
         };
     }
 
+    private static SyntaxKind? GetSyntaxKindFromObjectReferencePropertyValue(ObjectReferencePropertyValueSyntax orpvs)
+    {
+        return orpvs.GetContainingObjectSyntax() switch
+        {
+            ProfileSyntax => EnumProvider.SyntaxKind.PageKeyword,
+            _ => null
+        };
+    }
     private static SyntaxKind? GetSyntaxKindFromSubtypedDataType(SubtypedDataTypeSyntax sdts)
     {
         var kind = sdts.TypeName.Kind;
@@ -116,18 +272,28 @@ public class ObjectIdInDeclaration : DiagnosticAnalyzer
         };
     }
 
-    private static string GetQualifiedIdentifierName(ISymbol containingSymbol, IApplicationObjectTypeSymbol applicationObjectTypeSymbol)
+    private static ImmutableDictionary<string, string> GenerateSymbolKindDictionary()
     {
-        var containingNamespaceQualifiedName = containingSymbol.GetContainingNamespaceQualifiedNameWithReflection();
-        var applicationObjectNamespaceQualifiedName = applicationObjectTypeSymbol.GetContainingNamespaceQualifiedNameWithReflection();
-        if (
-            (string.IsNullOrEmpty(containingNamespaceQualifiedName) &&
-            string.IsNullOrEmpty(applicationObjectNamespaceQualifiedName)) ||
-            containingNamespaceQualifiedName == applicationObjectNamespaceQualifiedName)
+        var builder = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var kind in Enum.GetNames(typeof(SymbolKind)))
         {
-            return applicationObjectTypeSymbol.Name;
+            // Map enum names to expected string value
+            // - "Table" => "Database"
+            // - "XmlPort" => "Xmlport"
+            var value = kind switch
+            {
+                "Table" => "Database",
+                "XmlPort" => "Xmlport",
+                _ => kind
+            };
+
+            builder[kind] = value;
         }
 
-        return applicationObjectNamespaceQualifiedName + "." + applicationObjectTypeSymbol.Name;
+        // Add additional entry for handling RecordRef.methodName (map to Database)
+        builder["RecordRef"] = "Database";
+
+        return builder.ToImmutable();
     }
 }

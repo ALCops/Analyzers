@@ -17,11 +17,13 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
     // We use a regular class for netstandard2.1 and a record for .NET 8+ to maintain compatibility with both targets.
     private sealed class CodeFixProperties
     {
+        public string SymbolKind { get; }
         public string NamespaceName { get; }
         public string IdentifierName { get; }
 
-        private CodeFixProperties(string namespaceName, string identifierName)
+        private CodeFixProperties(string symbolKind, string namespaceName, string identifierName)
         {
+            SymbolKind = symbolKind;
             NamespaceName = namespaceName;
             IdentifierName = identifierName;
         }
@@ -34,15 +36,16 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
             if (!properties.TryGetValue(nameof(IdentifierName), out var identifierName) || string.IsNullOrEmpty(identifierName))
                 return null;
 
+            properties.TryGetValue(nameof(SymbolKind), out var symbolKind);
             properties.TryGetValue(nameof(NamespaceName), out var namespaceName);
 
-            return new CodeFixProperties(namespaceName ?? string.Empty, identifierName);
+            return new CodeFixProperties(symbolKind ?? string.Empty, namespaceName ?? string.Empty, identifierName);
         }
     }
 #endif
 
 #if NET8_0_OR_GREATER
-    private sealed record CodeFixProperties(string NamespaceName, string IdentifierName)
+    private sealed record CodeFixProperties(string SymbolKind, string NamespaceName, string IdentifierName)
     {
         public static CodeFixProperties? TryParse(ImmutableDictionary<string, string>? properties)
         {
@@ -52,9 +55,10 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
             if (!properties.TryGetValue(nameof(IdentifierName), out var identifierName) || string.IsNullOrEmpty(identifierName))
                 return null;
 
+            properties.TryGetValue(nameof(SymbolKind), out var symbolKind);
             properties.TryGetValue(nameof(NamespaceName), out var namespaceName);
 
-            return new CodeFixProperties(namespaceName ?? string.Empty, identifierName);
+            return new CodeFixProperties(symbolKind ?? string.Empty, namespaceName ?? string.Empty, identifierName);
         }
     }
 #endif
@@ -114,12 +118,87 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
 
     private static async Task<Document> ReplaceObjectIdWithObjectName(Document document, SyntaxNode node, CodeFixProperties properties, CancellationToken cancellationToken)
     {
-        if (node is not ObjectNameOrIdSyntax objectNameOrIdSyntax)
-            return document;
+        switch (node)
+        {
+            case LiteralAttributeArgumentSyntax literalAttributeArgument:
+                {
+                    var NewOptionAccessAttributeArgument =
+                        SyntaxFactory.OptionAccessAttributeArgument(
+                            CreateOptionAccessExpression(properties));
 
-        var newObjectNameOrIdSyntax = SyntaxFactory.ObjectNameOrId(CreateIdentifierName(properties));
-        var newRoot = (await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false)).ReplaceNode(objectNameOrIdSyntax, newObjectNameOrIdSyntax);
-        return document.WithSyntaxRoot(newRoot);
+                    var root =
+                        await document
+                            .GetSyntaxRootAsync(cancellationToken)
+                            .ConfigureAwait(false);
+
+                    return document.WithSyntaxRoot(
+                        root.ReplaceNode(
+                            literalAttributeArgument,
+                            NewOptionAccessAttributeArgument));
+                }
+
+            case LiteralExpressionSyntax literalExpression:
+                {
+                    var newOptionAccessExpression = CreateOptionAccessExpression(properties);
+
+                    var root =
+                        await document
+                            .GetSyntaxRootAsync(cancellationToken)
+                            .ConfigureAwait(false);
+
+                    return document.WithSyntaxRoot(
+                        root.ReplaceNode(
+                            literalExpression,
+                            newOptionAccessExpression));
+                }
+
+            case ObjectNameOrIdSyntax objectNameOrId:
+                {
+                    var newObjectNameOrIdSyntax =
+                        SyntaxFactory.ObjectNameOrId(
+                            CreateIdentifierName(properties));
+
+                    var root =
+                        await document
+                            .GetSyntaxRootAsync(cancellationToken)
+                            .ConfigureAwait(false);
+
+                    return document.WithSyntaxRoot(
+                        root.ReplaceNode(
+                            objectNameOrId,
+                            newObjectNameOrIdSyntax));
+                }
+            case ObjectReferencePropertyValueSyntax objectReferencePropertyValue:
+                {
+                    var NewObjectReferencePropertyValue =
+                    SyntaxFactory.ObjectReferencePropertyValue(
+                        SyntaxFactory.ObjectNameOrId(
+                            CreateIdentifierName(properties)));
+
+                    var root =
+                        await document
+                            .GetSyntaxRootAsync(cancellationToken)
+                            .ConfigureAwait(false);
+
+                    return document.WithSyntaxRoot(
+                        root.ReplaceNode(
+                            objectReferencePropertyValue,
+                            NewObjectReferencePropertyValue));
+                }
+
+            default:
+                return document;
+        }
+    }
+
+
+
+    private static OptionAccessExpressionSyntax CreateOptionAccessExpression(CodeFixProperties properties)
+    {
+        return SyntaxFactory.OptionAccessExpression(
+            SyntaxFactory.IdentifierName(properties.SymbolKind),
+            SyntaxFactory.Token(EnumProvider.SyntaxKind.ColonColonToken),
+            CreateIdentifierName(properties));
     }
 
     private static NameSyntax CreateIdentifierName(CodeFixProperties properties)

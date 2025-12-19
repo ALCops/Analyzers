@@ -21,9 +21,17 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
+        [TestCase("DataTypeCodeunit")]
+        [TestCase("DataTypePage")]
+        [TestCase("DataTypeQuery")]
+        [TestCase("DataTypeRecordRef")]
+        [TestCase("DataTypeReport")]
+        [TestCase("DataTypeXmlPort")]
+        [TestCase("EventSubscriber")]
         [TestCase("GlobalVariable")]
         [TestCase("LocalVariable")]
         [TestCase("PagePart")]
+        [TestCase("Profile")]
         [TestCase("ReportDataItem")]
         public async Task HasDiagnostic(string testCase)
         {
@@ -34,6 +42,10 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
+        [TestCase("DataTypePage")]
+        [TestCase("DataTypeRecord")]
+        [TestCase("DataTypeRecordRef")]
+        [TestCase("EventSubscriber")]
         [TestCase("GlobalVariable")]
         [TestCase("LocalVariable")]
         public async Task NoDiagnostic(string testCase)
@@ -45,9 +57,23 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
+        [TestCase("DataTypeCodeunit")]
+        [TestCase("DataTypePage")]
+        [TestCase("DataTypeQuery")]
+        [TestCase("DataTypeRecordRef")]
+        [TestCase("DataTypeReport")]
+        [TestCase("DataTypeXmlPort")]
+        [TestCase("EventSubscriberCodeunit")]
+        [TestCase("EventSubscribeReport")]
+        [TestCase("EventSubscriberPage")]
+        [TestCase("EventSubscriberQuery")]
+        [TestCase("EventSubscriberCodeunit")]
+        [TestCase("EventSubscribeTable")]
+        [TestCase("EventSubscribeXmlPort")]
         [TestCase("GlobalVariable")]
         [TestCase("LocalVariable")]
         [TestCase("PagePart")]
+        [TestCase("Profile")]
         [TestCase("ReportDataItem")]
         public async Task HasFix(string testCase)
         {
