@@ -83,5 +83,77 @@ namespace ALCops.ApplicationCop {
                 return ResourceManager.GetString("LookupPageIdAndDrillDownPageIdTitle", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ALCops: Set NotBlank property to false.
+        /// </summary>
+        internal static string NotBlankNotAllowedOnPrimaryKeyFieldCodeAction {
+            get {
+                return ResourceManager.GetString("NotBlankNotAllowedOnPrimaryKeyFieldCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When the &apos;No. Series&apos; TableRelation is present on the table, assigning the primary key might occur after inserting the record, which could cause an error due to the NotBlank property..
+        /// </summary>
+        internal static string NotBlankNotAllowedOnPrimaryKeyFieldDescription {
+            get {
+                return ResourceManager.GetString("NotBlankNotAllowedOnPrimaryKeyFieldDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The NotBlank property should be set to false (or removed) if a TableRelation of &apos;No. Series&apos; is present on the table..
+        /// </summary>
+        internal static string NotBlankNotAllowedOnPrimaryKeyFieldFormat {
+            get {
+                return ResourceManager.GetString("NotBlankNotAllowedOnPrimaryKeyFieldFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set NotBlank property to false when &apos;No. Series&apos; TableRelation exists.
+        /// </summary>
+        internal static string NotBlankNotAllowedOnPrimaryKeyFieldTitle {
+            get {
+                return ResourceManager.GetString("NotBlankNotAllowedOnPrimaryKeyFieldTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ALCops: Set NotBlank property to true.
+        /// </summary>
+        internal static string NotBlankRequiredOnPrimaryKeyFieldCodeAction {
+            get {
+                return ResourceManager.GetString("NotBlankRequiredOnPrimaryKeyFieldCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to In tables that define a primary key consisting of a single field of type Code or Text, the primary key field must explicitly set the NotBlank property..
+        /// </summary>
+        internal static string NotBlankRequiredOnPrimaryKeyFieldDescription {
+            get {
+                return ResourceManager.GetString("NotBlankRequiredOnPrimaryKeyFieldDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to NotBlank property should be set explicitly for tables with a single-field primary key..
+        /// </summary>
+        internal static string NotBlankRequiredOnPrimaryKeyFieldFormat {
+            get {
+                return ResourceManager.GetString("NotBlankRequiredOnPrimaryKeyFieldFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Single-field primary key requires the NotBlank property.
+        /// </summary>
+        internal static string NotBlankRequiredOnPrimaryKeyFieldTitle {
+            get {
+                return ResourceManager.GetString("NotBlankRequiredOnPrimaryKeyFieldTitle", resourceCulture);
+            }
+        }
     }
 }

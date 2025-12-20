@@ -67,8 +67,11 @@ public static class EnumProvider
     {
         private static readonly Lazy<NavCodeAnalysis.FieldClassKind> _flowField =
             new(() => ParseEnum<NavCodeAnalysis.FieldClassKind>(nameof(NavCodeAnalysis.FieldClassKind.FlowField)));
+        private static readonly Lazy<NavCodeAnalysis.FieldClassKind> _normal =
+            new(() => ParseEnum<NavCodeAnalysis.FieldClassKind>(nameof(NavCodeAnalysis.FieldClassKind.Normal)));
 
         public static NavCodeAnalysis.FieldClassKind FlowField => _flowField.Value;
+        public static NavCodeAnalysis.FieldClassKind Normal => _normal.Value;
     }
 
     /// <summary>
@@ -76,6 +79,8 @@ public static class EnumProvider
     /// </summary>
     public static class NavTypeKind
     {
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _code =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Code)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _codeunit =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Codeunit)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dotNet =
@@ -99,6 +104,7 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _xmlPort =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.XmlPort)));
 
+        public static NavCodeAnalysis.NavTypeKind Code => _code.Value;
         public static NavCodeAnalysis.NavTypeKind Codeunit => _codeunit.Value;
         public static NavCodeAnalysis.NavTypeKind DotNet => _dotNet.Value;
         public static NavCodeAnalysis.NavTypeKind Integer => _integer.Value;
@@ -153,23 +159,29 @@ public static class EnumProvider
     {
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _autoIncrement =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.AutoIncrement)));
-        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _editable =
-            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Editable)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _drillDownPageId =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.DrillDownPageId)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _editable =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Editable)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _lookupPageId =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.LookupPageId)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _notBlank =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.NotBlank)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _sourceTableTemporary =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.SourceTableTemporary)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _subtype =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Subtype)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _tableRelation =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.TableRelation)));
 
         public static NavCodeAnalysis.PropertyKind AutoIncrement => _autoIncrement.Value;
-        public static NavCodeAnalysis.PropertyKind Editable => _editable.Value;
         public static NavCodeAnalysis.PropertyKind DrillDownPageId => _drillDownPageId.Value;
+        public static NavCodeAnalysis.PropertyKind Editable => _editable.Value;
         public static NavCodeAnalysis.PropertyKind LookupPageId => _lookupPageId.Value;
+        public static NavCodeAnalysis.PropertyKind NotBlank => _notBlank.Value;
         public static NavCodeAnalysis.PropertyKind SourceTableTemporary => _sourceTableTemporary.Value;
         public static NavCodeAnalysis.PropertyKind Subtype => _subtype.Value;
+        public static NavCodeAnalysis.PropertyKind TableRelation => _tableRelation.Value;
     }
 
     /// <summary>
@@ -231,6 +243,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.TableKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _triggerDeclaration =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.TriggerDeclaration)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _trueKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.TrueKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _xmlPortKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.XmlPortKeyword)));
 
@@ -261,6 +275,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind ReportKeyword => _reportKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind TableKeyword => _tableKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind TriggerDeclaration => _triggerDeclaration.Value;
+        public static NavCodeAnalysis.SyntaxKind TrueKeyword => _trueKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind XmlPortKeyword => _xmlPortKeyword.Value;
     }
 

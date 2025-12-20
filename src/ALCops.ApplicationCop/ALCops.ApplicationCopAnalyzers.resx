@@ -119,14 +119,35 @@
   </resheader>
   <data name="LookupPageIdAndDrillDownPageIdTitle" xml:space="preserve">
     <value>DrillDownPageId and LookupPageId property must be defined for tables used in list pages</value>
-    <comment/>
   </data>
   <data name="LookupPageIdAndDrillDownPageIdFormat" xml:space="preserve">
     <value>Table '{0}' is used in a list page but does not define both the DrillDownPageId and LookupPageId properties.</value>
-    <comment/>
   </data>
   <data name="LookupPageIdAndDrillDownPageIdDescription" xml:space="preserve">
     <value>When a table is used as the source for a list page, users expect to be able to drill down into records and open lookups in a consistent and predictable way. The DrillDownPageId and LookupPageId table properties define which pages are used for these interactions.</value>
-    <comment/>
+  </data>
+  <data name="NotBlankRequiredOnPrimaryKeyFieldTitle" xml:space="preserve">
+    <value>Single-field primary key requires the NotBlank property</value>
+  </data>
+  <data name="NotBlankRequiredOnPrimaryKeyFieldFormat" xml:space="preserve">
+    <value>NotBlank property should be set explicitly for tables with a single-field primary key.</value>
+  </data>
+  <data name="NotBlankRequiredOnPrimaryKeyFieldDescription" xml:space="preserve">
+    <value>In tables that define a primary key consisting of a single field of type Code or Text, the primary key field must explicitly set the NotBlank property.</value>
+  </data>
+  <data name="NotBlankRequiredOnPrimaryKeyFieldCodeAction" xml:space="preserve">
+    <value>ALCops: Set NotBlank property to true</value>
+  </data>
+  <data name="NotBlankNotAllowedOnPrimaryKeyFieldTitle" xml:space="preserve">
+    <value>Set NotBlank property to false when 'No. Series' TableRelation exists</value>
+  </data>
+  <data name="NotBlankNotAllowedOnPrimaryKeyFieldFormat" xml:space="preserve">
+    <value>The NotBlank property should be set to false (or removed) if a TableRelation of 'No. Series' is present on the table.</value>
+  </data>
+  <data name="NotBlankNotAllowedOnPrimaryKeyFieldDescription" xml:space="preserve">
+    <value>When the 'No. Series' TableRelation is present on the table, assigning the primary key might occur after inserting the record, which could cause an error due to the NotBlank property.</value>
+  </data>
+  <data name="NotBlankNotAllowedOnPrimaryKeyFieldCodeAction" xml:space="preserve">
+    <value>ALCops: Set NotBlank property to false</value>
   </data>
 </root>

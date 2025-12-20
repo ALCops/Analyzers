@@ -15,6 +15,26 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.LookupPageIdAndDrillDownPageIdDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.LookupPageIdAndDrillDownPageId));
 
+    public static readonly DiagnosticDescriptor NotBlankRequiredOnPrimaryKeyField = new(
+        id: DiagnosticIds.NotBlankRequiredOnPrimaryKeyField,
+        title: ApplicationCopAnalyzers.NotBlankRequiredOnPrimaryKeyFieldTitle,
+        messageFormat: ApplicationCopAnalyzers.NotBlankRequiredOnPrimaryKeyFieldFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.NotBlankRequiredOnPrimaryKeyFieldDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.NotBlankRequiredOnPrimaryKeyField));
+
+    public static readonly DiagnosticDescriptor NotBlankNotAllowedOnPrimaryKeyField = new(
+        id: DiagnosticIds.NotBlankNotAllowedOnPrimaryKeyField,
+        title: ApplicationCopAnalyzers.NotBlankNotAllowedOnPrimaryKeyFieldTitle,
+        messageFormat: ApplicationCopAnalyzers.NotBlankNotAllowedOnPrimaryKeyFieldFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.NotBlankNotAllowedOnPrimaryKeyFieldDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.NotBlankRequiredOnPrimaryKeyField));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/applicationcop/{0}/", identifier.ToLower());
