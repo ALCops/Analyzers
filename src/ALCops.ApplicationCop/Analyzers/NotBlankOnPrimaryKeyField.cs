@@ -53,8 +53,10 @@ public class NotBlankOnPrimaryKeyField : DiagnosticAnalyzer
     private static bool TableContainsNoSeries(ITableTypeSymbol table)
     {
         return table.Fields
-            .Where(x => x.FieldClass == EnumProvider.FieldClassKind.Normal && x.Id > 0 && x.Id < 2000000000)
-            .Where(x => x.Type?.GetNavTypeKindSafeWithReflection() == EnumProvider.NavTypeKind.Code)
+            .Where(fld => fld.FieldClass == EnumProvider.FieldClassKind.Normal && fld.Id > 0 && fld.Id < 2000000000)
+#if NET8_0_OR_GREATER
+            .Where(fld => fld.Type?.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Code)
+#endif
             .Any(field =>
         {
             var propertySymbol = field.GetProperty(EnumProvider.PropertyKind.TableRelation);
