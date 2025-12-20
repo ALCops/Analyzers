@@ -15,14 +15,15 @@ public sealed class NotBlankNotAllowedOnPrimaryKeyFieldCodeFixProvider : CodeFix
     private class NotBlankNotAllowedOnPrimaryKeyFieldCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
+        public override bool SupportsFixAll { get; }
+        public override string? FixAllSingleInstanceTitle => string.Empty;
+        public override string? FixAllTitle => Title;
 
         public NotBlankNotAllowedOnPrimaryKeyFieldCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument, string equivalenceKey, bool generateFixAll)
             : base(title, createChangedDocument, equivalenceKey)
         {
-            this.SetPropertyIfExists("SupportsFixAll", generateFixAll);
-            this.SetPropertyIfExists("FixAllSingleInstanceTitle", string.Empty);
-            this.SetPropertyIfExists("FixAllTitle", Title);
+            SupportsFixAll = generateFixAll;
         }
     }
 
