@@ -108,9 +108,9 @@ public class WriteToFlowFieldRequiresComment : DiagnosticAnalyzer
         if (statement is null)
             return false;
 
-        var lastToken = statement.GetLastToken();
-
-        return lastToken.TrailingTrivia
+        return statement
+            .GetLastToken()
+            .TrailingTrivia
             .Any(t => t.IsKind(EnumProvider.SyntaxKind.LineCommentTrivia));
     }
 }
