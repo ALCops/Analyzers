@@ -16,14 +16,17 @@ public sealed class EditableFlowFieldCodeFix : CodeFixProvider
     private class EditableFlowFieldCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
+        public override bool SupportsFixAll { get; }
+        public override string? FixAllSingleInstanceTitle => string.Empty;
+        public override string? FixAllTitle => Title;
+
 
         public EditableFlowFieldCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument, string equivalenceKey, bool generateFixAll)
             : base(title, createChangedDocument, equivalenceKey)
         {
-            this.SetPropertyIfExists("SupportsFixAll", generateFixAll);
-            this.SetPropertyIfExists("FixAllSingleInstanceTitle", string.Empty);
-            this.SetPropertyIfExists("FixAllTitle", Title);
+            SupportsFixAll = generateFixAll;
+
         }
     }
 
@@ -49,8 +52,7 @@ public sealed class EditableFlowFieldCodeFix : CodeFixProvider
         ctx.RegisterCodeFix(CreateCodeAction(node, document, true), ctx.Diagnostics[0]);
     }
 
-    private static EditableFlowFieldCodeAction CreateCodeAction(SyntaxNode node, Document document,
-        bool generateFixAll)
+    private static EditableFlowFieldCodeAction CreateCodeAction(SyntaxNode node, Document document, bool generateFixAll)
     {
         return new EditableFlowFieldCodeAction(
             PlatformCopAnalyzers.EditableFlowFieldCodeAction,

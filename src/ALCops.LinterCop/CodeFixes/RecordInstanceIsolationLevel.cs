@@ -19,14 +19,15 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
     private class RecordInstanceIsolationLevelCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
+        public override bool SupportsFixAll { get; }
+        public override string? FixAllSingleInstanceTitle => string.Empty;
+        public override string? FixAllTitle => Title;
 
         public RecordInstanceIsolationLevelCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument, string equivalenceKey, bool generateFixAll)
             : base(title, createChangedDocument, equivalenceKey)
         {
-            this.SetPropertyIfExists("SupportsFixAll", generateFixAll);
-            this.SetPropertyIfExists("FixAllSingleInstanceTitle", string.Empty);
-            this.SetPropertyIfExists("FixAllTitle", Title);
+            SupportsFixAll = generateFixAll;
         }
     }
 

@@ -15,14 +15,15 @@ public sealed class SetRangeWithFilterOperatorsCodeFix : CodeFixProvider
     private class SetRangeWithFilterOperatorsCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
+        public override bool SupportsFixAll { get; }
+        public override string? FixAllSingleInstanceTitle => string.Empty;
+        public override string? FixAllTitle => Title;
 
         public SetRangeWithFilterOperatorsCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument, string equivalenceKey, bool generateFixAll)
             : base(title, createChangedDocument, equivalenceKey)
         {
-            this.SetPropertyIfExists("SupportsFixAll", generateFixAll);
-            this.SetPropertyIfExists("FixAllSingleInstanceTitle", string.Empty);
-            this.SetPropertyIfExists("FixAllTitle", Title);
+            SupportsFixAll = generateFixAll;
         }
     }
 
@@ -48,8 +49,7 @@ public sealed class SetRangeWithFilterOperatorsCodeFix : CodeFixProvider
         ctx.RegisterCodeFix(CreateCodeAction(node, document, true), ctx.Diagnostics[0]);
     }
 
-    private static SetRangeWithFilterOperatorsCodeAction CreateCodeAction(SyntaxNode node, Document document,
-        bool generateFixAll)
+    private static SetRangeWithFilterOperatorsCodeAction CreateCodeAction(SyntaxNode node, Document document, bool generateFixAll)
     {
         return new SetRangeWithFilterOperatorsCodeAction(
             PlatformCopAnalyzers.SetRangeWithFilterOperatorsCodeAction,

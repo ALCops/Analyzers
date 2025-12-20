@@ -49,8 +49,7 @@ public sealed class NotBlankNotAllowedOnPrimaryKeyFieldCodeFixProvider : CodeFix
         ctx.RegisterCodeFix(CreateCodeAction(node, document, false), ctx.Diagnostics[0]);
     }
 
-    private static NotBlankNotAllowedOnPrimaryKeyFieldCodeAction CreateCodeAction(SyntaxNode node, Document document,
-        bool generateFixAll)
+    private static NotBlankNotAllowedOnPrimaryKeyFieldCodeAction CreateCodeAction(SyntaxNode node, Document document, bool generateFixAll)
     {
         return new NotBlankNotAllowedOnPrimaryKeyFieldCodeAction(
             ApplicationCopAnalyzers.NotBlankNotAllowedOnPrimaryKeyFieldCodeAction,

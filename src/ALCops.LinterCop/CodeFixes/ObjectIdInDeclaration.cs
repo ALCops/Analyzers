@@ -66,14 +66,15 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
     private class ObjectIdInDeclarationCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
+        public override bool SupportsFixAll { get; }
+        public override string? FixAllSingleInstanceTitle => string.Empty;
+        public override string? FixAllTitle => Title;
 
         public ObjectIdInDeclarationCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument, string equivalenceKey, bool generateFixAll)
             : base(title, createChangedDocument, equivalenceKey)
         {
-            this.SetPropertyIfExists("SupportsFixAll", generateFixAll);
-            this.SetPropertyIfExists("FixAllSingleInstanceTitle", string.Empty);
-            this.SetPropertyIfExists("FixAllTitle", Title);
+            SupportsFixAll = generateFixAll;
         }
     }
 
@@ -190,8 +191,6 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
                 return document;
         }
     }
-
-
 
     private static OptionAccessExpressionSyntax CreateOptionAccessExpression(CodeFixProperties properties)
     {
