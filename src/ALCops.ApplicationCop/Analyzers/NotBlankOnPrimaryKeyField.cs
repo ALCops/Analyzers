@@ -54,7 +54,7 @@ public class NotBlankOnPrimaryKeyField : DiagnosticAnalyzer
     {
         return table.Fields
             .Where(x => x.FieldClass == EnumProvider.FieldClassKind.Normal && x.Id > 0 && x.Id < 2000000000)
-            .Where(x => x.Type?.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Code)
+            .Where(x => x.Type?.GetNavTypeKindSafeWithReflection() == EnumProvider.NavTypeKind.Code)
             .Any(field =>
         {
             var propertySymbol = field.GetProperty(EnumProvider.PropertyKind.TableRelation);
