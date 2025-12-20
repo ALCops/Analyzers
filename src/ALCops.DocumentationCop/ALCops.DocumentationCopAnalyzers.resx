@@ -119,14 +119,20 @@
   </resheader>
   <data name="CommitRequiresCommentTitle" xml:space="preserve">
     <value>Commit() needs a comment to justify its existence</value>
-    <comment/>
   </data>
   <data name="CommitRequiresCommentFormat" xml:space="preserve">
     <value>Commit() needs a comment to justify its existence. Add a leading or trailing comment explaining why it is required.</value>
-    <comment/>
   </data>
   <data name="CommitRequiresCommentDescription" xml:space="preserve">
     <value>Calling Commit() manually interrupts the default transactional behavior of Business Central by persisting changes earlier than the platform would normally allow. Although there are valid use cases, the reason cannot be inferred from the code itself. A leading or trailing comment is required to document why the commit is necessary.</value>
-    <comment/>
+  </data>
+  <data name="WriteToFlowFieldRequiresCommentTitle" xml:space="preserve">
+    <value>Writing to FlowFields is not common and requires an explanatory comment</value>
+  </data>
+  <data name="WriteToFlowFieldRequiresCommentFormat" xml:space="preserve">
+    <value>Writing to a FlowField is not common and requires a comment explaining why this assignment is intentional.</value>
+  </data>
+  <data name="WriteToFlowFieldRequiresCommentDescription" xml:space="preserve">
+    <value>FlowFields are calculated fields and are not intended to be written to. Writing to a FlowField, whether accidental or intentional, can lead to runtime errors.</value>
   </data>
 </root>

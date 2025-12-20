@@ -15,6 +15,16 @@ public static class DiagnosticDescriptors
         description: DocumentationCopAnalyzers.CommitRequiresCommentDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.CommitRequiresComment));
 
+    public static readonly DiagnosticDescriptor WriteToFlowFieldRequiresComment = new(
+        id: DiagnosticIds.WriteToFlowFieldRequiresComment,
+        title: DocumentationCopAnalyzers.WriteToFlowFieldRequiresCommentTitle,
+        messageFormat: DocumentationCopAnalyzers.WriteToFlowFieldRequiresCommentFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: DocumentationCopAnalyzers.WriteToFlowFieldRequiresCommentDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.WriteToFlowFieldRequiresComment));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/documentationcop/{0}/", identifier.ToLower());

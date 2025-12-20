@@ -83,5 +83,32 @@ namespace ALCops.DocumentationCop {
                 return ResourceManager.GetString("CommitRequiresCommentTitle", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to FlowFields are calculated fields and are not intended to be written to. Writing to a FlowField, whether accidental or intentional, can lead to runtime errors..
+        /// </summary>
+        internal static string WriteToFlowFieldRequiresCommentDescription {
+            get {
+                return ResourceManager.GetString("WriteToFlowFieldRequiresCommentDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Writing to a FlowField is not common and requires a comment explaining why this assignment is intentional..
+        /// </summary>
+        internal static string WriteToFlowFieldRequiresCommentFormat {
+            get {
+                return ResourceManager.GetString("WriteToFlowFieldRequiresCommentFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Writing to FlowFields is not common and requires an explanatory comment.
+        /// </summary>
+        internal static string WriteToFlowFieldRequiresCommentTitle {
+            get {
+                return ResourceManager.GetString("WriteToFlowFieldRequiresCommentTitle", resourceCulture);
+            }
+        }
     }
 }
