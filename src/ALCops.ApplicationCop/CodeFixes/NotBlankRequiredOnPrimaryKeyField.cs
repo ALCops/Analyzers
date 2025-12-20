@@ -14,15 +14,16 @@ public sealed class NotBlankRequiredOnPrimaryKeyFieldCodeFixProvider : CodeFixPr
 {
     private class NotBlankRequiredOnPrimaryKeyFieldCodeAction : CodeAction.DocumentChangeAction
     {
-        public override CodeActionKind Kind => CodeActionKind.QuickFix;
+        public override CodeActionKind Kind => CodeActionKind.Refactor;
+        public override bool SupportsFixAll { get; }
+        public override string? FixAllSingleInstanceTitle => string.Empty;
+        public override string? FixAllTitle => Title;
 
         public NotBlankRequiredOnPrimaryKeyFieldCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument, string equivalenceKey, bool generateFixAll)
             : base(title, createChangedDocument, equivalenceKey)
         {
-            this.SetPropertyIfExists("SupportsFixAll", generateFixAll);
-            this.SetPropertyIfExists("FixAllSingleInstanceTitle", string.Empty);
-            this.SetPropertyIfExists("FixAllTitle", Title);
+            SupportsFixAll = generateFixAll;
         }
     }
 
@@ -45,7 +46,7 @@ public sealed class NotBlankRequiredOnPrimaryKeyFieldCodeFixProvider : CodeFixPr
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
     {
         SyntaxNode node = syntaxRoot.FindNode(span);
-        ctx.RegisterCodeFix(CreateCodeAction(node, document, true), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(node, document, false), ctx.Diagnostics[0]);
     }
 
     private static NotBlankRequiredOnPrimaryKeyFieldCodeAction CreateCodeAction(SyntaxNode node, Document document,

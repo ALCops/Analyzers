@@ -45,7 +45,7 @@ public sealed class NotBlankNotAllowedOnPrimaryKeyFieldCodeFixProvider : CodeFix
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
     {
         SyntaxNode node = syntaxRoot.FindNode(span);
-        ctx.RegisterCodeFix(CreateCodeAction(node, document, true), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(node, document, false), ctx.Diagnostics[0]);
     }
 
     private static NotBlankNotAllowedOnPrimaryKeyFieldCodeAction CreateCodeAction(SyntaxNode node, Document document,
