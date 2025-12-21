@@ -117,6 +117,30 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ConfirmImplementConfirmManagementTitle" xml:space="preserve">
+    <value>Confirm() must be implemented through the "Confirm Management" codeunit</value>
+  </data>
+  <data name="ConfirmImplementConfirmManagementFormat" xml:space="preserve">
+    <value>Confirm() must be implemented through the "Confirm Management" codeunit from the System Application.</value>
+  </data>
+  <data name="ConfirmImplementConfirmManagementDescription" xml:space="preserve">
+    <value>TODO</value>
+  </data>
+  <data name="ConfirmImplementConfirmManagementDescriptionCodeAction" xml:space="preserve">
+    <value>ALCops: Refactor to use "Confirm Management" codeunit</value>
+  </data>
+  <data name="GlobalLanguageImplementTranslationHelperTitle" xml:space="preserve">
+    <value>GlobalLanguage() must be implemented through the "Translation Helper" codeunit.</value>
+  </data>
+  <data name="GlobalLanguageImplementTranslationHelperFormat" xml:space="preserve">
+    <value>GlobalLanguage() must be implemented through the "Translation Helper" codeunit from the Base Application.</value>
+  </data>
+  <data name="GlobalLanguageImplementTranslationHelperDescription" xml:space="preserve">
+    <value>TODO</value>
+  </data>
+  <data name="GlobalLanguageImplementTranslationHelperCodeAction" xml:space="preserve">
+    <value>ALCops: Refactor to use "Translation Helper" codeunit</value>
+  </data>
   <data name="LookupPageIdAndDrillDownPageIdTitle" xml:space="preserve">
     <value>DrillDownPageId and LookupPageId property must be defined for tables used in list pages</value>
   </data>

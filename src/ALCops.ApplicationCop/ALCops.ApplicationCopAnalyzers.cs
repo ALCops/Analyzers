@@ -58,6 +58,78 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to TODO.
+        /// </summary>
+        internal static string ConfirmImplementConfirmManagementDescription {
+            get {
+                return ResourceManager.GetString("ConfirmImplementConfirmManagementDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ALCops: Refactor to use &quot;Confirm Management&quot; codeunit.
+        /// </summary>
+        internal static string ConfirmImplementConfirmManagementDescriptionCodeAction {
+            get {
+                return ResourceManager.GetString("ConfirmImplementConfirmManagementDescriptionCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Confirm() must be implemented through the &quot;Confirm Management&quot; codeunit from the System Application..
+        /// </summary>
+        internal static string ConfirmImplementConfirmManagementFormat {
+            get {
+                return ResourceManager.GetString("ConfirmImplementConfirmManagementFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Confirm() must be implemented through the &quot;Confirm Management&quot; codeunit.
+        /// </summary>
+        internal static string ConfirmImplementConfirmManagementTitle {
+            get {
+                return ResourceManager.GetString("ConfirmImplementConfirmManagementTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ALCops: Refactor to use &quot;Translation Helper&quot; codeunit.
+        /// </summary>
+        internal static string GlobalLanguageImplementTranslationHelperCodeAction {
+            get {
+                return ResourceManager.GetString("GlobalLanguageImplementTranslationHelperCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to TODO.
+        /// </summary>
+        internal static string GlobalLanguageImplementTranslationHelperDescription {
+            get {
+                return ResourceManager.GetString("GlobalLanguageImplementTranslationHelperDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to GlobalLanguage() must be implemented through the &quot;Translation Helper&quot; codeunit from the Base Application..
+        /// </summary>
+        internal static string GlobalLanguageImplementTranslationHelperFormat {
+            get {
+                return ResourceManager.GetString("GlobalLanguageImplementTranslationHelperFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to GlobalLanguage() must be implemented through the &quot;Translation Helper&quot; codeunit..
+        /// </summary>
+        internal static string GlobalLanguageImplementTranslationHelperTitle {
+            get {
+                return ResourceManager.GetString("GlobalLanguageImplementTranslationHelperTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to When a table is used as the source for a list page, users expect to be able to drill down into records and open lookups in a consistent and predictable way. The DrillDownPageId and LookupPageId table properties define which pages are used for these interactions..
         /// </summary>
         internal static string LookupPageIdAndDrillDownPageIdDescription {

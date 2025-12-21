@@ -5,6 +5,26 @@ namespace ALCops.ApplicationCop;
 
 public static class DiagnosticDescriptors
 {
+    public static readonly DiagnosticDescriptor ConfirmImplementConfirmManagement = new(
+        id: DiagnosticIds.ConfirmImplementConfirmManagement,
+        title: ApplicationCopAnalyzers.ConfirmImplementConfirmManagementTitle,
+        messageFormat: ApplicationCopAnalyzers.ConfirmImplementConfirmManagementFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.ConfirmImplementConfirmManagementDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ConfirmImplementConfirmManagement));
+
+    public static readonly DiagnosticDescriptor GlobalLanguageImplementTranslationHelper = new(
+        id: DiagnosticIds.GlobalLanguageImplementTranslationHelper,
+        title: ApplicationCopAnalyzers.GlobalLanguageImplementTranslationHelperTitle,
+        messageFormat: ApplicationCopAnalyzers.GlobalLanguageImplementTranslationHelperFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.GlobalLanguageImplementTranslationHelperDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.GlobalLanguageImplementTranslationHelper));
+
     public static readonly DiagnosticDescriptor LookupPageIdAndDrillDownPageId = new(
         id: DiagnosticIds.LookupPageIdAndDrillDownPageId,
         title: ApplicationCopAnalyzers.LookupPageIdAndDrillDownPageIdTitle,
