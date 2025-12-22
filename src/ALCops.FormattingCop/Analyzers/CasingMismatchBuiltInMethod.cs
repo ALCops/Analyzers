@@ -58,14 +58,14 @@ public class CasingMismatchBuiltInMethod : DiagnosticAnalyzer
         if (OnlyDiffersInCasing(opSyntaxUnquoted.AsSpan(), targetSpan))
         {
             var properties = ImmutableDictionary<string, string>.Empty
-                .Add("CanonicalText", targetName.QuoteIdentifierIfNeededWithReflection());
+                .Add("CanonicalText", targetName);
 
             ctx.ReportDiagnostic(
                 Diagnostic.Create(
                     DiagnosticDescriptors.CasingMismatch,
                     opSyntax.GetLocation(),
                     properties,
-                    targetName.QuoteIdentifierIfNeededWithReflection(),
+                    targetName,
                     opSyntax.ToString()));
             return;
         }
@@ -78,14 +78,14 @@ public class CasingMismatchBuiltInMethod : DiagnosticAnalyzer
             if (OnlyDiffersInCasing(descendantUnquoted.AsSpan(), targetSpan))
             {
                 var properties = ImmutableDictionary<string, string>.Empty
-                    .Add("CanonicalText", targetName.QuoteIdentifierIfNeededWithReflection());
+                    .Add("CanonicalText", targetName);
 
                 ctx.ReportDiagnostic(
                     Diagnostic.Create(
                         DiagnosticDescriptors.CasingMismatch,
                         opSyntax.GetLocation(),
                         properties,
-                        targetName.QuoteIdentifierIfNeededWithReflection(),
+                        targetName,
                         descendantUnquoted));
                 return;
             }
