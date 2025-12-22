@@ -592,6 +592,7 @@ public static class EnumProvider
             CreateEnumDictionary<NavCodeAnalysis.PromotedCategoryKind>();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// PromptModeKind enum values
     /// </summary>
@@ -600,6 +601,7 @@ public static class EnumProvider
         public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
             CreateEnumDictionary<NavCodeAnalysis.PromptModeKind>();
     }
+#endif
 
     /// <summary>
     /// PropertyKind enum values
@@ -753,6 +755,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.TableTypeKind Temporary => _temporary.Value;
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// TestHttpRequestPolicyKind enum values
     /// </summary>
@@ -761,6 +764,7 @@ public static class EnumProvider
         public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
             CreateEnumDictionary<NavCodeAnalysis.TestHttpRequestPolicyKind>();
     }
+#endif
 
     /// <summary>
     /// TestIsolationKind enum values
