@@ -758,7 +758,6 @@ public static class EnumProvider
         public static NavCodeAnalysis.TableTypeKind Temporary => _temporary.Value;
     }
 
-#if NET8_0_OR_GREATER
     /// <summary>
     /// TestHttpRequestPolicyKind enum values
     /// </summary>
@@ -772,7 +771,6 @@ public static class EnumProvider
             CreateEnumDictionary<NavCodeAnalysis.TestHttpRequestPolicyKind>();
 #endif
     }
-#endif
 
     /// <summary>
     /// TestIsolationKind enum values
