@@ -51,23 +51,5 @@ namespace ALCops.FormattingCop.Test
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.CasingMismatch);
         }
-
-        // [TestCase("ObjectKeyword")]
-        // public async Task HasFix(string testCase)
-        // {
-        //     var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
-        //         .ConfigureAwait(false);
-
-        //     var expectedCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "expected.al"))
-        //         .ConfigureAwait(false);
-
-        //     var fixture = RoslynFixtureFactory.Create<CasingMismatchCodeFix>(
-        //         new CodeFixTestFixtureConfig
-        //         {
-        //             AdditionalAnalyzers = [_analyzer]
-        //         });
-
-        //     fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.CasingMismatch);
-        // }
     }
 }
