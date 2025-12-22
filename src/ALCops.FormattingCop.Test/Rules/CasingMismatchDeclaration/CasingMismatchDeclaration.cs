@@ -33,6 +33,13 @@ namespace ALCops.FormattingCop.Test
         [TestCase("TriggerDeclaration")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["Property"],
+                testCase,
+                "14.0",
+                "error AL0124: The property 'SCOPE' cannot be used in this context"
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
