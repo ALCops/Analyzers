@@ -26,6 +26,12 @@ namespace ALCops.FormattingCop.Test
         [TestCase("Table")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["Codeunit"],
+                testCase,
+                "13.0"
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -38,6 +44,12 @@ namespace ALCops.FormattingCop.Test
         [TestCase("Table")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["Codeunit"],
+                testCase,
+                "13.0"
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 

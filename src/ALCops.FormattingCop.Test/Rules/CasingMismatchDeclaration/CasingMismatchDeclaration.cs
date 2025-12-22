@@ -61,7 +61,7 @@ namespace ALCops.FormattingCop.Test
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["Property", "TriggerDeclaration"],
+                ["Property", "DataType", "TriggerDeclaration"],
                 testCase,
                 "14.0"
             );
