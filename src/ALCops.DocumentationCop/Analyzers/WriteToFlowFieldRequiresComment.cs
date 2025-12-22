@@ -48,7 +48,7 @@ public class WriteToFlowFieldRequiresComment : DiagnosticAnalyzer
 
     private static IFieldSymbol? ExtractFieldSymbolFromAssignment(IAssignmentStatement operation)
     {
-        if (operation.Target.Syntax.Kind == SyntaxKind.ArrayIndexExpression &&
+        if (operation.Target.Syntax.Kind == EnumProvider.SyntaxKind.ArrayIndexExpression &&
             operation.Target is ITextIndexAccess textIndexAccess &&
             textIndexAccess.TextExpression is IFieldAccess fieldAccess)
         {

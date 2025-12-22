@@ -58,6 +58,51 @@ namespace ALCops.FormattingCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Fix casing.
+        /// </summary>
+        internal static string CasingMismatchCodeAction {
+            get {
+                return ResourceManager.GetString("CasingMismatchCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Although incorrect casing is syntactically valid, it is not common practice and reduces readability and recognizability of code..
+        /// </summary>
+        internal static string CasingMismatchDescription {
+            get {
+                return ResourceManager.GetString("CasingMismatchDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}. Help improving this rule and open a GitHub issue, pretty please? :-).
+        /// </summary>
+        internal static string CasingMismatchImproveDiagnosticMessageFormat {
+            get {
+                return ResourceManager.GetString("CasingMismatchImproveDiagnosticMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use &apos;{0}&apos; instead of &apos;{1}&apos; to match the defined casing..
+        /// </summary>
+        internal static string CasingMismatchMessageFormat {
+            get {
+                return ResourceManager.GetString("CasingMismatchMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Casing of symbols and keywords must align with the language definition.
+        /// </summary>
+        internal static string CasingMismatchTitle {
+            get {
+                return ResourceManager.GetString("CasingMismatchTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to In AL the semicolon is a statement separator, not a terminator, and procedure or trigger signatures do not require a semicolon at the end. Although the compiler accepts it, enforcing this rule improves consistency and aligns with the coding guidelines used by the community..
         /// </summary>
         internal static string SemicolonAfterMethodOrTriggerDeclarationDescription {

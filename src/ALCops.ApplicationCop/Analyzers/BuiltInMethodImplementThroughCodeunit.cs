@@ -25,7 +25,7 @@ public class BuiltInMethodImplementThroughCodeunit : DiagnosticAnalyzer
         if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression operation)
             return;
 
-        if (operation.TargetMethod.MethodKind != MethodKind.BuiltInMethod)
+        if (operation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
             return;
 
         switch (operation.TargetMethod.Name)

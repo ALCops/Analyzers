@@ -117,16 +117,29 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="CasingMismatchTitle" xml:space="preserve">
+    <value>Casing of symbols and keywords must align with the language definition</value>
+  </data>
+  <data name="CasingMismatchMessageFormat" xml:space="preserve">
+    <value>Use '{0}' instead of '{1}' to match the defined casing.</value>
+  </data>
+  <data name="CasingMismatchImproveDiagnosticMessageFormat" xml:space="preserve">
+    <value>{0}. Help improving this rule and open a GitHub issue, pretty please? :-)</value>
+  </data>
+  <data name="CasingMismatchDescription" xml:space="preserve">
+    <value>Although incorrect casing is syntactically valid, it is not common practice and reduces readability and recognizability of code.</value>
+  </data>
+  <data name="CasingMismatchCodeAction" xml:space="preserve">
+    <value>ALCops: Fix casing</value>
+  </data>
+
   <data name="SemicolonAfterMethodOrTriggerDeclarationTitle" xml:space="preserve">
     <value>Procedure or Trigger declaration should not end with semicolon</value>
-    <comment/>
   </data>
   <data name="SemicolonAfterMethodOrTriggerDeclarationMessageFormat" xml:space="preserve">
     <value>The {0} declaration ends with a semicolon. Remove the trailing semicolon from the declaration.</value>
-    <comment/>
   </data>
   <data name="SemicolonAfterMethodOrTriggerDeclarationDescription" xml:space="preserve">
     <value>In AL the semicolon is a statement separator, not a terminator, and procedure or trigger signatures do not require a semicolon at the end. Although the compiler accepts it, enforcing this rule improves consistency and aligns with the coding guidelines used by the community.</value>
-    <comment/>
   </data>
 </root>

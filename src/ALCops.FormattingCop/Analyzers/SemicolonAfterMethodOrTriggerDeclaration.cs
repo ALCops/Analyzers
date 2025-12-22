@@ -12,7 +12,8 @@ public class SemicolonAfterMethodOrTriggerDeclaration : DiagnosticAnalyzer
     private const string DeclarationSuffix = "Declaration";
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-        ImmutableArray.Create(DiagnosticDescriptors.SemicolonAfterMethodOrTriggerDeclaration);
+        ImmutableArray.Create(
+            DiagnosticDescriptors.SemicolonAfterMethodOrTriggerDeclaration);
 
     public override void Initialize(AnalysisContext context) =>
         context.RegisterSyntaxNodeAction(
