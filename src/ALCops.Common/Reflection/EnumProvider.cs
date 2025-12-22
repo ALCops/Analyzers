@@ -385,8 +385,13 @@ public static class EnumProvider
     /// </summary>
     public static class MaskTypeKind
     {
+#if NETSTANDARD2_1
         public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
-            CreateEnumDictionary<NavCodeAnalysis.MaskTypeKind>();
+            new Lazy<ImmutableDictionary<string, string>>(() => ImmutableDictionary<string, string>.Empty, LazyThreadSafetyMode.PublicationOnly);
+#else
+        public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
+            CreateEnumDictionaryByName("Microsoft.Dynamics.Nav.CodeAnalysis.MaskTypeKind");
+#endif
     }
 
     /// <summary>
@@ -1230,6 +1235,30 @@ public static class EnumProvider
                     name => name,
                     name => name,
                     StringComparer.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Creates an enum dictionary by type name using runtime reflection.
+    /// Use this for enum types that may not exist in all versions of dependencies.
+    /// </summary>
+    private static Lazy<ImmutableDictionary<string, string>> CreateEnumDictionaryByName(string typeName)
+    {
+        return new Lazy<ImmutableDictionary<string, string>>(() =>
+        {
+            var type = AppDomain.CurrentDomain.GetAssemblies()
+                .Select(a => a.GetType(typeName))
+                .FirstOrDefault(t => t != null);
+
+            if (type == null || !type.IsEnum)
+                return ImmutableDictionary<string, string>.Empty;
+
+            var builder = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var name in Enum.GetNames(type))
+            {
+                builder[name] = name;
+            }
+            return builder.ToImmutable();
+        }, LazyThreadSafetyMode.PublicationOnly);
     }
 
     #endregion
