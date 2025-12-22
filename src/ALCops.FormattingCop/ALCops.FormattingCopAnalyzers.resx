@@ -121,7 +121,7 @@
     <value>Casing of symbols and keywords must align with the language definition</value>
   </data>
   <data name="CasingMismatchMessageFormat" xml:space="preserve">
-    <value>Use '{0}' instead of '{1}' to match the defined casing.</value>
+    <value>Use '{0}' instead of '{1}' for consistent casing.</value>
   </data>
   <data name="CasingMismatchImproveDiagnosticMessageFormat" xml:space="preserve">
     <value>{0}. Help improving this rule and open a GitHub issue, pretty please? :-)</value>
