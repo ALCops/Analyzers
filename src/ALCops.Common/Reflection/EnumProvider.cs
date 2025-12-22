@@ -381,6 +381,15 @@ public static class EnumProvider
     }
 
     /// <summary>
+    /// MaskTypeKind enum values
+    /// </summary>
+    public static class MaskTypeKind
+    {
+        public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
+            CreateEnumDictionary<NavCodeAnalysis.MaskTypeKind>();
+    }
+
+    /// <summary>
     /// MethodKind enum values
     /// </summary>
     public static class MethodKind

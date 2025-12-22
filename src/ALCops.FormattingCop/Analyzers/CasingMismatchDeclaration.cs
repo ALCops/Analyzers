@@ -616,7 +616,7 @@ public class CasingMismatchDeclaration : DiagnosticAnalyzer
             {
                 if (node.Value is EnumPropertyValueSyntax)
                 {
-                    var message = $"missing '{propertyName}' ordinals.";
+                    var message = $"Missing '{propertyName}' ordinals.";
                     RaiseImproveRuleDiagnostic(ctx, node.Value, message);
                 }
             }
@@ -756,6 +756,7 @@ public class CasingMismatchDeclaration : DiagnosticAnalyzer
             { "Gesture",                EnumProvider.GestureKind.CanonicalNames },
             { "GridLayout",             EnumProvider.GridLayoutKind.CanonicalNames },
             { "Importance",             EnumProvider.ImportanceKind.CanonicalNames },
+            { "MaskType",               EnumProvider.MaskTypeKind.CanonicalNames },
             { "MaxOccurs",              EnumProvider.MaxOccursKind.CanonicalNames },
             { "Method",                 EnumProvider.QueryColumnMethodKind.CanonicalNames },
             { "MinOccurs",              EnumProvider.MinOccursKind.CanonicalNames },
@@ -870,14 +871,14 @@ public class CasingMismatchDeclaration : DiagnosticAnalyzer
 
         if (lookupDict is null)
         {
-            var message = $"missing ordinals for '{tokenText}'.";
+            var message = $"Missing ordinals for '{tokenText}'.";
             RaiseImproveRuleDiagnostic(ctx, identifier, message);
             return;
         }
 
         if (!lookupDict.TryGetValue(tokenText, out string? canonical))
         {
-            var message = $"redundant analysis of '{tokenText}'.";
+            var message = $"Redundant analysis of '{tokenText}'.";
             RaiseImproveRuleDiagnostic(ctx, identifier, message);
             return;
         }

@@ -124,7 +124,7 @@
     <value>Use '{0}' instead of '{1}' for consistent casing.</value>
   </data>
   <data name="CasingMismatchImproveDiagnosticMessageFormat" xml:space="preserve">
-    <value>{0}. Help improving this rule and open a GitHub issue, pretty please? :-)</value>
+    <value>{0} Help improving this rule and open a GitHub issue, pretty please? :-)</value>
   </data>
   <data name="CasingMismatchDescription" xml:space="preserve">
     <value>Although incorrect casing is syntactically valid, it is not common practice and reduces readability and recognizability of code.</value>
