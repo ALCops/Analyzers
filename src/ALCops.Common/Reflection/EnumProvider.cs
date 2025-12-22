@@ -592,14 +592,21 @@ public static class EnumProvider
             CreateEnumDictionary<NavCodeAnalysis.PromotedCategoryKind>();
     }
 
+
     /// <summary>
     /// PromptModeKind enum values
     /// </summary>
     public static class PromptModeKind
     {
+#if NETSTANDARD2_1
+        public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
+            new Lazy<ImmutableDictionary<string, string>>(() => ImmutableDictionary<string, string>.Empty, LazyThreadSafetyMode.PublicationOnly);
+#else
         public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
             CreateEnumDictionary<NavCodeAnalysis.PromptModeKind>();
+#endif
     }
+
 
     /// <summary>
     /// PropertyKind enum values
@@ -758,8 +765,13 @@ public static class EnumProvider
     /// </summary>
     public static class TestHttpRequestPolicyKind
     {
+#if NETSTANDARD2_1
+        public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
+            new Lazy<ImmutableDictionary<string, string>>(() => ImmutableDictionary<string, string>.Empty, LazyThreadSafetyMode.PublicationOnly);
+#else
         public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
             CreateEnumDictionary<NavCodeAnalysis.TestHttpRequestPolicyKind>();
+#endif
     }
 
     /// <summary>
