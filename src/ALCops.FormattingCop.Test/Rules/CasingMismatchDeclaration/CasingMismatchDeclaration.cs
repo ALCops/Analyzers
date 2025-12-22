@@ -62,10 +62,10 @@ namespace ALCops.FormattingCop.Test
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["Property"],
+                ["Property", "TriggerDeclaration"],
                 testCase,
                 "14.0",
-                "error AL0124: The property 'SCOPE' cannot be used in this context"
+                 "The property 'SCOPE' and extension object are not supported in this AL language version."
             );
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
