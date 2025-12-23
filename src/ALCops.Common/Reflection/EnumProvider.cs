@@ -967,7 +967,9 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CodeunitKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _codeunitObject =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CodeunitObject)));
-#if NET8_0
+#if NETSTANDARD2_1
+        private static readonly NavCodeAnalysis.SyntaxKind? _continueKeyword = null;
+#elif NET8_0
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _continueKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>("ContinueKeyword"));
 #else
@@ -1133,11 +1135,7 @@ public static class EnumProvider
 
         public static NavCodeAnalysis.SyntaxKind ArrayIndexExpression => _arrayIndexExpression.Value;
         public static NavCodeAnalysis.SyntaxKind CodeunitKeyword => _codeunitKeyword.Value;
-#if NETSTANDARD2_1
-        public static NavCodeAnalysis.SyntaxKind ContinueKeyword => None;
-#else
         public static NavCodeAnalysis.SyntaxKind ContinueKeyword => _continueKeyword.Value;
-#endif
         public static NavCodeAnalysis.SyntaxKind CodeunitObject => _codeunitObject.Value;
         public static NavCodeAnalysis.SyntaxKind ControlAddInObject => _controlAddInObject.Value;
         public static NavCodeAnalysis.SyntaxKind DataType => _dataType.Value;
