@@ -15,14 +15,14 @@ namespace ALCops.Common.Settings;
 public static class ALCopsSettingsProvider
 {
     private static readonly ConcurrentDictionary<string, ALCopsSettings> _cache = new();
+#if !NETSTANDARD2_1
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true
     };
-
-    private const string SettingsFileName = "alcops.json";
+#endif
 
     /// <summary>
     /// Gets the settings for the specified workspace path.
@@ -48,7 +48,11 @@ public static class ALCopsSettingsProvider
             return new ALCopsSettings();
 
         var json = File.ReadAllText(settingsFilePath);
+#if NETSTANDARD2_1
+        return JsonConvert.DeserializeObject<ALCopsSettings>(json) ?? new ALCopsSettings();
+#else
         return JsonSerializer.Deserialize<ALCopsSettings>(json, _jsonOptions) ?? new ALCopsSettings();
+#endif
     }
 
     private static string? FindSettingsFile(string workspacePath)
