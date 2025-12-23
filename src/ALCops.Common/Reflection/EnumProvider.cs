@@ -967,9 +967,7 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CodeunitKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _codeunitObject =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CodeunitObject)));
-#if NETSTANDARD2_1
-        private static readonly NavCodeAnalysis.SyntaxKind? _continueKeyword = null;
-#elif NET8_0
+#if NETSTANDARD2_1 || NET8_0
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _continueKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>("ContinueKeyword"));
 #else

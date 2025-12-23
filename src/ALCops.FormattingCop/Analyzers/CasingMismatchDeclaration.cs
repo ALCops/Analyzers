@@ -491,8 +491,8 @@ public class CasingMismatchDeclaration : DiagnosticAnalyzer
                            node.Parent.Kind != EnumProvider.SyntaxKind.UnaryNotExpression)
             .ToLookup(node => node.Identifier.ValueText, StringComparer.Ordinal);
 
+#if NET8_0_OR_GREATER
         var continueKeywordText = SyntaxFacts.GetText(EnumProvider.SyntaxKind.ContinueKeyword);
-
         foreach (var groupNode in groupNodes)
         {
             var representative = groupNode.OrderBy(node => node.Position).Last();
@@ -508,6 +508,7 @@ public class CasingMismatchDeclaration : DiagnosticAnalyzer
 
                 continue;
             }
+#endif
 
             if (semanticModel.GetSymbolInfo(representative, ctx.CancellationToken).Symbol is not ISymbol symbol)
             {
