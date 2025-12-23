@@ -981,9 +981,17 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _codeunitObject =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CodeunitObject)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _conditionalExpression =
+#if NETSTANDARD2_1 || NET8_0
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>("ConditionalExpression"));
+#else
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ConditionalExpression)));
+#endif
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _continueKeyword =
+#if NETSTANDARD2_1 || NET8_0
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>("ContinueKeyword"));
+#else
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ContinueKeyword)));
+#endif
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _controlAddInObject =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ControlAddInObject)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _dataType =
