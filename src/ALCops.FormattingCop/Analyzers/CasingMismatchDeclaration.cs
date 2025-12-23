@@ -668,15 +668,13 @@ public class CasingMismatchDeclaration : DiagnosticAnalyzer
 
             foreach (var node in groupNode)
             {
-
-
                 if (representative.Left.Kind == EnumProvider.SyntaxKind.IdentifierName)
                 {
                     // without namespace
                     if (symbol.ContainingSymbol is not IObjectTypeSymbol objectTypeSymbol)
                         return;
 
-                    if (symbol.ContainingSymbol.Kind == SymbolKind.TableExtension)
+                    if (symbol.ContainingSymbol.Kind == EnumProvider.SymbolKind.TableExtension)
                     {
                         ITableExtensionTypeSymbol tableExtension = (ITableExtensionTypeSymbol)symbol.ContainingSymbol;
                         if (tableExtension.Target is not IObjectTypeSymbol tableExtensionTypeSymbol)
