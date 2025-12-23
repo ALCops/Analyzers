@@ -1128,7 +1128,11 @@ public static class EnumProvider
 
         public static NavCodeAnalysis.SyntaxKind ArrayIndexExpression => _arrayIndexExpression.Value;
         public static NavCodeAnalysis.SyntaxKind CodeunitKeyword => _codeunitKeyword.Value;
+#if NETSTANDARD2_1
+        public static NavCodeAnalysis.SyntaxKind ContinueKeyword => None;
+#else
         public static NavCodeAnalysis.SyntaxKind ContinueKeyword => _continueKeyword.Value;
+#endif
         public static NavCodeAnalysis.SyntaxKind CodeunitObject => _codeunitObject.Value;
         public static NavCodeAnalysis.SyntaxKind ControlAddInObject => _controlAddInObject.Value;
         public static NavCodeAnalysis.SyntaxKind DataType => _dataType.Value;
