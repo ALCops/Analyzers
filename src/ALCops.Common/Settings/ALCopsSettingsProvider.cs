@@ -1,5 +1,10 @@
 using System.Collections.Concurrent;
+#if NETSTANDARD2_1
+using Newtonsoft.Json;
+#else
 using System.Text.Json;
+#endif
+
 
 namespace ALCops.Common.Settings;
 
