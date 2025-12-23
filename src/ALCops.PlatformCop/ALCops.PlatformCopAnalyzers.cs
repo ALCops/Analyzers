@@ -157,7 +157,7 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to In projects where company data isolation matters, table objects must explicitly define the DataPerCompany property. Relying on implicit defaults makes the data scope unclear and can lead to incorrect assumptions about whether data is shared across companies or stored per company..
         /// </summary>
         internal static string TableDataPerCompanyDeclarationDescription {
             get {
@@ -166,7 +166,7 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to The table object does not explicitly define the DataPerCompany property..
         /// </summary>
         internal static string TableDataPerCompanyDeclarationMessageFormat {
             get {
@@ -175,7 +175,7 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to DataPerCompany must be explicitly set on table objects.
         /// </summary>
         internal static string TableDataPerCompanyDeclarationTitle {
             get {

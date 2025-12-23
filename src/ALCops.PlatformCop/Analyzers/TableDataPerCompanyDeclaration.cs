@@ -15,10 +15,10 @@ public class TableDataPerCompanyDeclaration : DiagnosticAnalyzer
 
     public override void Initialize(AnalysisContext context) =>
         context.RegisterSymbolAction(
-            this.CheckForMissingDataPerCompanyOnTables,
+            this.AnalyzeTableObject,
             EnumProvider.SymbolKind.Table);
 
-    private void CheckForMissingDataPerCompanyOnTables(SymbolAnalysisContext ctx)
+    private void AnalyzeTableObject(SymbolAnalysisContext ctx)
     {
         if (ctx.IsObsolete() || ctx.Symbol is not ITableTypeSymbol table)
             return;
