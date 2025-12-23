@@ -493,10 +493,13 @@ public class CasingMismatchDeclaration : DiagnosticAnalyzer
 
 #if NET8_0_OR_GREATER
         var continueKeywordText = SyntaxFacts.GetText(EnumProvider.SyntaxKind.ContinueKeyword);
+#endif
+
         foreach (var groupNode in groupNodes)
         {
             var representative = groupNode.OrderBy(node => node.Position).Last();
 
+#if NET8_0_OR_GREATER
             // Special handling for 'continue' keyword as the semantic model will returns null on this identifier
             if (string.Equals(representative.Identifier.ValueText, continueKeywordText, StringComparison.OrdinalIgnoreCase))
             {
