@@ -24,6 +24,8 @@ public static class ALCopsSettingsProvider
     };
 #endif
 
+    private const string SettingsFileName = "alcops.json";
+
     /// <summary>
     /// Gets the settings for the specified workspace path.
     /// Returns cached settings if already loaded, otherwise loads from file or returns defaults.
