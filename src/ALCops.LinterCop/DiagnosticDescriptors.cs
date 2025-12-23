@@ -25,6 +25,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.CyclomaticComplexityThresholdExceededDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.CyclomaticComplexityThresholdExceeded));
 
+    public static readonly DiagnosticDescriptor DataClassificationRedundancy = new(
+        id: DiagnosticIds.DataClassificationRedundancy,
+        title: LinterCopAnalyzers.DataClassificationRedundancyMessageFormat,
+        messageFormat: LinterCopAnalyzers.DataClassificationRedundancyMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.DataClassificationRedundancyDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.DataClassificationRedundancy));
+
     public static readonly DiagnosticDescriptor MaintainabilityIndexMetric = new(
         id: DiagnosticIds.MaintainabilityIndexMetric,
         title: LinterCopAnalyzers.MaintainabilityIndexMetricTitle,

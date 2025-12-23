@@ -112,6 +112,42 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Remove redundant DataClassification.
+        /// </summary>
+        internal static string DataClassificationRedundancyCodeAction {
+            get {
+                return ResourceManager.GetString("DataClassificationRedundancyCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When a DataClassification is defined on a table, it automatically applies to all fields of that table. Setting the same DataClassification again on individual fields is redundant and adds unnecessary noise to the object definition..
+        /// </summary>
+        internal static string DataClassificationRedundancyDescription {
+            get {
+                return ResourceManager.GetString("DataClassificationRedundancyDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DataClassification matches the table-level DataClassification and can be removed..
+        /// </summary>
+        internal static string DataClassificationRedundancyMessageFormat {
+            get {
+                return ResourceManager.GetString("DataClassificationRedundancyMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redundant DataClassification on field.
+        /// </summary>
+        internal static string DataClassificationRedundancyTitle {
+            get {
+                return ResourceManager.GetString("DataClassificationRedundancyTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reports the maintainability index of a method or trigger. The maintainability index is a composite metric derived from cyclomatic complexity, Halstead volume, and code size, providing an overall indication of how easy the code is to understand, modify, and maintain..
         /// </summary>
         internal static string MaintainabilityIndexMetricDescription {

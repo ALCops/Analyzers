@@ -135,6 +135,18 @@
   <data name="CyclomaticComplexityThresholdExceededDescription" xml:space="preserve">
     <value>Cyclomatic complexity measures the number of independent execution paths through a method or trigger. When this value meets or exceeds the configured threshold, the code is considered overly complex, which can reduce readability, increase maintenance cost, and raise the risk of defects.</value>
   </data>
+  <data name="DataClassificationRedundancyTitle" xml:space="preserve">
+    <value>Redundant DataClassification on field</value>
+  </data>
+  <data name="DataClassificationRedundancyMessageFormat" xml:space="preserve">
+    <value>DataClassification matches the table-level DataClassification and can be removed.</value>
+  </data>
+  <data name="DataClassificationRedundancyDescription" xml:space="preserve">
+    <value>When a DataClassification is defined on a table, it automatically applies to all fields of that table. Setting the same DataClassification again on individual fields is redundant and adds unnecessary noise to the object definition.</value>
+  </data>
+    <data name="DataClassificationRedundancyCodeAction" xml:space="preserve">
+    <value>ALCops: Remove redundant DataClassification</value>
+  </data>
   <data name="MaintainabilityIndexMetricTitle" xml:space="preserve">
     <value>Maintainability index metric</value>
   </data>

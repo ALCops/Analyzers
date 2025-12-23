@@ -8,5 +8,6 @@ public static class DiagnosticIds
     public static readonly string MaintainabilityIndexThresholdExceeded = "LC0008";
     public static readonly string CyclomaticComplexityMetric = "LC0009";
     public static readonly string CyclomaticComplexityThresholdExceeded = "LC0010";
+    public static readonly string DataClassificationRedundancy = "LC0019";
 
 }
