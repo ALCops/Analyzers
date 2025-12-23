@@ -491,9 +491,23 @@ public class CasingMismatchDeclaration : DiagnosticAnalyzer
                            node.Parent.Kind != EnumProvider.SyntaxKind.UnaryNotExpression)
             .ToLookup(node => node.Identifier.ValueText, StringComparer.Ordinal);
 
+        var continueKeywordText = SyntaxFacts.GetText(EnumProvider.SyntaxKind.ContinueKeyword);
+
         foreach (var groupNode in groupNodes)
         {
             var representative = groupNode.OrderBy(node => node.Position).Last();
+
+            // Special handling for 'continue' keyword as the semantic model will returns null on this identifier
+            if (string.Equals(representative.Identifier.ValueText, continueKeywordText, StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (var node in groupNode)
+                {
+                    ctx.CancellationToken.ThrowIfCancellationRequested();
+                    CompareIdentifier(ctx, node.Identifier, continueKeywordText);
+                }
+
+                continue;
+            }
 
             if (semanticModel.GetSymbolInfo(representative, ctx.CancellationToken).Symbol is not ISymbol symbol)
             {
