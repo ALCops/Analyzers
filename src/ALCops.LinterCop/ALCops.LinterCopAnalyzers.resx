@@ -117,40 +117,67 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="CyclomaticComplexityMetricTitle" xml:space="preserve">
+    <value>Cyclomatic complexity metric</value>
+  </data>
+  <data name="CyclomaticComplexityMetricMessageFormat" xml:space="preserve">
+    <value>Cyclomatic complexity: {0} (threshold ≥ {1})</value>
+  </data>
+  <data name="CyclomaticComplexityMetricDescription" xml:space="preserve">
+    <value>Reports the cyclomatic complexity of a method or trigger. Cyclomatic complexity represents the number of independent execution paths through the code and provides insight into control-flow complexity.</value>
+  </data>
+  <data name="CyclomaticComplexityThresholdExceededTitle" xml:space="preserve">
+    <value>Cyclomatic complexity exceeds configured threshold</value>
+  </data>
+  <data name="CyclomaticComplexityThresholdExceededMessageFormat" xml:space="preserve">
+    <value>Cyclomatic complexity: {0} (threshold ≥ {1})</value>
+  </data>
+  <data name="CyclomaticComplexityThresholdExceededDescription" xml:space="preserve">
+    <value>Cyclomatic complexity measures the number of independent execution paths through a method or trigger. When this value meets or exceeds the configured threshold, the code is considered overly complex, which can reduce readability, increase maintenance cost, and raise the risk of defects.</value>
+  </data>
+  <data name="MaintainabilityIndexMetricTitle" xml:space="preserve">
+    <value>Maintainability index metric</value>
+  </data>
+  <data name="MaintainabilityIndexMetricMessageFormat" xml:space="preserve">
+    <value>Maintainability index: {0} (threshold ≤ {1})</value>
+  </data>
+  <data name="MaintainabilityIndexMetricDescription" xml:space="preserve">
+    <value>Reports the maintainability index of a method or trigger. The maintainability index is a composite metric derived from cyclomatic complexity, Halstead volume, and code size, providing an overall indication of how easy the code is to understand, modify, and maintain.</value>
+  </data>
+  <data name="MaintainabilityIndexThresholdExceededTitle" xml:space="preserve">
+    <value>Maintainability index below configured threshold</value>
+  </data>
+  <data name="MaintainabilityIndexThresholdExceededMessageFormat" xml:space="preserve">
+    <value>Maintainability index: {0} (threshold ≤ {1})</value>
+  </data>
+  <data name="MaintainabilityIndexThresholdExceededDescription" xml:space="preserve">
+    <value>The maintainability index provides an overall indication of code maintainability based on complexity, size, and structural characteristics. When this value falls at or below the configured threshold, the code is considered difficult to maintain, increasing the likelihood of defects and long-term maintenance cost.</value>
+  </data>
   <data name="ObjectIdInDeclarationTitle" xml:space="preserve">
     <value>Do not use Object IDs as object references</value>
-    <comment/>
   </data>
   <data name="ObjectIdInDeclarationMessageFormat" xml:space="preserve">
     <value>Object ID '{0}' used as object reference. Use the object name '{1}' instead.</value>
-    <comment/>
   </data>
   <data name="ObjectIdInDeclarationFormatWithoutCodeFix" xml:space="preserve">
     <value>Object ID '{0}' used as object reference.</value>
-    <comment/>
   </data>
   <data name="ObjectIdInDeclarationDescription" xml:space="preserve">
     <value>Using Object IDs in variable or property declarations reduces readability and prevents safe renaming. Object IDs are numeric and provide no semantic meaning, making the code harder to understand and maintain. Declare variables and properties using the resolved object name rather than a numeric Object ID.</value>
-    <comment/>
   </data>
   <data name="ObjectIdInDeclarationActionTitle" xml:space="preserve">
     <value>ALCops: Replace id with name of object reference</value>
-    <comment/>
   </data>
   <data name="RecordInstanceIsolationLevelTitle" xml:space="preserve">
     <value>Use ReadIsolation instead of LockTable</value>
-    <comment/>
   </data>
   <data name="RecordInstanceIsolationLevelMessageFormat" xml:space="preserve">
     <value>Use ReadIsolation(IsolationLevel::UpdLock) instead of LockTable().</value>
-    <comment/>
   </data>
   <data name="RecordInstanceIsolationLevelDescription" xml:space="preserve">
     <value>Use the ReadIsolation method to control isolation level on database transactions instead of the LockTable method.</value>
-    <comment/>
   </data>
   <data name="RecordInstanceIsolationLevelCodeActionTitle" xml:space="preserve">
     <value>ALCops: Replace LockTable() with ReadIsolation</value>
-    <comment/>
   </data>
 </root>

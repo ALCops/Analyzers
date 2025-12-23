@@ -44,6 +44,14 @@ public static class AnalysisContextExtensions
         return false;
     }
 
+    public static bool IsDiagnosticEnabled(this CodeBlockAnalysisContext ctx, DiagnosticDescriptor descriptor)
+    {
+        if (ctx.SemanticModel.Compilation.Options.SpecificDiagnosticOptions.TryGetValue(descriptor.Id, out var report))
+            return report != ReportDiagnostic.Suppress;
+
+        return true;
+    }
+
     public static bool IsObsolete(this CodeBlockAnalysisContext context)
     {
         if (context.OwningSymbol.IsObsolete())

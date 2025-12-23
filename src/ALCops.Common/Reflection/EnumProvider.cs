@@ -438,10 +438,14 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Code)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _codeunit =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Codeunit)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _controlAddIn =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.ControlAddIn)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dotNet =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DotNet)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _integer =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Integer)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _interface =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Interface)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _joker =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Joker)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _option =
@@ -463,8 +467,10 @@ public static class EnumProvider
 
         public static NavCodeAnalysis.NavTypeKind Code => _code.Value;
         public static NavCodeAnalysis.NavTypeKind Codeunit => _codeunit.Value;
+        public static NavCodeAnalysis.NavTypeKind ControlAddIn => _controlAddIn.Value;
         public static NavCodeAnalysis.NavTypeKind DotNet => _dotNet.Value;
         public static NavCodeAnalysis.NavTypeKind Integer => _integer.Value;
+        public static NavCodeAnalysis.NavTypeKind Interface => _interface.Value;
         public static NavCodeAnalysis.NavTypeKind Joker => _joker.Value;
         public static NavCodeAnalysis.NavTypeKind Option => _option.Value;
         public static NavCodeAnalysis.NavTypeKind Page => _page.Value;
@@ -966,16 +972,22 @@ public static class EnumProvider
 
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _arrayIndexExpression =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ArrayIndexExpression)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _booleanLiteralValue =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.BooleanLiteralValue)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _caseLine =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CaseLine)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _codeunitKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CodeunitKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _codeunitObject =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CodeunitObject)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _conditionalExpression =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ConditionalExpression)));
 #if NETSTANDARD2_1 || NET8_0
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _continueKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>("ContinueKeyword"));
 #else
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _continueKeyword =
-            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(NavCodeAnalysis.SyntaxKind.ContinueKeyword));
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ContinueKeyword)));
 #endif
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _controlAddInObject =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ControlAddInObject)));
@@ -987,6 +999,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ColonToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _dotToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.DotToken)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _elifKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ElifKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _enumExtensionType =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EnumExtensionType)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _enumDataType =
@@ -999,6 +1013,10 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Entitlement)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _falseKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.FalseKeyword)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _forKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ForKeyword)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _forEachKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ForEachKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _field =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Field)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _fieldGroup =
@@ -1009,6 +1027,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.IdentifierEqualsLiteral)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _identifierToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.IdentifierToken)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _ifKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.IfKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _interface =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Interface)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _int32LiteralToken =
@@ -1029,6 +1049,10 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LiteralAttributeArgument)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _literalExpression =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LiteralExpression)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _logicalAndExpression =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LogicalAndExpression)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _logicalOrExpression =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LogicalOrExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _memberAccessExpression =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.MemberAccessExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _memberAttribute =
@@ -1109,6 +1133,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReportObject)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _semicolonToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.SemicolonToken)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _stringLiteralToken =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.StringLiteralToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _subtypedDataType =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.SubtypedDataType)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _systemKeyword =
@@ -1127,33 +1153,44 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.TrueKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _unaryNotExpression =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.UnaryNotExpression)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _untilKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.UntilKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _varKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.VarKeyword)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _whileKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.WhileKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _xmlPortKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.XmlPortKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _xmlPortObject =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.XmlPortObject)));
 
         public static NavCodeAnalysis.SyntaxKind ArrayIndexExpression => _arrayIndexExpression.Value;
+        public static NavCodeAnalysis.SyntaxKind BooleanLiteralValue => _booleanLiteralValue.Value;
+        public static NavCodeAnalysis.SyntaxKind CaseLine => _caseLine.Value;
         public static NavCodeAnalysis.SyntaxKind CodeunitKeyword => _codeunitKeyword.Value;
-        public static NavCodeAnalysis.SyntaxKind ContinueKeyword => _continueKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind CodeunitObject => _codeunitObject.Value;
+        public static NavCodeAnalysis.SyntaxKind ConditionalExpression => _conditionalExpression.Value;
+        public static NavCodeAnalysis.SyntaxKind ContinueKeyword => _continueKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind ControlAddInObject => _controlAddInObject.Value;
         public static NavCodeAnalysis.SyntaxKind DataType => _dataType.Value;
         public static NavCodeAnalysis.SyntaxKind ColonToken => _colonToken.Value;
         public static NavCodeAnalysis.SyntaxKind ColonColonToken => _colonColonToken.Value;
         public static NavCodeAnalysis.SyntaxKind DotToken => _dotToken.Value;
+        public static NavCodeAnalysis.SyntaxKind ElifKeyword => _elifKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind EnumExtensionType => _enumExtensionType.Value;
         public static NavCodeAnalysis.SyntaxKind EnumDataType => _enumDataType.Value;
         public static NavCodeAnalysis.SyntaxKind EnumType => _enumType.Value;
         public static NavCodeAnalysis.SyntaxKind EnumValue => _enumValue.Value;
         public static NavCodeAnalysis.SyntaxKind Entitlement => _entitlement.Value;
         public static NavCodeAnalysis.SyntaxKind FalseKeyword => _falseKeyword.Value;
+        public static NavCodeAnalysis.SyntaxKind ForKeyword => _forKeyword.Value;
+        public static NavCodeAnalysis.SyntaxKind ForEachKeyword => _forEachKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind Field => _field.Value;
         public static NavCodeAnalysis.SyntaxKind FieldGroup => _fieldGroup.Value;
         public static NavCodeAnalysis.SyntaxKind IdentifierName => _identifierName.Value;
         public static NavCodeAnalysis.SyntaxKind IdentifierEqualsLiteral => _identifierEqualsLiteral.Value;
         public static NavCodeAnalysis.SyntaxKind IdentifierToken => _identifierToken.Value;
+        public static NavCodeAnalysis.SyntaxKind IfKeyword => _ifKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind Interface => _interface.Value;
         public static NavCodeAnalysis.SyntaxKind Int32LiteralToken => _int32LiteralToken.Value;
         public static NavCodeAnalysis.SyntaxKind Int32SignedLiteralValue => _int32SignedLiteralValue.Value;
@@ -1164,6 +1201,8 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind LineCommentTrivia => _lineCommentTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind LiteralAttributeArgument => _literalAttributeArgument.Value;
         public static NavCodeAnalysis.SyntaxKind LiteralExpression => _literalExpression.Value;
+        public static NavCodeAnalysis.SyntaxKind LogicalAndExpression => _logicalAndExpression.Value;
+        public static NavCodeAnalysis.SyntaxKind LogicalOrExpression => _logicalOrExpression.Value;
         public static NavCodeAnalysis.SyntaxKind MemberAccessExpression => _memberAccessExpression.Value;
         public static NavCodeAnalysis.SyntaxKind MemberAttribute => _memberAttribute.Value;
         public static NavCodeAnalysis.SyntaxKind MethodDeclaration => _methodDeclaration.Value;
@@ -1204,6 +1243,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind ReportLayout => _reportLayout.Value;
         public static NavCodeAnalysis.SyntaxKind ReportObject => _reportObject.Value;
         public static NavCodeAnalysis.SyntaxKind SemicolonToken => _semicolonToken.Value;
+        public static NavCodeAnalysis.SyntaxKind StringLiteralToken => _stringLiteralToken.Value;
         public static NavCodeAnalysis.SyntaxKind SubtypedDataType => _subtypedDataType.Value;
         public static NavCodeAnalysis.SyntaxKind SystemKeyword => _systemKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind TableExtensionObject => _tableExtensionObject.Value;
@@ -1213,7 +1253,9 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind TriggerDeclaration => _triggerDeclaration.Value;
         public static NavCodeAnalysis.SyntaxKind TrueKeyword => _trueKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind UnaryNotExpression => _unaryNotExpression.Value;
+        public static NavCodeAnalysis.SyntaxKind UntilKeyword => _untilKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind VarKeyword => _varKeyword.Value;
+        public static NavCodeAnalysis.SyntaxKind WhileKeyword => _whileKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind XmlPortKeyword => _xmlPortKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind XmlPortObject => _xmlPortObject.Value;
     }

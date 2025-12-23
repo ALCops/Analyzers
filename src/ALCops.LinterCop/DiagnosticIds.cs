@@ -4,4 +4,9 @@ public static class DiagnosticIds
 {
     public static readonly string ObjectIdInDeclaration = "LC0003";
     public static readonly string RecordInstanceIsolationLevel = "LC0031";
+    public static readonly string MaintainabilityIndexMetric = "LC0007";
+    public static readonly string MaintainabilityIndexThresholdExceeded = "LC0008";
+    public static readonly string CyclomaticComplexityMetric = "LC0009";
+    public static readonly string CyclomaticComplexityThresholdExceeded = "LC0010";
+
 }

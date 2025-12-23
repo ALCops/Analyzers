@@ -5,6 +5,45 @@ namespace ALCops.LinterCop;
 
 public static class DiagnosticDescriptors
 {
+    public static readonly DiagnosticDescriptor CyclomaticComplexityMetric = new(
+        id: DiagnosticIds.CyclomaticComplexityMetric,
+        title: LinterCopAnalyzers.CyclomaticComplexityMetricMessageFormat,
+        messageFormat: LinterCopAnalyzers.CyclomaticComplexityMetricMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: LinterCopAnalyzers.CyclomaticComplexityMetricDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.CyclomaticComplexityMetric));
+
+    public static readonly DiagnosticDescriptor CyclomaticComplexityThresholdExceeded = new(
+        id: DiagnosticIds.CyclomaticComplexityThresholdExceeded,
+        title: LinterCopAnalyzers.CyclomaticComplexityThresholdExceededTitle,
+        messageFormat: LinterCopAnalyzers.CyclomaticComplexityThresholdExceededMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.CyclomaticComplexityThresholdExceededDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.CyclomaticComplexityThresholdExceeded));
+
+    public static readonly DiagnosticDescriptor MaintainabilityIndexMetric = new(
+        id: DiagnosticIds.MaintainabilityIndexMetric,
+        title: LinterCopAnalyzers.MaintainabilityIndexMetricTitle,
+        messageFormat: LinterCopAnalyzers.MaintainabilityIndexMetricMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: LinterCopAnalyzers.MaintainabilityIndexMetricDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.MaintainabilityIndexMetric));
+
+    public static readonly DiagnosticDescriptor MaintainabilityIndexThresholdExceeded = new(
+        id: DiagnosticIds.MaintainabilityIndexThresholdExceeded,
+        title: LinterCopAnalyzers.MaintainabilityIndexThresholdExceededTitle,
+        messageFormat: LinterCopAnalyzers.MaintainabilityIndexThresholdExceededMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.MaintainabilityIndexThresholdExceededDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.MaintainabilityIndexThresholdExceeded));
 
     public static readonly DiagnosticDescriptor ObjectIdInDeclaration = new(
         id: DiagnosticIds.ObjectIdInDeclaration,

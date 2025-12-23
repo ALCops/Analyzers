@@ -58,6 +58,114 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Reports the cyclomatic complexity of a method or trigger. Cyclomatic complexity represents the number of independent execution paths through the code and provides insight into control-flow complexity..
+        /// </summary>
+        internal static string CyclomaticComplexityMetricDescription {
+            get {
+                return ResourceManager.GetString("CyclomaticComplexityMetricDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cyclomatic complexity: {0} (threshold ≥ {1}).
+        /// </summary>
+        internal static string CyclomaticComplexityMetricMessageFormat {
+            get {
+                return ResourceManager.GetString("CyclomaticComplexityMetricMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cyclomatic complexity metric.
+        /// </summary>
+        internal static string CyclomaticComplexityMetricTitle {
+            get {
+                return ResourceManager.GetString("CyclomaticComplexityMetricTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cyclomatic complexity measures the number of independent execution paths through a method or trigger. When this value meets or exceeds the configured threshold, the code is considered overly complex, which can reduce readability, increase maintenance cost, and raise the risk of defects..
+        /// </summary>
+        internal static string CyclomaticComplexityThresholdExceededDescription {
+            get {
+                return ResourceManager.GetString("CyclomaticComplexityThresholdExceededDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cyclomatic complexity: {0} (threshold ≥ {1}).
+        /// </summary>
+        internal static string CyclomaticComplexityThresholdExceededMessageFormat {
+            get {
+                return ResourceManager.GetString("CyclomaticComplexityThresholdExceededMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cyclomatic complexity exceeds configured threshold.
+        /// </summary>
+        internal static string CyclomaticComplexityThresholdExceededTitle {
+            get {
+                return ResourceManager.GetString("CyclomaticComplexityThresholdExceededTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reports the maintainability index of a method or trigger. The maintainability index is a composite metric derived from cyclomatic complexity, Halstead volume, and code size, providing an overall indication of how easy the code is to understand, modify, and maintain..
+        /// </summary>
+        internal static string MaintainabilityIndexMetricDescription {
+            get {
+                return ResourceManager.GetString("MaintainabilityIndexMetricDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Maintainability index: {0} (threshold ≤ {1}).
+        /// </summary>
+        internal static string MaintainabilityIndexMetricMessageFormat {
+            get {
+                return ResourceManager.GetString("MaintainabilityIndexMetricMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Maintainability index metric.
+        /// </summary>
+        internal static string MaintainabilityIndexMetricTitle {
+            get {
+                return ResourceManager.GetString("MaintainabilityIndexMetricTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The maintainability index provides an overall indication of code maintainability based on complexity, size, and structural characteristics. When this value falls at or below the configured threshold, the code is considered difficult to maintain, increasing the likelihood of defects and long-term maintenance cost..
+        /// </summary>
+        internal static string MaintainabilityIndexThresholdExceededDescription {
+            get {
+                return ResourceManager.GetString("MaintainabilityIndexThresholdExceededDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Maintainability index: {0} (threshold ≤ {1}).
+        /// </summary>
+        internal static string MaintainabilityIndexThresholdExceededMessageFormat {
+            get {
+                return ResourceManager.GetString("MaintainabilityIndexThresholdExceededMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Maintainability index below configured threshold.
+        /// </summary>
+        internal static string MaintainabilityIndexThresholdExceededTitle {
+            get {
+                return ResourceManager.GetString("MaintainabilityIndexThresholdExceededTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Replace id with name of object reference.
         /// </summary>
         internal static string ObjectIdInDeclarationActionTitle {

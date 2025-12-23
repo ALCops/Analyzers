@@ -1,0 +1,13 @@
+codeunit 50200 MyCodeunit
+{
+    procedure [|MyProcedure()|]
+    begin
+        if true then;
+        if true then;
+        if true then;
+        if true then;
+        if true then;
+        if true then;
+        if true then;
+    end;
+}
