@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.IO;
 using System.Text.Json;
 
 namespace ALCops.Common.Settings;
