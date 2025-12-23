@@ -125,7 +125,7 @@ public class CyclomaticComplexityAndMaintainabilityIndex : DiagnosticAnalyzer
             var triviaLinesCount = body
                 .DescendantTrivia(e => true, true)
                 .Count(node =>
-                    node.Kind == SyntaxKind.EndOfLineTrivia &&
+                    node.Kind == EnumProvider.SyntaxKind.EndOfLineTrivia &&
                     node.GetLocation().GetLineSpan().StartLinePosition.Line ==
                     node.Token.GetLocation().GetLineSpan().StartLinePosition.Line) - 2; //Minus 2 for Begin end of function
 

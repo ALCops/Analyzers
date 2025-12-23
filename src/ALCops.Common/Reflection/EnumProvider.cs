@@ -1004,6 +1004,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.DotToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _elifKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ElifKeyword)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _endOfLineTrivia =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EndOfLineTrivia)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _enumExtensionType =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EnumExtensionType)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _enumDataType =
@@ -1180,6 +1182,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind ColonColonToken => _colonColonToken.Value;
         public static NavCodeAnalysis.SyntaxKind DotToken => _dotToken.Value;
         public static NavCodeAnalysis.SyntaxKind ElifKeyword => _elifKeyword.Value;
+        public static NavCodeAnalysis.SyntaxKind EndOfLineTrivia => _endOfLineTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind EnumExtensionType => _enumExtensionType.Value;
         public static NavCodeAnalysis.SyntaxKind EnumDataType => _enumDataType.Value;
         public static NavCodeAnalysis.SyntaxKind EnumType => _enumType.Value;
