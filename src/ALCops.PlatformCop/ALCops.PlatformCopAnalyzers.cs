@@ -155,5 +155,32 @@ namespace ALCops.PlatformCop {
                 return ResourceManager.GetString("SetRangeWithFilterOperatorsTitle", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string TableDataPerCompanyDeclarationDescription {
+            get {
+                return ResourceManager.GetString("TableDataPerCompanyDeclarationDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string TableDataPerCompanyDeclarationMessageFormat {
+            get {
+                return ResourceManager.GetString("TableDataPerCompanyDeclarationMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string TableDataPerCompanyDeclarationTitle {
+            get {
+                return ResourceManager.GetString("TableDataPerCompanyDeclarationTitle", resourceCulture);
+            }
+        }
     }
 }

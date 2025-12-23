@@ -35,6 +35,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.SetRangeWithFilterOperatorsDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.SetRangeWithFilterOperators));
 
+    public static readonly DiagnosticDescriptor TableDataPerCompanyDeclaration = new(
+        id: DiagnosticIds.TableDataPerCompanyDeclaration,
+        title: PlatformCopAnalyzers.TableDataPerCompanyDeclarationTitle,
+        messageFormat: PlatformCopAnalyzers.TableDataPerCompanyDeclarationMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: PlatformCopAnalyzers.TableDataPerCompanyDeclarationDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TableDataPerCompanyDeclaration));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLower());
