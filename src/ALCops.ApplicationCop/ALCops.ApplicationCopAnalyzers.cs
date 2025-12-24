@@ -227,5 +227,41 @@ namespace ALCops.ApplicationCop {
                 return ResourceManager.GetString("NotBlankRequiredOnPrimaryKeyFieldTitle", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ALCops: X.
+        /// </summary>
+        internal static string RunPageImplementPageManagementCodeAction {
+            get {
+                return ResourceManager.GetString("RunPageImplementPageManagementCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to X.
+        /// </summary>
+        internal static string RunPageImplementPageManagementDescription {
+            get {
+                return ResourceManager.GetString("RunPageImplementPageManagementDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to X.
+        /// </summary>
+        internal static string RunPageImplementPageManagementMessageFormat {
+            get {
+                return ResourceManager.GetString("RunPageImplementPageManagementMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to X.
+        /// </summary>
+        internal static string RunPageImplementPageManagementTitle {
+            get {
+                return ResourceManager.GetString("RunPageImplementPageManagementTitle", resourceCulture);
+            }
+        }
     }
 }

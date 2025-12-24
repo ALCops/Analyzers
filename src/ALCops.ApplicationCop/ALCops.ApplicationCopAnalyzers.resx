@@ -124,7 +124,7 @@
     <value>Confirm() must be implemented through the "Confirm Management" codeunit from the System Application.</value>
   </data>
   <data name="ConfirmImplementConfirmManagementDescription" xml:space="preserve">
-    <value>TODO</value>
+    <value>Direct calls to Confirm() bypass the safeguards and features provided by the Confirm Management codeunit in the System Application. Using Confirm Management ensures automatic validation of IsGuiAllowed(), prevents runtime failures in non-GUI contexts, and allows explicit control over the default response (true or false).</value>
   </data>
   <data name="ConfirmImplementConfirmManagementDescriptionCodeAction" xml:space="preserve">
     <value>ALCops: Refactor to use "Confirm Management" codeunit</value>
@@ -136,7 +136,7 @@
     <value>GlobalLanguage() must be implemented through the "Translation Helper" codeunit from the Base Application.</value>
   </data>
   <data name="GlobalLanguageImplementTranslationHelperDescription" xml:space="preserve">
-    <value>TODO</value>
+    <value>Direct use of GlobalLanguage() leads to verbose, error-prone code and often requires manual state management, hardcoded language IDs, or duplicated logic. The Translation Helper codeunit from the Base Application centralizes global language handling by automatically preserving and restoring the previous language, supporting both LanguageId and LanguageCode, and allowing a safe reset to the default application language without hardcoding values such as 1033.</value>
   </data>
   <data name="GlobalLanguageImplementTranslationHelperCodeAction" xml:space="preserve">
     <value>ALCops: Refactor to use "Translation Helper" codeunit</value>
@@ -173,5 +173,17 @@
   </data>
   <data name="NotBlankNotAllowedOnPrimaryKeyFieldCodeAction" xml:space="preserve">
     <value>ALCops: Set NotBlank property to false</value>
+  </data>
+  <data name="RunPageImplementPageManagementTitle" xml:space="preserve">
+    <value>Use the "Page Management" codeunit instead invoking Page.Run directly</value>
+  </data>
+  <data name="RunPageImplementPageManagementMessageFormat" xml:space="preserve">
+    <value>Invoke pages through the "Page Management" codeunit instead of invoking Page.Run(...) directly for this record context.</value>
+  </data>
+  <data name="RunPageImplementPageManagementDescription" xml:space="preserve">
+    <value>Direct calls to Page.Run bypass the centralized logic provided by the Page Management codeunit. Using Page Management improves correctness and extensibility by automatically resolving the appropriate page.</value>
+  </data>
+  <data name="RunPageImplementPageManagementCodeAction" xml:space="preserve">
+    <value>ALCops: Refactor to use "Page Management" codeunit</value>
   </data>
 </root>

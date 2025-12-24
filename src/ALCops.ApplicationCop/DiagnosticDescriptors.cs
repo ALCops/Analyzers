@@ -55,6 +55,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.NotBlankNotAllowedOnPrimaryKeyFieldDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.NotBlankRequiredOnPrimaryKeyField));
 
+    public static readonly DiagnosticDescriptor RunPageImplementPageManagement = new(
+        id: DiagnosticIds.RunPageImplementPageManagement,
+        title: ApplicationCopAnalyzers.RunPageImplementPageManagementTitle,
+        messageFormat: ApplicationCopAnalyzers.RunPageImplementPageManagementMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.RunPageImplementPageManagementDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.NotBlankRequiredOnPrimaryKeyField));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/applicationcop/{0}/", identifier.ToLower());

@@ -58,7 +58,7 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ALCops: X.
+        ///   Looks up a localized string similar to ALCops: Remove redundant ApplicationArea.
         /// </summary>
         internal static string ApplicationAreaRedundancyCodeAction {
             get {
@@ -67,7 +67,7 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to X.
+        ///   Looks up a localized string similar to When a ApplicationArea is defined on a page, it automatically applies to all fields of that page. Setting the same ApplicationArea again on individual fields is redundant and adds unnecessary noise to the object definition..
         /// </summary>
         internal static string ApplicationAreaRedundancyDescription {
             get {
@@ -76,7 +76,7 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to X.
+        ///   Looks up a localized string similar to ApplicationArea matches the page-level ApplicationArea and can be removed.
         /// </summary>
         internal static string ApplicationAreaRedundancyMessageFormat {
             get {
@@ -85,7 +85,7 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to X.
+        ///   Looks up a localized string similar to Redundant ApplicationArea on page.
         /// </summary>
         internal static string ApplicationAreaRedundancyTitle {
             get {
