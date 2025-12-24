@@ -9,20 +9,20 @@ using ALCops.Common.Reflection;
 
 namespace ALCops.LinterCop.CodeFixes;
 
-[CodeFixProvider("DataClassificationRedundancyCodeFixProvider")]
-public sealed class DataClassificationRedundancyCodeFixProvider : CodeFixProvider
+[CodeFixProvider("ApplicationAreaRedundancyCodeFixProvider")]
+public sealed class ApplicationAreaRedundancyCodeFixProvider : CodeFixProvider
 {
-    private static readonly string DataClassificationName =
-        EnumProvider.PropertyKind.DataClassification.ToString();
+    private static readonly string ApplicationAreaName =
+        EnumProvider.PropertyKind.ApplicationArea.ToString();
 
-    private class DataClassificationRedundancyCodeAction : CodeAction.DocumentChangeAction
+    private class ApplicationAreaRedundancyCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
         public override string? FixAllSingleInstanceTitle => string.Empty;
         public override string? FixAllTitle => Title;
 
-        public DataClassificationRedundancyCodeAction(string title,
+        public ApplicationAreaRedundancyCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument, string equivalenceKey, bool generateFixAll)
             : base(title, createChangedDocument, equivalenceKey)
         {
@@ -31,7 +31,7 @@ public sealed class DataClassificationRedundancyCodeFixProvider : CodeFixProvide
     }
 
     public sealed override ImmutableArray<string> FixableDiagnosticIds =>
-        ImmutableArray.Create(DiagnosticDescriptors.DataClassificationRedundancy.Id);
+        ImmutableArray.Create(DiagnosticDescriptors.ApplicationAreaRedundancy.Id);
 
     public sealed override FixAllProvider GetFixAllProvider() =>
          WellKnownFixAllProviders.BatchFixer;
@@ -52,26 +52,26 @@ public sealed class DataClassificationRedundancyCodeFixProvider : CodeFixProvide
         ctx.RegisterCodeFix((CodeAction)CreateCodeAction(node, document, true), ctx.Diagnostics[0]);
     }
 
-    private static DataClassificationRedundancyCodeAction CreateCodeAction(SyntaxNode node, Document document,
+    private static ApplicationAreaRedundancyCodeAction CreateCodeAction(SyntaxNode node, Document document,
         bool generateFixAll)
     {
-        return new DataClassificationRedundancyCodeAction(
-            LinterCopAnalyzers.DataClassificationRedundancyCodeAction,
-            ct => RemoveRedundantDataClassification(document, node, ct),
-            nameof(DataClassificationRedundancyCodeFixProvider),
+        return new ApplicationAreaRedundancyCodeAction(
+            LinterCopAnalyzers.ApplicationAreaRedundancyCodeAction,
+            ct => RemoveRedundantApplicationArea(document, node, ct),
+            nameof(ApplicationAreaRedundancyCodeFixProvider),
             generateFixAll);
     }
 
-    private static async Task<Document> RemoveRedundantDataClassification(Document document, SyntaxNode node, CancellationToken cancellationToken)
+    private static async Task<Document> RemoveRedundantApplicationArea(Document document, SyntaxNode node, CancellationToken cancellationToken)
     {
         if (node.Parent is not PropertyListSyntax originalPropertyList)
             return document;
 
-        var dataClassificationProperty = originalPropertyList.GetProperty(DataClassificationName);
-        if (dataClassificationProperty is null)
+        var ApplicationAreaProperty = originalPropertyList.GetProperty(ApplicationAreaName);
+        if (ApplicationAreaProperty is null)
             return document;
 
-        var newProperties = originalPropertyList.Properties.Remove(dataClassificationProperty);
+        var newProperties = originalPropertyList.Properties.Remove(ApplicationAreaProperty);
         var newPropertyList = originalPropertyList.WithProperties(newProperties);
 
         var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);

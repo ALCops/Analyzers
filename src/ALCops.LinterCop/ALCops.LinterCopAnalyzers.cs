@@ -58,6 +58,42 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: X.
+        /// </summary>
+        internal static string ApplicationAreaRedundancyCodeAction {
+            get {
+                return ResourceManager.GetString("ApplicationAreaRedundancyCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to X.
+        /// </summary>
+        internal static string ApplicationAreaRedundancyDescription {
+            get {
+                return ResourceManager.GetString("ApplicationAreaRedundancyDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to X.
+        /// </summary>
+        internal static string ApplicationAreaRedundancyMessageFormat {
+            get {
+                return ResourceManager.GetString("ApplicationAreaRedundancyMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to X.
+        /// </summary>
+        internal static string ApplicationAreaRedundancyTitle {
+            get {
+                return ResourceManager.GetString("ApplicationAreaRedundancyTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reports the cyclomatic complexity of a method or trigger. Cyclomatic complexity represents the number of independent execution paths through the code and provides insight into control-flow complexity..
         /// </summary>
         internal static string CyclomaticComplexityMetricDescription {

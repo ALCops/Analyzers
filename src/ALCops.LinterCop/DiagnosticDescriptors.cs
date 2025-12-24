@@ -5,6 +5,16 @@ namespace ALCops.LinterCop;
 
 public static class DiagnosticDescriptors
 {
+    public static readonly DiagnosticDescriptor ApplicationAreaRedundancy = new(
+        id: DiagnosticIds.ApplicationAreaRedundancy,
+        title: LinterCopAnalyzers.ApplicationAreaRedundancyMessageFormat,
+        messageFormat: LinterCopAnalyzers.ApplicationAreaRedundancyMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.ApplicationAreaRedundancyDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ApplicationAreaRedundancy));
+
     public static readonly DiagnosticDescriptor CyclomaticComplexityMetric = new(
         id: DiagnosticIds.CyclomaticComplexityMetric,
         title: LinterCopAnalyzers.CyclomaticComplexityMetricMessageFormat,

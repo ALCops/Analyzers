@@ -117,6 +117,18 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ApplicationAreaRedundancyTitle" xml:space="preserve">
+    <value>Redundant ApplicationArea on page</value>
+  </data>
+  <data name="ApplicationAreaRedundancyMessageFormat" xml:space="preserve">
+    <value>ApplicationArea matches the page-level ApplicationArea and can be removed</value>  
+  </data>
+  <data name="ApplicationAreaRedundancyDescription" xml:space="preserve">
+    <value>When a ApplicationArea is defined on a page, it automatically applies to all fields of that page. Setting the same ApplicationArea again on individual fields is redundant and adds unnecessary noise to the object definition.</value>
+  </data>
+  <data name="ApplicationAreaRedundancyCodeAction" xml:space="preserve">
+    <value>ALCops: Remove redundant ApplicationArea</value>
+  </data>
   <data name="CyclomaticComplexityMetricTitle" xml:space="preserve">
     <value>Cyclomatic complexity metric</value>
   </data>

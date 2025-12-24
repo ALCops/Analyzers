@@ -56,9 +56,12 @@ public static class VersionProvider
     /// </summary>
     public static class VersionCompatibility
     {
+        private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _fall2022OrGreater =
+            new(() => GetVersionCompatibility("Fall2022OrGreater"));
         private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _spring2023OrGreater =
             new(() => GetVersionCompatibility("Spring2023OrGreater"));
 
         public static NavCodeAnalysis.VersionCompatibility Spring2023OrGreater => _spring2023OrGreater.Value;
+        public static NavCodeAnalysis.VersionCompatibility Fall2022OrGreater => _fall2022OrGreater.Value;
     }
 }

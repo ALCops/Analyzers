@@ -634,6 +634,8 @@ public static class EnumProvider
         public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
             CreateEnumDictionary<NavCodeAnalysis.PropertyKind>();
 
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _applicationArea =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ApplicationArea)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _autoIncrement =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.AutoIncrement)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _dataClassification =
@@ -655,6 +657,7 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _tableRelation =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.TableRelation)));
 
+        public static NavCodeAnalysis.PropertyKind ApplicationArea => _applicationArea.Value;
         public static NavCodeAnalysis.PropertyKind AutoIncrement => _autoIncrement.Value;
         public static NavCodeAnalysis.PropertyKind DataClassification => _dataClassification.Value;
         public static NavCodeAnalysis.PropertyKind DataPerCompany => _dataPerCompany.Value;
@@ -898,6 +901,8 @@ public static class EnumProvider
 
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _codeunit =
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Codeunit)));
+        private static readonly Lazy<NavCodeAnalysis.SymbolKind> _control =
+            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Control)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _entitlement =
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Entitlement)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _enum =
@@ -942,6 +947,7 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.XmlPort)));
 
         public static NavCodeAnalysis.SymbolKind Codeunit => _codeunit.Value;
+        public static NavCodeAnalysis.SymbolKind Control => _control.Value;
         public static NavCodeAnalysis.SymbolKind Entitlement => _entitlement.Value;
         public static NavCodeAnalysis.SymbolKind Enum => _enum.Value;
         public static NavCodeAnalysis.SymbolKind EnumExtension => _enumExtension.Value;
