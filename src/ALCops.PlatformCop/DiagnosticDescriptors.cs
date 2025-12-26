@@ -35,6 +35,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.ExtensiblePropertyExplicitlySetDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ExtensiblePropertyExplicitlySet));
 
+    public static readonly DiagnosticDescriptor ListObjectsAreOneBased = new(
+        id: DiagnosticIds.ListObjectsAreOneBased,
+        title: PlatformCopAnalyzers.ListObjectsAreOneBasedTitle,
+        messageFormat: PlatformCopAnalyzers.ListObjectsAreOneBasedMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.ListObjectsAreOneBasedDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ListObjectsAreOneBased));
+
     public static readonly DiagnosticDescriptor SetRangeWithFilterOperators = new(
         id: DiagnosticIds.SetRangeWithFilterOperators,
         title: PlatformCopAnalyzers.SetRangeWithFilterOperatorsTitle,

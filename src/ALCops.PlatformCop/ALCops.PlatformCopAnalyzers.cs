@@ -157,6 +157,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to List objects are 1-based, meaning indexing starts from 1 instead of the conventional 0..
+        /// </summary>
+        internal static string ListObjectsAreOneBasedDescription {
+            get {
+                return ResourceManager.GetString("ListObjectsAreOneBasedDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to List objects are 1-based.
+        /// </summary>
+        internal static string ListObjectsAreOneBasedMessageFormat {
+            get {
+                return ResourceManager.GetString("ListObjectsAreOneBasedMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Zero index access on 1-based List objects..
+        /// </summary>
+        internal static string ListObjectsAreOneBasedTitle {
+            get {
+                return ResourceManager.GetString("ListObjectsAreOneBasedTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Replace SetRange with SetFilter.
         /// </summary>
         internal static string SetRangeWithFilterOperatorsCodeAction {

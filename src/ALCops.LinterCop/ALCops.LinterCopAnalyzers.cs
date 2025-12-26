@@ -184,7 +184,7 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to X.
+        ///   Looks up a localized string similar to Starting with Business Central 2023 wave 1 (BC22), event subscriber arguments support identifier syntax rather than string literals. Using identifiers enables full Visual Studio Code navigation features such as Go To Definition and Find All References, improving code readability, refactor safety, and maintainability..
         /// </summary>
         internal static string IdentifiersInEventSubscribersDescription {
             get {
@@ -193,7 +193,7 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to X.
+        ///   Looks up a localized string similar to Event subscriber arguments should use identifier syntax instead of string literals..
         /// </summary>
         internal static string IdentifiersInEventSubscribersMessageFormat {
             get {
@@ -202,7 +202,7 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to X.
+        ///   Looks up a localized string similar to Use identifier syntax in event subscriber arguments.
         /// </summary>
         internal static string IdentifiersInEventSubscribersTitle {
             get {

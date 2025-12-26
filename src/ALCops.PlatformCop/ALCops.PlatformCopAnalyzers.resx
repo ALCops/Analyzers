@@ -150,6 +150,15 @@
   <data name="ExtensiblePropertyExplicitlySetCodeAction" xml:space="preserve">
     <value>ALCops: Set Extensible property to platform default</value>
   </data>
+  <data name="ListObjectsAreOneBasedTitle" xml:space="preserve">
+    <value>Zero index access on 1-based List objects</value>
+  </data>
+  <data name="ListObjectsAreOneBasedMessageFormat" xml:space="preserve">
+    <value>List objects are 1-based</value>
+  </data>
+  <data name="ListObjectsAreOneBasedDescription" xml:space="preserve">
+    <value>List objects are 1-based, meaning indexing starts from 1 instead of the conventional 0.</value>
+  </data>
   <data name="SetRangeWithFilterOperatorsTitle" xml:space="preserve">
     <value>Filter operators should not be used in SetRange</value>
   </data>

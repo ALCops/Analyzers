@@ -473,6 +473,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Interface)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _joker =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Joker)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _list =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.List)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _option =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Option)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _page =
@@ -498,6 +500,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind Integer => _integer.Value;
         public static NavCodeAnalysis.NavTypeKind Interface => _interface.Value;
         public static NavCodeAnalysis.NavTypeKind Joker => _joker.Value;
+        public static NavCodeAnalysis.NavTypeKind List => _list.Value;
         public static NavCodeAnalysis.NavTypeKind Option => _option.Value;
         public static NavCodeAnalysis.NavTypeKind Page => _page.Value;
         public static NavCodeAnalysis.NavTypeKind Query => _query.Value;
