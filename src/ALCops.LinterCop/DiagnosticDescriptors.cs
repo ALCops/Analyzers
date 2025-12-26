@@ -45,6 +45,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.DataClassificationRedundancyDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.DataClassificationRedundancy));
 
+    public static readonly DiagnosticDescriptor IdentifiersInEventSubscribers = new(
+        id: DiagnosticIds.IdentifiersInEventSubscribers,
+        title: LinterCopAnalyzers.IdentifiersInEventSubscribersTitle,
+        messageFormat: LinterCopAnalyzers.IdentifiersInEventSubscribersMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.IdentifiersInEventSubscribersDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.IdentifiersInEventSubscribers));
+
     public static readonly DiagnosticDescriptor MaintainabilityIndexMetric = new(
         id: DiagnosticIds.MaintainabilityIndexMetric,
         title: LinterCopAnalyzers.MaintainabilityIndexMetricTitle,

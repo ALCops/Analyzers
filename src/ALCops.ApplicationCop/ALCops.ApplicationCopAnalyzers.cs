@@ -58,7 +58,7 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to TODO.
+        ///   Looks up a localized string similar to Direct calls to Confirm() bypass the safeguards and features provided by the Confirm Management codeunit in the System Application. Using Confirm Management ensures automatic validation of IsGuiAllowed(), prevents runtime failures in non-GUI contexts, and allows explicit control over the default response (true or false)..
         /// </summary>
         internal static string ConfirmImplementConfirmManagementDescription {
             get {
@@ -103,7 +103,7 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to TODO.
+        ///   Looks up a localized string similar to Direct use of GlobalLanguage() leads to verbose, error-prone code and often requires manual state management, hardcoded language IDs, or duplicated logic. The Translation Helper codeunit from the Base Application centralizes global language handling by automatically preserving and restoring the previous language, supporting both LanguageId and LanguageCode, and allowing a safe reset to the default application language without hardcoding values such as 1033..
         /// </summary>
         internal static string GlobalLanguageImplementTranslationHelperDescription {
             get {
@@ -229,7 +229,7 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ALCops: X.
+        ///   Looks up a localized string similar to ALCops: Refactor to use &quot;Page Management&quot; codeunit.
         /// </summary>
         internal static string RunPageImplementPageManagementCodeAction {
             get {
@@ -238,7 +238,7 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to X.
+        ///   Looks up a localized string similar to Direct calls to Page.Run bypass the centralized logic provided by the Page Management codeunit. Using Page Management improves correctness and extensibility by automatically resolving the appropriate page..
         /// </summary>
         internal static string RunPageImplementPageManagementDescription {
             get {
@@ -247,7 +247,7 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to X.
+        ///   Looks up a localized string similar to Invoke pages through the &quot;Page Management&quot; codeunit instead of invoking Page.Run(...) directly for this record context..
         /// </summary>
         internal static string RunPageImplementPageManagementMessageFormat {
             get {
@@ -256,7 +256,7 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to X.
+        ///   Looks up a localized string similar to Use the &quot;Page Management&quot; codeunit instead invoking Page.Run directly.
         /// </summary>
         internal static string RunPageImplementPageManagementTitle {
             get {

@@ -282,6 +282,18 @@ public static class EnumProvider
             CreateEnumDictionary<NavCodeAnalysis.ExternalAccessKind>();
     }
 
+
+    /// <summary>
+    /// Feature enum values
+    /// </summary>
+    public static class Feature
+    {
+        private static readonly Lazy<NavCodeAnalysis.Feature> _ientifiersInEventSubscribers =
+            new(() => ParseEnum<NavCodeAnalysis.Feature>(nameof(NavCodeAnalysis.Feature.IdentifiersInEventSubscribers)));
+
+        public static NavCodeAnalysis.Feature IdentifiersInEventSubscribers => _ientifiersInEventSubscribers.Value;
+    }
+
     /// <summary>
     /// FieldClassKind enum values
     /// </summary>

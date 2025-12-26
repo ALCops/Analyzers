@@ -184,6 +184,33 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to X.
+        /// </summary>
+        internal static string IdentifiersInEventSubscribersDescription {
+            get {
+                return ResourceManager.GetString("IdentifiersInEventSubscribersDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to X.
+        /// </summary>
+        internal static string IdentifiersInEventSubscribersMessageFormat {
+            get {
+                return ResourceManager.GetString("IdentifiersInEventSubscribersMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to X.
+        /// </summary>
+        internal static string IdentifiersInEventSubscribersTitle {
+            get {
+                return ResourceManager.GetString("IdentifiersInEventSubscribersTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reports the maintainability index of a method or trigger. The maintainability index is a composite metric derived from cyclomatic complexity, Halstead volume, and code size, providing an overall indication of how easy the code is to understand, modify, and maintain..
         /// </summary>
         internal static string MaintainabilityIndexMetricDescription {

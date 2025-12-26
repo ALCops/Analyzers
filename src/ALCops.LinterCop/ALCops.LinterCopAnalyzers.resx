@@ -156,7 +156,16 @@
   <data name="DataClassificationRedundancyDescription" xml:space="preserve">
     <value>When a DataClassification is defined on a table, it automatically applies to all fields of that table. Setting the same DataClassification again on individual fields is redundant and adds unnecessary noise to the object definition.</value>
   </data>
-    <data name="DataClassificationRedundancyCodeAction" xml:space="preserve">
+  <data name="IdentifiersInEventSubscribersTitle" xml:space="preserve">
+    <value>Use identifier syntax in event subscriber arguments</value>
+  </data>
+  <data name="IdentifiersInEventSubscribersMessageFormat" xml:space="preserve">
+    <value>Event subscriber arguments should use identifier syntax instead of string literals.</value>
+  </data>
+  <data name="IdentifiersInEventSubscribersDescription" xml:space="preserve">
+    <value>Starting with Business Central 2023 wave 1 (BC22), event subscriber arguments support identifier syntax rather than string literals. Using identifiers enables full Visual Studio Code navigation features such as Go To Definition and Find All References, improving code readability, refactor safety, and maintainability.</value>
+  </data>
+  <data name="DataClassificationRedundancyCodeAction" xml:space="preserve">
     <value>ALCops: Remove redundant DataClassification</value>
   </data>
   <data name="MaintainabilityIndexMetricTitle" xml:space="preserve">
