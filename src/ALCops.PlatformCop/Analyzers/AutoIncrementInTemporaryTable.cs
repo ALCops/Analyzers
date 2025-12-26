@@ -7,7 +7,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 namespace ALCops.PlatformCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class AutoIncrementInTemporaryTable : DiagnosticAnalyzer
+public sealed class AutoIncrementInTemporaryTable : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.AutoIncrementInTemporaryTable);

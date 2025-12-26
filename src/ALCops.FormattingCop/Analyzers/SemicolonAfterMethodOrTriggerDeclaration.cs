@@ -7,7 +7,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 namespace ALCops.FormattingCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class SemicolonAfterMethodOrTriggerDeclaration : DiagnosticAnalyzer
+public sealed class SemicolonAfterMethodOrTriggerDeclaration : DiagnosticAnalyzer
 {
     private const string DeclarationSuffix = "Declaration";
 

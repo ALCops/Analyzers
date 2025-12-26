@@ -7,7 +7,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 namespace ALCops.LinterCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class IdentifiersInEventSubscribers : DiagnosticAnalyzer
+public sealed class IdentifiersInEventSubscribers : DiagnosticAnalyzer
 {
     private const string EventSubscriberAttributeName = "EventSubscriber";
     private const int EventNameArgIndex = 2;

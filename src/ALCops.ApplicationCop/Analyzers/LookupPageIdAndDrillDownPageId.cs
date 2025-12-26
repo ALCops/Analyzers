@@ -7,7 +7,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 namespace ALCops.ApplicationCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class LookupPageIdAndDrillDownPageId : DiagnosticAnalyzer
+public sealed class LookupPageIdAndDrillDownPageId : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

@@ -9,7 +9,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 namespace ALCops.LinterCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class CyclomaticComplexityAndMaintainabilityIndex : DiagnosticAnalyzer
+public sealed class CyclomaticComplexityAndMaintainabilityIndex : DiagnosticAnalyzer
 {
     private static readonly HashSet<string> EventPublisherDecoratorNames = new(StringComparer.OrdinalIgnoreCase)
     {

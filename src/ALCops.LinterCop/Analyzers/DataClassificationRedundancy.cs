@@ -7,7 +7,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 namespace ALCops.LinterCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class DataClassificationRedundancy : DiagnosticAnalyzer
+public sealed class DataClassificationRedundancy : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

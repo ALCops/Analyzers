@@ -9,7 +9,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 namespace ALCops.LinterCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class ObjectIdInDeclaration : DiagnosticAnalyzer
+public sealed class ObjectIdInDeclaration : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.ObjectIdInDeclaration);

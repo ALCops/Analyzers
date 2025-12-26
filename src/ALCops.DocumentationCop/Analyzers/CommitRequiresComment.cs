@@ -8,7 +8,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 namespace ALCops.DocumentationCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class CommitRequiresComment : DiagnosticAnalyzer
+public sealed class CommitRequiresComment : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.CommitRequiresCommen);

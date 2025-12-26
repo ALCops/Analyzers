@@ -7,7 +7,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.InternalSyntax;
 namespace ALCops.TestAutomationCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class GlobalMethodRequiresTestAttribute : DiagnosticAnalyzer
+public sealed class GlobalMethodRequiresTestAttribute : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

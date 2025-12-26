@@ -10,7 +10,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 namespace ALCops.DocumentationCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class WriteToFlowFieldRequiresComment : DiagnosticAnalyzer
+public sealed class WriteToFlowFieldRequiresComment : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.WriteToFlowFieldRequiresComment);

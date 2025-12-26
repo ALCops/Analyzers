@@ -5,7 +5,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 namespace ALCops.FormattingCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class CasingMismatchKeyword : DiagnosticAnalyzer
+public sealed class CasingMismatchKeyword : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

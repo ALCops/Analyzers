@@ -9,7 +9,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 namespace ALCops.ApplicationCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class NotBlankOnPrimaryKeyField : DiagnosticAnalyzer
+public sealed class NotBlankOnPrimaryKeyField : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

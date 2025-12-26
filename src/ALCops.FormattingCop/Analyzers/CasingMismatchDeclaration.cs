@@ -10,7 +10,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 namespace ALCops.FormattingCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class CasingMismatchDeclaration : DiagnosticAnalyzer
+public sealed class CasingMismatchDeclaration : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

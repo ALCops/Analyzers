@@ -9,7 +9,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 namespace ALCops.PlatformCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class SetRangeWithFilterOperators : DiagnosticAnalyzer
+public sealed class SetRangeWithFilterOperators : DiagnosticAnalyzer
 {
     private readonly Lazy<Regex> replacementFieldPatternLazy = new Lazy<Regex>((Func<Regex>)(() => new Regex(@"%\d+", RegexOptions.Compiled)));
 
