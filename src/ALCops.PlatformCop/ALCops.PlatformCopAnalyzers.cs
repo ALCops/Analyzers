@@ -85,7 +85,7 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ALCops: Set Editable property to false.
+        ///   Looks up a localized string similar to ALCops: Set Editable property to False.
         /// </summary>
         internal static string EditableFlowFieldCodeAction {
             get {
@@ -117,6 +117,42 @@ namespace ALCops.PlatformCop {
         internal static string EditableFlowFieldTitle {
             get {
                 return ResourceManager.GetString("EditableFlowFieldTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ALCops: Set Extensible property to platform default.
+        /// </summary>
+        internal static string ExtensiblePropertyExplicitlySetCodeAction {
+            get {
+                return ResourceManager.GetString("ExtensiblePropertyExplicitlySetCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Public objects should explicitly define their extensibility by setting the Extensible property to either true or false. Leaving this property unspecified relies on implicit defaults and can lead to avoidable compatibility and maintenance issues..
+        /// </summary>
+        internal static string ExtensiblePropertyExplicitlySetDescription {
+            get {
+                return ResourceManager.GetString("ExtensiblePropertyExplicitlySetDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The property Extensible should be explicitly set for public objects..
+        /// </summary>
+        internal static string ExtensiblePropertyExplicitlySetMessageFormat {
+            get {
+                return ResourceManager.GetString("ExtensiblePropertyExplicitlySetMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Explicitly set Extensible property on public objects.
+        /// </summary>
+        internal static string ExtensiblePropertyExplicitlySetTitle {
+            get {
+                return ResourceManager.GetString("ExtensiblePropertyExplicitlySetTitle", resourceCulture);
             }
         }
         

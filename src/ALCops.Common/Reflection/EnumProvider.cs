@@ -605,9 +605,12 @@ public static class EnumProvider
         public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
             CreateEnumDictionary<NavCodeAnalysis.PageTypeKind>();
 
+        private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _api =
+            new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.API)));
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _list =
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.List)));
 
+        public static NavCodeAnalysis.PageTypeKind API => _api.Value;
         public static NavCodeAnalysis.PageTypeKind List => _list.Value;
     }
 
@@ -672,6 +675,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.DrillDownPageId)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _editable =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Editable)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _extensible =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Extensible)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _lookupPageId =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.LookupPageId)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _notBlank =
@@ -689,6 +694,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind DataPerCompany => _dataPerCompany.Value;
         public static NavCodeAnalysis.PropertyKind DrillDownPageId => _drillDownPageId.Value;
         public static NavCodeAnalysis.PropertyKind Editable => _editable.Value;
+        public static NavCodeAnalysis.PropertyKind Extensible => _extensible.Value;
         public static NavCodeAnalysis.PropertyKind LookupPageId => _lookupPageId.Value;
         public static NavCodeAnalysis.PropertyKind NotBlank => _notBlank.Value;
         public static NavCodeAnalysis.PropertyKind SourceTableTemporary => _sourceTableTemporary.Value;

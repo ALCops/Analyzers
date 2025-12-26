@@ -25,6 +25,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.EditableFlowFieldDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.EditableFlowField));
 
+    public static readonly DiagnosticDescriptor ExtensiblePropertyExplicitlySet = new(
+        id: DiagnosticIds.ExtensiblePropertyExplicitlySet,
+        title: PlatformCopAnalyzers.ExtensiblePropertyExplicitlySetTitle,
+        messageFormat: PlatformCopAnalyzers.ExtensiblePropertyExplicitlySetMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: false,
+        description: PlatformCopAnalyzers.ExtensiblePropertyExplicitlySetDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ExtensiblePropertyExplicitlySet));
+
     public static readonly DiagnosticDescriptor SetRangeWithFilterOperators = new(
         id: DiagnosticIds.SetRangeWithFilterOperators,
         title: PlatformCopAnalyzers.SetRangeWithFilterOperatorsTitle,

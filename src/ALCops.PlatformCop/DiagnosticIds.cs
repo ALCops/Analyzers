@@ -6,4 +6,5 @@ public static class DiagnosticIds
     public static readonly string AutoIncrementInTemporaryTable = "PC0002";
     public static readonly string SetRangeWithFilterOperators = "PC0003";
     public static readonly string TableDataPerCompanyDeclaration = "PC0004";
+    public static readonly string ExtensiblePropertyExplicitlySet = "PC0005";
 }
