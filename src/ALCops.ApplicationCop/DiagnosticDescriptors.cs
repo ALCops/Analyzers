@@ -25,6 +25,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.GlobalLanguageImplementTranslationHelperDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.GlobalLanguageImplementTranslationHelper));
 
+    public static readonly DiagnosticDescriptor InstallAndUpgradeCodeunitsShouldBeInternal = new(
+        id: DiagnosticIds.InstallAndUpgradeCodeunitsShouldBeInternal,
+        title: ApplicationCopAnalyzers.InstallAndUpgradeCodeunitsShouldBeInternalTitle,
+        messageFormat: ApplicationCopAnalyzers.InstallAndUpgradeCodeunitsShouldBeInternalMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.InstallAndUpgradeCodeunitsShouldBeInternalDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.InstallAndUpgradeCodeunitsShouldBeInternal));
+
     public static readonly DiagnosticDescriptor LookupPageIdAndDrillDownPageId = new(
         id: DiagnosticIds.LookupPageIdAndDrillDownPageId,
         title: ApplicationCopAnalyzers.LookupPageIdAndDrillDownPageIdTitle,
