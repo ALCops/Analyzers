@@ -5,7 +5,7 @@ namespace ALCops.DocumentationCop;
 
 public static class DiagnosticDescriptors
 {
-    public static readonly DiagnosticDescriptor CommitRequiresCommen = new(
+    public static readonly DiagnosticDescriptor CommitRequiresComment = new(
         id: DiagnosticIds.CommitRequiresComment,
         title: DocumentationCopAnalyzers.CommitRequiresCommentTitle,
         messageFormat: DocumentationCopAnalyzers.CommitRequiresCommentMessageFormat,
@@ -14,6 +14,16 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: DocumentationCopAnalyzers.CommitRequiresCommentDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.CommitRequiresComment));
+
+    public static readonly DiagnosticDescriptor EmptyStatementRequiresComment = new(
+        id: DiagnosticIds.EmptyStatementRequiresComment,
+        title: DocumentationCopAnalyzers.EmptyStatementRequiresCommentTitle,
+        messageFormat: DocumentationCopAnalyzers.EmptyStatementRequiresCommentMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: DocumentationCopAnalyzers.EmptyStatementRequiresCommentDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.EmptyStatementRequiresComment));
 
     public static readonly DiagnosticDescriptor WriteToFlowFieldRequiresComment = new(
         id: DiagnosticIds.WriteToFlowFieldRequiresComment,

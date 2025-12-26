@@ -85,6 +85,33 @@ namespace ALCops.DocumentationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Empty statements (standalone ;) reduce readability and are commonly introduced by mistake. This rule flags empty statement expressions (excess semicolons) so they can be removed..
+        /// </summary>
+        internal static string EmptyStatementRequiresCommentDescription {
+            get {
+                return ResourceManager.GetString("EmptyStatementRequiresCommentDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Empty statements should be removed or have a leading or trailing comment explaining why it is intentionally empty..
+        /// </summary>
+        internal static string EmptyStatementRequiresCommentMessageFormat {
+            get {
+                return ResourceManager.GetString("EmptyStatementRequiresCommentMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Empty statements should be removed or documented.
+        /// </summary>
+        internal static string EmptyStatementRequiresCommentTitle {
+            get {
+                return ResourceManager.GetString("EmptyStatementRequiresCommentTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to FlowFields are calculated fields and are not intended to be written to. Writing to a FlowField, whether accidental or intentional, can lead to runtime errors..
         /// </summary>
         internal static string WriteToFlowFieldRequiresCommentDescription {

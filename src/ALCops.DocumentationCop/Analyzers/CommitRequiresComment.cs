@@ -11,7 +11,7 @@ namespace ALCops.DocumentationCop.Analyzers;
 public sealed class CommitRequiresComment : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-        ImmutableArray.Create(DiagnosticDescriptors.CommitRequiresCommen);
+        ImmutableArray.Create(DiagnosticDescriptors.CommitRequiresComment);
 
     public override void Initialize(AnalysisContext context) =>
         context.RegisterOperationAction(
@@ -33,7 +33,7 @@ public sealed class CommitRequiresComment : DiagnosticAnalyzer
 
         ctx.ReportDiagnostic(
             Diagnostic.Create(
-                DiagnosticDescriptors.CommitRequiresCommen,
+                DiagnosticDescriptors.CommitRequiresComment,
                 ctx.Operation.Syntax.GetLocation()));
     }
     private static bool HasLineComment(SyntaxTriviaList triviaList)
