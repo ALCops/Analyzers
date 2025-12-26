@@ -130,6 +130,42 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Set Access property to Internal.
+        /// </summary>
+        internal static string InstallAndUpgradeCodeunitsShouldBeInternalCodeAction {
+            get {
+                return ResourceManager.GetString("InstallAndUpgradeCodeunitsShouldBeInternalCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Install and Upgrade codeunits are intended for lifecycle execution only and are not designed to expose reusable APIs. Declaring them as Public unnecessarily broadens their surface area and increases coupling between extensions..
+        /// </summary>
+        internal static string InstallAndUpgradeCodeunitsShouldBeInternalDescription {
+            get {
+                return ResourceManager.GetString("InstallAndUpgradeCodeunitsShouldBeInternalDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set Access property to Internal for Install and Upgrade codeunits..
+        /// </summary>
+        internal static string InstallAndUpgradeCodeunitsShouldBeInternalMessageFormat {
+            get {
+                return ResourceManager.GetString("InstallAndUpgradeCodeunitsShouldBeInternalMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Install and Upgrade codeunits should have Access set to Internal.
+        /// </summary>
+        internal static string InstallAndUpgradeCodeunitsShouldBeInternalTitle {
+            get {
+                return ResourceManager.GetString("InstallAndUpgradeCodeunitsShouldBeInternalTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to When a table is used as the source for a list page, users expect to be able to drill down into records and open lookups in a consistent and predictable way. The DrillDownPageId and LookupPageId table properties define which pages are used for these interactions..
         /// </summary>
         internal static string LookupPageIdAndDrillDownPageIdDescription {

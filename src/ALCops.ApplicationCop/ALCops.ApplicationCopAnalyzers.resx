@@ -141,6 +141,18 @@
   <data name="GlobalLanguageImplementTranslationHelperCodeAction" xml:space="preserve">
     <value>ALCops: Refactor to use "Translation Helper" codeunit</value>
   </data>
+  <data name="InstallAndUpgradeCodeunitsShouldBeInternalTitle" xml:space="preserve">
+    <value>Install and Upgrade codeunits should have Access set to Internal</value>
+  </data>
+  <data name="InstallAndUpgradeCodeunitsShouldBeInternalMessageFormat" xml:space="preserve">
+    <value>Set Access property to Internal for Install and Upgrade codeunits.</value>
+  </data>
+  <data name="InstallAndUpgradeCodeunitsShouldBeInternalDescription" xml:space="preserve">
+    <value>Install and Upgrade codeunits are intended for lifecycle execution only and are not designed to expose reusable APIs. Declaring them as Public unnecessarily broadens their surface area and increases coupling between extensions.</value>
+  </data>
+  <data name="InstallAndUpgradeCodeunitsShouldBeInternalCodeAction" xml:space="preserve">
+    <value>ALCops: Set Access property to Internal</value>
+  </data>
   <data name="LookupPageIdAndDrillDownPageIdTitle" xml:space="preserve">
     <value>DrillDownPageId and LookupPageId property must be defined for tables used in list pages</value>
   </data>
