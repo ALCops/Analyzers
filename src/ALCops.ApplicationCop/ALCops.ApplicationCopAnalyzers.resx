@@ -198,4 +198,13 @@
   <data name="RunPageImplementPageManagementCodeAction" xml:space="preserve">
     <value>ALCops: Refactor to use "Page Management" codeunit</value>
   </data>
+  <data name="TableDataPerCompanyDeclarationTitle" xml:space="preserve">
+    <value>DataPerCompany must be explicitly set on table objects</value>
+  </data>
+  <data name="TableDataPerCompanyDeclarationMessageFormat" xml:space="preserve">
+    <value>The table object does not explicitly define the DataPerCompany property.</value>
+  </data>
+  <data name="TableDataPerCompanyDeclarationDescription" xml:space="preserve">
+    <value>In projects where company data isolation matters, table objects must explicitly define the DataPerCompany property. Relying on implicit defaults makes the data scope unclear and can lead to incorrect assumptions about whether data is shared across companies or stored per company.</value>
+  </data>
 </root>

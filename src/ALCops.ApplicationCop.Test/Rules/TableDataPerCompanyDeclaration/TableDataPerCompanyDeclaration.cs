@@ -1,6 +1,6 @@
 using RoslynTestKit;
 
-namespace ALCops.PlatformCop.Test
+namespace ALCops.ApplicationCop.Test
 {
     public class TableDataPerCompanyDeclaration : NavCodeAnalysisBase
     {

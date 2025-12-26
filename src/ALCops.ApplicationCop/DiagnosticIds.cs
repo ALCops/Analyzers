@@ -9,4 +9,5 @@ public static class DiagnosticIds
     public static readonly string GlobalLanguageImplementTranslationHelper = "AC0005";
     public static readonly string RunPageImplementPageManagement = "AC0006";
     public static readonly string InstallAndUpgradeCodeunitsShouldBeInternal = "AC0007";
+    public static readonly string TableDataPerCompanyDeclaration = "AC0008";
 }

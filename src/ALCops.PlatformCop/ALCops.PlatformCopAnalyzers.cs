@@ -191,32 +191,5 @@ namespace ALCops.PlatformCop {
                 return ResourceManager.GetString("SetRangeWithFilterOperatorsTitle", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to In projects where company data isolation matters, table objects must explicitly define the DataPerCompany property. Relying on implicit defaults makes the data scope unclear and can lead to incorrect assumptions about whether data is shared across companies or stored per company..
-        /// </summary>
-        internal static string TableDataPerCompanyDeclarationDescription {
-            get {
-                return ResourceManager.GetString("TableDataPerCompanyDeclarationDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The table object does not explicitly define the DataPerCompany property..
-        /// </summary>
-        internal static string TableDataPerCompanyDeclarationMessageFormat {
-            get {
-                return ResourceManager.GetString("TableDataPerCompanyDeclarationMessageFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DataPerCompany must be explicitly set on table objects.
-        /// </summary>
-        internal static string TableDataPerCompanyDeclarationTitle {
-            get {
-                return ResourceManager.GetString("TableDataPerCompanyDeclarationTitle", resourceCulture);
-            }
-        }
     }
 }

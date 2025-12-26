@@ -4,7 +4,7 @@ using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 
-namespace ALCops.PlatformCop.Analyzers;
+namespace ALCops.ApplicationCop.Analyzers;
 
 [DiagnosticAnalyzer]
 public sealed class TableDataPerCompanyDeclaration : DiagnosticAnalyzer
