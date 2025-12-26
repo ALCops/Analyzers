@@ -58,6 +58,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Every AL object should explicitly specify its Access property to make its intended accessibility clear. Explicitly setting Access prevents accidental exposure or over-restriction of objects and forces conscious design decisions about visibility..
+        /// </summary>
+        internal static string AccessPropertyExplicitlySetDescription {
+            get {
+                return ResourceManager.GetString("AccessPropertyExplicitlySetDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} &apos;{1}&apos; does not explicitly set the Access property..
+        /// </summary>
+        internal static string AccessPropertyExplicitlySetMessageFormat {
+            get {
+                return ResourceManager.GetString("AccessPropertyExplicitlySetMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Every object needs to specify a value for the Access property.
+        /// </summary>
+        internal static string AccessPropertyExplicitlySetTitle {
+            get {
+                return ResourceManager.GetString("AccessPropertyExplicitlySetTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to AutoIncrement relies on SQL Server to generate the next value when inserting records. Temporary tables are only in-memory in Business Central and are not created on SQL Server, so SQL Server cannot generate AutoIncrement values. This results in runtime failures when code inserts into the temporary table..
         /// </summary>
         internal static string AutoIncrementInTemporaryTableDescription {
@@ -175,7 +202,7 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Zero index access on 1-based List objects..
+        ///   Looks up a localized string similar to Zero index access on 1-based List objects.
         /// </summary>
         internal static string ListObjectsAreOneBasedTitle {
             get {

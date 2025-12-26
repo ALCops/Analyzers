@@ -669,6 +669,8 @@ public static class EnumProvider
         public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
             CreateEnumDictionary<NavCodeAnalysis.PropertyKind>();
 
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _access =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Access)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _applicationArea =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ApplicationArea)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _autoIncrement =
@@ -694,6 +696,7 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _tableRelation =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.TableRelation)));
 
+        public static NavCodeAnalysis.PropertyKind Access => _access.Value;
         public static NavCodeAnalysis.PropertyKind ApplicationArea => _applicationArea.Value;
         public static NavCodeAnalysis.PropertyKind AutoIncrement => _autoIncrement.Value;
         public static NavCodeAnalysis.PropertyKind DataClassification => _dataClassification.Value;

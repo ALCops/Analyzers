@@ -15,7 +15,7 @@ public sealed class ExtensiblePropertyExplicitlySet : DiagnosticAnalyzer
             DiagnosticDescriptors.ExtensiblePropertyExplicitlySet);
 
     public override VersionCompatibility SupportedVersions =>
-        VersionCompatibility.Fall2019OrGreater;
+        VersionProvider.VersionCompatibility.Fall2019OrGreater;
 
     public override void Initialize(AnalysisContext context) =>
         context.RegisterSymbolAction(

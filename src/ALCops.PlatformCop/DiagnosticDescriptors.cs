@@ -5,6 +5,16 @@ namespace ALCops.PlatformCop;
 
 public static class DiagnosticDescriptors
 {
+    public static readonly DiagnosticDescriptor AccessPropertyExplicitlySet = new(
+        id: DiagnosticIds.AccessPropertyExplicitlySet,
+        title: PlatformCopAnalyzers.AccessPropertyExplicitlySetTitle,
+        messageFormat: PlatformCopAnalyzers.AccessPropertyExplicitlySetMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: false,
+        description: PlatformCopAnalyzers.AccessPropertyExplicitlySetDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.AccessPropertyExplicitlySet));
+
     public static readonly DiagnosticDescriptor AutoIncrementInTemporaryTable = new(
         id: DiagnosticIds.AutoIncrementInTemporaryTable,
         title: PlatformCopAnalyzers.AutoIncrementInTemporaryTableTitle,

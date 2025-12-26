@@ -120,6 +120,15 @@
   <data name="AutoIncrementInTemporaryTableTitle" xml:space="preserve">
     <value>AutoIncrement fields are not supported in temporary tables</value>
   </data>
+  <data name="AccessPropertyExplicitlySetTitle" xml:space="preserve">
+    <value>Every object needs to specify a value for the Access property</value>
+  </data>
+  <data name="AccessPropertyExplicitlySetMessageFormat" xml:space="preserve">
+    <value>{0} '{1}' does not explicitly have the Access property set.</value>
+  </data>
+  <data name="AccessPropertyExplicitlySetDescription" xml:space="preserve">
+    <value>Every AL object should explicitly specify its Access property to make its intended accessibility clear. Explicitly setting Access prevents accidental exposure or over-restriction of objects and forces conscious design decisions about visibility.</value>
+  </data>
   <data name="AutoIncrementInTemporaryTableMessageFormat" xml:space="preserve">
     <value>AutoIncrement is used in a table with TableType = Temporary, which will cause a runtime error. Remove AutoIncrement or make the table non-temporary.</value>
   </data>
