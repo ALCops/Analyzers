@@ -69,6 +69,7 @@ foreach ($item in $marketplace) {
         packageVersion = $item.version
         isLatest       = ($item.version -eq $marketplaceLatest)
         isPreview      = ($item.version -eq $marketplacePreview)
+        isBeta         = $item.properties.key -contains 'Microsoft.VisualStudio.Code.PreRelease'   
         uri            = $VSIXPackage.source
         tfm            = $frameworkInfoTFM
     }
@@ -102,6 +103,7 @@ foreach ($item in $nupkgs) {
         packageVersion = $item.version
         isLatest       = ($item.version -eq $nugetLatest)
         isPreview      = ($item.version -eq $nugetPreview)
+        isBeta         = $item.version -match '-'
         uri            = $item.assetUri
         tfm            = $frameworkInfoTFM
     }

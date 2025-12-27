@@ -3,552 +3,700 @@
     "version": "17.0.30.32593",
     "packageType": "VSIX",
     "packageVersion": "17.0.1998613",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.30.30339",
     "packageType": "NuGet",
     "packageVersion": "17.0.30.30339-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.29.57863",
     "packageType": "NuGet",
     "packageVersion": "17.0.29.57863-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.29.44223",
     "packageType": "NuGet",
     "packageVersion": "17.0.29.44223-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.29.41701",
     "packageType": "NuGet",
     "packageVersion": "17.0.29.41701-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.28.34589",
     "packageType": "VSIX",
     "packageVersion": "17.0.1869541",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.28.27828",
     "packageType": "VSIX",
     "packageVersion": "17.0.1862780",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.28.26016",
     "packageType": "VSIX",
     "packageVersion": "17.0.1860968",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.28.6483",
     "packageType": "NuGet",
     "packageVersion": "17.0.28.6483-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.27.56185",
     "packageType": "VSIX",
     "packageVersion": "17.0.1825603",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.27.45647",
     "packageType": "VSIX",
     "packageVersion": "17.0.1815065",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.27.27275",
     "packageType": "NuGet",
     "packageVersion": "17.0.27.27275-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "17.0.26.46427",
     "packageType": "VSIX",
     "packageVersion": "17.0.1750311",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.2.28.57946",
     "packageType": "NuGet",
     "packageVersion": "16.2.28.57946",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": false
   },
   {
     "version": "16.2.28.34590",
     "packageType": "VSIX",
     "packageVersion": "16.2.1869542",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": false
   },
   {
     "version": "16.1.28.25773",
     "packageType": "VSIX",
     "packageVersion": "16.1.1860725",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": false
   },
   {
     "version": "16.0.28.13140",
     "packageType": "NuGet",
     "packageVersion": "16.0.28.13140",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": false
   },
   {
     "version": "16.0.27.57058",
     "packageType": "VSIX",
     "packageVersion": "16.0.1826476",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": false
   },
   {
     "version": "16.0.27.23631",
     "packageType": "NuGet",
     "packageVersion": "16.0.27.23631-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.0.26.39708",
     "packageType": "VSIX",
     "packageVersion": "16.0.1743592",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.0.25.28482",
     "packageType": "VSIX",
     "packageVersion": "16.0.1666832",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.0.24.41895",
     "packageType": "NuGet",
     "packageVersion": "16.0.24.41895-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.0.23.34358",
     "packageType": "NuGet",
     "packageVersion": "16.0.23.34358-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.0.23.21839",
     "packageType": "NuGet",
     "packageVersion": "16.0.23.21839-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.0.23.16427",
     "packageType": "VSIX",
     "packageVersion": "16.0.1523709",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.0.22.52049",
     "packageType": "VSIX",
     "packageVersion": "16.0.1493797",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.0.22.52049",
     "packageType": "NuGet",
     "packageVersion": "16.0.22.52049-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.0.22.35424",
     "packageType": "NuGet",
     "packageVersion": "16.0.22.35424-beta",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.0.22.22232",
     "packageType": "VSIX",
     "packageVersion": "16.0.1463980",
-    "targetFramework": "net8.0"
+    "targetFramework": "net8.0",
+    "beta": true
   },
   {
     "version": "16.0.21.57573",
     "packageType": "VSIX",
     "packageVersion": "16.0.1433787",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "16.0.21.53261",
     "packageType": "NuGet",
     "packageVersion": "16.0.21.53261-beta",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "16.0.21.42129",
     "packageType": "VSIX",
     "packageVersion": "16.0.1418343",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "16.0.21.41228",
     "packageType": "VSIX",
     "packageVersion": "16.0.1417442",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "16.0.21.8158",
     "packageType": "VSIX",
     "packageVersion": "16.0.1384372",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.2.24.57679",
     "packageType": "VSIX",
     "packageVersion": "15.2.1630495",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "15.0.24.31795",
     "packageType": "NuGet",
     "packageVersion": "15.0.24.31795-beta",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.23.21838",
     "packageType": "NuGet",
     "packageVersion": "15.0.23.21838-beta",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.21.57627",
     "packageType": "VSIX",
     "packageVersion": "15.0.1433841",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "15.0.21.34351",
     "packageType": "VSIX",
     "packageVersion": "15.0.1410565",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "15.0.20.29733",
     "packageType": "NuGet",
     "packageVersion": "15.0.20.29733-beta",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.20.27582",
     "packageType": "VSIX",
     "packageVersion": "15.0.1338262",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.20.8354",
     "packageType": "NuGet",
     "packageVersion": "15.0.20.8354-beta",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.19.45509",
     "packageType": "VSIX",
     "packageVersion": "15.0.1290655",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.19.30243",
     "packageType": "VSIX",
     "packageVersion": "15.0.1275389",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.19.7809",
     "packageType": "VSIX",
     "packageVersion": "15.0.1252955",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.19.6384",
     "packageType": "VSIX",
     "packageVersion": "15.0.1251530",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.18.19684",
     "packageType": "NuGet",
     "packageVersion": "15.0.18.19684-beta",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.17.63735",
     "packageType": "VSIX",
     "packageVersion": "15.0.1177813",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.17.63223",
     "packageType": "NuGet",
     "packageVersion": "15.0.17.63223-beta",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.17.48346",
     "packageType": "VSIX",
     "packageVersion": "15.0.1162424",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.17.43318",
     "packageType": "NuGet",
     "packageVersion": "15.0.17.43318-beta",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.17.29212",
     "packageType": "VSIX",
     "packageVersion": "15.0.1143290",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.17.22595",
     "packageType": "NuGet",
     "packageVersion": "15.0.17.22595-beta",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "15.0.17.15865",
     "packageType": "VSIX",
     "packageVersion": "15.0.1129943",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.3.20.17127",
     "packageType": "VSIX",
     "packageVersion": "14.3.1327807",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "14.2.19.4832",
     "packageType": "VSIX",
     "packageVersion": "14.2.1249978",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "14.1.18.1238",
     "packageType": "VSIX",
     "packageVersion": "14.1.1180850",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "14.1.17.65504",
     "packageType": "VSIX",
     "packageVersion": "14.1.1179582",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "14.0.17.47112",
     "packageType": "VSIX",
     "packageVersion": "14.0.1161190",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "14.0.16.65517",
     "packageType": "VSIX",
     "packageVersion": "14.0.1114061",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.16.60148",
     "packageType": "VSIX",
     "packageVersion": "14.0.1108692",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.16.22338",
     "packageType": "VSIX",
     "packageVersion": "14.0.1070882",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.16.6582",
     "packageType": "VSIX",
     "packageVersion": "14.0.1055126",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.16.5281",
     "packageType": "VSIX",
     "packageVersion": "14.0.1053825",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.15.61795",
     "packageType": "VSIX",
     "packageVersion": "14.0.1044805",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.15.54698",
     "packageType": "VSIX",
     "packageVersion": "14.0.1037708",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.15.27930",
     "packageType": "VSIX",
     "packageVersion": "14.0.1010940",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.15.19051",
     "packageType": "VSIX",
     "packageVersion": "14.0.1002061",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.15.3709",
     "packageType": "VSIX",
     "packageVersion": "14.0.986719",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.15.277",
     "packageType": "VSIX",
     "packageVersion": "14.0.983287",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.14.45804",
     "packageType": "VSIX",
     "packageVersion": "14.0.963280",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.14.38716",
     "packageType": "VSIX",
     "packageVersion": "14.0.956192",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "14.0.14.33810",
     "packageType": "VSIX",
     "packageVersion": "14.0.951286",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "13.1.16.16524",
     "packageType": "VSIX",
     "packageVersion": "13.1.1065068",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "13.0.15.44608",
     "packageType": "VSIX",
     "packageVersion": "13.0.1027618",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "13.0.15.24481",
     "packageType": "VSIX",
     "packageVersion": "13.0.1007491",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "13.0.14.54431",
     "packageType": "VSIX",
     "packageVersion": "13.0.971907",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "13.0.14.47012",
     "packageType": "VSIX",
     "packageVersion": "13.0.964488",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "13.0.14.19678",
     "packageType": "VSIX",
     "packageVersion": "13.0.937154",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "13.0.14.4367",
     "packageType": "VSIX",
     "packageVersion": "13.0.921843",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "13.0.13.51688",
     "packageType": "VSIX",
     "packageVersion": "13.0.903630",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "13.0.13.45434",
     "packageType": "VSIX",
     "packageVersion": "13.0.897376",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "13.0.13.35965",
     "packageType": "VSIX",
     "packageVersion": "13.0.887907",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "13.0.13.26889",
     "packageType": "VSIX",
     "packageVersion": "13.0.878831",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "13.0.13.12755",
     "packageType": "VSIX",
     "packageVersion": "13.0.864697",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": true
   },
   {
     "version": "12.7.14.47371",
     "packageType": "VSIX",
     "packageVersion": "12.7.964847",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "12.6.14.18950",
     "packageType": "VSIX",
     "packageVersion": "12.6.936426",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "12.5.13.63033",
     "packageType": "VSIX",
     "packageVersion": "12.5.914975",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "12.3.13.48960",
     "packageType": "VSIX",
     "packageVersion": "12.3.900902",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "12.1.13.35966",
     "packageType": "VSIX",
     "packageVersion": "12.1.887908",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "12.1.13.31069",
     "packageType": "VSIX",
     "packageVersion": "12.1.883011",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
   },
   {
     "version": "12.0.13.24028",
     "packageType": "VSIX",
     "packageVersion": "12.0.875970",
-    "targetFramework": "netstandard2.0"
+    "targetFramework": "netstandard2.0",
+    "beta": false
+  },
+  {
+    "version": "12.0.13.6137",
+    "packageType": "VSIX",
+    "packageVersion": "12.0.858079",
+    "targetFramework": "netstandard2.0",
+    "beta": true
+  },
+  {
+    "version": "12.0.12.63390",
+    "packageType": "VSIX",
+    "packageVersion": "12.0.849798",
+    "targetFramework": "netstandard2.0",
+    "beta": true
+  },
+  {
+    "version": "12.0.12.61317",
+    "packageType": "VSIX",
+    "packageVersion": "12.0.847725",
+    "targetFramework": "netstandard2.0",
+    "beta": true
+  },
+  {
+    "version": "12.0.12.55789",
+    "packageType": "VSIX",
+    "packageVersion": "12.0.842197",
+    "targetFramework": "netstandard2.0",
+    "beta": true
+  },
+  {
+    "version": "12.0.12.50196",
+    "packageType": "VSIX",
+    "packageVersion": "12.0.836604",
+    "targetFramework": "netstandard2.0",
+    "beta": true
+  },
+  {
+    "version": "12.0.12.46966",
+    "packageType": "VSIX",
+    "packageVersion": "12.0.833374",
+    "targetFramework": "netstandard2.0",
+    "beta": true
+  },
+  {
+    "version": "12.0.12.14294",
+    "packageType": "VSIX",
+    "packageVersion": "12.0.800702",
+    "targetFramework": "netstandard2.0",
+    "beta": true
+  },
+  {
+    "version": "12.0.11.58921",
+    "packageType": "VSIX",
+    "packageVersion": "12.0.779795",
+    "targetFramework": "netstandard2.0",
+    "beta": true
   }
 ]

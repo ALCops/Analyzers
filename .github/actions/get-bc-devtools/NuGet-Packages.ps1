@@ -87,6 +87,32 @@ if (-not $versions -or $versions.Count -eq 0) {
     }
 }
 
+# Find the highest non-beta (stable) version
+$stableVersions = $versions | Where-Object { $_ -notmatch '-' }
+$highestStable = $null
+
+if ($stableVersions) {
+    $highestStable = ($stableVersions | 
+        Sort-Object { [version]($_ -split '-')[0] } -Descending | 
+        Select-Object -First 1)
+}
+
+# Filter out beta versions that are older than the highest stable release
+if ($highestStable -and $IncludePrerelease) {
+    $highestStableVersion = [version]($highestStable -split '-')[0]
+    
+    $versions = $versions | Where-Object {
+        $currentBetaVersion = [version]($_ -split '-')[0]
+        
+        # If this is a beta version, only keep it if it's newer than the highest stable
+        if ($_ -match '-') {
+            return $currentBetaVersion -ge $highestStableVersion
+        }
+        # Keep all stable versions
+        return $true
+    }
+}
+
 $results =
 foreach ($v in $versions) {
     [pscustomobject]@{

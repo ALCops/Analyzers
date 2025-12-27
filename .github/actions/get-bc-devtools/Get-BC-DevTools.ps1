@@ -144,20 +144,6 @@ function Get-AssemblyInfo {
                     break
                 }
             }
-            
-            # Final fallback: try to infer from runtime version
-            if ($targetFramework -eq "unknown") {
-                $runtimeVersion = $assembly.ImageRuntimeVersion
-                if ($runtimeVersion -match '^v4\.') {
-                    $targetFramework = "net472" # Common .NET Framework target
-                }
-                elseif ($runtimeVersion -match '^v2\.') {
-                    $targetFramework = "net20"
-                }
-                else {
-                    $targetFramework = "unknown-$runtimeVersion"
-                }
-            }
         }
         
         return [PSCustomObject]@{
