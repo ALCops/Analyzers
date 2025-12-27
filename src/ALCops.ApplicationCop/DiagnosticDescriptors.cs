@@ -5,6 +5,16 @@ namespace ALCops.ApplicationCop;
 
 public static class DiagnosticDescriptors
 {
+    public static readonly DiagnosticDescriptor CaptionRequired = new(
+        id: DiagnosticIds.CaptionRequired,
+        title: ApplicationCopAnalyzers.CaptionRequiredTitle,
+        messageFormat: ApplicationCopAnalyzers.CaptionRequiredMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.CaptionRequiredDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.CaptionRequired));
+
     public static readonly DiagnosticDescriptor ConfirmImplementConfirmManagement = new(
         id: DiagnosticIds.ConfirmImplementConfirmManagement,
         title: ApplicationCopAnalyzers.ConfirmImplementConfirmManagementTitle,

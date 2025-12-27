@@ -12,4 +12,5 @@ public static class DiagnosticIds
     public static readonly string TableDataPerCompanyDeclaration = "AC0008";
     public static readonly string PermissionSetCaptionLength = "AC0009";
     public static readonly string PermissionSetCoverage = "AC0010";
+    public static readonly string CaptionRequired = "AC0011";
 }

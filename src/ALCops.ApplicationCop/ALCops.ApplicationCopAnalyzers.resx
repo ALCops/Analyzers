@@ -117,6 +117,15 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="CaptionRequiredTitle" xml:space="preserve">
+    <value>Captions must be defined on user-facing objects and controls</value>
+  </data>
+  <data name="CaptionRequiredMessageFormat" xml:space="preserve">
+    <value>A user-facing object or control is missing a Caption</value>
+  </data>
+  <data name="CaptionRequiredDescription" xml:space="preserve">
+    <value>All user-facing application objects and controls must explicitly define a Caption to ensure a consistent, accessible, and localizable user interface.</value>
+  </data>
   <data name="ConfirmImplementConfirmManagementTitle" xml:space="preserve">
     <value>Confirm() must be implemented through the "Confirm Management" codeunit</value>
   </data>

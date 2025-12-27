@@ -58,6 +58,33 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to All user-facing application objects and controls must explicitly define a Caption to ensure a consistent, accessible, and localizable user interface..
+        /// </summary>
+        internal static string CaptionRequiredDescription {
+            get {
+                return ResourceManager.GetString("CaptionRequiredDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A user-facing object or control is missing a Caption.
+        /// </summary>
+        internal static string CaptionRequiredMessageFormat {
+            get {
+                return ResourceManager.GetString("CaptionRequiredMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Captions must be defined on user-facing objects and controls.
+        /// </summary>
+        internal static string CaptionRequiredTitle {
+            get {
+                return ResourceManager.GetString("CaptionRequiredTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Direct calls to Confirm() bypass the safeguards and features provided by the Confirm Management codeunit in the System Application. Using Confirm Management ensures automatic validation of IsGuiAllowed(), prevents runtime failures in non-GUI contexts, and allows explicit control over the default response (true or false)..
         /// </summary>
         internal static string ConfirmImplementConfirmManagementDescription {
