@@ -67,7 +67,7 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A user-facing object or control is missing a Caption.
+        ///   Looks up a localized string similar to A user-facing object or control is missing a Caption..
         /// </summary>
         internal static string CaptionRequiredMessageFormat {
             get {
@@ -148,7 +148,7 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to GlobalLanguage() must be implemented through the &quot;Translation Helper&quot; codeunit..
+        ///   Looks up a localized string similar to GlobalLanguage() must be implemented through the &quot;Translation Helper&quot; codeunit.
         /// </summary>
         internal static string GlobalLanguageImplementTranslationHelperTitle {
             get {

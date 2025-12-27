@@ -121,7 +121,7 @@
     <value>Captions must be defined on user-facing objects and controls</value>
   </data>
   <data name="CaptionRequiredMessageFormat" xml:space="preserve">
-    <value>A user-facing object or control is missing a Caption</value>
+    <value>A user-facing object or control is missing a Caption.</value>
   </data>
   <data name="CaptionRequiredDescription" xml:space="preserve">
     <value>All user-facing application objects and controls must explicitly define a Caption to ensure a consistent, accessible, and localizable user interface.</value>
@@ -139,7 +139,7 @@
     <value>ALCops: Refactor to use "Confirm Management" codeunit</value>
   </data>
   <data name="GlobalLanguageImplementTranslationHelperTitle" xml:space="preserve">
-    <value>GlobalLanguage() must be implemented through the "Translation Helper" codeunit.</value>
+    <value>GlobalLanguage() must be implemented through the "Translation Helper" codeunit</value>
   </data>
   <data name="GlobalLanguageImplementTranslationHelperMessageFormat" xml:space="preserve">
     <value>GlobalLanguage() must be implemented through the "Translation Helper" codeunit from the Base Application.</value>
