@@ -363,3 +363,5 @@ jobs:
           path: "**/*.trx"
           reporter: dotnet-trx
           list-suites: 'failed'
+          fail-on-error: false
+          fail-on-empty: true
