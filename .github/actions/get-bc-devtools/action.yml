@@ -75,6 +75,7 @@ runs:
                 packageType = $_.packagetype
                 packageVersion = $_.packageVersion
                 targetFramework = $_.tfm
+                beta = $_.isBeta
                 source = $_.uri
             }
         }
@@ -95,12 +96,17 @@ runs:
         $targetFrameworkWidth = ($tableData.targetFramework | Measure-Object -Property Length -Maximum).Maximum
         $targetFrameworkWidth = [Math]::Max($targetFrameworkWidth, 3) # Minimum width for "TFM" header
 
+        # Beta column values (we'll display 'X' for true)
+        $betaValues = $tableData | ForEach-Object { if ($_.beta -eq $true) { 'X' } else { '' } }
+        $betaWidth = ($betaValues | Measure-Object -Property Length -Maximum).Maximum
+        $betaWidth = [Math]::Max($betaWidth, 4) # Minimum width for "Beta" header
+
         # For source, use a reasonable max width to avoid extremely long lines
         $sourceWidth = 60
 
         # Create markdown table with proper alignment
-        $header = "| {0,-$versionWidth} | {1,-$statusWidth} | {2,-$packageTypeWidth} | {3,-$packageVersionWidth} | {4,-$targetFrameworkWidth} | {5,-$sourceWidth} |" -f "Version", "Status", "Type", "Package Version", "TFM", "Source"
-        $separator = "|{0}|{1}|{2}|{3}|{4}|{5}|" -f ("-" * ($versionWidth + 2)), ("-" * ($statusWidth + 2)), ("-" * ($packageTypeWidth + 2)), ("-" * ($packageVersionWidth + 2)), ("-" * ($targetFrameworkWidth + 2)), ("-" * ($sourceWidth + 2))
+        $header = "| {0,-$versionWidth} | {1,-$statusWidth} | {2,-$packageTypeWidth} | {3,-$packageVersionWidth} | {4,-$targetFrameworkWidth} | {5,-$betaWidth} | {6,-$sourceWidth} |" -f "Version", "Status", "Type", "Package Version", "TFM", "Beta", "Source"
+        $separator = "|{0}|{1}|{2}|{3}|{4}|{5}|{6}|" -f ("-" * ($versionWidth + 2)), ("-" * ($statusWidth + 2)), ("-" * ($packageTypeWidth + 2)), ("-" * ($packageVersionWidth + 2)), ("-" * ($targetFrameworkWidth + 2)), ("-" * ($betaWidth + 2)), ("-" * ($sourceWidth + 2))
 
         Write-Host ""
         Write-Host $header
@@ -113,6 +119,7 @@ runs:
                 $item.source 
             }
             
-            $row = "| {0,-$versionWidth} | {1,-$statusWidth} | {2,-$packageTypeWidth} | {3,-$packageVersionWidth} | {4,-$targetFrameworkWidth} | {5,-$sourceWidth} |" -f $item.version, $item.status, $item.packagetype, $item.packageVersion, $item.targetFramework, $truncatedSource
+            $betaChar = if ($item.beta -eq $true) { 'X' } else { '' }
+            $row = "| {0,-$versionWidth} | {1,-$statusWidth} | {2,-$packageTypeWidth} | {3,-$packageVersionWidth} | {4,-$targetFrameworkWidth} | {5,-$betaWidth} | {6,-$sourceWidth} |" -f $item.version, $item.status, $item.packagetype, $item.packageVersion, $item.targetFramework, $betaChar, $truncatedSource
             Write-Host $row
         }
