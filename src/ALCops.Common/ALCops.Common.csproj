@@ -18,6 +18,11 @@
             <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.CodeAnalysis.dll</HintPath>
             <Private>False</Private>
         </Reference>
+        <Reference Include="Microsoft.Dynamics.Nav.Analyzers.Common">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.Analyzers.Common.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
     </ItemGroup>
 
     <!-- Legacy support for netstandard2.1 -->
