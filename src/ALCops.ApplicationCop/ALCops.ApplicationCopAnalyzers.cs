@@ -301,6 +301,33 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Every application object in an extension must be explicitly granted permissions through at least one permission set or permission set extension, defined in AL or XML..
+        /// </summary>
+        internal static string PermissionSetCoverageDescription {
+            get {
+                return ResourceManager.GetString("PermissionSetCoverageDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The application object {0} &apos;{1}&apos; is not covered by any PermissionSet in this extension..
+        /// </summary>
+        internal static string PermissionSetCoverageMessageFormat {
+            get {
+                return ResourceManager.GetString("PermissionSetCoverageMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to All application objects must be covered by a PermissionSet.
+        /// </summary>
+        internal static string PermissionSetCoverageTitle {
+            get {
+                return ResourceManager.GetString("PermissionSetCoverageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Refactor to use &quot;Page Management&quot; codeunit.
         /// </summary>
         internal static string RunPageImplementPageManagementCodeAction {

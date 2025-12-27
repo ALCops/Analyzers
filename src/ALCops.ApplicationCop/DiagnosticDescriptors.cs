@@ -75,6 +75,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.PermissionSetCaptionLengthDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.NotBlankRequiredOnPrimaryKeyField));
 
+    public static readonly DiagnosticDescriptor PermissionSetCoverage = new(
+        id: DiagnosticIds.PermissionSetCoverage,
+        title: ApplicationCopAnalyzers.PermissionSetCoverageTitle,
+        messageFormat: ApplicationCopAnalyzers.PermissionSetCoverageMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.PermissionSetCoverageDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.NotBlankRequiredOnPrimaryKeyField));
+
     public static readonly DiagnosticDescriptor RunPageImplementPageManagement = new(
         id: DiagnosticIds.RunPageImplementPageManagement,
         title: ApplicationCopAnalyzers.RunPageImplementPageManagementTitle,

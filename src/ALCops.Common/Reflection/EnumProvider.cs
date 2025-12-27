@@ -687,6 +687,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Editable)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _extensible =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Extensible)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _inherentPermissions =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.InherentPermissions)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _lookupPageId =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.LookupPageId)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _notBlank =
@@ -707,11 +709,45 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind DrillDownPageId => _drillDownPageId.Value;
         public static NavCodeAnalysis.PropertyKind Editable => _editable.Value;
         public static NavCodeAnalysis.PropertyKind Extensible => _extensible.Value;
+        public static NavCodeAnalysis.PropertyKind InherentPermissions => _inherentPermissions.Value;
         public static NavCodeAnalysis.PropertyKind LookupPageId => _lookupPageId.Value;
         public static NavCodeAnalysis.PropertyKind NotBlank => _notBlank.Value;
         public static NavCodeAnalysis.PropertyKind SourceTableTemporary => _sourceTableTemporary.Value;
         public static NavCodeAnalysis.PropertyKind Subtype => _subtype.Value;
         public static NavCodeAnalysis.PropertyKind TableRelation => _tableRelation.Value;
+    }
+
+    /// <summary>
+    /// PermissionObjectKind enum values
+    /// </summary>
+    public static class PermissionObjectKind
+    {
+        public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
+            CreateEnumDictionary<NavCodeAnalysis.PermissionObjectKind>();
+
+        private static readonly Lazy<NavCodeAnalysis.PermissionObjectKind> _codeunit =
+            new(() => ParseEnum<NavCodeAnalysis.PermissionObjectKind>(nameof(NavCodeAnalysis.PermissionObjectKind.Codeunit)));
+        private static readonly Lazy<NavCodeAnalysis.PermissionObjectKind> _page =
+            new(() => ParseEnum<NavCodeAnalysis.PermissionObjectKind>(nameof(NavCodeAnalysis.PermissionObjectKind.Page)));
+        private static readonly Lazy<NavCodeAnalysis.PermissionObjectKind> _query =
+            new(() => ParseEnum<NavCodeAnalysis.PermissionObjectKind>(nameof(NavCodeAnalysis.PermissionObjectKind.Query)));
+        private static readonly Lazy<NavCodeAnalysis.PermissionObjectKind> _report =
+            new(() => ParseEnum<NavCodeAnalysis.PermissionObjectKind>(nameof(NavCodeAnalysis.PermissionObjectKind.Report)));
+        private static readonly Lazy<NavCodeAnalysis.PermissionObjectKind> _table =
+            new(() => ParseEnum<NavCodeAnalysis.PermissionObjectKind>(nameof(NavCodeAnalysis.PermissionObjectKind.Table)));
+        private static readonly Lazy<NavCodeAnalysis.PermissionObjectKind> _tableData =
+            new(() => ParseEnum<NavCodeAnalysis.PermissionObjectKind>(nameof(NavCodeAnalysis.PermissionObjectKind.TableData)));
+
+        private static readonly Lazy<NavCodeAnalysis.PermissionObjectKind> _xmlport =
+            new(() => ParseEnum<NavCodeAnalysis.PermissionObjectKind>(nameof(NavCodeAnalysis.PermissionObjectKind.Xmlport)));
+
+        public static NavCodeAnalysis.PermissionObjectKind Codeunit => _codeunit.Value;
+        public static NavCodeAnalysis.PermissionObjectKind Page => _page.Value;
+        public static NavCodeAnalysis.PermissionObjectKind Query => _query.Value;
+        public static NavCodeAnalysis.PermissionObjectKind Report => _report.Value;
+        public static NavCodeAnalysis.PermissionObjectKind Table => _table.Value;
+        public static NavCodeAnalysis.PermissionObjectKind TableData => _tableData.Value;
+        public static NavCodeAnalysis.PermissionObjectKind Xmlport => _xmlport.Value;
     }
 
     /// <summary>
@@ -823,11 +859,15 @@ public static class EnumProvider
 
         private static readonly Lazy<NavCodeAnalysis.TableTypeKind> _cds =
             new(() => ParseEnum<NavCodeAnalysis.TableTypeKind>(nameof(NavCodeAnalysis.TableTypeKind.CDS)));
+        private static readonly Lazy<NavCodeAnalysis.TableTypeKind> _normal =
+            new(() => ParseEnum<NavCodeAnalysis.TableTypeKind>(nameof(NavCodeAnalysis.TableTypeKind.Normal)));
+
         private static readonly Lazy<NavCodeAnalysis.TableTypeKind> _temporary =
             new(() => ParseEnum<NavCodeAnalysis.TableTypeKind>(nameof(NavCodeAnalysis.TableTypeKind.Temporary)));
 
 
         public static NavCodeAnalysis.TableTypeKind CDS => _cds.Value;
+        public static NavCodeAnalysis.TableTypeKind Normal => _normal.Value;
         public static NavCodeAnalysis.TableTypeKind Temporary => _temporary.Value;
     }
 
@@ -963,6 +1003,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.LocalVariable)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _method =
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Method)));
+        private static readonly Lazy<NavCodeAnalysis.SymbolKind> _module =
+            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Module)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _page =
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Page)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _pageExtension =
@@ -1000,6 +1042,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SymbolKind Interface => _interface.Value;
         public static NavCodeAnalysis.SymbolKind LocalVariable => _localVariable.Value;
         public static NavCodeAnalysis.SymbolKind Method => _method.Value;
+        public static NavCodeAnalysis.SymbolKind Module => _module.Value;
         public static NavCodeAnalysis.SymbolKind Page => _page.Value;
         public static NavCodeAnalysis.SymbolKind PageExtension => _pageExtension.Value;
         public static NavCodeAnalysis.SymbolKind PermissionSet => _permissionSet.Value;

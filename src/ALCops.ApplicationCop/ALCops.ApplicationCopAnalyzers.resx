@@ -198,6 +198,15 @@
   <data name="PermissionSetCaptionLengthCodeAction" xml:space="preserve">
     <value>ALCops: Set MaxLength property to 30</value>
   </data>
+  <data name="PermissionSetCoverageTitle" xml:space="preserve">
+    <value>All application objects must be covered by a PermissionSet</value>
+  </data>
+  <data name="PermissionSetCoverageMessageFormat" xml:space="preserve">
+    <value>The application object {0} '{1}' is not covered by any PermissionSet in this extension.</value>
+  </data>
+  <data name="PermissionSetCoverageDescription" xml:space="preserve">
+    <value>Every application object in an extension must be explicitly granted permissions through at least one permission set or permission set extension, defined in AL or XML.</value>
+  </data>
   <data name="RunPageImplementPageManagementTitle" xml:space="preserve">
     <value>Use the "Page Management" codeunit instead invoking Page.Run directly</value>
   </data>
