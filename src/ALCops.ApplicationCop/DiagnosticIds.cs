@@ -10,4 +10,5 @@ public static class DiagnosticIds
     public static readonly string RunPageImplementPageManagement = "AC0006";
     public static readonly string InstallAndUpgradeCodeunitsShouldBeInternal = "AC0007";
     public static readonly string TableDataPerCompanyDeclaration = "AC0008";
+    public static readonly string PermissionSetCaptionLength = "AC0009";
 }

@@ -675,6 +675,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ApplicationArea)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _autoIncrement =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.AutoIncrement)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _caption =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Caption)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _dataClassification =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.DataClassification)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _dataPerCompany =
@@ -699,6 +701,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind Access => _access.Value;
         public static NavCodeAnalysis.PropertyKind ApplicationArea => _applicationArea.Value;
         public static NavCodeAnalysis.PropertyKind AutoIncrement => _autoIncrement.Value;
+        public static NavCodeAnalysis.PropertyKind Caption => _caption.Value;
         public static NavCodeAnalysis.PropertyKind DataClassification => _dataClassification.Value;
         public static NavCodeAnalysis.PropertyKind DataPerCompany => _dataPerCompany.Value;
         public static NavCodeAnalysis.PropertyKind DrillDownPageId => _drillDownPageId.Value;
@@ -1044,6 +1047,10 @@ public static class EnumProvider
 #endif
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _controlAddInObject =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ControlAddInObject)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _commaSeparatedIdentifierEqualsLiteralList =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CommaSeparatedIdentifierEqualsLiteralList)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _commaToken =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CommaToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _dataType =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.DataType)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _colonColonToken =
@@ -1227,6 +1234,8 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind ConditionalExpression => _conditionalExpression.Value;
         public static NavCodeAnalysis.SyntaxKind ContinueKeyword => _continueKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind ControlAddInObject => _controlAddInObject.Value;
+        public static NavCodeAnalysis.SyntaxKind CommaSeparatedIdentifierEqualsLiteralList => _commaSeparatedIdentifierEqualsLiteralList.Value;
+        public static NavCodeAnalysis.SyntaxKind CommaToken => _commaToken.Value;
         public static NavCodeAnalysis.SyntaxKind DataType => _dataType.Value;
         public static NavCodeAnalysis.SyntaxKind ColonToken => _colonToken.Value;
         public static NavCodeAnalysis.SyntaxKind ColonColonToken => _colonColonToken.Value;

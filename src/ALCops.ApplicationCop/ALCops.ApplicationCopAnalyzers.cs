@@ -265,6 +265,42 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Set MaxLength property to 30.
+        /// </summary>
+        internal static string PermissionSetCaptionLengthCodeAction {
+            get {
+                return ResourceManager.GetString("PermissionSetCaptionLengthCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PermissionSet captions should remain within a defined maximum length to avoid issues in translated captions. When no MaxLength or Locked subproperty is specified, translations can exceed the intended limit and cause inconsistent or truncated UI labels..
+        /// </summary>
+        internal static string PermissionSetCaptionLengthDescription {
+            get {
+                return ResourceManager.GetString("PermissionSetCaptionLengthDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Caption of permissionset objects should not exceed {0} characters. Use MaxLength={0} or Locked=true to ensure there are no translations that exceed this limit..
+        /// </summary>
+        internal static string PermissionSetCaptionLengthMessageFormat {
+            get {
+                return ResourceManager.GetString("PermissionSetCaptionLengthMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Caption of permissionset objects should not exceed the maximum length.
+        /// </summary>
+        internal static string PermissionSetCaptionLengthTitle {
+            get {
+                return ResourceManager.GetString("PermissionSetCaptionLengthTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Refactor to use &quot;Page Management&quot; codeunit.
         /// </summary>
         internal static string RunPageImplementPageManagementCodeAction {
