@@ -67,6 +67,6 @@ public sealed class AccessPropertyExplicitlySet : DiagnosticAnalyzer
         => EnumOrInterfaceAccessSupportedCache.GetOrAdd(compilation, static c =>
         {
             var manifest = ManifestHelper.GetManifest(c);
-            return manifest is null || manifest.Runtime >= RuntimeVersion.Spring2021;
+            return manifest is not null && manifest.Runtime >= RuntimeVersion.Spring2021;
         });
 }
