@@ -24,6 +24,13 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("TableField")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["TableField"],
+                testCase,
+                "13.0",
+                "ToolTips on fields in a table object are not supported in versions lower than 13.0."
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -36,6 +43,13 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("TableField")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["TableField"],
+                testCase,
+                "13.0",
+                "ToolTips on fields in a table object are not supported in versions lower than 13.0."
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
