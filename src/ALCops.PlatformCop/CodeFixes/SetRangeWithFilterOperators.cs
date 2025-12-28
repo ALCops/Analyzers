@@ -46,7 +46,7 @@ public sealed class SetRangeWithFilterOperatorsCodeFix : CodeFixProvider
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
     {
         SyntaxNode node = syntaxRoot.FindNode(span);
-        ctx.RegisterCodeFix(CreateCodeAction(node, document, true), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(node, document, generateFixAll: true), ctx.Diagnostics[0]);
     }
 
     private static SetRangeWithFilterOperatorsCodeAction CreateCodeAction(SyntaxNode node, Document document, bool generateFixAll)
@@ -60,10 +60,12 @@ public sealed class SetRangeWithFilterOperatorsCodeFix : CodeFixProvider
 
     private static async Task<Document> ReplaceSetRangeWithSetFilter(Document document, SyntaxNode node, CancellationToken cancellationToken)
     {
-        if (node is not InvocationExpressionSyntax invocationExpression)
+        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
+
+        if (node is not InvocationExpressionSyntax invocation)
             return document;
 
-        if (invocationExpression.Expression is not MemberAccessExpressionSyntax memberAccess)
+        if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
             return document;
 
         var newMemberAccess = SyntaxFactory.MemberAccessExpression(
@@ -71,9 +73,13 @@ public sealed class SetRangeWithFilterOperatorsCodeFix : CodeFixProvider
             SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
             SyntaxFactory.IdentifierName("SetFilter"));
 
-        var newInvocation = SyntaxFactory.InvocationExpression(newMemberAccess, invocationExpression.ArgumentList);
+        var newInvocation = SyntaxFactory.InvocationExpression(newMemberAccess, invocation.ArgumentList);
 
-        var newRoot = (await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false)).ReplaceNode(invocationExpression, newInvocation);
+        var root = await syntaxRootTask.ConfigureAwait(false);
+        if (root is null)
+            return document;
+
+        var newRoot = root.ReplaceNode(invocation, newInvocation);
         return document.WithSyntaxRoot(newRoot);
     }
 }

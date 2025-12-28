@@ -64,6 +64,8 @@ public sealed class ApplicationAreaRedundancyCodeFixProvider : CodeFixProvider
 
     private static async Task<Document> RemoveRedundantApplicationArea(Document document, SyntaxNode node, CancellationToken cancellationToken)
     {
+        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
+
         if (node.Parent is not PropertyListSyntax originalPropertyList)
             return document;
 
@@ -74,7 +76,7 @@ public sealed class ApplicationAreaRedundancyCodeFixProvider : CodeFixProvider
         var newProperties = originalPropertyList.Properties.Remove(ApplicationAreaProperty);
         var newPropertyList = originalPropertyList.WithProperties(newProperties);
 
-        var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+        var root = await syntaxRootTask.ConfigureAwait(false);
         if (root is null)
             return document;
 

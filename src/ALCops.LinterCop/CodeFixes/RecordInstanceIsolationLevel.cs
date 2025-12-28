@@ -50,7 +50,7 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
     {
         SyntaxNode node = syntaxRoot.FindNode(span);
-        ctx.RegisterCodeFix(CreateCodeAction(node, document, true), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(node, document, generateFixAll: true), ctx.Diagnostics[0]);
     }
 
     private static RecordInstanceIsolationLevelCodeAction CreateCodeAction(SyntaxNode node, Document document, bool generateFixAll)
@@ -64,6 +64,8 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
 
     private static async Task<Document> ReplaceLockTableWithReadIsolation(Document document, SyntaxNode node, CancellationToken cancellationToken)
     {
+        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
+
         if (node is not InvocationExpressionSyntax invocationExpression)
             return document;
 
@@ -85,7 +87,11 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
 
         var newInvocation = SyntaxFactory.InvocationExpression(newMemberAccess, argumentList);
 
-        var newRoot = (await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false)).ReplaceNode(invocationExpression, newInvocation);
+        var root = await syntaxRootTask.ConfigureAwait(false);
+        if (root is null)
+            return document;
+
+        var newRoot = root.ReplaceNode(invocationExpression, newInvocation);
         return document.WithSyntaxRoot(newRoot);
     }
 }

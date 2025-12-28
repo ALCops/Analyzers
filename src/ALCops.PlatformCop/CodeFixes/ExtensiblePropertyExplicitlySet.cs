@@ -48,7 +48,7 @@ public sealed class ExtensiblePropertyExplicitlySetCodeFix : CodeFixProvider
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
     {
         SyntaxNode node = syntaxRoot.FindNode(span);
-        ctx.RegisterCodeFix(CreateCodeAction(node, document, true), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(node, document, generateFixAll: true), ctx.Diagnostics[0]);
     }
 
     private static ExtensiblePropertyExplicitlySetCodeAction CreateCodeAction(SyntaxNode node, Document document, bool generateFixAll)
@@ -62,6 +62,8 @@ public sealed class ExtensiblePropertyExplicitlySetCodeFix : CodeFixProvider
 
     private static async Task<Document> SetExtensiblePropertyToPlatformDefault(Document document, SyntaxNode node, CancellationToken cancellationToken)
     {
+        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
+
         var objectNode = node switch
         {
             TableSyntax or PageSyntax or ReportSyntax => node,
@@ -85,7 +87,7 @@ public sealed class ExtensiblePropertyExplicitlySetCodeFix : CodeFixProvider
         if (newObjectNode is null)
             return document;
 
-        var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+        var root = await syntaxRootTask.ConfigureAwait(false);
         if (root is null)
             return document;
 

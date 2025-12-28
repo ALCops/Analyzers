@@ -56,7 +56,7 @@ public sealed class InstallAndUpgradeCodeunitsShouldBeInternalCodeFixProvider : 
         if (codeunitSyntax is null)
             return;
 
-        ctx.RegisterCodeFix(CreateCodeAction(codeunitSyntax, document, true), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(codeunitSyntax, document, generateFixAll: true), ctx.Diagnostics[0]);
     }
 
     private static InstallAndUpgradeCodeunitsShouldBeInternalCodeAction CreateCodeAction(CodeunitSyntax codeunitSyntax, Document document, bool generateFixAll)
@@ -70,9 +70,7 @@ public sealed class InstallAndUpgradeCodeunitsShouldBeInternalCodeFixProvider : 
 
     private static async Task<Document> SetAccessPropertyToInternal(Document document, CodeunitSyntax codeunitSyntax, CancellationToken cancellationToken)
     {
-        var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-        if (root is null)
-            return document;
+        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
 
         var accessProperty = CreateAccessInternalProperty();
 
@@ -101,6 +99,10 @@ public sealed class InstallAndUpgradeCodeunitsShouldBeInternalCodeFixProvider : 
             // Add the Access property (at the beginning)
             newPropertyList = propertyList.WithProperties(properties.Insert(0, accessProperty));
         }
+
+        var root = await syntaxRootTask.ConfigureAwait(false);
+        if (root is null)
+            return document;
 
         var newRoot = root.ReplaceNode(propertyList, newPropertyList);
         return document.WithSyntaxRoot(newRoot);

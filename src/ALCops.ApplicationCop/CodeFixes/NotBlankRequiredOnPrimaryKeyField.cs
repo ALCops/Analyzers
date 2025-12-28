@@ -46,7 +46,7 @@ public sealed class NotBlankRequiredOnPrimaryKeyFieldCodeFixProvider : CodeFixPr
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
     {
         SyntaxNode node = syntaxRoot.FindNode(span);
-        ctx.RegisterCodeFix(CreateCodeAction(node, document, false), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(node, document, generateFixAll: false), ctx.Diagnostics[0]);
     }
 
     private static NotBlankRequiredOnPrimaryKeyFieldCodeAction CreateCodeAction(SyntaxNode node, Document document,
@@ -61,6 +61,8 @@ public sealed class NotBlankRequiredOnPrimaryKeyFieldCodeFixProvider : CodeFixPr
 
     private static async Task<Document> SetNonBlankPropertyForField(Document document, SyntaxNode node, CancellationToken cancellationToken)
     {
+        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
+
         if (node.Parent is not FieldSyntax originalFieldNode)
             return document;
 
@@ -76,7 +78,11 @@ public sealed class NotBlankRequiredOnPrimaryKeyFieldCodeFixProvider : CodeFixPr
             newFieldNode = originalFieldNode.WithPropertyList(newPropertyList);
         }
 
-        var newRoot = (await document.GetSyntaxRootAsync(cancellationToken)).ReplaceNode(originalFieldNode, newFieldNode);
+        var root = await syntaxRootTask.ConfigureAwait(false);
+        if (root is null)
+            return document;
+
+        var newRoot = root.ReplaceNode(originalFieldNode, newFieldNode);
         return document.WithSyntaxRoot(newRoot);
     }
 

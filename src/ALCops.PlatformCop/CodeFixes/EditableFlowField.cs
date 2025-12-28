@@ -49,7 +49,7 @@ public sealed class EditableFlowFieldCodeFix : CodeFixProvider
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
     {
         SyntaxNode node = syntaxRoot.FindNode(span);
-        ctx.RegisterCodeFix(CreateCodeAction(node, document, true), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(node, document, generateFixAll: true), ctx.Diagnostics[0]);
     }
 
     private static EditableFlowFieldCodeAction CreateCodeAction(SyntaxNode node, Document document, bool generateFixAll)
@@ -63,6 +63,8 @@ public sealed class EditableFlowFieldCodeFix : CodeFixProvider
 
     private static async Task<Document> SetEditablePropertyForField(Document document, SyntaxNode node, CancellationToken cancellationToken)
     {
+        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
+
         if (node.Parent is not FieldSyntax originalFieldNode)
             return document;
 
@@ -78,7 +80,11 @@ public sealed class EditableFlowFieldCodeFix : CodeFixProvider
             newFieldNode = originalFieldNode.WithPropertyList(newPropertyList);
         }
 
-        var newRoot = (await document.GetSyntaxRootAsync(cancellationToken)).ReplaceNode(originalFieldNode, newFieldNode);
+        var root = await syntaxRootTask.ConfigureAwait(false);
+        if (root is null)
+            return document;
+
+        var newRoot = root.ReplaceNode(originalFieldNode, newFieldNode);
         return document.WithSyntaxRoot(newRoot);
     }
 

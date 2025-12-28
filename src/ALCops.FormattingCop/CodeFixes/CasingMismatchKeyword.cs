@@ -93,7 +93,7 @@ public sealed class CasingMismatchCodeFix : CodeFixProvider
         if (properties is null)
             return;
 
-        ctx.RegisterCodeFix(CreateCodeAction(span, document, properties, true), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(span, document, properties, generateFixAll: true), ctx.Diagnostics[0]);
     }
 
     private static CasingMismatchCodeAction CreateCodeAction(TextSpan span, Document document, CodeFixProperties properties, bool generateFixAll)

@@ -105,7 +105,7 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
         if (properties is null)
             return;
 
-        ctx.RegisterCodeFix(CreateCodeAction(node, document, properties, true), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(node, document, properties, generateFixAll: true), ctx.Diagnostics[0]);
     }
 
     private static ObjectIdInDeclarationCodeAction CreateCodeAction(SyntaxNode node, Document document, CodeFixProperties properties, bool generateFixAll)
@@ -119,77 +119,49 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
 
     private static async Task<Document> ReplaceObjectIdWithObjectName(Document document, SyntaxNode node, CodeFixProperties properties, CancellationToken cancellationToken)
     {
+        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
+
+        SyntaxNode? newNode;
         switch (node)
         {
-            case LiteralAttributeArgumentSyntax literalAttributeArgument:
+            case LiteralAttributeArgumentSyntax:
                 {
-                    var NewOptionAccessAttributeArgument =
-                        SyntaxFactory.OptionAccessAttributeArgument(
-                            CreateOptionAccessExpression(properties));
-
-                    var root =
-                        await document
-                            .GetSyntaxRootAsync(cancellationToken)
-                            .ConfigureAwait(false);
-
-                    return document.WithSyntaxRoot(
-                        root.ReplaceNode(
-                            literalAttributeArgument,
-                            NewOptionAccessAttributeArgument));
+                    newNode = SyntaxFactory.OptionAccessAttributeArgument(
+                        CreateOptionAccessExpression(properties));
+                    break;
                 }
 
-            case LiteralExpressionSyntax literalExpression:
+            case LiteralExpressionSyntax:
                 {
-                    var newOptionAccessExpression = CreateOptionAccessExpression(properties);
-
-                    var root =
-                        await document
-                            .GetSyntaxRootAsync(cancellationToken)
-                            .ConfigureAwait(false);
-
-                    return document.WithSyntaxRoot(
-                        root.ReplaceNode(
-                            literalExpression,
-                            newOptionAccessExpression));
+                    newNode = CreateOptionAccessExpression(properties);
+                    break;
                 }
 
-            case ObjectNameOrIdSyntax objectNameOrId:
+            case ObjectNameOrIdSyntax:
                 {
-                    var newObjectNameOrIdSyntax =
-                        SyntaxFactory.ObjectNameOrId(
-                            CreateIdentifierName(properties));
-
-                    var root =
-                        await document
-                            .GetSyntaxRootAsync(cancellationToken)
-                            .ConfigureAwait(false);
-
-                    return document.WithSyntaxRoot(
-                        root.ReplaceNode(
-                            objectNameOrId,
-                            newObjectNameOrIdSyntax));
+                    newNode = SyntaxFactory.ObjectNameOrId(
+                        CreateIdentifierName(properties));
+                    break;
                 }
-            case ObjectReferencePropertyValueSyntax objectReferencePropertyValue:
+
+            case ObjectReferencePropertyValueSyntax:
                 {
-                    var NewObjectReferencePropertyValue =
-                    SyntaxFactory.ObjectReferencePropertyValue(
+                    newNode = SyntaxFactory.ObjectReferencePropertyValue(
                         SyntaxFactory.ObjectNameOrId(
                             CreateIdentifierName(properties)));
-
-                    var root =
-                        await document
-                            .GetSyntaxRootAsync(cancellationToken)
-                            .ConfigureAwait(false);
-
-                    return document.WithSyntaxRoot(
-                        root.ReplaceNode(
-                            objectReferencePropertyValue,
-                            NewObjectReferencePropertyValue));
+                    break;
                 }
 
             default:
                 return document;
         }
+
+        if (newNode is null)
+            return document;
+
+        var root = await syntaxRootTask.ConfigureAwait(false);
+
+        return document.WithSyntaxRoot(root.ReplaceNode(node, newNode));
     }
 
     private static OptionAccessExpressionSyntax CreateOptionAccessExpression(CodeFixProperties properties)

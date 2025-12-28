@@ -49,7 +49,7 @@ public sealed class PermissionSetCaptionLengthCodeFixProvider : CodeFixProvider
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
     {
         SyntaxNode node = syntaxRoot.FindNode(span);
-        ctx.RegisterCodeFix(CreateCodeAction(node, document, true), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(node, document, generateFixAll: true), ctx.Diagnostics[0]);
     }
 
     private static PermissionSetCaptionLengthCodeAction CreateCodeAction(SyntaxNode node, Document document, bool generateFixAll)
@@ -63,6 +63,8 @@ public sealed class PermissionSetCaptionLengthCodeFixProvider : CodeFixProvider
 
     private static async Task<Document> SetMaxLangthProperty(Document document, SyntaxNode node, CancellationToken cancellationToken)
     {
+        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
+
         var originalLabel = node.DescendantNodes().OfType<LabelSyntax>().FirstOrDefault();
         if (originalLabel is null)
             return document;
@@ -78,7 +80,7 @@ public sealed class PermissionSetCaptionLengthCodeFixProvider : CodeFixProvider
         }
 
         // Replace the label node (smallest replacement = best formatting stability)
-        var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+        var root = await syntaxRootTask.ConfigureAwait(false);
         if (root is null)
             return document;
 

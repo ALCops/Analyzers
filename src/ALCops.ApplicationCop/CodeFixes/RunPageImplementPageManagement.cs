@@ -53,7 +53,7 @@ public sealed class RunPageImplementPageManagementCodeFixProvider : CodeFixProvi
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
     {
         SyntaxNode node = syntaxRoot.FindNode(span);
-        ctx.RegisterCodeFix(CreateCodeAction(node, document, false), ctx.Diagnostics[0]);
+        ctx.RegisterCodeFix(CreateCodeAction(node, document, generateFixAll: false), ctx.Diagnostics[0]);
     }
 
     private static RunPageImplementPageManagementCodeAction CreateCodeAction(SyntaxNode node, Document document,
@@ -68,6 +68,8 @@ public sealed class RunPageImplementPageManagementCodeFixProvider : CodeFixProvi
 
     private static async Task<Document> ImplementPageManagement(Document document, SyntaxNode node, CancellationToken cancellationToken)
     {
+        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
+
         var originalInvocation = node.FirstAncestorOrSelf<InvocationExpressionSyntax>(); // Page.Run(...);
         if (originalInvocation is null)
             return document;
@@ -91,7 +93,7 @@ public sealed class RunPageImplementPageManagementCodeFixProvider : CodeFixProvi
         var methodName = GetMethodNameForPageManagement(originalInvocation, runModel);
 
         // Track nodes across edits so we always operate on nodes from the current tree
-        var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+        var root = await syntaxRootTask.ConfigureAwait(false);
         if (root is null)
             return document;
 
