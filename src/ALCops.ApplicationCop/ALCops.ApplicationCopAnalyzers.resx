@@ -261,4 +261,40 @@
   <data name="TableDataPerCompanyDeclarationDescription" xml:space="preserve">
     <value>In projects where company data isolation matters, table objects must explicitly define the DataPerCompany property. Relying on implicit defaults makes the data scope unclear and can lead to incorrect assumptions about whether data is shared across companies or stored per company.</value>
   </data>
+  <data name="ToolTipDoNotUseLineBreaksTitle" xml:space="preserve">
+    <value>Do not use line breaks in ToolTip</value>
+  </data>
+  <data name="ToolTipDoNotUseLineBreaksMessageFormat" xml:space="preserve">
+    <value>ToolTip text must not contain line breaks.</value>
+  </data>
+  <data name="ToolTipDoNotUseLineBreaksDescription" xml:space="preserve">
+    <value>The Business Central user assistance model does not support formatting in ToolTips. Line breaks are not rendered and make the ToolTip harder to read. Keep ToolTips as a single, continuous sentence.</value>
+  </data>
+  <data name="ToolTipMaximumLengthTitle" xml:space="preserve">
+    <value>ToolTip should not exceed 200 characters</value>
+  </data>
+  <data name="ToolTipMaximumLengthMessageFormat" xml:space="preserve">
+    <value>ToolTip exceeds the recommended maximum length of 200 characters.</value>
+  </data>
+  <data name="ToolTipMaximumLengthDescription" xml:space="preserve">
+    <value>The user assistance model recommends keeping ToolTips short (about 200 characters including spaces) so users can scan them quickly. The UI can render longer ToolTips, but longer text reduces scannability and consistency.</value>
+  </data>
+  <data name="ToolTipMustEndWithDotTitle" xml:space="preserve">
+    <value>ToolTip must end with a dot</value>
+  </data>
+  <data name="ToolTipMustEndWithDotMessageFormat" xml:space="preserve">
+    <value>ToolTip must end with a dot.</value>
+  </data>
+  <data name="ToolTipMustEndWithDotDescription" xml:space="preserve">
+    <value>End ToolTips with a dot to keep phrasing consistent and clearly separated from surrounding UI text.</value>
+  </data>
+  <data name="ToolTipShouldStartWithSpecifiesTitle" xml:space="preserve">
+    <value>ToolTip should start with 'Specifies'</value>
+  </data>
+  <data name="ToolTipShouldStartWithSpecifiesMessageFormat" xml:space="preserve">
+    <value>ToolTip should start with the verb 'Specifies'.</value>
+  </data>
+  <data name="ToolTipShouldStartWithSpecifiesDescription" xml:space="preserve">
+    <value>For field ToolTips, the Business Central user assistance model expects the text to start with the verb 'Specifies' to describe what the field represents.</value>
+  </data>
 </root>

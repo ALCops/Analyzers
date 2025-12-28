@@ -780,6 +780,9 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Subtype)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _tableRelation =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.TableRelation)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _toolTip =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ToolTip)));
+
 
         public static NavCodeAnalysis.PropertyKind Access => _access.Value;
         public static NavCodeAnalysis.PropertyKind Assignable => _assignable.Value;
@@ -802,6 +805,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind SourceTableTemporary => _sourceTableTemporary.Value;
         public static NavCodeAnalysis.PropertyKind Subtype => _subtype.Value;
         public static NavCodeAnalysis.PropertyKind TableRelation => _tableRelation.Value;
+        public static NavCodeAnalysis.PropertyKind ToolTip => _toolTip.Value;
     }
 
     /// <summary>
@@ -1244,6 +1248,10 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.InvocationExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _key =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Key)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageAction =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageAction)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageField =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageField)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _labelDataType =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LabelDataType)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _lengthDataType =
@@ -1411,6 +1419,8 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind Int32SignedLiteralValue => _int32SignedLiteralValue.Value;
         public static NavCodeAnalysis.SyntaxKind InvocationExpression => _invocationExpression.Value;
         public static NavCodeAnalysis.SyntaxKind Key => _key.Value;
+        public static NavCodeAnalysis.SyntaxKind PageAction => _pageAction.Value;
+        public static NavCodeAnalysis.SyntaxKind PageField => _pageField.Value;
         public static NavCodeAnalysis.SyntaxKind LabelDataType => _labelDataType.Value;
         public static NavCodeAnalysis.SyntaxKind LengthDataType => _lengthDataType.Value;
         public static NavCodeAnalysis.SyntaxKind LineCommentTrivia => _lineCommentTrivia.Value;

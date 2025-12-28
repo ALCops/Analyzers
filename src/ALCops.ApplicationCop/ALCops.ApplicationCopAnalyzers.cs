@@ -488,5 +488,113 @@ namespace ALCops.ApplicationCop {
                 return ResourceManager.GetString("TableDataPerCompanyDeclarationTitle", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Business Central user assistance model does not support formatting in ToolTips. Line breaks are not rendered and make the ToolTip harder to read. Keep ToolTips as a single, continuous sentence..
+        /// </summary>
+        internal static string ToolTipDoNotUseLineBreaksDescription {
+            get {
+                return ResourceManager.GetString("ToolTipDoNotUseLineBreaksDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ToolTip text must not contain line breaks..
+        /// </summary>
+        internal static string ToolTipDoNotUseLineBreaksMessageFormat {
+            get {
+                return ResourceManager.GetString("ToolTipDoNotUseLineBreaksMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Do not use line breaks in ToolTip.
+        /// </summary>
+        internal static string ToolTipDoNotUseLineBreaksTitle {
+            get {
+                return ResourceManager.GetString("ToolTipDoNotUseLineBreaksTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The user assistance model recommends keeping ToolTips short (about 200 characters including spaces) so users can scan them quickly. The UI can render longer ToolTips, but longer text reduces scannability and consistency..
+        /// </summary>
+        internal static string ToolTipMaximumLengthDescription {
+            get {
+                return ResourceManager.GetString("ToolTipMaximumLengthDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ToolTip exceeds the recommended maximum length of 200 characters..
+        /// </summary>
+        internal static string ToolTipMaximumLengthMessageFormat {
+            get {
+                return ResourceManager.GetString("ToolTipMaximumLengthMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ToolTip should not exceed 200 characters.
+        /// </summary>
+        internal static string ToolTipMaximumLengthTitle {
+            get {
+                return ResourceManager.GetString("ToolTipMaximumLengthTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to End ToolTips with a dot to keep phrasing consistent and clearly separated from surrounding UI text..
+        /// </summary>
+        internal static string ToolTipMustEndWithDotDescription {
+            get {
+                return ResourceManager.GetString("ToolTipMustEndWithDotDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ToolTip must end with a dot..
+        /// </summary>
+        internal static string ToolTipMustEndWithDotMessageFormat {
+            get {
+                return ResourceManager.GetString("ToolTipMustEndWithDotMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ToolTip must end with a dot.
+        /// </summary>
+        internal static string ToolTipMustEndWithDotTitle {
+            get {
+                return ResourceManager.GetString("ToolTipMustEndWithDotTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to For field ToolTips, the Business Central user assistance model expects the text to start with the verb &apos;Specifies&apos; to describe what the field represents..
+        /// </summary>
+        internal static string ToolTipShouldStartWithSpecifiesDescription {
+            get {
+                return ResourceManager.GetString("ToolTipShouldStartWithSpecifiesDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ToolTip should start with the verb &apos;Specifies&apos;..
+        /// </summary>
+        internal static string ToolTipShouldStartWithSpecifiesMessageFormat {
+            get {
+                return ResourceManager.GetString("ToolTipShouldStartWithSpecifiesMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ToolTip should start with &apos;Specifies&apos;.
+        /// </summary>
+        internal static string ToolTipShouldStartWithSpecifiesTitle {
+            get {
+                return ResourceManager.GetString("ToolTipShouldStartWithSpecifiesTitle", resourceCulture);
+            }
+        }
     }
 }

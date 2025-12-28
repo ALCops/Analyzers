@@ -31,6 +31,14 @@ public static class AnalysisContextExtensions
         return false;
     }
 
+    public static bool IsDiagnosticEnabled(this SyntaxNodeAnalysisContext ctx, DiagnosticDescriptor descriptor)
+    {
+        if (ctx.SemanticModel.Compilation.Options.SpecificDiagnosticOptions.TryGetValue(descriptor.Id, out var report))
+            return report != ReportDiagnostic.Suppress;
+
+        return true;
+    }
+
     public static bool IsObsolete(this SyntaxNodeAnalysisContext context)
     {
         if (context.ContainingSymbol.IsObsolete())
