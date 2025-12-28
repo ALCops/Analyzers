@@ -25,6 +25,16 @@ public static class DiagnosticDescriptors
         description: DocumentationCopAnalyzers.EmptyStatementRequiresCommentDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.EmptyStatementRequiresComment));
 
+    public static readonly DiagnosticDescriptor PublicProcedureRequiresDocumentation = new(
+        id: DiagnosticIds.PublicProcedureRequiresDocumentation,
+        title: DocumentationCopAnalyzers.PublicProcedureRequiresDocumentationTitle,
+        messageFormat: DocumentationCopAnalyzers.PublicProcedureRequiresDocumentationMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: DocumentationCopAnalyzers.PublicProcedureRequiresDocumentationDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PublicProcedureRequiresDocumentation));
+
     public static readonly DiagnosticDescriptor WriteToFlowFieldRequiresComment = new(
         id: DiagnosticIds.WriteToFlowFieldRequiresComment,
         title: DocumentationCopAnalyzers.WriteToFlowFieldRequiresCommentTitle,

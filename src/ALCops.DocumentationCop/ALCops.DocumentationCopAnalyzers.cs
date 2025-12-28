@@ -112,6 +112,33 @@ namespace ALCops.DocumentationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Public procedures are part of the exposed API and must be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension..
+        /// </summary>
+        internal static string PublicProcedureRequiresDocumentationDescription {
+            get {
+                return ResourceManager.GetString("PublicProcedureRequiresDocumentationDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Public procedure &apos;{0}&apos; must have XML documentation (or be restricted to local or internal scope)..
+        /// </summary>
+        internal static string PublicProcedureRequiresDocumentationMessageFormat {
+            get {
+                return ResourceManager.GetString("PublicProcedureRequiresDocumentationMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Public procedures must have XML documentation.
+        /// </summary>
+        internal static string PublicProcedureRequiresDocumentationTitle {
+            get {
+                return ResourceManager.GetString("PublicProcedureRequiresDocumentationTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to FlowFields are calculated fields and are not intended to be written to. Writing to a FlowField, whether accidental or intentional, can lead to runtime errors..
         /// </summary>
         internal static string WriteToFlowFieldRequiresCommentDescription {

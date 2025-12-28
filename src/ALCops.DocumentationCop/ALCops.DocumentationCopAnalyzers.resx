@@ -135,6 +135,15 @@
   <data name="EmptyStatementRequiresCommentDescription" xml:space="preserve">
     <value>Empty statements (standalone ;) reduce readability and are commonly introduced by mistake. This rule flags empty statement expressions (excess semicolons) so they can be removed.</value>
   </data>
+  <data name="PublicProcedureRequiresDocumentationTitle" xml:space="preserve">
+    <value>Public procedures must have XML documentation</value>
+  </data>
+  <data name="PublicProcedureRequiresDocumentationMessageFormat" xml:space="preserve">
+    <value>Public procedure '{0}' must have XML documentation (or be restricted to local or internal scope).</value>
+  </data>
+  <data name="PublicProcedureRequiresDocumentationDescription" xml:space="preserve">
+    <value>Public procedures are part of the exposed API and must be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
+  </data>
   <data name="WriteToFlowFieldRequiresCommentTitle" xml:space="preserve">
     <value>Writing to FlowFields is not common and requires an explanatory comment</value>
   </data>
