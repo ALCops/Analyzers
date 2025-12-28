@@ -60,7 +60,7 @@ public sealed class ToolTipPunctuation : DiagnosticAnalyzer
 
     private static void AnalyzeLineBreaks(SyntaxNodeAnalysisContext ctx, string tooltipText, PropertyValueSyntax tooltipProperty)
     {
-        if (tooltipText.Contains("\\"))
+        if (tooltipText.Contains('\\'))
         {
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.ToolTipDoNotUseLineBreaks,
