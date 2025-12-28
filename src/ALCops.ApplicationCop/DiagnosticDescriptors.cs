@@ -25,6 +25,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.ConfirmImplementConfirmManagementDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ConfirmImplementConfirmManagement));
 
+    public static readonly DiagnosticDescriptor FieldGroupsRequired = new(
+        id: DiagnosticIds.FieldGroupsRequired,
+        title: ApplicationCopAnalyzers.FieldGroupsRequiredTitle,
+        messageFormat: ApplicationCopAnalyzers.FieldGroupsRequiredMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: ApplicationCopAnalyzers.FieldGroupsRequiredDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.FieldGroupsRequired));
+
     public static readonly DiagnosticDescriptor GlobalLanguageImplementTranslationHelper = new(
         id: DiagnosticIds.GlobalLanguageImplementTranslationHelper,
         title: ApplicationCopAnalyzers.GlobalLanguageImplementTranslationHelperTitle,

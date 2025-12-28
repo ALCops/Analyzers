@@ -121,6 +121,33 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Table objects must explicitly define both the DropDown and Brick fieldgroups..
+        /// </summary>
+        internal static string FieldGroupsRequiredDescription {
+            get {
+                return ResourceManager.GetString("FieldGroupsRequiredDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Table &apos;{0}&apos; is missing the required &apos;{1}&apos; fieldgroup..
+        /// </summary>
+        internal static string FieldGroupsRequiredMessageFormat {
+            get {
+                return ResourceManager.GetString("FieldGroupsRequiredMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DropDown and Brick fieldgroups must be defined.
+        /// </summary>
+        internal static string FieldGroupsRequiredTitle {
+            get {
+                return ResourceManager.GetString("FieldGroupsRequiredTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Refactor to use &quot;Translation Helper&quot; codeunit.
         /// </summary>
         internal static string GlobalLanguageImplementTranslationHelperCodeAction {

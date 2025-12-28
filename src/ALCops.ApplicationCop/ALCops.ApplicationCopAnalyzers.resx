@@ -138,6 +138,15 @@
   <data name="ConfirmImplementConfirmManagementDescriptionCodeAction" xml:space="preserve">
     <value>ALCops: Refactor to use "Confirm Management" codeunit</value>
   </data>
+  <data name="FieldGroupsRequiredTitle" xml:space="preserve">
+    <value>DropDown and Brick fieldgroups must be defined</value>
+  </data>
+  <data name="FieldGroupsRequiredMessageFormat" xml:space="preserve">
+    <value>Table '{0}' is missing the required '{1}' fieldgroup.</value>
+  </data>
+  <data name="FieldGroupsRequiredDescription" xml:space="preserve">
+    <value>Table objects must explicitly define both the DropDown and Brick fieldgroups.</value>
+  </data>
   <data name="GlobalLanguageImplementTranslationHelperTitle" xml:space="preserve">
     <value>GlobalLanguage() must be implemented through the "Translation Helper" codeunit</value>
   </data>

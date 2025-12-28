@@ -14,4 +14,5 @@ public static class DiagnosticIds
     public static readonly string PermissionSetCoverage = "AC0010";
     public static readonly string CaptionRequired = "AC0011";
     public static readonly string IntegrationEventInInternalCodeunit = "AC0012";
+    public static readonly string FieldGroupsRequired = "AC0013";
 }
