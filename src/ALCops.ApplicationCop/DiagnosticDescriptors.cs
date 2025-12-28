@@ -45,6 +45,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.InstallAndUpgradeCodeunitsShouldBeInternalDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.InstallAndUpgradeCodeunitsShouldBeInternal));
 
+    public static readonly DiagnosticDescriptor IntegrationEventInInternalCodeunit = new(
+        id: DiagnosticIds.IntegrationEventInInternalCodeunit,
+        title: ApplicationCopAnalyzers.IntegrationEventInInternalCodeunitTitle,
+        messageFormat: ApplicationCopAnalyzers.IntegrationEventInInternalCodeunitMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.IntegrationEventInInternalCodeunitDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.IntegrationEventInInternalCodeunit));
+
     public static readonly DiagnosticDescriptor LookupPageIdAndDrillDownPageId = new(
         id: DiagnosticIds.LookupPageIdAndDrillDownPageId,
         title: ApplicationCopAnalyzers.LookupPageIdAndDrillDownPageIdTitle,

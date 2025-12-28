@@ -193,6 +193,51 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Refactor from IntegrationEvent to InternalEvent.
+        /// </summary>
+        internal static string IntegrationEventInInternalCodeunitChangeToInternalEventCodeAction {
+            get {
+                return ResourceManager.GetString("IntegrationEventInInternalCodeunitChangeToInternalEventCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Integration events are designed to be consumed by extensions and therefore must be accessible outside the defining app. When an IntegrationEvent is declared in a codeunit with Access = Internal, the event cannot be subscribed to by extensions, rendering it ineffective..
+        /// </summary>
+        internal static string IntegrationEventInInternalCodeunitDescription {
+            get {
+                return ResourceManager.GetString("IntegrationEventInInternalCodeunitDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Integration event &apos;{0}&apos; is declared in a codeunit with Access = Interna`, making it inaccessible to extensions. Remove the Access property or declare the event as an InternalEvent..
+        /// </summary>
+        internal static string IntegrationEventInInternalCodeunitMessageFormat {
+            get {
+                return ResourceManager.GetString("IntegrationEventInInternalCodeunitMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ALCops: Remove property Access = Internal.
+        /// </summary>
+        internal static string IntegrationEventInInternalCodeunitRemoveAccessPropertyCodeAction {
+            get {
+                return ResourceManager.GetString("IntegrationEventInInternalCodeunitRemoveAccessPropertyCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Integration events must not be declared in codeunits with Access set to Internal.
+        /// </summary>
+        internal static string IntegrationEventInInternalCodeunitTitle {
+            get {
+                return ResourceManager.GetString("IntegrationEventInInternalCodeunitTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to When a table is used as the source for a list page, users expect to be able to drill down into records and open lookups in a consistent and predictable way. The DrillDownPageId and LookupPageId table properties define which pages are used for these interactions..
         /// </summary>
         internal static string LookupPageIdAndDrillDownPageIdDescription {

@@ -162,6 +162,21 @@
   <data name="InstallAndUpgradeCodeunitsShouldBeInternalCodeAction" xml:space="preserve">
     <value>ALCops: Set Access property to Internal</value>
   </data>
+  <data name="IntegrationEventInInternalCodeunitTitle" xml:space="preserve">
+    <value>Integration events must not be declared in codeunits with Access set to Internal</value>
+  </data>
+  <data name="IntegrationEventInInternalCodeunitMessageFormat" xml:space="preserve">
+    <value>Integration event '{0}' is declared in a codeunit with Access = Interna`, making it inaccessible to extensions. Remove the Access property or declare the event as an InternalEvent.</value>
+  </data>
+  <data name="IntegrationEventInInternalCodeunitDescription" xml:space="preserve">
+    <value>Integration events are designed to be consumed by extensions and therefore must be accessible outside the defining app. When an IntegrationEvent is declared in a codeunit with Access = Internal, the event cannot be subscribed to by extensions, rendering it ineffective.</value>
+  </data>
+  <data name="IntegrationEventInInternalCodeunitRemoveAccessPropertyCodeAction" xml:space="preserve">
+    <value>ALCops: Remove property Access = Internal</value>
+  </data>
+  <data name="IntegrationEventInInternalCodeunitChangeToInternalEventCodeAction" xml:space="preserve">
+    <value>ALCops: Refactor from IntegrationEvent to InternalEvent</value>
+  </data>
   <data name="LookupPageIdAndDrillDownPageIdTitle" xml:space="preserve">
     <value>DrillDownPageId and LookupPageId property must be defined for tables used in list pages</value>
   </data>

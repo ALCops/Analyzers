@@ -102,9 +102,12 @@ public static class EnumProvider
         public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
             CreateEnumDictionary<NavCodeAnalysis.Symbols.Accessibility>();
 
+        private static readonly Lazy<NavCodeAnalysis.Symbols.Accessibility> _internal =
+            new(() => ParseEnum<NavCodeAnalysis.Symbols.Accessibility>(nameof(NavCodeAnalysis.Symbols.Accessibility.Internal)));
         private static readonly Lazy<NavCodeAnalysis.Symbols.Accessibility> _public =
             new(() => ParseEnum<NavCodeAnalysis.Symbols.Accessibility>(nameof(NavCodeAnalysis.Symbols.Accessibility.Public)));
 
+        public static NavCodeAnalysis.Symbols.Accessibility Internal => _internal.Value;
         public static NavCodeAnalysis.Symbols.Accessibility Public => _public.Value;
     }
 
@@ -139,6 +142,10 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.FilterPageHandler)));
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _hyperlinkHandler =
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.HyperlinkHandler)));
+        private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _integrationEvent =
+            new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.IntegrationEvent)));
+        private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _internalEvent =
+                  new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.InternalEvent)));
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _messageHandler =
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.MessageHandler)));
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _modalPageHandler =
@@ -167,6 +174,8 @@ public static class EnumProvider
         public static NavCodeAnalysis.InternalSyntax.AttributeKind EventSubscriber => _eventSubscriber.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind FilterPageHandler => _filterPageHandler.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind HyperlinkHandler => _hyperlinkHandler.Value;
+        public static NavCodeAnalysis.InternalSyntax.AttributeKind IntegrationEvent => _integrationEvent.Value;
+        public static NavCodeAnalysis.InternalSyntax.AttributeKind InternalEvent => _internalEvent.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind MessageHandler => _messageHandler.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind ModalPageHandler => _modalPageHandler.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind PageHandler => _pageHandler.Value;
