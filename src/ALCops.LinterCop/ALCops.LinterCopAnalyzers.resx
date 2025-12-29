@@ -156,6 +156,15 @@
   <data name="DataClassificationRedundancyDescription" xml:space="preserve">
     <value>When a DataClassification is defined on a table, it automatically applies to all fields of that table. Setting the same DataClassification again on individual fields is redundant and adds unnecessary noise to the object definition.</value>
   </data>
+  <data name="ExplicitlySetRunTriggerTitle" xml:space="preserve">
+    <value>Explicitly set the RunTrigger parameter on build-in methods</value>
+  </data>
+  <data name="ExplicitlySetRunTriggerMessageFormat" xml:space="preserve">
+    <value>The method call '{0}' does not explicitly specify the RunTrigger parameter. Set RunTrigger explicitly instead of the implicit default value of false.</value>
+  </data>
+  <data name="ExplicitlySetRunTriggerDescription" xml:space="preserve">
+    <value>This rule enforces explicitly specifying the RunTrigger parameter when calling methods such as Insert, Modify, ModifyAll, Delete, and DeleteAll. These methods allow omitting the RunTrigger parameter, which implicitly defaults to false.</value>
+  </data>
   <data name="IdentifiersInEventSubscribersTitle" xml:space="preserve">
     <value>Use identifier syntax in event subscriber arguments</value>
   </data>

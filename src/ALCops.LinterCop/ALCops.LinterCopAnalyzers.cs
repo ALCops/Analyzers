@@ -184,6 +184,33 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This rule enforces explicitly specifying the RunTrigger parameter when calling methods such as Insert, Modify, ModifyAll, Delete, and DeleteAll. These methods allow omitting the RunTrigger parameter, which implicitly defaults to false..
+        /// </summary>
+        internal static string ExplicitlySetRunTriggerDescription {
+            get {
+                return ResourceManager.GetString("ExplicitlySetRunTriggerDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The method call &apos;{0}&apos; does not explicitly specify the RunTrigger parameter. Set RunTrigger explicitly instead of the implicit default value of false..
+        /// </summary>
+        internal static string ExplicitlySetRunTriggerMessageFormat {
+            get {
+                return ResourceManager.GetString("ExplicitlySetRunTriggerMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Explicitly set the RunTrigger parameter on build-in methods.
+        /// </summary>
+        internal static string ExplicitlySetRunTriggerTitle {
+            get {
+                return ResourceManager.GetString("ExplicitlySetRunTriggerTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Starting with Business Central 2023 wave 1 (BC22), event subscriber arguments support identifier syntax rather than string literals. Using identifiers enables full Visual Studio Code navigation features such as Go To Definition and Find All References, improving code readability, refactor safety, and maintainability..
         /// </summary>
         internal static string IdentifiersInEventSubscribersDescription {

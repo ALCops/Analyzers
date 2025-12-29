@@ -45,6 +45,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.DataClassificationRedundancyDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.DataClassificationRedundancy));
 
+    public static readonly DiagnosticDescriptor ExplicitlySetRunTrigger = new(
+        id: DiagnosticIds.ExplicitlySetRunTrigger,
+        title: LinterCopAnalyzers.ExplicitlySetRunTriggerMessageFormat,
+        messageFormat: LinterCopAnalyzers.ExplicitlySetRunTriggerMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.ExplicitlySetRunTriggerDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ExplicitlySetRunTrigger));
+
     public static readonly DiagnosticDescriptor IdentifiersInEventSubscribers = new(
         id: DiagnosticIds.IdentifiersInEventSubscribers,
         title: LinterCopAnalyzers.IdentifiersInEventSubscribersTitle,
