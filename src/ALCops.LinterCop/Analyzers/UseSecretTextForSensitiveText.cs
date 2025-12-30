@@ -108,7 +108,7 @@ public class UseSecretTextForSensitiveText : DiagnosticAnalyzer
         IInvocationExpression invocation,
         IMethodSymbol targetMethod)
     {
-        if (!HttpHeadersMethodNames.Contains(invocation.TargetMethod.Name))
+        if (!HttpHeadersMethodNames.Contains(targetMethod.Name))
             return;
 
         if (invocation.Arguments.Length < 2)
@@ -138,10 +138,10 @@ public class UseSecretTextForSensitiveText : DiagnosticAnalyzer
         if (invocation.Arguments.Length < 2)
             return;
 
-        if (invocation.TargetMethod.ContainingType?.GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Codeunit)
+        if (targetMethod.ContainingType?.GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Codeunit)
             return;
 
-        var codeunitTypeSymbol = (ICodeunitTypeSymbol)invocation.TargetMethod.GetContainingObjectTypeSymbol();
+        var codeunitTypeSymbol = (ICodeunitTypeSymbol)targetMethod.GetContainingObjectTypeSymbol();
 
         // System.RestClient."Rest Client".SetDefaultRequestHeader(...)
         if (!SemanticFacts.IsSameName(((INamespaceSymbol)codeunitTypeSymbol.ContainingSymbol!).QualifiedName, "System.RestClient"))
@@ -150,7 +150,7 @@ public class UseSecretTextForSensitiveText : DiagnosticAnalyzer
         if (!SemanticFacts.IsSameName(codeunitTypeSymbol.Name, "Rest Client"))
             return;
 
-        if (!SemanticFacts.IsSameName(invocation.TargetMethod.Name, "SetDefaultRequestHeader"))
+        if (!SemanticFacts.IsSameName(targetMethod.Name, "SetDefaultRequestHeader"))
             return;
 
         if (!IsAuthorizationNameArgument(invocation.Arguments[0]))
