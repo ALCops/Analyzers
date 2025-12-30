@@ -21,4 +21,6 @@ public static class DiagnosticIds
     public static readonly string ToolTipMaximumLength = "AC0017";
     public static readonly string EmptyCaptionLocked = "AC0018";
     public static readonly string ZeroEnumValueReservedForEmpty = "AC0019";
+    public static readonly string LabelWithTokSuffixMustBeLocked = "AC0020";
+    public static readonly string LabelLockedMustHaveTokSuffix = "AC0021";
 }

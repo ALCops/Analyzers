@@ -301,6 +301,69 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A label with the Locked property set to true is explicitly marked as non-translatable and represents a hardcoded value. To make this intent explicit and consistent, locked labels must be suffixed with &apos;Tok&apos;..
+        /// </summary>
+        internal static string LabelLockedMustHaveTokSuffixDescription {
+            get {
+                return ResourceManager.GetString("LabelLockedMustHaveTokSuffixDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Label &apos;{0}&apos; has the Locked property set to true but is not suffixed with &apos;Tok&apos;..
+        /// </summary>
+        internal static string LabelLockedMustHaveTokSuffixMessageFormat {
+            get {
+                return ResourceManager.GetString("LabelLockedMustHaveTokSuffixMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Locked Label must have a suffix Tok..
+        /// </summary>
+        internal static string LabelLockedMustHaveTokSuffixTitle {
+            get {
+                return ResourceManager.GetString("LabelLockedMustHaveTokSuffixTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ALCops: Set Locked property to true.
+        /// </summary>
+        internal static string LabelWithTokSuffixMustBeLockedCodeAction {
+            get {
+                return ResourceManager.GetString("LabelWithTokSuffixMustBeLockedCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Labels ending with the suffix &apos;Tok&apos; represent tokens: hardcoded, non-translatable values. Such labels must explicitly have the Locked property set to true to prevent translation..
+        /// </summary>
+        internal static string LabelWithTokSuffixMustBeLockedDescription {
+            get {
+                return ResourceManager.GetString("LabelWithTokSuffixMustBeLockedDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Label &apos;{0}&apos; is suffixed with &apos;Tok&apos; but does not have the Locked property set to true..
+        /// </summary>
+        internal static string LabelWithTokSuffixMustBeLockedMessageFormat {
+            get {
+                return ResourceManager.GetString("LabelWithTokSuffixMustBeLockedMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Labels suffixed with Tok must be locked..
+        /// </summary>
+        internal static string LabelWithTokSuffixMustBeLockedTitle {
+            get {
+                return ResourceManager.GetString("LabelWithTokSuffixMustBeLockedTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to When a table is used as the source for a list page, users expect to be able to drill down into records and open lookups in a consistent and predictable way. The DrillDownPageId and LookupPageId table properties define which pages are used for these interactions..
         /// </summary>
         internal static string LookupPageIdAndDrillDownPageIdDescription {

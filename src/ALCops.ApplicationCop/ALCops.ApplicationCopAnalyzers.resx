@@ -171,6 +171,27 @@
   <data name="GlobalLanguageImplementTranslationHelperCodeAction" xml:space="preserve">
     <value>ALCops: Refactor to use "Translation Helper" codeunit</value>
   </data>
+  <data name="LabelLockedMustHaveTokSuffixTitle" xml:space="preserve">
+    <value>Locked Label must have a suffix Tok.</value>
+  </data>
+  <data name="LabelLockedMustHaveTokSuffixMessageFormat" xml:space="preserve">
+    <value>Label '{0}' has the Locked property set to true but is not suffixed with 'Tok'.</value>
+  </data>
+  <data name="LabelLockedMustHaveTokSuffixDescription" xml:space="preserve">
+    <value>A label with the Locked property set to true is explicitly marked as non-translatable and represents a hardcoded value. To make this intent explicit and consistent, locked labels must be suffixed with 'Tok'.</value>
+  </data>
+  <data name="LabelWithTokSuffixMustBeLockedTitle" xml:space="preserve">
+    <value>Labels suffixed with Tok must be locked.</value>
+  </data>
+  <data name="LabelWithTokSuffixMustBeLockedMessageFormat" xml:space="preserve">
+    <value>Label '{0}' is suffixed with 'Tok' but does not have the Locked property set to true.</value>
+  </data>
+  <data name="LabelWithTokSuffixMustBeLockedDescription" xml:space="preserve">
+    <value>Labels ending with the suffix 'Tok' represent tokens: hardcoded, non-translatable values. Such labels must explicitly have the Locked property set to true to prevent translation.</value>
+  </data>
+  <data name="LabelWithTokSuffixMustBeLockedCodeAction" xml:space="preserve">
+    <value>ALCops: Set Locked property to true</value>
+  </data>
   <data name="InstallAndUpgradeCodeunitsShouldBeInternalTitle" xml:space="preserve">
     <value>Install and Upgrade codeunits should have Access set to Internal</value>
   </data>

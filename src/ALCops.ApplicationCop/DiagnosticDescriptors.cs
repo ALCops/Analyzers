@@ -55,6 +55,26 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.GlobalLanguageImplementTranslationHelperDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.GlobalLanguageImplementTranslationHelper));
 
+    public static readonly DiagnosticDescriptor LabelLockedMustHaveTokSuffix = new(
+        id: DiagnosticIds.LabelLockedMustHaveTokSuffix,
+        title: ApplicationCopAnalyzers.LabelLockedMustHaveTokSuffixTitle,
+        messageFormat: ApplicationCopAnalyzers.LabelLockedMustHaveTokSuffixMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.LabelLockedMustHaveTokSuffixDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.LabelLockedMustHaveTokSuffix));
+
+    public static readonly DiagnosticDescriptor LabelWithTokSuffixMustBeLocked = new(
+        id: DiagnosticIds.LabelWithTokSuffixMustBeLocked,
+        title: ApplicationCopAnalyzers.LabelWithTokSuffixMustBeLockedTitle,
+        messageFormat: ApplicationCopAnalyzers.LabelWithTokSuffixMustBeLockedMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.LabelWithTokSuffixMustBeLockedDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.LabelWithTokSuffixMustBeLocked));
+
     public static readonly DiagnosticDescriptor InstallAndUpgradeCodeunitsShouldBeInternal = new(
         id: DiagnosticIds.InstallAndUpgradeCodeunitsShouldBeInternal,
         title: ApplicationCopAnalyzers.InstallAndUpgradeCodeunitsShouldBeInternalTitle,
