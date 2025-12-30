@@ -371,5 +371,32 @@ namespace ALCops.LinterCop {
                 return ResourceManager.GetString("RecordInstanceIsolationLevelTitle", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Using SecretText prevents confidential information such as API keys, tokens, passwords, and similar secrets from being exposed through the AL debugger during regular or snapshot debugging..
+        /// </summary>
+        internal static string UseSecretTextForSensitiveTextDescription {
+            get {
+                return ResourceManager.GetString("UseSecretTextForSensitiveTextDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sensitive textual values should be passed as SecretText to prevent them from being revealed..
+        /// </summary>
+        internal static string UseSecretTextForSensitiveTextMessageFormat {
+            get {
+                return ResourceManager.GetString("UseSecretTextForSensitiveTextMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use SecretText type to protect credentials and sensitive textual values from being revealed.
+        /// </summary>
+        internal static string UseSecretTextForSensitiveTextTitle {
+            get {
+                return ResourceManager.GetString("UseSecretTextForSensitiveTextTitle", resourceCulture);
+            }
+        }
     }
 }
