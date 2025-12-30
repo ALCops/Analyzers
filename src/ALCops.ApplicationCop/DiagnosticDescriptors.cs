@@ -61,7 +61,7 @@ public static class DiagnosticDescriptors
         messageFormat: ApplicationCopAnalyzers.LabelLockedMustHaveTokSuffixMessageFormat,
         category: Category.Design,
         defaultSeverity: DiagnosticSeverity.Info,
-        isEnabledByDefault: true,
+        isEnabledByDefault: false,
         description: ApplicationCopAnalyzers.LabelLockedMustHaveTokSuffixDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.LabelLockedMustHaveTokSuffix));
 
