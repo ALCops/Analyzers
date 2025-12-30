@@ -36,6 +36,13 @@ namespace ALCops.LinterCop.Test
         [TestCase("ErrorWiththisLabel")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ErrorWiththisLabel"],
+                testCase,
+                "14.0",
+                "The this keyword is not supported in versions prior to 14.0."
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
