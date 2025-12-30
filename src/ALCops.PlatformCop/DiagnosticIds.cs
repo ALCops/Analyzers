@@ -8,4 +8,5 @@ public static class DiagnosticIds
     public static readonly string ListObjectsAreOneBased = "PC0004";
     public static readonly string ExtensiblePropertyExplicitlySet = "PC0005";
     public static readonly string AccessPropertyExplicitlySet = "PC0006";
+    public static readonly string AutoCalcFieldsOnlyOnFlowFields = "PC0007";
 }

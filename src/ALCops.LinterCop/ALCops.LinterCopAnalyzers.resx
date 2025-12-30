@@ -222,4 +222,13 @@
   <data name="RecordInstanceIsolationLevelCodeActionTitle" xml:space="preserve">
     <value>ALCops: Replace LockTable() with ReadIsolation</value>
   </data>
+  <data name="UseSecretTextForSensitiveTextTitle" xml:space="preserve">
+    <value>Use SecretText type to protect credentials and sensitive textual values from being revealed</value>
+  </data>
+  <data name="UseSecretTextForSensitiveTextMessageFormat" xml:space="preserve">
+    <value>Sensitive textual values should be passed as SecretText to prevent them from being revealed.</value>
+  </data>
+  <data name="UseSecretTextForSensitiveTextDescription" xml:space="preserve">
+    <value>Using SecretText prevents confidential information such as API keys, tokens, passwords, and similar secrets from being exposed through the AL debugger during regular or snapshot debugging.</value>
+  </data>
 </root>

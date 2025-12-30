@@ -117,9 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AutoIncrementInTemporaryTableTitle" xml:space="preserve">
-    <value>AutoIncrement fields are not supported in temporary tables</value>
-  </data>
   <data name="AccessPropertyExplicitlySetTitle" xml:space="preserve">
     <value>Every object needs to specify a value for the Access property</value>
   </data>
@@ -128,6 +125,18 @@
   </data>
   <data name="AccessPropertyExplicitlySetDescription" xml:space="preserve">
     <value>Every AL object should explicitly specify its Access property to make its intended accessibility clear. Explicitly setting Access prevents accidental exposure or over-restriction of objects and forces conscious design decisions about visibility.</value>
+  </data>
+  <data name="AutoCalcFieldsOnlyOnFlowFieldsTitle" xml:space="preserve">
+    <value>Avoids a runtime error from using AutoCalcFields on a field that is not a FlowField or a field of type Blob.</value>
+  </data>
+  <data name="AutoCalcFieldsOnlyOnFlowFieldsMessageFormat" xml:space="preserve">
+    <value>The AutoCalcFields method should only be used with FlowFields or fields of type Blob. The field {0} is not a FlowField or of type Blob.</value>
+  </data>
+  <data name="AutoCalcFieldsOnlyOnFlowFieldsDescription" xml:space="preserve">
+    <value>AutoCalcFields should only be used for FlowFields or Blob fields</value>
+  </data>
+  <data name="AutoIncrementInTemporaryTableTitle" xml:space="preserve">
+    <value>AutoIncrement fields are not supported in temporary tables</value>
   </data>
   <data name="AutoIncrementInTemporaryTableMessageFormat" xml:space="preserve">
     <value>AutoIncrement is used in a table with TableType = Temporary, which will cause a runtime error. Remove AutoIncrement or make the table non-temporary.</value>

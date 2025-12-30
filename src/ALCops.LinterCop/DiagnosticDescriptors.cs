@@ -115,6 +115,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.RecordInstanceIsolationLevelDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.RecordInstanceIsolationLevel));
 
+    public static readonly DiagnosticDescriptor UseSecretTextForSensitiveText = new(
+        id: DiagnosticIds.UseSecretTextForSensitiveText,
+        title: LinterCopAnalyzers.UseSecretTextForSensitiveTextTitle,
+        messageFormat: LinterCopAnalyzers.UseSecretTextForSensitiveTextMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.UseSecretTextForSensitiveTextDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UseSecretTextForSensitiveText));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/lintercop/{0}/", identifier.ToLower());
