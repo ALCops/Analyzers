@@ -19,10 +19,8 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
-        [TestCase("IsolatedStorageGet")]
-        [TestCase("IsolatedStorageGetWithDataScope")]
-        [TestCase("IsolatedStorageSet")]
-        [TestCase("IsolatedStorageSetWithDataScope")]
+        [TestCase("IsolatedStorage")]
+        [TestCase("HttpHeaders")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -32,10 +30,8 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
-        [TestCase("IsolatedStorageGet")]
-        [TestCase("IsolatedStorageGetWithDataScope")]
-        [TestCase("IsolatedStorageSet")]
-        [TestCase("IsolatedStorageSetWithDataScope")]
+        [TestCase("IsolatedStorage")]
+        [TestCase("HttpHeaders")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
