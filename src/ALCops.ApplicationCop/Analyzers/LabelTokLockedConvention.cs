@@ -7,7 +7,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 namespace ALCops.ApplicationCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class LabelTokLockedConvention : DiagnosticAnalyzer
+public sealed class LabelTokLockedConvention : DiagnosticAnalyzer
 {
     private const string TokSuffix = "Tok";
 
