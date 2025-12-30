@@ -1305,7 +1305,11 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pagePart =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PagePart)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageSystemAction =
+#if NETSTANDARD2_1 || NET8_0
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>("PageSystemAction"));
+#else
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageSystemAction)));
+#endif
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageSystemPart =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageSystemPart)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageView =
