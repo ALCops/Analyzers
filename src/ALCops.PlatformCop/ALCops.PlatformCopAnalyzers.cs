@@ -67,7 +67,7 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} &apos;{1}&apos; does not explicitly set the Access property..
+        ///   Looks up a localized string similar to {0} &apos;{1}&apos; does not explicitly have the Access property set..
         /// </summary>
         internal static string AccessPropertyExplicitlySetMessageFormat {
             get {
@@ -81,6 +81,33 @@ namespace ALCops.PlatformCop {
         internal static string AccessPropertyExplicitlySetTitle {
             get {
                 return ResourceManager.GetString("AccessPropertyExplicitlySetTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AutoCalcFields should only be used for FlowFields or Blob fields.
+        /// </summary>
+        internal static string AutoCalcFieldsOnlyOnFlowFieldsDescription {
+            get {
+                return ResourceManager.GetString("AutoCalcFieldsOnlyOnFlowFieldsDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The AutoCalcFields method should only be used with FlowFields or fields of type Blob. The field {0} is not a FlowField or of type Blob..
+        /// </summary>
+        internal static string AutoCalcFieldsOnlyOnFlowFieldsMessageFormat {
+            get {
+                return ResourceManager.GetString("AutoCalcFieldsOnlyOnFlowFieldsMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Avoids a runtime error from using AutoCalcFields on a field that is not a FlowField or a field of type Blob..
+        /// </summary>
+        internal static string AutoCalcFieldsOnlyOnFlowFieldsTitle {
+            get {
+                return ResourceManager.GetString("AutoCalcFieldsOnlyOnFlowFieldsTitle", resourceCulture);
             }
         }
         

@@ -15,6 +15,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.AccessPropertyExplicitlySetDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.AccessPropertyExplicitlySet));
 
+    public static readonly DiagnosticDescriptor AutoCalcFieldsOnlyOnFlowFields = new(
+        id: DiagnosticIds.AutoCalcFieldsOnlyOnFlowFields,
+        title: PlatformCopAnalyzers.AutoCalcFieldsOnlyOnFlowFieldsTitle,
+        messageFormat: PlatformCopAnalyzers.AutoCalcFieldsOnlyOnFlowFieldsMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.AutoCalcFieldsOnlyOnFlowFieldsDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.AutoCalcFieldsOnlyOnFlowFields));
+
     public static readonly DiagnosticDescriptor AutoIncrementInTemporaryTable = new(
         id: DiagnosticIds.AutoIncrementInTemporaryTable,
         title: PlatformCopAnalyzers.AutoIncrementInTemporaryTableTitle,
