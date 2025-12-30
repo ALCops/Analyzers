@@ -23,6 +23,13 @@ namespace ALCops.LinterCop.Test
         [TestCase("HttpHeaders")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["IsolatedStorage"],
+                testCase,
+                "13.0",
+                "No support for SecretText in IsolatedStorage in versions prior to 13.0."
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -34,6 +41,13 @@ namespace ALCops.LinterCop.Test
         [TestCase("HttpHeaders")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["IsolatedStorage"],
+                testCase,
+                "13.0",
+                "No support for SecretText in IsolatedStorage in versions prior to 13.0."
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
