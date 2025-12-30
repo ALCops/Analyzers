@@ -19,4 +19,5 @@ public static class DiagnosticIds
     public static readonly string ToolTipShouldStartWithSpecifies = "AC0015";
     public static readonly string ToolTipDoNotUseLineBreaks = "AC0016";
     public static readonly string ToolTipMaximumLength = "AC0017";
+    public static readonly string EmptyCaptionLocked = "AC0018";
 }

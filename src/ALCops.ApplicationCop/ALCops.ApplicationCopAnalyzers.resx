@@ -138,6 +138,18 @@
   <data name="ConfirmImplementConfirmManagementDescriptionCodeAction" xml:space="preserve">
     <value>ALCops: Refactor to use "Confirm Management" codeunit</value>
   </data>
+  <data name="EmptyCaptionLockedTitle" xml:space="preserve">
+    <value>Empty captions should be locked</value>
+  </data>
+  <data name="EmptyCaptionLockedMessageFormat" xml:space="preserve">
+    <value>The Caption property is empty but not locked. Empty captions should be marked with Locked = true to prevent translation entries.</value>
+  </data>
+  <data name="EmptyCaptionLockedDescription" xml:space="preserve">
+    <value>When a Caption property is intentionally left empty, it should always be marked with Locked = true. An empty caption without locking is still extracted into translation files, resulting in meaningless entries.</value>
+  </data>
+  <data name="EmptyCaptionLockedCodeAction" xml:space="preserve">
+    <value>ALCops: Set Locked property to true</value>
+  </data>
   <data name="FieldGroupsRequiredTitle" xml:space="preserve">
     <value>DropDown and Brick fieldgroups must be defined</value>
   </data>

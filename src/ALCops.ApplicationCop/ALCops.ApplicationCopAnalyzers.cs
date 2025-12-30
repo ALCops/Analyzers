@@ -121,6 +121,42 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Set Locked property to true.
+        /// </summary>
+        internal static string EmptyCaptionLockedCodeAction {
+            get {
+                return ResourceManager.GetString("EmptyCaptionLockedCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When a Caption property is intentionally left empty, it should always be marked with Locked = true. An empty caption without locking is still extracted into translation files, resulting in meaningless entries..
+        /// </summary>
+        internal static string EmptyCaptionLockedDescription {
+            get {
+                return ResourceManager.GetString("EmptyCaptionLockedDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Caption property is empty but not locked. Empty captions should be marked with Locked = true to prevent translation entries..
+        /// </summary>
+        internal static string EmptyCaptionLockedMessageFormat {
+            get {
+                return ResourceManager.GetString("EmptyCaptionLockedMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Empty captions should be locked.
+        /// </summary>
+        internal static string EmptyCaptionLockedTitle {
+            get {
+                return ResourceManager.GetString("EmptyCaptionLockedTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Table objects must explicitly define both the DropDown and Brick fieldgroups..
         /// </summary>
         internal static string FieldGroupsRequiredDescription {

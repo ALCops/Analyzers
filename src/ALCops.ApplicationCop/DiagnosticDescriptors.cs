@@ -25,6 +25,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.ConfirmImplementConfirmManagementDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ConfirmImplementConfirmManagement));
 
+    public static readonly DiagnosticDescriptor EmptyCaptionLocked = new(
+        id: DiagnosticIds.EmptyCaptionLocked,
+        title: ApplicationCopAnalyzers.EmptyCaptionLockedTitle,
+        messageFormat: ApplicationCopAnalyzers.EmptyCaptionLockedMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.EmptyCaptionLockedDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.EmptyCaptionLocked));
+
     public static readonly DiagnosticDescriptor FieldGroupsRequired = new(
         id: DiagnosticIds.FieldGroupsRequired,
         title: ApplicationCopAnalyzers.FieldGroupsRequiredTitle,
