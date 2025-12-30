@@ -156,6 +156,15 @@
   <data name="DataClassificationRedundancyDescription" xml:space="preserve">
     <value>When a DataClassification is defined on a table, it automatically applies to all fields of that table. Setting the same DataClassification again on individual fields is redundant and adds unnecessary noise to the object definition.</value>
   </data>
+  <data name="ErrorInvocationUsingTextConstantTitle" xml:space="preserve">
+    <value>Use Error with ErrorInfo or Label instead of Text</value>
+  </data>
+  <data name="ErrorInvocationUsingTextConstantMessageFormat" xml:space="preserve">
+    <value>Error is called with a Text value. Use ErrorInfo or a Label variable to preserve error details in telemetry.</value>
+  </data>
+  <data name="ErrorInvocationUsingTextConstantDescription" xml:space="preserve">
+    <value>Calling the Error method with a Text literal, Text variable, or Text expression (such as StrSubstNo) prevents the error message from being included in Business Central telemetry.</value>
+  </data>
   <data name="ExplicitlySetRunTriggerTitle" xml:space="preserve">
     <value>Explicitly set the RunTrigger parameter on build-in methods</value>
   </data>

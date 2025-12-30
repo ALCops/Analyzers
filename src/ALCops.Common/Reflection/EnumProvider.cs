@@ -536,6 +536,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.ControlAddIn)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dotNet =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DotNet)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _errorInfo =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.ErrorInfo)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _httpClient =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.HttpClient)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _httpHeaders =
@@ -577,6 +579,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind Codeunit => _codeunit.Value;
         public static NavCodeAnalysis.NavTypeKind ControlAddIn => _controlAddIn.Value;
         public static NavCodeAnalysis.NavTypeKind DotNet => _dotNet.Value;
+        public static NavCodeAnalysis.NavTypeKind ErrorInfo => _errorInfo.Value;
         public static NavCodeAnalysis.NavTypeKind HttpHeaders => _httpHeaders.Value;
         public static NavCodeAnalysis.NavTypeKind HttpClient => _httpClient.Value;
         public static NavCodeAnalysis.NavTypeKind Integer => _integer.Value;
@@ -642,6 +645,8 @@ public static class EnumProvider
 
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _assignmentStatement =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.AssignmentStatement)));
+        private static readonly Lazy<NavCodeAnalysis.OperationKind> _conversionExpression =
+            new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.ConversionExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _emptyStatement =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.EmptyStatement)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _fieldAccess =
@@ -660,6 +665,7 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.XmlPortDataItemAccess)));
 
         public static NavCodeAnalysis.OperationKind AssignmentStatement => _assignmentStatement.Value;
+        public static NavCodeAnalysis.OperationKind ConversionExpression => _conversionExpression.Value;
         public static NavCodeAnalysis.OperationKind EmptyStatement => _emptyStatement.Value;
         public static NavCodeAnalysis.OperationKind FieldAccess => _fieldAccess.Value;
         public static NavCodeAnalysis.OperationKind GlobalReferenceExpression => _globalReferenceExpression.Value;

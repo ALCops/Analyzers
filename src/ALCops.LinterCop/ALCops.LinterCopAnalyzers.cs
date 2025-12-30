@@ -184,6 +184,33 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Calling the Error method with a Text literal, Text variable, or Text expression (such as StrSubstNo) prevents the error message from being included in Business Central telemetry..
+        /// </summary>
+        internal static string ErrorInvocationUsingTextConstantDescription {
+            get {
+                return ResourceManager.GetString("ErrorInvocationUsingTextConstantDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error is called with a Text value. Use ErrorInfo or a Label variable to preserve error details in telemetry..
+        /// </summary>
+        internal static string ErrorInvocationUsingTextConstantMessageFormat {
+            get {
+                return ResourceManager.GetString("ErrorInvocationUsingTextConstantMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use Error with ErrorInfo or Label instead of Text.
+        /// </summary>
+        internal static string ErrorInvocationUsingTextConstantTitle {
+            get {
+                return ResourceManager.GetString("ErrorInvocationUsingTextConstantTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to This rule enforces explicitly specifying the RunTrigger parameter when calling methods such as Insert, Modify, ModifyAll, Delete, and DeleteAll. These methods allow omitting the RunTrigger parameter, which implicitly defaults to false..
         /// </summary>
         internal static string ExplicitlySetRunTriggerDescription {
