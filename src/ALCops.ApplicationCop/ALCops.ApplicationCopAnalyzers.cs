@@ -632,5 +632,32 @@ namespace ALCops.ApplicationCop {
                 return ResourceManager.GetString("ToolTipShouldStartWithSpecifiesTitle", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Zero (0) should be reserved as the empty Enum value. Business Central stores Enums as integers and does not support null; new records (and existing records after adding a field via table extension) default to 0, which makes non-empty meaning at 0 ambiguous..
+        /// </summary>
+        internal static string ZeroEnumValueReservedForEmptyDescription {
+            get {
+                return ResourceManager.GetString("ZeroEnumValueReservedForEmptyDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enum &apos;{0}&apos; with value 0 must have an empty Name and Caption..
+        /// </summary>
+        internal static string ZeroEnumValueReservedForEmptyMessageFormat {
+            get {
+                return ResourceManager.GetString("ZeroEnumValueReservedForEmptyMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reserve Enum value zero (0) for empty value.
+        /// </summary>
+        internal static string ZeroEnumValueReservedForEmptyTitle {
+            get {
+                return ResourceManager.GetString("ZeroEnumValueReservedForEmptyTitle", resourceCulture);
+            }
+        }
     }
 }

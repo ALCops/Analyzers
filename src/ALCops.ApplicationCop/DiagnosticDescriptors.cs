@@ -145,6 +145,26 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.TableDataPerCompanyDeclarationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TableDataPerCompanyDeclaration));
 
+    public static readonly DiagnosticDescriptor ToolTipDoNotUseLineBreaks = new(
+         id: DiagnosticIds.ToolTipDoNotUseLineBreaks,
+         title: ApplicationCopAnalyzers.ToolTipDoNotUseLineBreaksTitle,
+         messageFormat: ApplicationCopAnalyzers.ToolTipDoNotUseLineBreaksMessageFormat,
+         category: Category.Design,
+         defaultSeverity: DiagnosticSeverity.Info,
+         isEnabledByDefault: true,
+         description: ApplicationCopAnalyzers.ToolTipDoNotUseLineBreaksDescription,
+         helpLinkUri: GetHelpUri(DiagnosticIds.ToolTipDoNotUseLineBreaks));
+
+    public static readonly DiagnosticDescriptor ToolTipMaximumLength = new(
+        id: DiagnosticIds.ToolTipMaximumLength,
+        title: ApplicationCopAnalyzers.ToolTipMaximumLengthTitle,
+        messageFormat: ApplicationCopAnalyzers.ToolTipMaximumLengthMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.ToolTipMaximumLengthDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ToolTipMaximumLength));
+
     public static readonly DiagnosticDescriptor ToolTipMustEndWithDot = new(
         id: DiagnosticIds.ToolTipMustEndWithDot,
         title: ApplicationCopAnalyzers.ToolTipMustEndWithDotTitle,
@@ -165,25 +185,15 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.ToolTipShouldStartWithSpecifiesDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ToolTipShouldStartWithSpecifies));
 
-    public static readonly DiagnosticDescriptor ToolTipDoNotUseLineBreaks = new(
-        id: DiagnosticIds.ToolTipDoNotUseLineBreaks,
-        title: ApplicationCopAnalyzers.ToolTipDoNotUseLineBreaksTitle,
-        messageFormat: ApplicationCopAnalyzers.ToolTipDoNotUseLineBreaksMessageFormat,
+    public static readonly DiagnosticDescriptor ZeroEnumValueReservedForEmpty = new(
+        id: DiagnosticIds.ZeroEnumValueReservedForEmpty,
+        title: ApplicationCopAnalyzers.ZeroEnumValueReservedForEmptyTitle,
+        messageFormat: ApplicationCopAnalyzers.ZeroEnumValueReservedForEmptyMessageFormat,
         category: Category.Design,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        description: ApplicationCopAnalyzers.ToolTipDoNotUseLineBreaksDescription,
-        helpLinkUri: GetHelpUri(DiagnosticIds.ToolTipDoNotUseLineBreaks));
-
-    public static readonly DiagnosticDescriptor ToolTipMaximumLength = new(
-        id: DiagnosticIds.ToolTipMaximumLength,
-        title: ApplicationCopAnalyzers.ToolTipMaximumLengthTitle,
-        messageFormat: ApplicationCopAnalyzers.ToolTipMaximumLengthMessageFormat,
-        category: Category.Design,
-        defaultSeverity: DiagnosticSeverity.Info,
-        isEnabledByDefault: true,
-        description: ApplicationCopAnalyzers.ToolTipMaximumLengthDescription,
-        helpLinkUri: GetHelpUri(DiagnosticIds.ToolTipMaximumLength));
+        description: ApplicationCopAnalyzers.ZeroEnumValueReservedForEmptyDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ZeroEnumValueReservedForEmpty));
 
     public static string GetHelpUri(string identifier)
     {
