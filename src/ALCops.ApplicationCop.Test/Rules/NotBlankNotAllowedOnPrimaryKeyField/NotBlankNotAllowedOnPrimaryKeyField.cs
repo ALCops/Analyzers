@@ -45,6 +45,7 @@ namespace ALCops.ApplicationCop.Test
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.NotBlankNotAllowedOnPrimaryKeyField);
         }
 
+        [Test]
         [TestCase("TableRelationNoSeries")]
         public async Task HasFix(string testCase)
         {

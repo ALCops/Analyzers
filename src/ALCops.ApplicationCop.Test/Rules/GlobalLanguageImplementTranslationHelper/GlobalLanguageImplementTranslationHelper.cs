@@ -42,6 +42,7 @@ namespace ALCops.ApplicationCop.Test
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.GlobalLanguageImplementTranslationHelper);
         }
 
+        [Test]
         [TestCase("GlobalLanguage")]
         [TestCase("GlobalLanguageAssignment")]
         [TestCase("GlobalLanguageCommentLeading")]

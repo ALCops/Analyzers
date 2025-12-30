@@ -44,6 +44,7 @@ namespace ALCops.ApplicationCop.Test
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.NotBlankRequiredOnPrimaryKeyField);
         }
 
+        [Test]
         [TestCase("PrimaryKeyCodeField")]
         public async Task HasFix(string testCase)
         {

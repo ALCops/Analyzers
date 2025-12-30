@@ -48,6 +48,7 @@ namespace ALCops.ApplicationCop.Test
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.IntegrationEventInInternalCodeunit);
         }
 
+        [Test]
         [TestCase("ConvertToInternalEvent")]
         [TestCase("RemoveAccessInternal")]
         public async Task HasFix(string testCase)

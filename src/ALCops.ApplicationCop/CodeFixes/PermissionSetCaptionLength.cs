@@ -56,12 +56,12 @@ public sealed class PermissionSetCaptionLengthCodeFixProvider : CodeFixProvider
     {
         return new PermissionSetCaptionLengthCodeAction(
             ApplicationCopAnalyzers.PermissionSetCaptionLengthCodeAction,
-            ct => SetMaxLangthProperty(document, node, ct),
+            ct => SetMaxLengthProperty(document, node, ct),
             nameof(PermissionSetCaptionLengthCodeFixProvider),
             generateFixAll);
     }
 
-    private static async Task<Document> SetMaxLangthProperty(Document document, SyntaxNode node, CancellationToken cancellationToken)
+    private static async Task<Document> SetMaxLengthProperty(Document document, SyntaxNode node, CancellationToken cancellationToken)
     {
         Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
 

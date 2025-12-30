@@ -56,6 +56,7 @@ namespace ALCops.FormattingCop.Test
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.CasingMismatch);
         }
 
+        [Test]
         [TestCase("ObjectKeyword")]
         public async Task HasFix(string testCase)
         {

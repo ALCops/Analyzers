@@ -42,6 +42,7 @@ namespace ALCops.ApplicationCop.Test
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.InstallAndUpgradeCodeunitsShouldBeInternal);
         }
 
+        [Test]
         [TestCase("InstallCodeunit")]
         [TestCase("UpgradeCodeunit")]
         public async Task HasFix(string testCase)

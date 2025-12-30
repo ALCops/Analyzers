@@ -44,6 +44,7 @@ namespace ALCops.ApplicationCop.Test
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.PermissionSetCaptionLength);
         }
 
+        [Test]
         [TestCase("Caption")]
         [TestCase("CaptionLocked")]
         [TestCase("CaptionMaxLength")]

@@ -44,6 +44,7 @@ namespace ALCops.ApplicationCop.Test
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.RunPageImplementPageManagement);
         }
 
+        [Test]
         [TestCase("PageRunModelPageIdentifierAndRecord")]
         [TestCase("PageRunModelPageIdentifierAndRecordWithPageFIeld")]
         [TestCase("PageRunPageIdentifierAndRecord")]

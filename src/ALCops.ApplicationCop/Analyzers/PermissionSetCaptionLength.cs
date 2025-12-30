@@ -10,8 +10,8 @@ namespace ALCops.ApplicationCop.Analyzers;
 public sealed class PermissionSetCaptionLength : DiagnosticAnalyzer
 {
     private const int MaxCaptionLength = 30;
-    private const string LockedName = "Locked";
-    private const string MaxLengthName = "MaxLength";
+    private const string LockedPropertyName = "Locked";
+    private const string MaxLengthPropertyName = "MaxLength";
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
@@ -49,17 +49,18 @@ public sealed class PermissionSetCaptionLength : DiagnosticAnalyzer
         }
 
         // Check if property "Locked = true" is applied
-        var lockedNode = subProperties.FirstOrDefault(node => node.ToString().Contains(LockedName, StringComparison.OrdinalIgnoreCase));
+        var lockedNode = subProperties.OfType<IdentifierEqualsLiteralSyntax>()
+                                    .FirstOrDefault(prop => prop.Identifier.ValueText?.Equals(LockedPropertyName, StringComparison.Ordinal) == true);
         var isLocked = lockedNode is not null &&
             lockedNode.DescendantNodes()
                         .OfType<BooleanLiteralValueSyntax>()
-                        .FirstOrDefault()?.Value.Kind == EnumProvider.SyntaxKind.TrueKeyword;
+                        .Any(b => b.Value.IsKind(EnumProvider.SyntaxKind.TrueKeyword));
 
         if (isLocked)
             return;
 
         // Check MaxLength is set to the MaxCaptionLength of 30 (or less)
-        var maxLengthNode = subProperties.FirstOrDefault(node => node.ToString().Contains(MaxLengthName, StringComparison.OrdinalIgnoreCase));
+        var maxLengthNode = subProperties.FirstOrDefault(node => node.ToString().Contains(MaxLengthPropertyName, StringComparison.OrdinalIgnoreCase));
         if (maxLengthNode is not null &&
             int.TryParse(maxLengthNode.DescendantNodes()?
                         .OfType<Int32SignedLiteralValueSyntax>()?
