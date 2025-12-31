@@ -62,7 +62,7 @@ public sealed class PermissionSetCaptionLength : DiagnosticAnalyzer
             MaxCaptionLength));
     }
 
-    private static SyntaxNode? TryGetProperties(IPropertySymbol captionProperty)
+    private static CommaSeparatedIdentifierEqualsLiteralListSyntax? TryGetProperties(IPropertySymbol captionProperty)
     {
         var syntaxReference = captionProperty.DeclaringSyntaxReference;
         if (syntaxReference is null)
@@ -74,7 +74,7 @@ public sealed class PermissionSetCaptionLength : DiagnosticAnalyzer
 
         return syntaxNode
                 .DescendantNodes()
-                .FirstOrDefault(e =>
-                    e.Kind == EnumProvider.SyntaxKind.CommaSeparatedIdentifierEqualsLiteralList);
+                .OfType<CommaSeparatedIdentifierEqualsLiteralListSyntax>()
+                .FirstOrDefault();
     }
 }
