@@ -36,7 +36,13 @@ public sealed class PermissionSetCaptionLength : DiagnosticAnalyzer
             return;
         }
 
-        var properties = TryGetProperties(captionProperty);
+        var properties =
+            captionProperty.DeclaringSyntaxReference?
+                .GetSyntax()
+                .DescendantNodes()
+                .OfType<CommaSeparatedIdentifierEqualsLiteralListSyntax>()
+                .FirstOrDefault();
+
         if (properties is null)
         {
             ctx.ReportDiagnostic(Diagnostic.Create(
@@ -60,21 +66,5 @@ public sealed class PermissionSetCaptionLength : DiagnosticAnalyzer
             DiagnosticDescriptors.PermissionSetCaptionLength,
             captionProperty.GetLocation(),
             MaxCaptionLength));
-    }
-
-    private static CommaSeparatedIdentifierEqualsLiteralListSyntax? TryGetProperties(IPropertySymbol captionProperty)
-    {
-        var syntaxReference = captionProperty.DeclaringSyntaxReference;
-        if (syntaxReference is null)
-            return null;
-
-        var syntaxNode = syntaxReference.GetSyntax();
-        if (syntaxNode is null)
-            return null;
-
-        return syntaxNode
-                .DescendantNodes()
-                .OfType<CommaSeparatedIdentifierEqualsLiteralListSyntax>()
-                .FirstOrDefault();
     }
 }
