@@ -23,4 +23,6 @@ public static class DiagnosticIds
     public static readonly string ZeroEnumValueReservedForEmpty = "AC0019";
     public static readonly string LabelWithTokSuffixMustBeLocked = "AC0020";
     public static readonly string LabelLockedMustHaveTokSuffix = "AC0021";
+    public static readonly string EnumEmptyValueHasCaption = "AC0022";
+    public static readonly string EnumValueHasEmptyCaption = "AC0023";
 }

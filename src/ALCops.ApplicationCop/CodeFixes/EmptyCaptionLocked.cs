@@ -12,7 +12,6 @@ namespace ALCops.ApplicationCop.CodeFixes;
 [CodeFixProvider(nameof(EmptyCaptionLockedCodeFixProvider))]
 public sealed class EmptyCaptionLockedCodeFixProvider : CodeFixProvider
 {
-    private const string CaptionPropertyName = "Caption";
     private const string LockedPropertyName = "Locked";
 
     private class EmptyCaptionLockedCodeAction : CodeAction.DocumentChangeAction

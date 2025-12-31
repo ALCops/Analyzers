@@ -157,6 +157,60 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enum values with an empty name act as sentinel or placeholder values in Business Central. These values are not selectable, not accessible from AL code, and never displayed in the client..
+        /// </summary>
+        internal static string EnumEmptyValueHasCaptionDescription {
+            get {
+                return ResourceManager.GetString("EnumEmptyValueHasCaptionDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The empty enum value defines a Caption, which will never be shown or used by the client.
+        /// </summary>
+        internal static string EnumEmptyValueHasCaptionMessageFormat {
+            get {
+                return ResourceManager.GetString("EnumEmptyValueHasCaptionMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Empty Enum value should not have a Caption property specified..
+        /// </summary>
+        internal static string EnumEmptyValueHasCaptionTitle {
+            get {
+                return ResourceManager.GetString("EnumEmptyValueHasCaptionTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enum values with a non-empty name are intended to be selectable and visible in the Business Central client. If the Caption is empty, the value is hidden from the UI, leading to unexpected behavior and incomplete user interaction..
+        /// </summary>
+        internal static string EnumValueHasEmptyCaptionDescription {
+            get {
+                return ResourceManager.GetString("EnumValueHasEmptyCaptionDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The enum value &apos;{0}&apos; has an empty Caption and will not be shown or be selectable in the client..
+        /// </summary>
+        internal static string EnumValueHasEmptyCaptionMessageFormat {
+            get {
+                return ResourceManager.GetString("EnumValueHasEmptyCaptionMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enum value must have non-empty Caption to be selectable in the client..
+        /// </summary>
+        internal static string EnumValueHasEmptyCaptionTitle {
+            get {
+                return ResourceManager.GetString("EnumValueHasEmptyCaptionTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Table objects must explicitly define both the DropDown and Brick fieldgroups..
         /// </summary>
         internal static string FieldGroupsRequiredDescription {

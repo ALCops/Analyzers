@@ -150,6 +150,24 @@
   <data name="EmptyCaptionLockedCodeAction" xml:space="preserve">
     <value>ALCops: Set Locked property to true</value>
   </data>
+  <data name="EnumEmptyValueHasCaptionTitle" xml:space="preserve">
+    <value>Empty Enum value should not have a Caption property specified.</value>
+  </data>
+  <data name="EnumEmptyValueHasCaptionMessageFormat" xml:space="preserve">
+    <value>The empty enum value defines a Caption, which will never be shown or used by the client</value>
+  </data>
+  <data name="EnumEmptyValueHasCaptionDescription" xml:space="preserve">
+    <value>Enum values with an empty name act as sentinel or placeholder values in Business Central. These values are not selectable, not accessible from AL code, and never displayed in the client.</value>
+  </data>
+  <data name="EnumValueHasEmptyCaptionTitle" xml:space="preserve">
+    <value>Enum value must have non-empty Caption to be selectable in the client.</value>
+  </data>
+  <data name="EnumValueHasEmptyCaptionMessageFormat" xml:space="preserve">
+    <value>The enum value '{0}' has an empty Caption and will not be shown or be selectable in the client.</value>
+  </data>
+  <data name="EnumValueHasEmptyCaptionDescription" xml:space="preserve">
+    <value>Enum values with a non-empty name are intended to be selectable and visible in the Business Central client. If the Caption is empty, the value is hidden from the UI, leading to unexpected behavior and incomplete user interaction.</value>
+  </data>
   <data name="FieldGroupsRequiredTitle" xml:space="preserve">
     <value>DropDown and Brick fieldgroups must be defined</value>
   </data>

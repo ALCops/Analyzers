@@ -35,6 +35,26 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.EmptyCaptionLockedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.EmptyCaptionLocked));
 
+    public static readonly DiagnosticDescriptor EnumEmptyValueHasCaption = new(
+        id: DiagnosticIds.EnumEmptyValueHasCaption,
+        title: ApplicationCopAnalyzers.EnumEmptyValueHasCaptionTitle,
+        messageFormat: ApplicationCopAnalyzers.EnumEmptyValueHasCaptionMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.EnumEmptyValueHasCaptionDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.EnumEmptyValueHasCaption));
+
+    public static readonly DiagnosticDescriptor EnumValueHasEmptyCaption = new(
+        id: DiagnosticIds.EnumValueHasEmptyCaption,
+        title: ApplicationCopAnalyzers.EnumValueHasEmptyCaptionTitle,
+        messageFormat: ApplicationCopAnalyzers.EnumValueHasEmptyCaptionMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.EnumValueHasEmptyCaptionDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.EnumValueHasEmptyCaption));
+
     public static readonly DiagnosticDescriptor FieldGroupsRequired = new(
         id: DiagnosticIds.FieldGroupsRequired,
         title: ApplicationCopAnalyzers.FieldGroupsRequiredTitle,

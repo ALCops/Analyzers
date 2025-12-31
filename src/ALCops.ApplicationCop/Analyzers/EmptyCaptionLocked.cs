@@ -11,7 +11,6 @@ namespace ALCops.ApplicationCop.Analyzers;
 public sealed class EmptyCaptionLocked : DiagnosticAnalyzer
 {
     private const string CaptionPropertyName = "Caption";
-    private const string LockedPropertyName = "Locked";
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
@@ -68,18 +67,7 @@ public sealed class EmptyCaptionLocked : DiagnosticAnalyzer
         if (!string.IsNullOrWhiteSpace(captionText))
             return;
 
-        var lockedNode = captionProperty.Value.Properties?
-                                    .DescendantNodes()
-                                    .OfType<IdentifierEqualsLiteralSyntax>()
-                                    .FirstOrDefault(prop => prop.Identifier.ValueText?.Equals(LockedPropertyName, StringComparison.Ordinal) == true);
-
-        // Check if true is applied for the Locked property
-        var isLocked = lockedNode is not null &&
-            lockedNode.DescendantNodes()
-                        .OfType<BooleanLiteralValueSyntax>()
-                        .Any(b => b.Value.IsKind(EnumProvider.SyntaxKind.TrueKeyword));
-
-        if (isLocked)
+        if (captionProperty.HasLockedPropertyValue(true))
             return;
 
         var location = captionProperty.Parent?.GetFirstToken().GetLocation() ?? captionProperty.GetLocation();
