@@ -36,23 +36,23 @@ public sealed class PermissionSetCaptionLength : DiagnosticAnalyzer
             return;
         }
 
-        var subProperties = ExtractSubProperties(captionProperty);
-        if (subProperties is null)
+        var properties = TryGetProperties(captionProperty);
+        if (properties is null)
         {
-            if (captionProperty is not null)
-                ctx.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.PermissionSetCaptionLength,
-                    captionProperty.GetLocation(),
-                    MaxCaptionLength));
+            ctx.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.PermissionSetCaptionLength,
+                captionProperty.GetLocation(),
+                MaxCaptionLength));
+
             return;
         }
 
         // Check if property "Locked = true" is applied
-        if (subProperties.GetBooleanPropertyValue(IdentifierProperty.Locked) == true)
+        if (properties.GetBooleanPropertyValue(IdentifierProperty.Locked) == true)
             return;
 
         // Check MaxLength is set to the MaxCaptionLength of 30 (or less)
-        var maxLength = subProperties.GetIntegerPropertyValue(IdentifierProperty.MaxLength);
+        var maxLength = properties.GetIntegerPropertyValue(IdentifierProperty.MaxLength);
         if (maxLength is not null && maxLength <= MaxCaptionLength)
             return;
 
@@ -62,19 +62,19 @@ public sealed class PermissionSetCaptionLength : DiagnosticAnalyzer
             MaxCaptionLength));
     }
 
-    private IEnumerable<SyntaxNode> ExtractSubProperties(IPropertySymbol? captionProperty)
+    private static SyntaxNode? TryGetProperties(IPropertySymbol captionProperty)
     {
-        var syntaxReference = captionProperty?.DeclaringSyntaxReference;
+        var syntaxReference = captionProperty.DeclaringSyntaxReference;
         if (syntaxReference is null)
-            return Enumerable.Empty<SyntaxNode>();
+            return null;
 
         var syntaxNode = syntaxReference.GetSyntax();
         if (syntaxNode is null)
-            return Enumerable.Empty<SyntaxNode>();
+            return null;
 
-        var subPropertyNode = syntaxNode.DescendantNodes()
-            .FirstOrDefault(e => e.Kind == EnumProvider.SyntaxKind.CommaSeparatedIdentifierEqualsLiteralList);
-
-        return subPropertyNode?.DescendantNodes() ?? Enumerable.Empty<SyntaxNode>();
+        return syntaxNode
+                .DescendantNodes()
+                .FirstOrDefault(e =>
+                    e.Kind == EnumProvider.SyntaxKind.CommaSeparatedIdentifierEqualsLiteralList);
     }
 }

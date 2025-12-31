@@ -9,18 +9,6 @@ public static class SyntaxNodeExtensions
     public static int? GetIntegerPropertyValue(this LabelPropertyValueSyntax labelProperty, IdentifierProperty property) =>
         labelProperty.Value.Properties.GetIntegerPropertyValue(property);
 
-    public static int? GetIntegerPropertyValue(this IEnumerable<SyntaxNode> nodes, IdentifierProperty property)
-    {
-        foreach (var list in nodes.OfType<CommaSeparatedIdentifierEqualsLiteralListSyntax>())
-        {
-            var value = list.GetIntegerPropertyValue(property);
-            if (value.HasValue)
-                return value;
-        }
-
-        return null;
-    }
-
     public static int? GetIntegerPropertyValue(this SyntaxNode node, IdentifierProperty property)
     {
         // Currently only 'MaxLength' property is supported
@@ -46,18 +34,6 @@ public static class SyntaxNodeExtensions
 
     public static bool? GetBooleanPropertyValue(this LabelPropertyValueSyntax labelProperty, IdentifierProperty property) =>
         labelProperty.Value.Properties.GetBooleanPropertyValue(property);
-
-    public static bool? GetBooleanPropertyValue(this IEnumerable<SyntaxNode> nodes, IdentifierProperty property)
-    {
-        foreach (var list in nodes.OfType<CommaSeparatedIdentifierEqualsLiteralListSyntax>())
-        {
-            var value = list.GetBooleanPropertyValue(property);
-            if (value.HasValue)
-                return value;
-        }
-
-        return null;
-    }
 
     public static bool? GetBooleanPropertyValue(this SyntaxNode node, IdentifierProperty property)
     {
