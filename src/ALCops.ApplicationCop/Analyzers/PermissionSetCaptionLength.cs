@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
+using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -10,8 +11,6 @@ namespace ALCops.ApplicationCop.Analyzers;
 public sealed class PermissionSetCaptionLength : DiagnosticAnalyzer
 {
     private const int MaxCaptionLength = 30;
-    private const string LockedPropertyName = "Locked";
-    private const string MaxLengthPropertyName = "MaxLength";
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
@@ -49,26 +48,13 @@ public sealed class PermissionSetCaptionLength : DiagnosticAnalyzer
         }
 
         // Check if property "Locked = true" is applied
-        var lockedNode = subProperties.OfType<IdentifierEqualsLiteralSyntax>()
-                                    .FirstOrDefault(prop => prop.Identifier.ValueText?.Equals(LockedPropertyName, StringComparison.Ordinal) == true);
-        var isLocked = lockedNode is not null &&
-            lockedNode.DescendantNodes()
-                        .OfType<BooleanLiteralValueSyntax>()
-                        .Any(b => b.Value.IsKind(EnumProvider.SyntaxKind.TrueKeyword));
-
-        if (isLocked)
+        if (subProperties.GetBooleanPropertyValue(IdentifierProperty.Locked) == true)
             return;
 
         // Check MaxLength is set to the MaxCaptionLength of 30 (or less)
-        var maxLengthNode = subProperties.FirstOrDefault(node => node.ToString().Contains(MaxLengthPropertyName, StringComparison.OrdinalIgnoreCase));
-        if (maxLengthNode is not null &&
-            int.TryParse(maxLengthNode.DescendantNodes()?
-                        .OfType<Int32SignedLiteralValueSyntax>()?
-                        .FirstOrDefault()?.Number.ValueText, out int maxLength))
-        {
-            if (maxLength <= MaxCaptionLength)
-                return;
-        }
+        var maxLength = subProperties.GetIntegerPropertyValue(IdentifierProperty.MaxLength);
+        if (maxLength is not null && maxLength <= MaxCaptionLength)
+            return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.PermissionSetCaptionLength,

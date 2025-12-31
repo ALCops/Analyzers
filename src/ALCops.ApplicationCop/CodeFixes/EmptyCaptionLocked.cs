@@ -6,14 +6,13 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using ALCops.Common.Reflection;
+using ALCops.Common;
 
 namespace ALCops.ApplicationCop.CodeFixes;
 
 [CodeFixProvider(nameof(EmptyCaptionLockedCodeFixProvider))]
 public sealed class EmptyCaptionLockedCodeFixProvider : CodeFixProvider
 {
-    private const string LockedPropertyName = "Locked";
-
     private class EmptyCaptionLockedCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
@@ -109,7 +108,7 @@ public sealed class EmptyCaptionLockedCodeFixProvider : CodeFixProvider
 
         var existing =
             values.FirstOrDefault(v =>
-                v.Identifier.ValueText?.Equals(LockedPropertyName, StringComparison.Ordinal) == true);
+                v.Identifier.ValueText?.Equals(Constants.Locked, StringComparison.OrdinalIgnoreCase) == true);
 
         var replacement = GetLockedEntryTrue();
 
@@ -128,7 +127,7 @@ public sealed class EmptyCaptionLockedCodeFixProvider : CodeFixProvider
             SyntaxFactory.Token(EnumProvider.SyntaxKind.TrueKeyword));
 
         return SyntaxFactory.IdentifierEqualsLiteral(
-            SyntaxFactory.Identifier(LockedPropertyName),
+            SyntaxFactory.Identifier(Constants.Locked),
             literal);
     }
 

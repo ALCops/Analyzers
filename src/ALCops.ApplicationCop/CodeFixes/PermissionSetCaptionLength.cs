@@ -6,6 +6,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using ALCops.Common.Reflection;
+using ALCops.Common;
 
 namespace ALCops.ApplicationCop.CodeFixes;
 
@@ -13,7 +14,6 @@ namespace ALCops.ApplicationCop.CodeFixes;
 public sealed class PermissionSetCaptionLengthCodeFixProvider : CodeFixProvider
 {
     private const int MaxCaptionLength = 30;
-    private const string MaxLengthName = "MaxLength";
 
     private class PermissionSetCaptionLengthCodeAction : CodeAction.DocumentChangeAction
     {
@@ -108,7 +108,7 @@ public sealed class PermissionSetCaptionLengthCodeFixProvider : CodeFixProvider
 
         var existing =
             values.FirstOrDefault(v =>
-                v.Identifier.ValueText?.Equals(MaxLengthName, StringComparison.OrdinalIgnoreCase) == true);
+                v.Identifier.ValueText?.Equals(Constants.MaxLength, StringComparison.OrdinalIgnoreCase) == true);
 
         var replacement = GetMaxLengthEntry(MaxCaptionLength);
 
@@ -126,7 +126,7 @@ public sealed class PermissionSetCaptionLengthCodeFixProvider : CodeFixProvider
         var literal = SyntaxFactory.Int32SignedLiteralValue(SyntaxFactory.Literal(maxLength));
 
         return SyntaxFactory.IdentifierEqualsLiteral(
-            SyntaxFactory.Identifier(MaxLengthName),
+            SyntaxFactory.Identifier(Constants.MaxLength),
             literal);
     }
 

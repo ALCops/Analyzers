@@ -53,7 +53,7 @@ public sealed class EnumAccessibility : DiagnosticAnalyzer
             return;
         }
 
-        if (captionProperty.HasLockedPropertyValue(true))
+        if (captionProperty.GetBooleanPropertyValue(IdentifierProperty.Locked) is true)
             return;
 
         // Non-empty enum value must have a non-empty caption

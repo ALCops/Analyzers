@@ -67,7 +67,7 @@ public sealed class EmptyCaptionLocked : DiagnosticAnalyzer
         if (!string.IsNullOrWhiteSpace(captionText))
             return;
 
-        if (captionProperty.HasLockedPropertyValue(true))
+        if (captionProperty.GetBooleanPropertyValue(IdentifierProperty.Locked) is true)
             return;
 
         var location = captionProperty.Parent?.GetFirstToken().GetLocation() ?? captionProperty.GetLocation();
