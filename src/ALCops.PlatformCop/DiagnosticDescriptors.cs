@@ -65,6 +65,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.ListObjectsAreOneBasedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ListObjectsAreOneBased));
 
+    public static readonly DiagnosticDescriptor OperatorAndPlaceholderInFilterExpression = new(
+        id: DiagnosticIds.OperatorAndPlaceholderInFilterExpression,
+        title: PlatformCopAnalyzers.OperatorAndPlaceholderInFilterExpressionTitle,
+        messageFormat: PlatformCopAnalyzers.OperatorAndPlaceholderInFilterExpressionMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.OperatorAndPlaceholderInFilterExpressionDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.OperatorAndPlaceholderInFilterExpression));
+
     public static readonly DiagnosticDescriptor SetRangeWithFilterOperators = new(
         id: DiagnosticIds.SetRangeWithFilterOperators,
         title: PlatformCopAnalyzers.SetRangeWithFilterOperatorsTitle,

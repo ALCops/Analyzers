@@ -238,6 +238,42 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Wrap filter expression in StrSubstNo().
+        /// </summary>
+        internal static string OperatorAndPlaceholderInFilterExpressionCodeAction {
+            get {
+                return ResourceManager.GetString("OperatorAndPlaceholderInFilterExpressionCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This rule validates filter expressions passed to Record.SetFilter when placeholders (%1, %2, …) are used together with certain operators such as *, @, and ?. When these operators are included directly in the filter string, placeholders are not substituted as expected, leading to incorrect or unpredictable filtering results..
+        /// </summary>
+        internal static string OperatorAndPlaceholderInFilterExpressionDescription {
+            get {
+                return ResourceManager.GetString("OperatorAndPlaceholderInFilterExpressionDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Found operator &apos;{0}&apos; together with placeholder &apos;{1}&apos; in filter expression, which results in unexpected behavior. Use the StrSubstNo() method to circumvent this..
+        /// </summary>
+        internal static string OperatorAndPlaceholderInFilterExpressionMessageFormat {
+            get {
+                return ResourceManager.GetString("OperatorAndPlaceholderInFilterExpressionMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Avoid unsupported operators with placeholders in SetFilter expressions.
+        /// </summary>
+        internal static string OperatorAndPlaceholderInFilterExpressionTitle {
+            get {
+                return ResourceManager.GetString("OperatorAndPlaceholderInFilterExpressionTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Replace SetRange with SetFilter.
         /// </summary>
         internal static string SetRangeWithFilterOperatorsCodeAction {
