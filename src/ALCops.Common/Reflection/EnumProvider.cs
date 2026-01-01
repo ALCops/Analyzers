@@ -554,6 +554,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.List)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _none =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.None)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _methodReference =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.MethodReference)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _option =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Option)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _page =
@@ -588,7 +590,8 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind Label => _label.Value;
         public static NavCodeAnalysis.NavTypeKind List => _list.Value;
         public static NavCodeAnalysis.NavTypeKind None => _none.Value;
-        public static NavCodeAnalysis.NavTypeKind Option => _option.Value;
+        public static NavCodeAnalysis.NavTypeKind Option => _methodReference.Value;
+        public static NavCodeAnalysis.NavTypeKind MethodReference => _option.Value;
         public static NavCodeAnalysis.NavTypeKind Page => _page.Value;
         public static NavCodeAnalysis.NavTypeKind Query => _query.Value;
         public static NavCodeAnalysis.NavTypeKind Record => _record.Value;

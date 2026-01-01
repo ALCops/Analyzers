@@ -175,6 +175,42 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Add var keyword.
+        /// </summary>
+        internal static string EventSubscriberVarKeywordCodeAction {
+            get {
+                return ResourceManager.GetString("EventSubscriberVarKeywordCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ensures that event subscriber methods use &apos;var&apos; keyword for parameters as defined by event publisher..
+        /// </summary>
+        internal static string EventSubscriberVarKeywordDescription {
+            get {
+                return ResourceManager.GetString("EventSubscriberVarKeywordDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parameter &apos;{0}&apos; must use the &apos;var&apos; keyword if the publisher parameter is &apos;var&apos;..
+        /// </summary>
+        internal static string EventSubscriberVarKeywordMessageFormat {
+            get {
+                return ResourceManager.GetString("EventSubscriberVarKeywordMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Event subscriber var keyword mismatch..
+        /// </summary>
+        internal static string EventSubscriberVarKeywordTitle {
+            get {
+                return ResourceManager.GetString("EventSubscriberVarKeywordTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Set Extensible property to platform default.
         /// </summary>
         internal static string ExtensiblePropertyExplicitlySetCodeAction {

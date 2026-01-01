@@ -156,6 +156,18 @@
   <data name="EditableFlowFieldCodeAction" xml:space="preserve">
     <value>ALCops: Set Editable property to False</value>
   </data>
+  <data name="EventSubscriberVarKeywordTitle" xml:space="preserve">
+    <value>Event subscriber var keyword mismatch.</value>
+  </data>
+  <data name="EventSubscriberVarKeywordMessageFormat" xml:space="preserve">
+    <value>Parameter '{0}' must use the 'var' keyword if the publisher parameter is 'var'.</value>
+  </data>
+  <data name="EventSubscriberVarKeywordDescription" xml:space="preserve">
+    <value>Ensures that event subscriber methods use 'var' keyword for parameters as defined by event publisher.</value>
+  </data>
+  <data name="EventSubscriberVarKeywordCodeAction" xml:space="preserve">
+    <value>ALCops: Add var keyword</value>
+  </data>
   <data name="ExtensiblePropertyExplicitlySetTitle" xml:space="preserve">
     <value>Explicitly set Extensible property on public objects</value>
   </data>
