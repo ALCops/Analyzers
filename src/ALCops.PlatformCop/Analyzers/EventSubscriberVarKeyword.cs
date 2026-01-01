@@ -21,10 +21,10 @@ public sealed class EventSubscriberVarKeyword : DiagnosticAnalyzer
 
     private void CheckForEventSubscriberVar(SymbolAnalysisContext ctx)
     {
-        if (ctx.Symbol is not IMethodSymbol methodSymbol)
+        if (ctx.Symbol is not IMethodSymbol subscriberMethod)
             return;
 
-        var eventSubscriberAttribute = methodSymbol.Attributes
+        var eventSubscriberAttribute = subscriberMethod.Attributes
             .FirstOrDefault(attr => attr.AttributeKind == EnumProvider.AttributeKind.EventSubscriber);
 
         if (eventSubscriberAttribute is null)
@@ -33,33 +33,32 @@ public sealed class EventSubscriberVarKeyword : DiagnosticAnalyzer
         if (eventSubscriberAttribute.Arguments.Length < 3)
             return;
 
-        if (eventSubscriberAttribute.Arguments[2] is not IAttributeArgumentSymbol methodReference)
-            return;
-
-        IMethodSymbol? method = methodReference.ValueAsSymbol as IMethodSymbol
+        IMethodSymbol? publisherMethod = eventSubscriberAttribute.Arguments[2].ValueAsSymbol as IMethodSymbol
             // Fallback for when the event name is declared as a string literal
             ?? GetValueAsSymbolFromStringLiteral(ctx, eventSubscriberAttribute);
 
-        if (method is null)
+        if (publisherMethod is null)
             return;
 
-        var publisherParameters = method.Parameters.ToDictionary(
-            p => p.Name,
-            StringComparer.OrdinalIgnoreCase);
+        var publisherParameters = publisherMethod.Parameters;
 
-        foreach (var subscriberParameter in methodSymbol.Parameters)
+        foreach (var subscriberParameter in subscriberMethod.Parameters)
         {
             ctx.CancellationToken.ThrowIfCancellationRequested();
 
-            if (publisherParameters.TryGetValue(subscriberParameter.Name, out var publisherParameter))
+            var publisherParameter = publisherParameters
+                .FirstOrDefault(p =>
+                    string.Equals(p.Name, subscriberParameter.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (publisherParameter is null)
+                continue;
+
+            if (publisherParameter.IsVar && !subscriberParameter.IsVar)
             {
-                if (publisherParameter.IsVar && !subscriberParameter.IsVar)
-                {
-                    ctx.ReportDiagnostic(Diagnostic.Create(
-                        DiagnosticDescriptors.EventSubscriberVarKeyword,
-                        subscriberParameter.GetLocation(),
-                        subscriberParameter.Name));
-                }
+                ctx.ReportDiagnostic(Diagnostic.Create(
+                    DiagnosticDescriptors.EventSubscriberVarKeyword,
+                    subscriberParameter.GetLocation(),
+                    subscriberParameter.Name));
             }
         }
     }
