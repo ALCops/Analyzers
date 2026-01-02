@@ -98,7 +98,11 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
             if (!AreFieldCompatible(invocation.Arguments[i], table.PrimaryKey.Fields[i]))
             {
                 var argumentType = invocation.Arguments[i].GetTypeSymbol();
+#if NETSTANDARD2_1
+                var fieldType = table.PrimaryKey.Fields[i].OriginalDefinition.GetTypeSymbol();
+#else
                 var fieldType = table.PrimaryKey.Fields[i].Type;
+#endif
 
                 string expectedArgs = $"Argument at position {i + 1} has an invalid type; expected '{fieldType}', found '{argumentType}'";
 
@@ -115,8 +119,11 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
     private static bool AreFieldCompatible(IArgument argument, IFieldSymbol field)
     {
         var argumentType = argument.GetTypeSymbol();
+#if NETSTANDARD2_1
+        var fieldType = field.OriginalDefinition.GetTypeSymbol();
+#else
         var fieldType = field.Type;
-
+#endif
         if (argumentType is null || fieldType is null)
             return true;
 
