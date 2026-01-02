@@ -379,6 +379,8 @@ public static class EnumProvider
     {
         private static readonly Lazy<NavCodeAnalysis.FieldClassKind> _flowField =
             new(() => ParseEnum<NavCodeAnalysis.FieldClassKind>(nameof(NavCodeAnalysis.FieldClassKind.FlowField)));
+        private static readonly Lazy<NavCodeAnalysis.FieldClassKind> _flowFilter =
+            new(() => ParseEnum<NavCodeAnalysis.FieldClassKind>(nameof(NavCodeAnalysis.FieldClassKind.FlowFilter)));
         private static readonly Lazy<NavCodeAnalysis.FieldClassKind> _normal =
             new(() => ParseEnum<NavCodeAnalysis.FieldClassKind>(nameof(NavCodeAnalysis.FieldClassKind.Normal)));
 
@@ -386,6 +388,7 @@ public static class EnumProvider
             CreateEnumDictionary<NavCodeAnalysis.FieldClassKind>();
 
         public static NavCodeAnalysis.FieldClassKind FlowField => _flowField.Value;
+        public static NavCodeAnalysis.FieldClassKind FlowFilter => _flowFilter.Value;
         public static NavCodeAnalysis.FieldClassKind Normal => _normal.Value;
     }
 
@@ -658,6 +661,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.ConversionExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _emptyStatement =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.EmptyStatement)));
+        private static readonly Lazy<NavCodeAnalysis.OperationKind> _expressionStatement =
+            new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.ExpressionStatement)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _fieldAccess =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.FieldAccess)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _globalReferenceExpression =
@@ -676,6 +681,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.OperationKind AssignmentStatement => _assignmentStatement.Value;
         public static NavCodeAnalysis.OperationKind ConversionExpression => _conversionExpression.Value;
         public static NavCodeAnalysis.OperationKind EmptyStatement => _emptyStatement.Value;
+        public static NavCodeAnalysis.OperationKind ExpressionStatement => _emptyStatement.Value;
         public static NavCodeAnalysis.OperationKind FieldAccess => _fieldAccess.Value;
         public static NavCodeAnalysis.OperationKind GlobalReferenceExpression => _globalReferenceExpression.Value;
         public static NavCodeAnalysis.OperationKind InvocationExpression => _invocationExpression.Value;
@@ -684,6 +690,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.OperationKind ReturnValueReferenceExpression => _returnValueReferenceExpression.Value;
         public static NavCodeAnalysis.OperationKind XmlPortDataItemAccess => _xmlPortDataItemAccess.Value;
     }
+
 
     /// <summary>
     /// PageActionScopeKind enum values

@@ -283,6 +283,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Directly assigning values to FlowFilter fields bypasses their purpose and invalidates the filtering logic, resulting in incorrect or unintended calculations. Instead, use the .SetFilter() or .SetRange() methods to define the appropriate filters..
+        /// </summary>
+        internal static string FlowFilterFieldAssignmentDescription {
+            get {
+                return ResourceManager.GetString("FlowFilterFieldAssignmentDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Direct assignment to the &apos;{0}&apos; field of type FlowFilter invalidates the filter logic for calculations. Use .SetFilter() or .SetRange() to set the filter correctly..
+        /// </summary>
+        internal static string FlowFilterFieldAssignmentMessageFormat {
+            get {
+                return ResourceManager.GetString("FlowFilterFieldAssignmentMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set values for FlowFilter fields using filtering methods.
+        /// </summary>
+        internal static string FlowFilterFieldAssignmentTitle {
+            get {
+                return ResourceManager.GetString("FlowFilterFieldAssignmentTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to List objects are 1-based, meaning indexing starts from 1 instead of the conventional 0..
         /// </summary>
         internal static string ListObjectsAreOneBasedDescription {

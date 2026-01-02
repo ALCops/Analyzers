@@ -75,6 +75,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.ExtensiblePropertyExplicitlySetDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ExtensiblePropertyExplicitlySet));
 
+    public static readonly DiagnosticDescriptor FlowFilterFieldAssignment = new(
+        id: DiagnosticIds.FlowFilterFieldAssignment,
+        title: PlatformCopAnalyzers.FlowFilterFieldAssignmentTitle,
+        messageFormat: PlatformCopAnalyzers.FlowFilterFieldAssignmentMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.FlowFilterFieldAssignmentDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.FlowFilterFieldAssignment));
+
     public static readonly DiagnosticDescriptor ListObjectsAreOneBased = new(
         id: DiagnosticIds.ListObjectsAreOneBased,
         title: PlatformCopAnalyzers.ListObjectsAreOneBasedTitle,

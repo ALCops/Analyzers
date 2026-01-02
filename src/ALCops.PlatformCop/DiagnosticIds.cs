@@ -12,4 +12,5 @@ public static class DiagnosticIds
     public static readonly string OperatorAndPlaceholderInFilterExpression = "PC0008";
     public static readonly string EventSubscriberVarKeyword = "PC0010";
     public static readonly string EventPublisherIsHandledByVar = "PC0011";
+    public static readonly string FlowFilterFieldAssignment = "PC0012";
 }

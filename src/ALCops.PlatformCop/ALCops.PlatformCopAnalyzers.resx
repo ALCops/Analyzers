@@ -192,6 +192,15 @@
   <data name="ExtensiblePropertyExplicitlySetCodeAction" xml:space="preserve">
     <value>ALCops: Set Extensible property to platform default</value>
   </data>
+  <data name="FlowFilterFieldAssignmentTitle" xml:space="preserve">
+    <value>Set values for FlowFilter fields using filtering methods</value>
+  </data>
+  <data name="FlowFilterFieldAssignmentMessageFormat" xml:space="preserve">
+    <value>Direct assignment to the '{0}' field of type FlowFilter invalidates the filter logic for calculations. Use .SetFilter() or .SetRange() to set the filter correctly.</value>
+  </data>
+  <data name="FlowFilterFieldAssignmentDescription" xml:space="preserve">
+    <value>Directly assigning values to FlowFilter fields bypasses their purpose and invalidates the filtering logic, resulting in incorrect or unintended calculations. Instead, use the .SetFilter() or .SetRange() methods to define the appropriate filters.</value>
+  </data>
   <data name="ListObjectsAreOneBasedTitle" xml:space="preserve">
     <value>Zero index access on 1-based List objects</value>
   </data>
