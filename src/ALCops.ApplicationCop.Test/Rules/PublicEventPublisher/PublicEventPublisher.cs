@@ -22,8 +22,15 @@ namespace ALCops.ApplicationCop.Test
 
         [Test]
         [TestCase("PublicEvent")]
+        [TestCase("PublicExternalBusinessEvent")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["PublicExternalBusinessEvent"],
+                testCase,
+                "13.0",
+                "No support for External Business Events before version 13.0");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -31,10 +38,18 @@ namespace ALCops.ApplicationCop.Test
         }
 
         [Test]
-        [TestCase("LocalEvent")]
         [TestCase("InternalEvent")]
+        [TestCase("InternalExternalBusinessEvent")]
+        [TestCase("LocalEvent")]
+        [TestCase("LocalExternalBusinessEvent")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["InternalExternalBusinessEvent", "LocalExternalBusinessEvent"],
+                testCase,
+                "13.0",
+                "No support for External Business Events before version 13.0");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
