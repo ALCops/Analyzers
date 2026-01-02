@@ -107,7 +107,7 @@ public sealed class GuidEmptyStringComparisonCodeFix : CodeFixProvider
         var exprNoLeading = expr.WithLeadingTrivia(SyntaxFactory.TriviaList());
 
         return SyntaxFactory.UnaryExpression(
-                SyntaxKind.UnaryNotExpression,
+                EnumProvider.SyntaxKind.UnaryNotExpression,
                 notToken,
                 exprNoLeading)
             .WithTrailingTrivia(triviaSource.GetTrailingTrivia());
