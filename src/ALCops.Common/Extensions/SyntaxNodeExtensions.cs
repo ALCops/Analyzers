@@ -6,13 +6,11 @@ namespace ALCops.Common.Extensions;
 
 public static class SyntaxNodeExtensions
 {
-    public static int? GetIntegerPropertyValue(this LabelPropertyValueSyntax? labelProperty, IdentifierProperty property)
-    {
-        if (labelProperty is null)
-            return null;
+    public static int? GetIntegerPropertyValue(this LabelPropertyValueSyntax? labelProperty, IdentifierProperty property) =>
+        labelProperty?.GetIntegerPropertyValue(property);
 
-        return labelProperty.Value.Properties.GetIntegerPropertyValue(property);
-    }
+    public static int? GetIntegerPropertyValue(this LabelSyntax? labelProperty, IdentifierProperty property) =>
+        labelProperty?.Properties.GetIntegerPropertyValue(property);
 
     public static int? GetIntegerPropertyValue(this SyntaxNode? node, IdentifierProperty property, bool includeChildNodes = false)
     {
@@ -57,13 +55,11 @@ public static class SyntaxNodeExtensions
         return value;
     }
 
-    public static bool? GetBooleanPropertyValue(this LabelPropertyValueSyntax? labelProperty, IdentifierProperty property)
-    {
-        if (labelProperty is null)
-            return null;
+    public static bool? GetBooleanPropertyValue(this LabelPropertyValueSyntax? labelProperty, IdentifierProperty property) =>
+        labelProperty?.GetBooleanPropertyValue(property);
 
-        return labelProperty.Value.Properties.GetBooleanPropertyValue(property);
-    }
+    public static bool? GetBooleanPropertyValue(this LabelSyntax? labelProperty, IdentifierProperty property) =>
+        labelProperty?.Properties.GetBooleanPropertyValue(property);
 
     public static bool? GetBooleanPropertyValue(this SyntaxNode? node, IdentifierProperty property, bool includeChildNodes = false)
     {
@@ -118,7 +114,6 @@ public static class SyntaxNodeExtensions
             .OfType<CommaSeparatedIdentifierEqualsLiteralListSyntax>()
             .FirstOrDefault();
     }
-
 
     private static IdentifierEqualsLiteralSyntax? FindIdentifierNode(this CommaSeparatedIdentifierEqualsLiteralListSyntax list, string propertyName)
     {
