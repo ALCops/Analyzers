@@ -128,5 +128,41 @@ namespace ALCops.FormattingCop {
                 return ResourceManager.GetString("SemicolonAfterMethodOrTriggerDeclarationTitle", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Add parenthesis.
+        /// </summary>
+        internal static string UseParenthesisForFunctionCallCodeAction {
+            get {
+                return ResourceManager.GetString("UseParenthesisForFunctionCallCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use parenthesis in a function call even if the function does not have any parameters..
+        /// </summary>
+        internal static string UseParenthesisForFunctionCallDescription {
+            get {
+                return ResourceManager.GetString("UseParenthesisForFunctionCallDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You must specify open and close parenthesis after &apos;{0}&apos;..
+        /// </summary>
+        internal static string UseParenthesisForFunctionCallMessageFormat {
+            get {
+                return ResourceManager.GetString("UseParenthesisForFunctionCallMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Function calls should have parenthesis even if they do not have any parameters.
+        /// </summary>
+        internal static string UseParenthesisForFunctionCallTitle {
+            get {
+                return ResourceManager.GetString("UseParenthesisForFunctionCallTitle", resourceCulture);
+            }
+        }
     }
 }

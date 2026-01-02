@@ -132,7 +132,6 @@
   <data name="CasingMismatchCodeAction" xml:space="preserve">
     <value>ALCops: Fix casing</value>
   </data>
-
   <data name="SemicolonAfterMethodOrTriggerDeclarationTitle" xml:space="preserve">
     <value>Procedure or Trigger declaration should not end with semicolon</value>
   </data>
@@ -141,5 +140,17 @@
   </data>
   <data name="SemicolonAfterMethodOrTriggerDeclarationDescription" xml:space="preserve">
     <value>In AL the semicolon is a statement separator, not a terminator, and procedure or trigger signatures do not require a semicolon at the end. Although the compiler accepts it, enforcing this rule improves consistency and aligns with the coding guidelines used by the community.</value>
+  </data>
+  <data name="UseParenthesisForFunctionCallTitle" xml:space="preserve">
+    <value>Function calls should have parenthesis even if they do not have any parameters</value>
+  </data>
+  <data name="UseParenthesisForFunctionCallMessageFormat" xml:space="preserve">
+    <value>You must specify open and close parenthesis after '{0}'.</value>
+  </data>
+  <data name="UseParenthesisForFunctionCallDescription" xml:space="preserve">
+    <value>Use parenthesis in a function call even if the function does not have any parameters.</value>
+  </data>
+  <data name="UseParenthesisForFunctionCallCodeAction" xml:space="preserve">
+    <value>Add parenthesis</value>
   </data>
 </root>

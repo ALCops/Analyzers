@@ -36,6 +36,17 @@ public static class DiagnosticDescriptors
         description: FormattingCopAnalyzers.SemicolonAfterMethodOrTriggerDeclarationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.SemicolonAfterMethodOrTriggerDeclaration));
 
+    public static readonly DiagnosticDescriptor UseParenthesisForFunctionCall = new(
+        id: DiagnosticIds.UseParenthesisForFunctionCall,
+        title: FormattingCopAnalyzers.UseParenthesisForFunctionCallTitle,
+        messageFormat: FormattingCopAnalyzers.UseParenthesisForFunctionCallMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: FormattingCopAnalyzers.UseParenthesisForFunctionCallDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UseParenthesisForFunctionCall));
+
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/formattingcop/{0}/", identifier.ToLower());
