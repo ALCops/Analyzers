@@ -23,6 +23,13 @@ namespace ALCops.LinterCop.Test
         [TestCase("Page")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["Label", "Label"],
+                testCase,
+                "14.0",
+                "No support for PageStyle datatype in versions below 14.0."
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -37,6 +44,13 @@ namespace ALCops.LinterCop.Test
         [TestCase("Page")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["AssignToStyleExpr", "AssignToTableField", "Enum", "Label", "Page"],
+                testCase,
+                "14.0",
+                "No support for PageStyle datatype in versions below 14.0."
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
