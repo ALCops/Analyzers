@@ -538,6 +538,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Blob)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _boolean =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Boolean)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _char =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Char)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _code =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Code)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _codeunit =
@@ -599,6 +601,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind BigInteger => _bigInteger.Value;
         public static NavCodeAnalysis.NavTypeKind Blob => _blob.Value;
         public static NavCodeAnalysis.NavTypeKind Boolean => _boolean.Value;
+        public static NavCodeAnalysis.NavTypeKind Char => _char.Value;
         public static NavCodeAnalysis.NavTypeKind Code => _code.Value;
         public static NavCodeAnalysis.NavTypeKind Codeunit => _codeunit.Value;
         public static NavCodeAnalysis.NavTypeKind ControlAddIn => _controlAddIn.Value;

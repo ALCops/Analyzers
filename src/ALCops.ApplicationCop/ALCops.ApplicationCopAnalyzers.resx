@@ -237,6 +237,15 @@
   <data name="IntegrationEventInInternalCodeunitChangeToInternalEventCodeAction" xml:space="preserve">
     <value>ALCops: Refactor from IntegrationEvent to InternalEvent</value>
   </data>
+ <data name="LineSeparatorShouldUseTypeHelperTitle" xml:space="preserve">
+    <value>Use the (CR)LFSeparator from the "Type Helper" codeunit.</value>
+  </data>
+  <data name="LineSeparatorShouldUseTypeHelperMessageFormat" xml:space="preserve">
+    <value>Use the (CR)LFSeparator from the "Type Helper" codeunit from the Base Application to define a line feed (LF) or carriage return (CR) variable.</value>
+  </data>
+  <data name="LineSeparatorShouldUseTypeHelperDescription" xml:space="preserve">
+    <value>Avoid manually creating helper methods or assigning character values (e.g., Char := 10 or Text[1] := 10) to define line feed (LF) or carriage return (CR) variables. Instead, use the LFSeparator and CRLFSeparator constants provided by the "Type Helper" codeunit from the Base Application.</value>
+  </data>
   <data name="LookupPageIdAndDrillDownPageIdTitle" xml:space="preserve">
     <value>DrillDownPageId and LookupPageId property must be defined for tables used in list pages</value>
   </data>

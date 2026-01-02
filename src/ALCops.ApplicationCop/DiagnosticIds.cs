@@ -26,4 +26,5 @@ public static class DiagnosticIds
     public static readonly string EnumEmptyValueHasCaption = "AC0022";
     public static readonly string EnumValueHasEmptyCaption = "AC0023";
     public static readonly string PublicEventPublisher = "AC0024";
+    public static readonly string LineSeparatorShouldUseTypeHelper = "AC0025";
 }

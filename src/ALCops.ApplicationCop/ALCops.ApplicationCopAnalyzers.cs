@@ -418,6 +418,33 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Avoid manually creating helper methods or assigning character values (e.g., Char := 10 or Text[1] := 10) to define line feed (LF) or carriage return (CR) variables. Instead, use the LFSeparator and CRLFSeparator constants provided by the &quot;Type Helper&quot; codeunit from the Base Application..
+        /// </summary>
+        internal static string LineSeparatorShouldUseTypeHelperDescription {
+            get {
+                return ResourceManager.GetString("LineSeparatorShouldUseTypeHelperDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use the (CR)LFSeparator from the &quot;Type Helper&quot; codeunit from the Base Application to define a line feed (LF) or carriage return (CR) variable..
+        /// </summary>
+        internal static string LineSeparatorShouldUseTypeHelperMessageFormat {
+            get {
+                return ResourceManager.GetString("LineSeparatorShouldUseTypeHelperMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use the (CR)LFSeparator from the &quot;Type Helper&quot; codeunit..
+        /// </summary>
+        internal static string LineSeparatorShouldUseTypeHelperTitle {
+            get {
+                return ResourceManager.GetString("LineSeparatorShouldUseTypeHelperTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to When a table is used as the source for a list page, users expect to be able to drill down into records and open lookups in a consistent and predictable way. The DrillDownPageId and LookupPageId table properties define which pages are used for these interactions..
         /// </summary>
         internal static string LookupPageIdAndDrillDownPageIdDescription {

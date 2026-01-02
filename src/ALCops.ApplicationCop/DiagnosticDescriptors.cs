@@ -95,6 +95,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.LabelWithTokSuffixMustBeLockedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.LabelWithTokSuffixMustBeLocked));
 
+    public static readonly DiagnosticDescriptor LineSeparatorShouldUseTypeHelper = new(
+        id: DiagnosticIds.LineSeparatorShouldUseTypeHelper,
+        title: ApplicationCopAnalyzers.LineSeparatorShouldUseTypeHelperTitle,
+        messageFormat: ApplicationCopAnalyzers.LineSeparatorShouldUseTypeHelperMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.LineSeparatorShouldUseTypeHelperDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.LineSeparatorShouldUseTypeHelper));
+
     public static readonly DiagnosticDescriptor InstallAndUpgradeCodeunitsShouldBeInternal = new(
         id: DiagnosticIds.InstallAndUpgradeCodeunitsShouldBeInternal,
         title: ApplicationCopAnalyzers.InstallAndUpgradeCodeunitsShouldBeInternalTitle,
