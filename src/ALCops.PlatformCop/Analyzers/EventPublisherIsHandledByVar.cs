@@ -23,13 +23,13 @@ public sealed class EventPublisherIsHandledByVar : DiagnosticAnalyzer
 
     private void AnalyzerEventPublisher(SymbolAnalysisContext ctx)
     {
-        if (ctx.IsObsolete() || ctx.Symbol is not IMethodSymbol methodSymbol)
+        if (ctx.IsObsolete() || ctx.Symbol is not IMethodSymbol method)
             return;
 
-        if (!HasPublisherEventAttribute(methodSymbol))
+        if (!method.IsEvent)
             return;
 
-        foreach (var parameter in methodSymbol.Parameters)
+        foreach (var parameter in method.Parameters)
         {
             if (IsValidIsHandledParameter(parameter))
                 continue;
@@ -38,23 +38,6 @@ public sealed class EventPublisherIsHandledByVar : DiagnosticAnalyzer
                 DiagnosticDescriptors.EventPublisherIsHandledByVar,
                 parameter.GetLocation()));
         }
-    }
-
-    private static bool HasPublisherEventAttribute(IMethodSymbol methodSymbol)
-    {
-        foreach (var attr in methodSymbol.Attributes)
-        {
-            var kind = attr.AttributeKind;
-
-            if (kind == EnumProvider.AttributeKind.BusinessEvent ||
-                kind == EnumProvider.AttributeKind.IntegrationEvent ||
-                kind == EnumProvider.AttributeKind.InternalEvent)
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private static bool IsValidIsHandledParameter(IParameterSymbol parameter)
