@@ -45,6 +45,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.EditableFlowFieldDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.EditableFlowField));
 
+    public static readonly DiagnosticDescriptor EventPublisherIsHandledByVar = new(
+        id: DiagnosticIds.EventPublisherIsHandledByVar,
+        title: PlatformCopAnalyzers.EventPublisherIsHandledByVarTitle,
+        messageFormat: PlatformCopAnalyzers.EventPublisherIsHandledByVarMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.EventPublisherIsHandledByVarDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.EventPublisherIsHandledByVar));
+
     public static readonly DiagnosticDescriptor EventSubscriberVarKeyword = new(
         id: DiagnosticIds.EventSubscriberVarKeyword,
         title: PlatformCopAnalyzers.EventSubscriberVarKeywordTitle,

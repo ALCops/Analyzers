@@ -177,6 +177,42 @@ namespace ALCops.PlatformCop {
         /// <summary>
         ///   Looks up a localized string similar to ALCops: Add var keyword.
         /// </summary>
+        internal static string EventPublisherIsHandledByVarCodeAction {
+            get {
+                return ResourceManager.GetString("EventPublisherIsHandledByVarCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Identifies event parameters of type boolean named IsHandled or Handled that are not passed by var..
+        /// </summary>
+        internal static string EventPublisherIsHandledByVarDescription {
+            get {
+                return ResourceManager.GetString("EventPublisherIsHandledByVarDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parameter &apos;{0}&apos; must use the &apos;var&apos; keyword if the publisher parameter is &apos;var&apos;..
+        /// </summary>
+        internal static string EventPublisherIsHandledByVarMessageFormat {
+            get {
+                return ResourceManager.GetString("EventPublisherIsHandledByVarMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Handled parameters in event signatures should be passed by var.
+        /// </summary>
+        internal static string EventPublisherIsHandledByVarTitle {
+            get {
+                return ResourceManager.GetString("EventPublisherIsHandledByVarTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ALCops: Add var keyword.
+        /// </summary>
         internal static string EventSubscriberVarKeywordCodeAction {
             get {
                 return ResourceManager.GetString("EventSubscriberVarKeywordCodeAction", resourceCulture);

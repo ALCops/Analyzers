@@ -156,6 +156,18 @@
   <data name="EditableFlowFieldCodeAction" xml:space="preserve">
     <value>ALCops: Set Editable property to False</value>
   </data>
+  <data name="EventPublisherIsHandledByVarTitle" xml:space="preserve">
+    <value>Handled parameters in event signatures should be passed by var</value>
+  </data>
+  <data name="EventPublisherIsHandledByVarMessageFormat" xml:space="preserve">
+    <value>Parameter '{0}' must use the 'var' keyword if the publisher parameter is 'var'.</value>
+  </data>
+  <data name="EventPublisherIsHandledByVarDescription" xml:space="preserve">
+    <value>Identifies event parameters of type boolean named IsHandled or Handled that are not passed by var.</value>
+  </data>
+  <data name="EventPublisherIsHandledByVarCodeAction" xml:space="preserve">
+    <value>ALCops: Add var keyword</value>
+  </data>
   <data name="EventSubscriberVarKeywordTitle" xml:space="preserve">
     <value>Event subscriber var keyword mismatch.</value>
   </data>
