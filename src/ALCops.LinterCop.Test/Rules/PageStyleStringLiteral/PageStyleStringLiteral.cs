@@ -24,7 +24,7 @@ namespace ALCops.LinterCop.Test
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["Label", "Label"],
+                ["Page", "Label"],
                 testCase,
                 "14.0",
                 "No support for PageStyle datatype in versions below 14.0."
