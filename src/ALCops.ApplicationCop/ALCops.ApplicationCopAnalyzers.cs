@@ -580,6 +580,42 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Make event publisher method local.
+        /// </summary>
+        internal static string PublicEventPublisherCodeAction {
+            get {
+                return ResourceManager.GetString("PublicEventPublisherCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Event publisher methods are intended solely to raise events within the extension that defines them. When declared as public, they can be called by external dependency apps, which is a design smell and breaks the intended event-driven pattern. Additionally, public event publishers are treated as part of the public API, meaning their parameter signature cannot be extended in the future without introducing breaking changes..
+        /// </summary>
+        internal static string PublicEventPublisherDescription {
+            get {
+                return ResourceManager.GetString("PublicEventPublisherDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Event publisher method &apos;{0}&apos; should be declared as local or internal. Public event publishers can be called by external dependency apps and prevent future parameter extensions without introducing breaking changes..
+        /// </summary>
+        internal static string PublicEventPublisherMessageFormat {
+            get {
+                return ResourceManager.GetString("PublicEventPublisherMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Event publisher methods should not be public..
+        /// </summary>
+        internal static string PublicEventPublisherTitle {
+            get {
+                return ResourceManager.GetString("PublicEventPublisherTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Refactor to use &quot;Page Management&quot; codeunit.
         /// </summary>
         internal static string RunPageImplementPageManagementCodeAction {

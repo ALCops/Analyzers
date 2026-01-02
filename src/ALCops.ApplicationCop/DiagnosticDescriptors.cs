@@ -165,6 +165,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.PermissionSetCoverageDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.PermissionSetCoverage));
 
+    public static readonly DiagnosticDescriptor PublicEventPublisher = new(
+        id: DiagnosticIds.PublicEventPublisher,
+        title: ApplicationCopAnalyzers.PublicEventPublisherTitle,
+        messageFormat: ApplicationCopAnalyzers.PublicEventPublisherMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.PublicEventPublisherDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PublicEventPublisher));
+
     public static readonly DiagnosticDescriptor RunPageImplementPageManagement = new(
         id: DiagnosticIds.RunPageImplementPageManagement,
         title: ApplicationCopAnalyzers.RunPageImplementPageManagementTitle,

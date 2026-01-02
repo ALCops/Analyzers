@@ -291,6 +291,18 @@
   <data name="PermissionSetCoverageDescription" xml:space="preserve">
     <value>Every application object in an extension must be explicitly granted permissions through at least one permission set or permission set extension, defined in AL or XML.</value>
   </data>
+  <data name="PublicEventPublisherTitle" xml:space="preserve">
+    <value>Event publisher methods should not be public.</value>
+  </data>
+  <data name="PublicEventPublisherMessageFormat" xml:space="preserve">
+    <value>Event publisher method '{0}' should be declared as local or internal. Public event publishers can be called by external dependency apps and prevent future parameter extensions without introducing breaking changes.</value>
+  </data>
+  <data name="PublicEventPublisherDescription" xml:space="preserve">
+    <value>Event publisher methods are intended solely to raise events within the extension that defines them. When declared as public, they can be called by external dependency apps, which is a design smell and breaks the intended event-driven pattern. Additionally, public event publishers are treated as part of the public API, meaning their parameter signature cannot be extended in the future without introducing breaking changes.</value>
+  </data>
+  <data name="PublicEventPublisherCodeAction" xml:space="preserve">
+    <value>ALCops: Make event publisher method local</value>
+  </data>
   <data name="RunPageImplementPageManagementTitle" xml:space="preserve">
     <value>Use the "Page Management" codeunit instead invoking Page.Run directly</value>
   </data>
