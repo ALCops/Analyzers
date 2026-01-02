@@ -310,6 +310,42 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Use IsNullGuid().
+        /// </summary>
+        internal static string GuidEmptyStringComparisonCodeAction {
+            get {
+                return ResourceManager.GetString("GuidEmptyStringComparisonCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When checking if a GUID is empty, avoid using direct comparisons such as MyGuid = &apos;&apos;, as this will result in a runtime error due to the invalid GUID format. Instead, use the IsNullGuid() method to perform the check safely and correctly..
+        /// </summary>
+        internal static string GuidEmptyStringComparisonDescription {
+            get {
+                return ResourceManager.GetString("GuidEmptyStringComparisonDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use &apos;IsNullGuid({0})&apos; method instead of comparing the GUID &apos;{0}&apos; with {1}, as this will result in a runtime error..
+        /// </summary>
+        internal static string GuidEmptyStringComparisonMessageFormat {
+            get {
+                return ResourceManager.GetString("GuidEmptyStringComparisonMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use IsNullGuid() to check for empty GUID values..
+        /// </summary>
+        internal static string GuidEmptyStringComparisonTitle {
+            get {
+                return ResourceManager.GetString("GuidEmptyStringComparisonTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Replace double quotes (&quot;) with two single quotes (&apos;&apos;).
         /// </summary>
         internal static string JsonTokenJPathUsesDoubleQuotesCodeAction {

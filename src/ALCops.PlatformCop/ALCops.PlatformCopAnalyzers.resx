@@ -201,6 +201,18 @@
   <data name="FlowFilterFieldAssignmentDescription" xml:space="preserve">
     <value>Directly assigning values to FlowFilter fields bypasses their purpose and invalidates the filtering logic, resulting in incorrect or unintended calculations. Instead, use the .SetFilter() or .SetRange() methods to define the appropriate filters.</value>
   </data>
+  <data name="GuidEmptyStringComparisonTitle" xml:space="preserve">
+    <value>Use IsNullGuid() to check for empty GUID values.</value>
+  </data>
+  <data name="GuidEmptyStringComparisonMessageFormat" xml:space="preserve">
+    <value>Use 'IsNullGuid({0})' method instead of comparing the GUID '{0}' with {1}, as this will result in a runtime error.</value>
+  </data>
+  <data name="GuidEmptyStringComparisonDescription" xml:space="preserve">
+    <value>When checking if a GUID is empty, avoid using direct comparisons such as MyGuid = '', as this will result in a runtime error due to the invalid GUID format. Instead, use the IsNullGuid() method to perform the check safely and correctly.</value>
+  </data>
+  <data name="GuidEmptyStringComparisonCodeAction" xml:space="preserve">
+    <value>ALCops: Use IsNullGuid()</value>
+  </data>
   <data name="JsonTokenJPathUsesDoubleQuotesTitle" xml:space="preserve">
     <value>Use two single quotes instead of double quotes in JPath expressions</value>
   </data>

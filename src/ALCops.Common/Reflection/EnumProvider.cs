@@ -556,6 +556,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Enum)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _errorInfo =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.ErrorInfo)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _guid =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Guid)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _httpClient =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.HttpClient)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _httpHeaders =
@@ -610,6 +612,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind Duration => _duration.Value;
         public static NavCodeAnalysis.NavTypeKind Enum => _enum.Value;
         public static NavCodeAnalysis.NavTypeKind ErrorInfo => _errorInfo.Value;
+        public static NavCodeAnalysis.NavTypeKind Guid => _guid.Value;
         public static NavCodeAnalysis.NavTypeKind HttpHeaders => _httpHeaders.Value;
         public static NavCodeAnalysis.NavTypeKind HttpClient => _httpClient.Value;
         public static NavCodeAnalysis.NavTypeKind Integer => _integer.Value;
@@ -678,6 +681,8 @@ public static class EnumProvider
 
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _assignmentStatement =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.AssignmentStatement)));
+        private static readonly Lazy<NavCodeAnalysis.OperationKind> _binaryOperatorExpression =
+            new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.BinaryOperatorExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _conversionExpression =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.ConversionExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _emptyStatement =
@@ -690,6 +695,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.GlobalReferenceExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _invocationExpression =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.InvocationExpression)));
+        private static readonly Lazy<NavCodeAnalysis.OperationKind> _literalExpression =
+            new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.LiteralExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _localReferenceExpression =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.LocalReferenceExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _parameterReferenceExpression =
@@ -700,18 +707,19 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.XmlPortDataItemAccess)));
 
         public static NavCodeAnalysis.OperationKind AssignmentStatement => _assignmentStatement.Value;
+        public static NavCodeAnalysis.OperationKind BinaryOperatorExpression => _binaryOperatorExpression.Value;
         public static NavCodeAnalysis.OperationKind ConversionExpression => _conversionExpression.Value;
         public static NavCodeAnalysis.OperationKind EmptyStatement => _emptyStatement.Value;
         public static NavCodeAnalysis.OperationKind ExpressionStatement => _emptyStatement.Value;
         public static NavCodeAnalysis.OperationKind FieldAccess => _fieldAccess.Value;
         public static NavCodeAnalysis.OperationKind GlobalReferenceExpression => _globalReferenceExpression.Value;
         public static NavCodeAnalysis.OperationKind InvocationExpression => _invocationExpression.Value;
+        public static NavCodeAnalysis.OperationKind LiteralExpression => _literalExpression.Value;
         public static NavCodeAnalysis.OperationKind LocalReferenceExpression => _localReferenceExpression.Value;
         public static NavCodeAnalysis.OperationKind ParameterReferenceExpression => _parameterReferenceExpression.Value;
         public static NavCodeAnalysis.OperationKind ReturnValueReferenceExpression => _returnValueReferenceExpression.Value;
         public static NavCodeAnalysis.OperationKind XmlPortDataItemAccess => _xmlPortDataItemAccess.Value;
     }
-
 
     /// <summary>
     /// PageActionScopeKind enum values
@@ -1277,6 +1285,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.DotToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _elifKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ElifKeyword)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _equalsToken =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EqualsToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _endOfLineTrivia =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EndOfLineTrivia)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _enumExtensionType =
@@ -1353,6 +1363,10 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.MultiLineDocumentationCommentTrivia)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _none =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.None)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _notEqualsToken =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.NotEqualsToken)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _notKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.NotKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _objectId =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ObjectId)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _objectNameReference =
@@ -1497,6 +1511,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind DataType => _dataType.Value;
         public static NavCodeAnalysis.SyntaxKind DotToken => _dotToken.Value;
         public static NavCodeAnalysis.SyntaxKind ElifKeyword => _elifKeyword.Value;
+        public static NavCodeAnalysis.SyntaxKind EqualsToken => _equalsToken.Value;
         public static NavCodeAnalysis.SyntaxKind EndOfLineTrivia => _endOfLineTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind EnumExtensionType => _enumExtensionType.Value;
         public static NavCodeAnalysis.SyntaxKind EnumDataType => _enumDataType.Value;
@@ -1535,6 +1550,8 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind MethodDeclaration => _methodDeclaration.Value;
         public static NavCodeAnalysis.SyntaxKind MultiLineDocumentationCommentTrivia => _multiLineDocumentationCommentTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind None => _none.Value;
+        public static NavCodeAnalysis.SyntaxKind NotEqualsToken => _notEqualsToken.Value;
+        public static NavCodeAnalysis.SyntaxKind NotKeyword => _notKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind ObjectNameReference => _objectId.Value;
         public static NavCodeAnalysis.SyntaxKind ObjectId => _objectNameReference.Value;
         public static NavCodeAnalysis.SyntaxKind ObjectReference => _objectReference.Value;

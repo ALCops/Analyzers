@@ -85,6 +85,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.FlowFilterFieldAssignmentDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.FlowFilterFieldAssignment));
 
+    public static readonly DiagnosticDescriptor GuidEmptyStringComparison = new(
+        id: DiagnosticIds.GuidEmptyStringComparison,
+        title: PlatformCopAnalyzers.GuidEmptyStringComparisonTitle,
+        messageFormat: PlatformCopAnalyzers.GuidEmptyStringComparisonMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.GuidEmptyStringComparisonDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.GuidEmptyStringComparison));
+
     public static readonly DiagnosticDescriptor JsonTokenJPathUsesDoubleQuotes = new(
         id: DiagnosticIds.JsonTokenJPathUsesDoubleQuotes,
         title: PlatformCopAnalyzers.JsonTokenJPathUsesDoubleQuotesTitle,
