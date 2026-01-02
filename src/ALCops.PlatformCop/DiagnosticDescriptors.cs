@@ -105,6 +105,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.OperatorAndPlaceholderInFilterExpressionDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.OperatorAndPlaceholderInFilterExpression));
 
+    public static readonly DiagnosticDescriptor RecordGetProcedureArguments = new(
+        id: DiagnosticIds.RecordGetProcedureArguments,
+        title: PlatformCopAnalyzers.RecordGetProcedureArgumentsTitle,
+        messageFormat: PlatformCopAnalyzers.RecordGetProcedureArgumentsMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.RecordGetProcedureArgumentsDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.RecordGetProcedureArguments));
+
     public static readonly DiagnosticDescriptor SetRangeWithFilterOperators = new(
         id: DiagnosticIds.SetRangeWithFilterOperators,
         title: PlatformCopAnalyzers.SetRangeWithFilterOperatorsTitle,

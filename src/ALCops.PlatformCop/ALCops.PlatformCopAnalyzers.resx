@@ -222,6 +222,15 @@
   <data name="OperatorAndPlaceholderInFilterExpressionCodeAction" xml:space="preserve">
     <value>ALCops: Wrap filter expression in StrSubstNo()</value>
   </data>
+  <data name="RecordGetProcedureArgumentsTitle" xml:space="preserve">
+    <value>Incorrect number or type of arguments in .Get() method on Record object</value>
+  </data>
+  <data name="RecordGetProcedureArgumentsMessageFormat" xml:space="preserve">
+    <value>Invalid arguments in .Get() method for record '{0}': {1}.</value>
+  </data>
+  <data name="RecordGetProcedureArgumentsDescription" xml:space="preserve">
+    <value>This rule ensures that calls to the built-in .Get() procedure on Record objects have the correct number and types of arguments matching the primary key (PK) of the record in question.</value>
+  </data>
   <data name="SetRangeWithFilterOperatorsTitle" xml:space="preserve">
     <value>Filter operators should not be used in SetRange</value>
   </data>

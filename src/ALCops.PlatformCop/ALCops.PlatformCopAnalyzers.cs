@@ -373,6 +373,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This rule ensures that calls to the built-in .Get() procedure on Record objects have the correct number and types of arguments matching the primary key (PK) of the record in question..
+        /// </summary>
+        internal static string RecordGetProcedureArgumentsDescription {
+            get {
+                return ResourceManager.GetString("RecordGetProcedureArgumentsDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid arguments in .Get() method for record &apos;{0}&apos;: {1}..
+        /// </summary>
+        internal static string RecordGetProcedureArgumentsMessageFormat {
+            get {
+                return ResourceManager.GetString("RecordGetProcedureArgumentsMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Incorrect number or type of arguments in .Get() method on Record object.
+        /// </summary>
+        internal static string RecordGetProcedureArgumentsTitle {
+            get {
+                return ResourceManager.GetString("RecordGetProcedureArgumentsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Replace SetRange with SetFilter.
         /// </summary>
         internal static string SetRangeWithFilterOperatorsCodeAction {
