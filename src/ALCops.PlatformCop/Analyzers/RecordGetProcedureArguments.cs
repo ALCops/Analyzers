@@ -150,8 +150,21 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
 
     private static bool IsSingletonTable(ITableTypeSymbol table)
     {
-        return table.PrimaryKey.Fields.Length == 1 &&
-            table.PrimaryKey.Fields[0].OriginalDefinition.GetTypeSymbol() is { } typeSymbol &&
-            (typeSymbol.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Code || SemanticFacts.IsSameName(table.PrimaryKey.Fields[0].Name, PrimaryKeyFieldName));
+        if (table.PrimaryKey.Fields.Length != 1)
+            return false;
+
+        var pkField = table.PrimaryKey.Fields[0];
+
+#if NETSTANDARD2_1
+        var fieldType = pkField.OriginalDefinition.GetTypeSymbol();
+#else
+        var fieldType = pkField.Type;
+#endif
+
+        if (fieldType is null)
+            return false;
+
+        return fieldType.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Code
+            || SemanticFacts.IsSameName(pkField.Name, PrimaryKeyFieldName);
     }
 }
