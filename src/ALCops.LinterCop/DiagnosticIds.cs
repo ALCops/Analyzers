@@ -14,4 +14,5 @@ public static class DiagnosticIds
     public static readonly string ExplicitlySetRunTrigger = "LC0040";
     public static readonly string UseSecretTextForSensitiveText = "LC0043";
     public static readonly string ErrorInvocationUsingTextConstant = "LC0048";
+    public static readonly string PageStyleStringLiteral = "LC0086";
 }

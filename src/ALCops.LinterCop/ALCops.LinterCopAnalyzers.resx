@@ -219,6 +219,15 @@
   <data name="ObjectIdInDeclarationActionTitle" xml:space="preserve">
     <value>ALCops: Replace id with name of object reference</value>
   </data>
+  <data name="PageStyleStringLiteralTitle" xml:space="preserve">
+    <value>Use the new PageStyle datatype instead string literals</value>
+  </data>
+  <data name="PageStyleStringLiteralMessageFormat" xml:space="preserve">
+    <value>Avoid using the string literal '{0}' for page styling. Use the PageStyle datatype instead (PageStyle::{1}).</value>
+  </data>
+  <data name="PageStyleStringLiteralDescription" xml:space="preserve">
+    <value>Adopting the use of the new PageStyle datatype allows to more easily get the supported pagestyles via IntelliSense and avoids incorrect behaviour when a typo is made in hardcoded strings or label variables.</value>
+  </data>
   <data name="RecordInstanceIsolationLevelTitle" xml:space="preserve">
     <value>Use ReadIsolation instead of LockTable</value>
   </data>

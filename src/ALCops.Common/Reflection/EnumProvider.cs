@@ -1234,6 +1234,8 @@ public static class EnumProvider
 
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _arrayIndexExpression =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ArrayIndexExpression)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _assignmentStatement =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.AssignmentStatement)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _booleanLiteralValue =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.BooleanLiteralValue)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _caseLine =
@@ -1320,6 +1322,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageField)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageGroup =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageGroup)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _label =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Label)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _labelDataType =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LabelDataType)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _lengthDataType =
@@ -1440,6 +1444,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.SemicolonToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _stringLiteralToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.StringLiteralToken)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _stringLiteralValue =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.StringLiteralValue)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _singleLineDocumentationCommentTrivia =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.SingleLineDocumentationCommentTrivia)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _subtypedDataType =
@@ -1472,6 +1478,7 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.XmlPortObject)));
 
         public static NavCodeAnalysis.SyntaxKind ArrayIndexExpression => _arrayIndexExpression.Value;
+        public static NavCodeAnalysis.SyntaxKind AssignmentStatement => _assignmentStatement.Value;
         public static NavCodeAnalysis.SyntaxKind BooleanLiteralValue => _booleanLiteralValue.Value;
         public static NavCodeAnalysis.SyntaxKind CaseLine => _caseLine.Value;
         public static NavCodeAnalysis.SyntaxKind CloseParenToken => _closeParenToken.Value;
@@ -1511,6 +1518,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind PageAction => _pageAction.Value;
         public static NavCodeAnalysis.SyntaxKind PageField => _pageField.Value;
         public static NavCodeAnalysis.SyntaxKind PageGroup => _pageGroup.Value;
+        public static NavCodeAnalysis.SyntaxKind Label => _label.Value;
         public static NavCodeAnalysis.SyntaxKind LabelDataType => _labelDataType.Value;
         public static NavCodeAnalysis.SyntaxKind LengthDataType => _lengthDataType.Value;
         public static NavCodeAnalysis.SyntaxKind LineCommentTrivia => _lineCommentTrivia.Value;
@@ -1569,6 +1577,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind RequestPage => _requestPage.Value;
         public static NavCodeAnalysis.SyntaxKind SemicolonToken => _semicolonToken.Value;
         public static NavCodeAnalysis.SyntaxKind StringLiteralToken => _stringLiteralToken.Value;
+        public static NavCodeAnalysis.SyntaxKind StringLiteralValue => _stringLiteralValue.Value;
         public static NavCodeAnalysis.SyntaxKind SingleLineDocumentationCommentTrivia => _singleLineDocumentationCommentTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind SubtypedDataType => _subtypedDataType.Value;
         public static NavCodeAnalysis.SyntaxKind SystemKeyword => _systemKeyword.Value;

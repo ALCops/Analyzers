@@ -115,6 +115,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.ObjectIdInDeclarationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ObjectIdInDeclaration));
 
+    public static readonly DiagnosticDescriptor PageStyleStringLiteral = new(
+        id: DiagnosticIds.PageStyleStringLiteral,
+        title: LinterCopAnalyzers.PageStyleStringLiteralTitle,
+        messageFormat: LinterCopAnalyzers.PageStyleStringLiteralMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.PageStyleStringLiteralDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PageStyleStringLiteral));
+
     public static readonly DiagnosticDescriptor RecordInstanceIsolationLevel = new(
         id: DiagnosticIds.RecordInstanceIsolationLevel,
         title: LinterCopAnalyzers.RecordInstanceIsolationLevelTitle,

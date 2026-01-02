@@ -364,6 +364,33 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Adopting the use of the new PageStyle datatype allows to more easily get the supported pagestyles via IntelliSense and avoids incorrect behaviour when a typo is made in hardcoded strings or label variables..
+        /// </summary>
+        internal static string PageStyleStringLiteralDescription {
+            get {
+                return ResourceManager.GetString("PageStyleStringLiteralDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Avoid using the string literal &apos;{0}&apos; for page styling. Use the PageStyle datatype instead (PageStyle::{1})..
+        /// </summary>
+        internal static string PageStyleStringLiteralMessageFormat {
+            get {
+                return ResourceManager.GetString("PageStyleStringLiteralMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use the new PageStyle datatype instead string literals.
+        /// </summary>
+        internal static string PageStyleStringLiteralTitle {
+            get {
+                return ResourceManager.GetString("PageStyleStringLiteralTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Replace LockTable() with ReadIsolation.
         /// </summary>
         internal static string RecordInstanceIsolationLevelCodeActionTitle {
