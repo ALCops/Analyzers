@@ -201,6 +201,18 @@
   <data name="FlowFilterFieldAssignmentDescription" xml:space="preserve">
     <value>Directly assigning values to FlowFilter fields bypasses their purpose and invalidates the filtering logic, resulting in incorrect or unintended calculations. Instead, use the .SetFilter() or .SetRange() methods to define the appropriate filters.</value>
   </data>
+  <data name="JsonTokenJPathUsesDoubleQuotesTitle" xml:space="preserve">
+    <value>Use two single quotes instead of double quotes in JPath expressions</value>
+  </data>
+  <data name="JsonTokenJPathUsesDoubleQuotesMessageFormat" xml:space="preserve">
+    <value>Double quote character detected in JPath expression. Replace all double quotes (") with two single quotes ('').</value>
+  </data>
+  <data name="JsonTokenJPathUsesDoubleQuotesDescription" xml:space="preserve">
+    <value>Detects and warns against the use of double-quote (") characters in JPath expressions.</value>
+  </data>
+  <data name="JsonTokenJPathUsesDoubleQuotesCodeAction" xml:space="preserve">
+    <value>ALCops: Replace double quotes (") with two single quotes ('')</value>
+  </data>
   <data name="ListObjectsAreOneBasedTitle" xml:space="preserve">
     <value>Zero index access on 1-based List objects</value>
   </data>

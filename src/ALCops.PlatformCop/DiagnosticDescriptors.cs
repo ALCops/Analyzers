@@ -85,6 +85,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.FlowFilterFieldAssignmentDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.FlowFilterFieldAssignment));
 
+    public static readonly DiagnosticDescriptor JsonTokenJPathUsesDoubleQuotes = new(
+        id: DiagnosticIds.JsonTokenJPathUsesDoubleQuotes,
+        title: PlatformCopAnalyzers.JsonTokenJPathUsesDoubleQuotesTitle,
+        messageFormat: PlatformCopAnalyzers.JsonTokenJPathUsesDoubleQuotesMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.JsonTokenJPathUsesDoubleQuotesDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.JsonTokenJPathUsesDoubleQuotes));
+
     public static readonly DiagnosticDescriptor ListObjectsAreOneBased = new(
         id: DiagnosticIds.ListObjectsAreOneBased,
         title: PlatformCopAnalyzers.ListObjectsAreOneBasedTitle,

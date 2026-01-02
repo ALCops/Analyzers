@@ -14,4 +14,5 @@ public static class DiagnosticIds
     public static readonly string EventPublisherIsHandledByVar = "PC0011";
     public static readonly string FlowFilterFieldAssignment = "PC0012";
     public static readonly string RecordGetProcedureArguments = "PC0013";
+    public static readonly string JsonTokenJPathUsesDoubleQuotes = "PC0014";
 }

@@ -310,6 +310,42 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Replace double quotes (&quot;) with two single quotes (&apos;&apos;).
+        /// </summary>
+        internal static string JsonTokenJPathUsesDoubleQuotesCodeAction {
+            get {
+                return ResourceManager.GetString("JsonTokenJPathUsesDoubleQuotesCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Detects and warns against the use of double-quote (&quot;) characters in JPath expressions..
+        /// </summary>
+        internal static string JsonTokenJPathUsesDoubleQuotesDescription {
+            get {
+                return ResourceManager.GetString("JsonTokenJPathUsesDoubleQuotesDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Double quote character detected in JPath expression. Replace all double quotes (&quot;) with two single quotes (&apos;&apos;)..
+        /// </summary>
+        internal static string JsonTokenJPathUsesDoubleQuotesMessageFormat {
+            get {
+                return ResourceManager.GetString("JsonTokenJPathUsesDoubleQuotesMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use two single quotes instead of double quotes in JPath expressions.
+        /// </summary>
+        internal static string JsonTokenJPathUsesDoubleQuotesTitle {
+            get {
+                return ResourceManager.GetString("JsonTokenJPathUsesDoubleQuotesTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to List objects are 1-based, meaning indexing starts from 1 instead of the conventional 0..
         /// </summary>
         internal static string ListObjectsAreOneBasedDescription {
