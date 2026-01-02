@@ -57,7 +57,7 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
         var labelSyntax = GetLabelSyntax(stringLiteral);
         if (labelSyntax is not null)
         {
-            bool isLocked = labelSyntax.GetBooleanPropertyValue(IdentifierProperty.Locked) == true;
+            bool isLocked = labelSyntax.GetBooleanPropertyValue(IdentifierProperty.Locked, includeChildNodes: true) == true;
             if (!isLocked)
                 return;
         }
