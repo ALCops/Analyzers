@@ -7,7 +7,7 @@ namespace ALCops.Common.Extensions;
 public static class SyntaxNodeExtensions
 {
     public static int? GetIntegerPropertyValue(this LabelPropertyValueSyntax? labelProperty, IdentifierProperty property) =>
-        labelProperty?.GetIntegerPropertyValue(property);
+        labelProperty?.Value.GetIntegerPropertyValue(property);
 
     public static int? GetIntegerPropertyValue(this LabelSyntax? labelProperty, IdentifierProperty property) =>
         labelProperty?.Properties.GetIntegerPropertyValue(property);
@@ -56,7 +56,7 @@ public static class SyntaxNodeExtensions
     }
 
     public static bool? GetBooleanPropertyValue(this LabelPropertyValueSyntax? labelProperty, IdentifierProperty property) =>
-        labelProperty?.GetBooleanPropertyValue(property);
+        labelProperty?.Value.GetBooleanPropertyValue(property);
 
     public static bool? GetBooleanPropertyValue(this LabelSyntax? labelProperty, IdentifierProperty property) =>
         labelProperty?.Properties.GetBooleanPropertyValue(property);
