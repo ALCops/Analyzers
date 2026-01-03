@@ -10,6 +10,35 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 
 namespace ALCops.LinterCop.Analyzers;
 
+/// <summary>
+/// Simple thread-safe object pool for Stack objects to reduce GC allocations.
+/// </summary>
+internal sealed class StackPool<T>
+{
+    private readonly ConcurrentBag<Stack<T>> _pool = new();
+    private readonly int _maxPoolSize;
+
+    public StackPool(int maxPoolSize = 16)
+    {
+        _maxPoolSize = maxPoolSize;
+    }
+
+    public Stack<T> Get()
+    {
+        if (_pool.TryTake(out var stack))
+            return stack;
+
+        return new Stack<T>(16); // Pre-allocate reasonable capacity
+    }
+
+    public void Return(Stack<T> stack)
+    {
+        stack.Clear();
+        if (_pool.Count < _maxPoolSize)
+            _pool.Add(stack);
+    }
+}
+
 [DiagnosticAnalyzer]
 public sealed class CognitiveComplexity : DiagnosticAnalyzer
 {
@@ -22,12 +51,16 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         private readonly ConcurrentDictionary<string, HashSet<IMethodSymbol>> _methodInvocationGraph;
         private readonly ConcurrentDictionary<SyntaxTree, SemanticModel> _semanticModelCache;
 
+        // Index mapping method keys to their syntax nodes for O(1) lookup
+        private readonly Lazy<ConcurrentDictionary<string, (SyntaxTree tree, MethodDeclarationSyntax syntax)>> _methodIndex;
+
         public CompilationAnalysisState(Compilation compilation, int complexityThreshold)
         {
             Compilation = compilation;
             ComplexityThreshold = complexityThreshold;
             _methodInvocationGraph = new();
             _semanticModelCache = new();
+            _methodIndex = new Lazy<ConcurrentDictionary<string, (SyntaxTree, MethodDeclarationSyntax)>>(BuildMethodIndex);
         }
 
         public SemanticModel GetCachedSemanticModel(SyntaxTree tree)
@@ -38,10 +71,10 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         public HashSet<IMethodSymbol> GetMethodInvocations(IMethodSymbol methodSymbol)
         {
             var key = GetMethodKey(methodSymbol);
-            return _methodInvocationGraph.GetOrAdd(key, _ => BuildMethodInvocations(methodSymbol));
+            return _methodInvocationGraph.GetOrAdd(key, _ => BuildMethodInvocations(key));
         }
 
-        private static string GetMethodKey(IMethodSymbol methodSymbol)
+        internal static string GetMethodKey(IMethodSymbol methodSymbol)
         {
             // Create a unique key using containing type and method name with parameter types
             var containingType = methodSymbol.ContainingSymbol?.Name ?? string.Empty;
@@ -49,35 +82,60 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             return $"{containingType}.{methodSymbol.Name}({parameters})";
         }
 
-        private HashSet<IMethodSymbol> BuildMethodInvocations(IMethodSymbol methodSymbol)
+        /// <summary>
+        /// Builds an index of all method declarations for O(1) lookup.
+        /// This is lazily initialized on first use and shared across all analyses.
+        /// </summary>
+        private ConcurrentDictionary<string, (SyntaxTree tree, MethodDeclarationSyntax syntax)> BuildMethodIndex()
         {
-            var invokedMethods = new HashSet<IMethodSymbol>();
+            var index = new ConcurrentDictionary<string, (SyntaxTree, MethodDeclarationSyntax)>();
 
-            // Search through all syntax trees to find the method declaration
             foreach (var tree in Compilation.SyntaxTrees)
             {
                 var root = tree.GetRoot();
                 var semanticModel = GetCachedSemanticModel(tree);
 
-                foreach (var methodDeclaration in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
+                // Use manual iteration instead of LINQ for better performance
+                foreach (var node in root.DescendantNodes())
                 {
+                    if (node is not MethodDeclarationSyntax methodDeclaration)
+                        continue;
+
                     if (methodDeclaration.Body == null || methodDeclaration.Body.Statements.Count == 0)
                         continue;
 
-                    var declaredSymbol = semanticModel.GetDeclaredSymbol(methodDeclaration) as IMethodSymbol;
-                    if (declaredSymbol == null || !declaredSymbol.Equals(methodSymbol))
-                        continue;
-
-                    // Found the method declaration, analyze its invocations
-                    foreach (var invocation in methodDeclaration.DescendantNodes().OfType<InvocationExpressionSyntax>())
+                    if (semanticModel.GetDeclaredSymbol(methodDeclaration) is IMethodSymbol declaredSymbol)
                     {
-                        var symbolInfo = semanticModel.GetSymbolInfo(invocation);
-                        if (symbolInfo.Symbol is IMethodSymbol invokedSymbol)
-                        {
-                            invokedMethods.Add(invokedSymbol);
-                        }
+                        var key = GetMethodKey(declaredSymbol);
+                        index.TryAdd(key, (tree, methodDeclaration));
                     }
-                    break; // Found the method, no need to continue in this tree
+                }
+            }
+
+            return index;
+        }
+
+        private HashSet<IMethodSymbol> BuildMethodInvocations(string methodKey)
+        {
+            var invokedMethods = new HashSet<IMethodSymbol>();
+
+            // O(1) lookup using the method index
+            if (!_methodIndex.Value.TryGetValue(methodKey, out var methodInfo))
+                return invokedMethods;
+
+            var (tree, methodDeclaration) = methodInfo;
+            var semanticModel = GetCachedSemanticModel(tree);
+
+            // Use manual iteration instead of LINQ OfType<T>() for better performance
+            foreach (var node in methodDeclaration.DescendantNodes())
+            {
+                if (node is not InvocationExpressionSyntax invocation)
+                    continue;
+
+                var symbolInfo = semanticModel.GetSymbolInfo(invocation);
+                if (symbolInfo.Symbol is IMethodSymbol invokedSymbol)
+                {
+                    invokedMethods.Add(invokedSymbol);
                 }
             }
 
@@ -146,6 +204,9 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         "ExternalBusinessEvent"
     };
 
+    // Object pool for stack reuse to reduce GC pressure in CalculateCognitiveComplexity
+    private static readonly StackPool<(SyntaxNode node, int nestingLevel)> TraversalStackPool = new();
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
             DiagnosticDescriptors.CognitiveComplexityMetric,
@@ -206,40 +267,48 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     private int CalculateCognitiveComplexity(CodeBlockAnalysisContext context, CompilationAnalysisState state, SyntaxNode root)
     {
         int complexity = 0;
-        var stack = new Stack<(SyntaxNode node, int nestingLevel)>();
-        stack.Push((root, 0));
+        var stack = TraversalStackPool.Get();
 
-        while (stack.Count > 0)
+        try
         {
-            var (node, nestingLevel) = stack.Pop();
+            stack.Push((root, 0));
 
-            if (node.IsKind(EnumProvider.SyntaxKind.IfStatement))
+            while (stack.Count > 0)
             {
-                ProcessIfStatement(context, ref stack, node, ref complexity, ref nestingLevel);
-                continue; // Skip further processing for this IF node
+                var (node, nestingLevel) = stack.Pop();
+
+                if (node.IsKind(EnumProvider.SyntaxKind.IfStatement))
+                {
+                    ProcessIfStatement(context, ref stack, node, ref complexity, ref nestingLevel);
+                    continue; // Skip further processing for this IF node
+                }
+
+                if (IsFlowBreakingStructure(node) && !IsGuardClause(node))
+                {
+                    complexity += 1 + nestingLevel;
+                    RaiseIncrementDiagnostic(context, GetKeywordLocation(node, node.SpanStart), node.Kind.ToString(), nestingLevel);
+
+                    if (IsNestedStructure(node))
+                        nestingLevel++;
+                }
+
+                foreach (var child in node.ChildNodes())
+                {
+                    stack.Push((child, nestingLevel));
+                }
             }
 
-            if (IsFlowBreakingStructure(node) && !IsGuardClause(node))
+            if (context.CodeBlock.IsKind(EnumProvider.SyntaxKind.MethodDeclaration))
             {
-                complexity += 1 + nestingLevel;
-                RaiseIncrementDiagnostic(context, GetKeywordLocation(node, node.SpanStart), node.Kind.ToString(), nestingLevel);
-
-                if (IsNestedStructure(node))
-                    nestingLevel++;
+                complexity += CalculateRecursionComplexity(context, state, root);
             }
 
-            foreach (var child in node.ChildNodes())
-            {
-                stack.Push((child, nestingLevel));
-            }
+            return complexity;
         }
-
-        if (context.CodeBlock.IsKind(EnumProvider.SyntaxKind.MethodDeclaration))
+        finally
         {
-            complexity += CalculateRecursionComplexity(context, state, root);
+            TraversalStackPool.Return(stack);
         }
-
-        return complexity;
     }
 
     // The 'else if' increment causes a problem
@@ -360,19 +429,27 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     private static int CalculateRecursionComplexity(CodeBlockAnalysisContext context, CompilationAnalysisState state, SyntaxNode root)
     {
         int increment = 0;
-        var visited = new HashSet<IMethodSymbol>();
+        var visited = new HashSet<string>(); // Use string keys for efficient visited tracking
+        string? currentMethodKey = null;
 
         if (context.OwningSymbol is not IMethodSymbol currentMethod)
             return increment;
 
-        foreach (var invocation in root.DescendantNodes().OfType<InvocationExpressionSyntax>())
+        currentMethodKey = CompilationAnalysisState.GetMethodKey(currentMethod);
+
+        // Use manual iteration instead of LINQ OfType<T>() for better performance
+        foreach (var node in root.DescendantNodes())
         {
+            if (node is not InvocationExpressionSyntax invocation)
+                continue;
+
+            // Use context's SemanticModel directly (already cached by the framework)
             var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation, context.CancellationToken);
             if (symbolInfo.Symbol is IMethodSymbol invokedMethod)
             {
                 // Check if there is a path from the invoked method back to the current method.
                 visited.Clear();
-                if (IsPathTo(invokedMethod, currentMethod, visited, state))
+                if (IsPathTo(invokedMethod, currentMethodKey, visited, state))
                 {
                     increment++;
                     RaiseIncrementDiagnostic(context, GetKeywordLocation(invocation, invocation.SpanStart), "RecursionCycle", 0);
@@ -382,19 +459,21 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         return increment;
     }
 
-    private static bool IsPathTo(IMethodSymbol from, IMethodSymbol target, HashSet<IMethodSymbol> visited, CompilationAnalysisState state)
+    private static bool IsPathTo(IMethodSymbol from, string targetKey, HashSet<string> visited, CompilationAnalysisState state)
     {
-        if (from.Equals(target))
+        var fromKey = CompilationAnalysisState.GetMethodKey(from);
+
+        if (string.Equals(fromKey, targetKey, StringComparison.Ordinal))
             return true;
 
-        if (!visited.Add(from))
+        if (!visited.Add(fromKey))
             return false;
 
         var invokedMethods = state.GetMethodInvocations(from);
 
         foreach (var invokedMethod in invokedMethods)
         {
-            if (IsPathTo(invokedMethod, target, visited, state))
+            if (IsPathTo(invokedMethod, targetKey, visited, state))
                 return true;
         }
 
