@@ -13,12 +13,83 @@ namespace ALCops.LinterCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class CognitiveComplexity : DiagnosticAnalyzer
 {
-    private int complexityThreshold;
+    private sealed class CompilationAnalysisState
+    {
+        public Compilation Compilation { get; }
+        public int ComplexityThreshold { get; }
 
-    // Lazy loading caches for method invocation graph
-    private readonly ConcurrentDictionary<IMethodSymbol, HashSet<IMethodSymbol>> _lazyMethodInvocationGraph = new();
-    private readonly ConcurrentDictionary<SyntaxTree, SemanticModel> _semanticModelCache = new();
-    private Compilation? _currentCompilation;
+        // Use string key (fully qualified name) for reliable cross-semantic-model symbol matching
+        private readonly ConcurrentDictionary<string, HashSet<IMethodSymbol>> _methodInvocationGraph;
+        private readonly ConcurrentDictionary<SyntaxTree, SemanticModel> _semanticModelCache;
+
+        public CompilationAnalysisState(Compilation compilation, int complexityThreshold)
+        {
+            Compilation = compilation;
+            ComplexityThreshold = complexityThreshold;
+            _methodInvocationGraph = new();
+            _semanticModelCache = new();
+        }
+
+        public SemanticModel GetCachedSemanticModel(SyntaxTree tree)
+        {
+            return _semanticModelCache.GetOrAdd(tree, t => Compilation.GetSemanticModel(t));
+        }
+
+        public HashSet<IMethodSymbol> GetMethodInvocations(IMethodSymbol methodSymbol)
+        {
+            var key = GetMethodKey(methodSymbol);
+            return _methodInvocationGraph.GetOrAdd(key, _ => BuildMethodInvocations(methodSymbol));
+        }
+
+        private static string GetMethodKey(IMethodSymbol methodSymbol)
+        {
+            // Create a unique key using containing type and method name with parameter types
+            var containingType = methodSymbol.ContainingSymbol?.Name ?? string.Empty;
+            var parameters = string.Join(",", methodSymbol.Parameters.Select(p => p.ParameterType?.Name ?? "unknown"));
+            return $"{containingType}.{methodSymbol.Name}({parameters})";
+        }
+
+        private HashSet<IMethodSymbol> BuildMethodInvocations(IMethodSymbol methodSymbol)
+        {
+            var invokedMethods = new HashSet<IMethodSymbol>();
+
+            // Search through all syntax trees to find the method declaration
+            foreach (var tree in Compilation.SyntaxTrees)
+            {
+                var root = tree.GetRoot();
+                var semanticModel = GetCachedSemanticModel(tree);
+
+                foreach (var methodDeclaration in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
+                {
+                    if (methodDeclaration.Body == null || methodDeclaration.Body.Statements.Count == 0)
+                        continue;
+
+                    var declaredSymbol = semanticModel.GetDeclaredSymbol(methodDeclaration) as IMethodSymbol;
+                    if (declaredSymbol == null || !declaredSymbol.Equals(methodSymbol))
+                        continue;
+
+                    // Found the method declaration, analyze its invocations
+                    foreach (var invocation in methodDeclaration.DescendantNodes().OfType<InvocationExpressionSyntax>())
+                    {
+                        var symbolInfo = semanticModel.GetSymbolInfo(invocation);
+                        if (symbolInfo.Symbol is IMethodSymbol invokedSymbol)
+                        {
+                            invokedMethods.Add(invokedSymbol);
+                        }
+                    }
+                    break; // Found the method, no need to continue in this tree
+                }
+            }
+
+            return invokedMethods;
+        }
+
+        public void Clear()
+        {
+            _methodInvocationGraph.Clear();
+            _semanticModelCache.Clear();
+        }
+    }
 
     // Flow-Breaking Structures: These disrupt the linear execution of the code.
     // Each occurrence of these structures adds +1 complexity to the score.
@@ -86,17 +157,21 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     {
         context.RegisterCompilationStartAction(compilationContext =>
         {
-            LoadCognitiveComplexityThreshold(compilationContext.Compilation);
-            _currentCompilation = compilationContext.Compilation;
+            var state = new CompilationAnalysisState(
+                compilationContext.Compilation,
+                LoadCognitiveComplexityThreshold(compilationContext.Compilation));
 
             compilationContext.RegisterCodeBlockAction(codeBlockContext =>
             {
-                AnalyzeCognitiveComplexity(codeBlockContext);
+                AnalyzeCognitiveComplexity(codeBlockContext, state);
             });
+
+            // Clean up resources when compilation ends
+            compilationContext.RegisterCompilationEndAction(_ => state.Clear());
         });
     }
 
-    private void AnalyzeCognitiveComplexity(CodeBlockAnalysisContext context)
+    private void AnalyzeCognitiveComplexity(CodeBlockAnalysisContext context, CompilationAnalysisState state)
     {
         if (context.IsObsolete() || context.CodeBlock is not MethodOrTriggerDeclarationSyntax methodOrTrigger)
             return;
@@ -111,24 +186,24 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             methodOrTrigger.Attributes.Any(attr => eventPublisherDecoratorNames.Contains(attr.GetIdentifierOrLiteralValue() ?? string.Empty)))
             return;
 
-        int complexity = CalculateCognitiveComplexity(context, methodOrTrigger.Body);
-        if (complexity >= complexityThreshold)
+        int complexity = CalculateCognitiveComplexity(context, state, methodOrTrigger.Body);
+        if (complexity >= state.ComplexityThreshold)
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.CognitiveComplexityThresholdExceeded,
                 context.OwningSymbol.GetLocation(),
                 complexity,
-                complexityThreshold));
+                state.ComplexityThreshold));
         }
 
         context.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.CognitiveComplexityMetric,
             context.OwningSymbol.GetLocation(),
             complexity,
-            complexityThreshold));
+            state.ComplexityThreshold));
     }
 
-    private int CalculateCognitiveComplexity(CodeBlockAnalysisContext context, SyntaxNode root)
+    private int CalculateCognitiveComplexity(CodeBlockAnalysisContext context, CompilationAnalysisState state, SyntaxNode root)
     {
         int complexity = 0;
         var stack = new Stack<(SyntaxNode node, int nestingLevel)>();
@@ -161,7 +236,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
         if (context.CodeBlock.IsKind(EnumProvider.SyntaxKind.MethodDeclaration))
         {
-            complexity += CalculateRecursionComplexity(context, root);
+            complexity += CalculateRecursionComplexity(context, state, root);
         }
 
         return complexity;
@@ -282,7 +357,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
     #region Recursion
 
-    private int CalculateRecursionComplexity(CodeBlockAnalysisContext context, SyntaxNode root)
+    private static int CalculateRecursionComplexity(CodeBlockAnalysisContext context, CompilationAnalysisState state, SyntaxNode root)
     {
         int increment = 0;
         var visited = new HashSet<IMethodSymbol>();
@@ -297,7 +372,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             {
                 // Check if there is a path from the invoked method back to the current method.
                 visited.Clear();
-                if (IsPathTo(invokedMethod, currentMethod, visited))
+                if (IsPathTo(invokedMethod, currentMethod, visited, state))
                 {
                     increment++;
                     RaiseIncrementDiagnostic(context, GetKeywordLocation(invocation, invocation.SpanStart), "RecursionCycle", 0);
@@ -307,7 +382,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         return increment;
     }
 
-    private bool IsPathTo(IMethodSymbol from, IMethodSymbol target, HashSet<IMethodSymbol> visited)
+    private static bool IsPathTo(IMethodSymbol from, IMethodSymbol target, HashSet<IMethodSymbol> visited, CompilationAnalysisState state)
     {
         if (from.Equals(target))
             return true;
@@ -315,88 +390,25 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         if (!visited.Add(from))
             return false;
 
-        var invokedMethods = GetMethodInvocations(from);
-        if (invokedMethods == null)
-            return false;
+        var invokedMethods = state.GetMethodInvocations(from);
 
         foreach (var invokedMethod in invokedMethods)
         {
-            if (IsPathTo(invokedMethod, target, visited))
+            if (IsPathTo(invokedMethod, target, visited, state))
                 return true;
         }
 
         return false;
     }
 
-    /// <summary>
-    /// Gets the cached semantic model for a syntax tree, or creates and caches it if not found.
-    /// </summary>
-    private SemanticModel GetCachedSemanticModel(SyntaxTree tree)
-    {
-        if (_currentCompilation == null)
-            throw new InvalidOperationException("Compilation not initialized");
-
-        return _semanticModelCache.GetOrAdd(tree, _ => _currentCompilation.GetSemanticModel(tree));
-    }
-
-    /// <summary>
-    /// Lazily builds and caches the method invocation list for a given method symbol.
-    /// </summary>
-    private HashSet<IMethodSymbol>? GetMethodInvocations(IMethodSymbol methodSymbol)
-    {
-        return _lazyMethodInvocationGraph.GetOrAdd(methodSymbol, BuildMethodInvocations);
-    }
-
-    /// <summary>
-    /// Builds the method invocation list for a specific method symbol.
-    /// This replaces the global graph building with on-demand, per-method analysis.
-    /// </summary>
-    private HashSet<IMethodSymbol> BuildMethodInvocations(IMethodSymbol methodSymbol)
-    {
-        var invokedMethods = new HashSet<IMethodSymbol>();
-
-        if (_currentCompilation == null)
-            return invokedMethods;
-
-        // Search through all syntax trees to find the method declaration
-        foreach (var tree in _currentCompilation.SyntaxTrees)
-        {
-            var root = tree.GetRoot();
-            var semanticModel = GetCachedSemanticModel(tree);
-
-            foreach (var methodDeclaration in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
-            {
-                if (methodDeclaration.Body == null || methodDeclaration.Body.Statements.Count == 0)
-                    continue;
-
-                var declaredSymbol = semanticModel.GetDeclaredSymbol(methodDeclaration) as IMethodSymbol;
-                if (declaredSymbol == null || !declaredSymbol.Equals(methodSymbol))
-                    continue;
-
-                // Found the method declaration, analyze its invocations
-                foreach (var invocation in methodDeclaration.DescendantNodes().OfType<InvocationExpressionSyntax>())
-                {
-                    var symbolInfo = semanticModel.GetSymbolInfo(invocation);
-                    if (symbolInfo.Symbol is IMethodSymbol invokedSymbol)
-                    {
-                        invokedMethods.Add(invokedSymbol);
-                    }
-                }
-                break; // Found the method, no need to continue in this tree
-            }
-        }
-
-        return invokedMethods;
-    }
-
     #endregion
 
-    private void LoadCognitiveComplexityThreshold(Compilation compilation)
+    private static int LoadCognitiveComplexityThreshold(Compilation compilation)
     {
         var settings = ALCopsSettingsProvider.GetSettings(
             compilation.FileSystem?.GetDirectoryPath());
 
-        this.complexityThreshold = settings.CognitiveComplexityThreshold;
+        return settings.CognitiveComplexityThreshold;
     }
 
     private static void RaiseIncrementDiagnostic(CodeBlockAnalysisContext context, Location location, string category, int nestingPenalty)
