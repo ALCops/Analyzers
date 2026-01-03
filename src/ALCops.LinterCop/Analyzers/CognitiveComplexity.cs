@@ -1,4 +1,7 @@
 using System.Collections.Concurrent;
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
@@ -151,7 +154,8 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
     // Flow-Breaking Structures: These disrupt the linear execution of the code.
     // Each occurrence of these structures adds +1 complexity to the score.
-    private static readonly HashSet<SyntaxKind> flowBreakingKinds = new()
+#if NET8_0_OR_GREATER
+    private static readonly FrozenSet<SyntaxKind> FlowBreakingKinds = new[]
     {
         EnumProvider.SyntaxKind.IfStatement,
         EnumProvider.SyntaxKind.CaseStatement,
@@ -160,13 +164,25 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         EnumProvider.SyntaxKind.WhileStatement,
         EnumProvider.SyntaxKind.RepeatStatement,
         EnumProvider.SyntaxKind.ConditionalExpression // Ternary operator
-    };
+    }.ToFrozenSet();
+#else
+    private static readonly ImmutableHashSet<SyntaxKind> FlowBreakingKinds = ImmutableHashSet.Create(
+        EnumProvider.SyntaxKind.IfStatement,
+        EnumProvider.SyntaxKind.CaseStatement,
+        EnumProvider.SyntaxKind.ForStatement,
+        EnumProvider.SyntaxKind.ForEachStatement,
+        EnumProvider.SyntaxKind.WhileStatement,
+        EnumProvider.SyntaxKind.RepeatStatement,
+        EnumProvider.SyntaxKind.ConditionalExpression // Ternary operator
+    );
+#endif
 
     // Nested Structures: These introduce additional cognitive load due to nesting.
     // Unlike flow-breaking structures that always add complexity, nested structures only add an extra penalty when nested inside another structure.
     // Currently there's no difference between the Flow-Breaking Structures and Nested Structures in the AL Language.
     // For example in C# nestedStructures could contain try-catch-finally
-    private static readonly HashSet<SyntaxKind> nestedStructures = new()
+#if NET8_0_OR_GREATER
+    private static readonly FrozenSet<SyntaxKind> NestedStructures = new[]
     {
         EnumProvider.SyntaxKind.IfStatement,
         EnumProvider.SyntaxKind.CaseStatement,
@@ -175,34 +191,60 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         EnumProvider.SyntaxKind.WhileStatement,
         EnumProvider.SyntaxKind.RepeatStatement,
         EnumProvider.SyntaxKind.ConditionalExpression // Ternary operator
-    };
+    }.ToFrozenSet();
+#else
+    private static readonly ImmutableHashSet<SyntaxKind> NestedStructures = ImmutableHashSet.Create(
+        EnumProvider.SyntaxKind.IfStatement,
+        EnumProvider.SyntaxKind.CaseStatement,
+        EnumProvider.SyntaxKind.ForStatement,
+        EnumProvider.SyntaxKind.ForEachStatement,
+        EnumProvider.SyntaxKind.WhileStatement,
+        EnumProvider.SyntaxKind.RepeatStatement,
+        EnumProvider.SyntaxKind.ConditionalExpression // Ternary operator
+    );
+#endif
 
     // This HashSet defines specific identifiers that, in certain cases, restrict whether a statement qualifies as a guard clause.
     // Some exit commands (e.g., "Break", "Skip", "Quit") are only considered guard clauses if they are called on these identifiers.
-    private static readonly HashSet<string> guardClauseIdentifiers = new(StringComparer.OrdinalIgnoreCase)
+#if NET8_0_OR_GREATER
+    private static readonly FrozenSet<string> GuardClauseIdentifiers = new[]
     {
         "CurrReport",
         "CurrXMLport"
-    };
+    }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+#else
+    private static readonly ImmutableHashSet<string> GuardClauseIdentifiers =
+        ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, "CurrReport", "CurrXMLport");
+#endif
 
     // This HashSet defines commands that act as guard clause exits, meaning they immediately alter the flow of execution.
     // These commands are typically used in scenarios where a function, loop, or process needs to be stopped or skipped under certain conditions.
     // However, "Exit" is not included in this set, as we can get the ExitStatementSyntax type directly on the Statement of the IfStatementSyntax
-    private static readonly HashSet<string> guardClauseExitCommands = new(StringComparer.OrdinalIgnoreCase)
+#if NET8_0_OR_GREATER
+    private static readonly FrozenSet<string> GuardClauseExitCommands = new[]
     {
         "Break",
         "Continue",
         "Error",
         "Quit",
         "Skip"
-    };
+    }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+#else
+    private static readonly ImmutableHashSet<string> GuardClauseExitCommands =
+        ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, "Break", "Continue", "Error", "Quit", "Skip");
+#endif
 
-    private static readonly HashSet<string> eventPublisherDecoratorNames = new(StringComparer.OrdinalIgnoreCase)
+#if NET8_0_OR_GREATER
+    private static readonly FrozenSet<string> EventPublisherDecoratorNames = new[]
     {
         "BusinessEvent",
         "IntegrationEvent",
         "ExternalBusinessEvent"
-    };
+    }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+#else
+    private static readonly ImmutableHashSet<string> EventPublisherDecoratorNames =
+        ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, "BusinessEvent", "IntegrationEvent", "ExternalBusinessEvent");
+#endif
 
     // Object pool for stack reuse to reduce GC pressure in CalculateCognitiveComplexity
     private static readonly StackPool<(SyntaxNode node, int nestingLevel)> TraversalStackPool = new();
@@ -244,7 +286,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
         if (methodOrTrigger.Body is null ||
             methodOrTrigger.Body.Statements.Count == 0 &&
-            methodOrTrigger.Attributes.Any(attr => eventPublisherDecoratorNames.Contains(attr.GetIdentifierOrLiteralValue() ?? string.Empty)))
+            methodOrTrigger.Attributes.Any(attr => EventPublisherDecoratorNames.Contains(attr.GetIdentifierOrLiteralValue() ?? string.Empty)))
             return;
 
         int complexity = CalculateCognitiveComplexity(context, state, methodOrTrigger.Body);
@@ -300,7 +342,12 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
             if (context.CodeBlock.IsKind(EnumProvider.SyntaxKind.MethodDeclaration))
             {
-                complexity += CalculateRecursionComplexity(context, state, root);
+                var detector = new RecursionDetector(state);
+                complexity += detector.CalculateComplexity(
+                    context,
+                    root,
+                    location => RaiseIncrementDiagnostic(context, location, "RecursionCycle", 0),
+                    context.CancellationToken);
             }
 
             return complexity;
@@ -353,10 +400,10 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         }
     }
 
-    private bool IsFlowBreakingStructure(SyntaxNode node)
+    private static bool IsFlowBreakingStructure(SyntaxNode node)
     {
         // Fast path for common flow-breaking structures
-        if (flowBreakingKinds.Contains(node.Kind))
+        if (FlowBreakingKinds.Contains(node.Kind))
             return true;
 
         var kind = node.Kind;
@@ -373,7 +420,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     }
 
     private static bool IsNestedStructure(SyntaxNode node) =>
-        nestedStructures.Contains(node.Kind);
+        NestedStructures.Contains(node.Kind);
 
     private static bool IsGuardClause(SyntaxNode node)
     {
@@ -394,7 +441,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         {
             // if not <condition> then continue;
             IdentifierNameSyntax identifier when identifier.GetIdentifierOrLiteralValue() is { } value
-                => guardClauseExitCommands.Contains(value),
+                => GuardClauseExitCommands.Contains(value),
 
             InvocationExpressionSyntax invocation => IsGuardInvocation(invocation),
             _ => false
@@ -409,7 +456,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
             // if not <condition> then error;
             IdentifierNameSyntax identifier when identifier.GetIdentifierOrLiteralValue() is { } value
-                => guardClauseExitCommands.Contains(value),
+                => GuardClauseExitCommands.Contains(value),
             _ => false
         };
     }
@@ -420,64 +467,91 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             return false;
 
         // if not <condition> then CurrReport.Break() or .Skip() or .Quit();
-        return guardClauseIdentifiers.Contains(identifierValue) &&
-               guardClauseExitCommands.Contains(memberAccess.GetNameStringValue() ?? string.Empty);
+        return GuardClauseIdentifiers.Contains(identifierValue) &&
+               GuardClauseExitCommands.Contains(memberAccess.GetNameStringValue() ?? string.Empty);
     }
 
     #region Recursion
 
-    private static int CalculateRecursionComplexity(CodeBlockAnalysisContext context, CompilationAnalysisState state, SyntaxNode root)
+    /// <summary>
+    /// Detects direct and indirect recursion cycles in method call graphs.
+    /// Encapsulates recursion detection logic for better separation of concerns.
+    /// </summary>
+    private sealed class RecursionDetector
     {
-        int increment = 0;
-        var visited = new HashSet<string>(); // Use string keys for efficient visited tracking
-        string? currentMethodKey = null;
+        private readonly CompilationAnalysisState _state;
+        private readonly HashSet<string> _visited = new();
 
-        if (context.OwningSymbol is not IMethodSymbol currentMethod)
-            return increment;
-
-        currentMethodKey = CompilationAnalysisState.GetMethodKey(currentMethod);
-
-        // Use manual iteration instead of LINQ OfType<T>() for better performance
-        foreach (var node in root.DescendantNodes())
+        public RecursionDetector(CompilationAnalysisState state)
         {
-            if (node is not InvocationExpressionSyntax invocation)
-                continue;
+            _state = state;
+        }
 
-            // Use context's SemanticModel directly (already cached by the framework)
-            var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation, context.CancellationToken);
-            if (symbolInfo.Symbol is IMethodSymbol invokedMethod)
+        /// <summary>
+        /// Calculates recursion complexity by detecting cycles from invocations back to the current method.
+        /// </summary>
+        public int CalculateComplexity(
+            CodeBlockAnalysisContext context,
+            SyntaxNode root,
+            Action<Location> onRecursionFound,
+            CancellationToken cancellationToken)
+        {
+            int increment = 0;
+
+            if (context.OwningSymbol is not IMethodSymbol currentMethod)
+                return increment;
+
+            var currentMethodKey = CompilationAnalysisState.GetMethodKey(currentMethod);
+
+            // Use manual iteration instead of LINQ OfType<T>() for better performance
+            foreach (var node in root.DescendantNodes())
             {
-                // Check if there is a path from the invoked method back to the current method.
-                visited.Clear();
-                if (IsPathTo(invokedMethod, currentMethodKey, visited, state))
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (node is not InvocationExpressionSyntax invocation)
+                    continue;
+
+                var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation, cancellationToken);
+                if (symbolInfo.Symbol is IMethodSymbol invokedMethod)
                 {
-                    increment++;
-                    RaiseIncrementDiagnostic(context, GetKeywordLocation(invocation, invocation.SpanStart), "RecursionCycle", 0);
+                    // Check if there is a path from the invoked method back to the current method.
+                    _visited.Clear();
+                    if (HasPathTo(invokedMethod, currentMethodKey, cancellationToken))
+                    {
+                        increment++;
+                        onRecursionFound(GetKeywordLocation(invocation, invocation.SpanStart));
+                    }
                 }
             }
+
+            return increment;
         }
-        return increment;
-    }
 
-    private static bool IsPathTo(IMethodSymbol from, string targetKey, HashSet<string> visited, CompilationAnalysisState state)
-    {
-        var fromKey = CompilationAnalysisState.GetMethodKey(from);
-
-        if (string.Equals(fromKey, targetKey, StringComparison.Ordinal))
-            return true;
-
-        if (!visited.Add(fromKey))
-            return false;
-
-        var invokedMethods = state.GetMethodInvocations(from);
-
-        foreach (var invokedMethod in invokedMethods)
+        /// <summary>
+        /// Checks if there is a path from the given method to the target method key (detecting cycles).
+        /// </summary>
+        private bool HasPathTo(IMethodSymbol from, string targetKey, CancellationToken cancellationToken)
         {
-            if (IsPathTo(invokedMethod, targetKey, visited, state))
-                return true;
-        }
+            cancellationToken.ThrowIfCancellationRequested();
 
-        return false;
+            var fromKey = CompilationAnalysisState.GetMethodKey(from);
+
+            if (string.Equals(fromKey, targetKey, StringComparison.Ordinal))
+                return true;
+
+            if (!_visited.Add(fromKey))
+                return false;
+
+            var invokedMethods = _state.GetMethodInvocations(from);
+
+            foreach (var invokedMethod in invokedMethods)
+            {
+                if (HasPathTo(invokedMethod, targetKey, cancellationToken))
+                    return true;
+            }
+
+            return false;
+        }
     }
 
     #endregion
