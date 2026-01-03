@@ -79,8 +79,8 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         ImmutableArray.Create(
             DiagnosticDescriptors.CognitiveComplexityMetric,
             DiagnosticDescriptors.CognitiveComplexityIncrement,
-            DiagnosticDescriptors.CognitiveComplexityThresholdExceeded)
-            ;
+            DiagnosticDescriptors.CognitiveComplexityThresholdExceeded
+        );
 
     public override void Initialize(AnalysisContext context)
     {

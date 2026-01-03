@@ -4,22 +4,21 @@ codeunit 50100 MyCodeunit
     var
         Condition: Boolean;
     begin
-        SomeOtherProcedure();           // +1 (nesting = 0)
-        if true then                    // +1 (nesting = 0)
-            if true then                // +2 (nesting = 1)
-                SomeOtherProcedure();   // +1 (no nesting penalty on recursion)
+        if true then                    // IfStatement: +1 (1 increment + 0 nesting penalty)
+            if true then                // IfStatement: +2 (1 increment + 1 nesting penalty)
+                SomeOtherProcedure();   // RecursionCycle: +1 (1 increment + 0 nesting penalty, no nesting penalty on recursion)
 
-        while true do                   // +1 (nesting = 0)
-            SomeOtherProcedure();       // +1 (no nesting penalty on recursion)
+        while true do                   // WhileStatement: +1 (1 increment + 0 nesting penalty)
+            SomeOtherProcedure();       // RecursionCycle: +1 (1 increment + 0 nesting penalty, no nesting penalty on recursion)
 
-        if true then                    // +1 (nesting = 0)
-            if Condition then           // +2 (nesting = 1)
-                SomeOtherProcedure()    // +1 (no nesting penalty on recursion)
-            else                        // +2 (nesting = 1)
-                SomeOtherProcedure();   // +1 (no nesting penalty on recursion)
+        if true then                    // IfStatement: +1 (1 increment + 0 nesting penalty)
+            if Condition then           // IfStatement: +2 (1 increment + 1 nesting penalty)
+                SomeOtherProcedure()    // RecursionCycle: +1 (1 increment + 0 nesting penalty, no nesting penalty on recursion)
+            else                        // ElseStatement: +2 (1 increment + 1 nesting penalty)
+                SomeOtherProcedure();   // RecursionCycle: +1 (1 increment + 0 nesting penalty, no nesting penalty on recursion)
 
-        repeat                          // +1 (nesting = 0)
-            this.SomeOtherProcedure();  // +1 (no nesting penalty on recursion)
+        repeat                          // RepeatStatement: +1 (1 increment + 0 nesting penalty)
+            this.SomeOtherProcedure();  // RecursionCycle: +1 (1 increment + 0 nesting penalty, no nesting penalty on recursion)
         until true;
     end;
 
