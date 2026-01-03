@@ -94,6 +94,87 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Reports an individual Cognitive Complexity increment at the exact source location where complexity increases. Each diagnostic explains how the increment is composed, including the base increment and any additional nesting penalty. This diagnostic is intended to make the complexity calculation transparent and explainable..
+        /// </summary>
+        internal static string CognitiveComplexityIncrementDescription {
+            get {
+                return ResourceManager.GetString("CognitiveComplexityIncrementDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: +{1} (1 increment + {2} nesting penalty).
+        /// </summary>
+        internal static string CognitiveComplexityIncrementMessageFormat {
+            get {
+                return ResourceManager.GetString("CognitiveComplexityIncrementMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cognitive Complexity increment.
+        /// </summary>
+        internal static string CognitiveComplexityIncrementTitle {
+            get {
+                return ResourceManager.GetString("CognitiveComplexityIncrementTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reports the Cognitive Complexity score of a procedure or trigger. This diagnostic is informational and is always reported, independent of any configured threshold..
+        /// </summary>
+        internal static string CognitiveComplexityMetricDescription {
+            get {
+                return ResourceManager.GetString("CognitiveComplexityMetricDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cognitive Complexity: {0} (threshold ≤ {1}).
+        /// </summary>
+        internal static string CognitiveComplexityMetricMessageFormat {
+            get {
+                return ResourceManager.GetString("CognitiveComplexityMetricMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cognitive complexity metric.
+        /// </summary>
+        internal static string CognitiveComplexityMetricTitle {
+            get {
+                return ResourceManager.GetString("CognitiveComplexityMetricTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Indicates that the Cognitive Complexity of a procedure or trigger meets or exceeds the configured threshold. High Cognitive Complexity signals reduced readability and maintainability. Thresholds are configurable and should be interpreted in the context of the application domain and expected problem complexity..
+        /// </summary>
+        internal static string CognitiveComplexityThresholdExceededDescription {
+            get {
+                return ResourceManager.GetString("CognitiveComplexityThresholdExceededDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cognitive Complexity: {0} (threshold ≤ {1}).
+        /// </summary>
+        internal static string CognitiveComplexityThresholdExceededMessageFormat {
+            get {
+                return ResourceManager.GetString("CognitiveComplexityThresholdExceededMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cognitive Complexity exceeds threshold..
+        /// </summary>
+        internal static string CognitiveComplexityThresholdExceededTitle {
+            get {
+                return ResourceManager.GetString("CognitiveComplexityThresholdExceededTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reports the cyclomatic complexity of a method or trigger. Cyclomatic complexity represents the number of independent execution paths through the code and provides insight into control-flow complexity..
         /// </summary>
         internal static string CyclomaticComplexityMetricDescription {

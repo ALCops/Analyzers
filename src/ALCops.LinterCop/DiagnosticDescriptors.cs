@@ -15,6 +15,36 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.ApplicationAreaRedundancyDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ApplicationAreaRedundancy));
 
+    public static readonly DiagnosticDescriptor CognitiveComplexityMetric = new(
+        id: DiagnosticIds.CognitiveComplexityMetric,
+        title: LinterCopAnalyzers.CognitiveComplexityMetricMessageFormat,
+        messageFormat: LinterCopAnalyzers.CognitiveComplexityMetricMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: LinterCopAnalyzers.CognitiveComplexityMetricDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.CognitiveComplexityMetric));
+
+    public static readonly DiagnosticDescriptor CognitiveComplexityIncrement = new(
+        id: DiagnosticIds.CognitiveComplexityIncrement,
+        title: LinterCopAnalyzers.CognitiveComplexityIncrementMessageFormat,
+        messageFormat: LinterCopAnalyzers.CognitiveComplexityIncrementMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: LinterCopAnalyzers.CognitiveComplexityIncrementDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.CognitiveComplexityIncrement));
+
+    public static readonly DiagnosticDescriptor CognitiveComplexityThresholdExceeded = new(
+        id: DiagnosticIds.CognitiveComplexityThresholdExceeded,
+        title: LinterCopAnalyzers.CognitiveComplexityThresholdExceededTitle,
+        messageFormat: LinterCopAnalyzers.CognitiveComplexityThresholdExceededMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.CognitiveComplexityThresholdExceededDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.CognitiveComplexityThresholdExceeded));
+
     public static readonly DiagnosticDescriptor CyclomaticComplexityMetric = new(
         id: DiagnosticIds.CyclomaticComplexityMetric,
         title: LinterCopAnalyzers.CyclomaticComplexityMetricMessageFormat,

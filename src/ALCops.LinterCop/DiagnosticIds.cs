@@ -15,4 +15,7 @@ public static class DiagnosticIds
     public static readonly string UseSecretTextForSensitiveText = "LC0043";
     public static readonly string ErrorInvocationUsingTextConstant = "LC0048";
     public static readonly string PageStyleStringLiteral = "LC0086";
+    public static readonly string CognitiveComplexityMetric = "LC0089";
+    public static readonly string CognitiveComplexityIncrement = "LC0089i";
+    public static readonly string CognitiveComplexityThresholdExceeded = "LC0090";
 }

@@ -129,6 +129,33 @@
   <data name="ApplicationAreaRedundancyCodeAction" xml:space="preserve">
     <value>ALCops: Remove redundant ApplicationArea</value>
   </data>
+  <data name="CognitiveComplexityMetricTitle" xml:space="preserve">
+    <value>Cognitive complexity metric</value>
+  </data>
+  <data name="CognitiveComplexityMetricMessageFormat" xml:space="preserve">
+    <value>Cognitive Complexity: {0} (threshold ≤ {1})</value>
+  </data>
+  <data name="CognitiveComplexityMetricDescription" xml:space="preserve">
+    <value>Reports the Cognitive Complexity score of a procedure or trigger. This diagnostic is informational and is always reported, independent of any configured threshold.</value>
+  </data>
+  <data name="CognitiveComplexityIncrementTitle" xml:space="preserve">
+  <value>Cognitive Complexity increment</value>
+  </data>
+  <data name="CognitiveComplexityIncrementMessageFormat" xml:space="preserve">
+    <value>{0}: +{1} (1 increment + {2} nesting penalty)</value>
+  </data>
+  <data name="CognitiveComplexityIncrementDescription" xml:space="preserve">
+    <value>Reports an individual Cognitive Complexity increment at the exact source location where complexity increases. Each diagnostic explains how the increment is composed, including the base increment and any additional nesting penalty. This diagnostic is intended to make the complexity calculation transparent and explainable.</value>
+  </data>
+  <data name="CognitiveComplexityThresholdExceededTitle" xml:space="preserve">
+    <value>Cognitive Complexity exceeds threshold.</value>
+  </data>
+  <data name="CognitiveComplexityThresholdExceededMessageFormat" xml:space="preserve">
+    <value>Cognitive Complexity: {0} (threshold ≤ {1})</value>
+  </data>
+  <data name="CognitiveComplexityThresholdExceededDescription" xml:space="preserve">
+    <value>Indicates that the Cognitive Complexity of a procedure or trigger meets or exceeds the configured threshold. High Cognitive Complexity signals reduced readability and maintainability. Thresholds are configurable and should be interpreted in the context of the application domain and expected problem complexity.</value>
+  </data>
   <data name="CyclomaticComplexityMetricTitle" xml:space="preserve">
     <value>Cyclomatic complexity metric</value>
   </data>
