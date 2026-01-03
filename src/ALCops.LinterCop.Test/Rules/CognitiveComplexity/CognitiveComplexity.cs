@@ -26,6 +26,18 @@ namespace ALCops.LinterCop.Test
         [TestCase("RecursionIndirect")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ConditionalExpressionNested"],
+                testCase,
+                "14.0",
+                "This test requires .NET 8 or higher due to the use of Conditional Expressions.");
+
+            SkipTestIfVersionIsTooLow(
+                ["RecursionDirect", "RecursionIndirect"],
+                testCase,
+                "14.0",
+                "The this keyword is not supported in versions prior to 14.0.");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -42,6 +54,12 @@ namespace ALCops.LinterCop.Test
         [TestCase("IfStatementGuardClauseContinue")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["IfStatementGuardClauseContinue"],
+                testCase,
+                "15.0",
+                "The continue statement is not supported in versions prior to 15.0.");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
