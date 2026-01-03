@@ -432,9 +432,10 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             RepeatStatementSyntax repeatStatement =>
                 repeatStatement.RepeatKeywordToken.GetLocation(),
 
+#if NET8_0_OR_GREATER
             ConditionalExpressionSyntax conditionalExpression =>
                 conditionalExpression.QuestionToken.GetLocation(),
-
+#endif
             BinaryExpressionSyntax binaryExpression when
                 node.IsKind(EnumProvider.SyntaxKind.LogicalAndExpression) ||
                 node.IsKind(EnumProvider.SyntaxKind.LogicalOrExpression) ||
