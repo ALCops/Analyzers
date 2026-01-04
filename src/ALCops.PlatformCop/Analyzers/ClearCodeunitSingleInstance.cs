@@ -17,7 +17,7 @@ public class ClearCodeunitSingleInstance : DiagnosticAnalyzer
 
     public override void Initialize(AnalysisContext context) =>
         context.RegisterOperationAction(
-            this.AnalyzeInvocation,
+            AnalyzeInvocation,
             EnumProvider.OperationKind.InvocationExpression);
 
     private void AnalyzeInvocation(OperationAnalysisContext ctx)
@@ -36,7 +36,7 @@ public class ClearCodeunitSingleInstance : DiagnosticAnalyzer
                 break;
 
             case "ClearAll":
-                AnalyzeClearAllInvocation(operation, ctx);
+                AnalyzeClearAllInvocation(ctx);
                 break;
         }
     }
@@ -50,8 +50,8 @@ public class ClearCodeunitSingleInstance : DiagnosticAnalyzer
 
         if (IsSingleInstanceCodeunitWithGlobalVars(codeunit))
         {
-            var variableName = operand.GetSymbol()?.Name.QuoteIdentifierIfNeeded() ?? string.Empty;
-            var objectName = codeunit.Name.QuoteIdentifierIfNeeded();
+            var variableName = operand.GetSymbol()?.Name ?? string.Empty;
+            var objectName = codeunit.Name;
 
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.ClearCodeunitSingleInstance,
@@ -61,22 +61,22 @@ public class ClearCodeunitSingleInstance : DiagnosticAnalyzer
         }
     }
 
-    private static void AnalyzeClearAllInvocation(IInvocationExpression operation, OperationAnalysisContext ctx)
+    private static void AnalyzeClearAllInvocation(OperationAnalysisContext ctx)
     {
         if (ctx.ContainingSymbol.GetContainingObjectTypeSymbol().GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Codeunit)
             return;
 
         IEnumerable<ISymbol> localVariables = ((IMethodSymbol)ctx.ContainingSymbol.OriginalDefinition).LocalVariables
                                                         .Where(var => var.OriginalDefinition.GetTypeSymbol().GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Codeunit &&
-                                                                        var.OriginalDefinition.GetTypeSymbol().OriginalDefinition != ctx.ContainingSymbol.GetContainingObjectTypeSymbol().OriginalDefinition);
+                                                                      var.OriginalDefinition.GetTypeSymbol().OriginalDefinition != ctx.ContainingSymbol.GetContainingObjectTypeSymbol().OriginalDefinition);
 
         if (HasSingleInstanceCodeunitWithGlobalVars(localVariables, out ISymbol? localCodeunitVariable) && localCodeunitVariable is not null)
         {
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.ClearCodeunitSingleInstance,
                 ctx.Operation.Syntax.GetLocation(),
-                localCodeunitVariable.Name.QuoteIdentifierIfNeeded(),
-                localCodeunitVariable.GetTypeSymbol().Name.QuoteIdentifierIfNeeded()));
+                localCodeunitVariable.Name,
+                localCodeunitVariable.GetTypeSymbol().Name));
 
             return;
         }
@@ -92,8 +92,8 @@ public class ClearCodeunitSingleInstance : DiagnosticAnalyzer
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.ClearCodeunitSingleInstance,
                 ctx.Operation.Syntax.GetLocation(),
-                globalCodeunitVariables.Name.QuoteIdentifierIfNeeded(),
-                globalCodeunitVariables.GetTypeSymbol().Name.QuoteIdentifierIfNeeded()));
+                globalCodeunitVariables.Name,
+                globalCodeunitVariables.GetTypeSymbol().Name));
 
             return;
         }
