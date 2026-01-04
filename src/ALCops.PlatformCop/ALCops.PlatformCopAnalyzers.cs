@@ -139,6 +139,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to SingleInstance codeunits keep their global (state) variables for the lifetime of the session. Calling Clear() on a SingleInstance codeunit variable, or calling ClearAll() in an object that contains local/global SingleInstance codeunit variables, does not reset the stored global values inside those SingleInstance codeunits..
+        /// </summary>
+        internal static string ClearCodeunitSingleInstanceDescription {
+            get {
+                return ResourceManager.GetString("ClearCodeunitSingleInstanceDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Clear(All) does not affect or change values for global variables in &apos;{0}: Codeunit {1}&apos;..
+        /// </summary>
+        internal static string ClearCodeunitSingleInstanceMessageFormat {
+            get {
+                return ResourceManager.GetString("ClearCodeunitSingleInstanceMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Clear/ClearAll does not reset SingleInstance codeunit state.
+        /// </summary>
+        internal static string ClearCodeunitSingleInstanceTitle {
+            get {
+                return ResourceManager.GetString("ClearCodeunitSingleInstanceTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Set Editable property to False.
         /// </summary>
         internal static string EditableFlowFieldCodeAction {

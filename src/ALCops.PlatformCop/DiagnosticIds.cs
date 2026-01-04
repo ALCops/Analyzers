@@ -16,4 +16,5 @@ public static class DiagnosticIds
     public static readonly string RecordGetProcedureArguments = "PC0013";
     public static readonly string JsonTokenJPathUsesDoubleQuotes = "PC0014";
     public static readonly string GuidEmptyStringComparison = "PC0015";
+    public static readonly string ClearCodeunitSingleInstance = "PC0016";
 }

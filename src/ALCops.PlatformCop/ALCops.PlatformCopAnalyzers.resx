@@ -144,6 +144,15 @@
   <data name="AutoIncrementInTemporaryTableDescription" xml:space="preserve">
     <value>AutoIncrement relies on SQL Server to generate the next value when inserting records. Temporary tables are only in-memory in Business Central and are not created on SQL Server, so SQL Server cannot generate AutoIncrement values. This results in runtime failures when code inserts into the temporary table.</value>
   </data>
+  <data name="ClearCodeunitSingleInstanceTitle" xml:space="preserve">
+    <value>Clear/ClearAll does not reset SingleInstance codeunit state</value>
+  </data>
+  <data name="ClearCodeunitSingleInstanceMessageFormat" xml:space="preserve">
+    <value>Clear(All) does not affect or change values for global variables in '{0}: Codeunit {1}'.</value>
+  </data>
+  <data name="ClearCodeunitSingleInstanceDescription" xml:space="preserve">
+    <value>SingleInstance codeunits keep their global (state) variables for the lifetime of the session. Calling Clear() on a SingleInstance codeunit variable, or calling ClearAll() in an object that contains local/global SingleInstance codeunit variables, does not reset the stored global values inside those SingleInstance codeunits.</value>
+  </data>
   <data name="EditableFlowFieldTitle" xml:space="preserve">
     <value>FlowFields should not be editable</value>
   </data>

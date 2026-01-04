@@ -35,6 +35,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.AutoIncrementInTemporaryTableDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.AutoIncrementInTemporaryTable));
 
+    public static readonly DiagnosticDescriptor ClearCodeunitSingleInstance = new(
+         id: DiagnosticIds.ClearCodeunitSingleInstance,
+         title: PlatformCopAnalyzers.ClearCodeunitSingleInstanceTitle,
+         messageFormat: PlatformCopAnalyzers.ClearCodeunitSingleInstanceMessageFormat,
+         category: Category.Design,
+         defaultSeverity: DiagnosticSeverity.Warning,
+         isEnabledByDefault: true,
+         description: PlatformCopAnalyzers.ClearCodeunitSingleInstanceDescription,
+         helpLinkUri: GetHelpUri(DiagnosticIds.ClearCodeunitSingleInstance));
+
     public static readonly DiagnosticDescriptor EditableFlowField = new(
         id: DiagnosticIds.EditableFlowField,
         title: PlatformCopAnalyzers.EditableFlowFieldTitle,
