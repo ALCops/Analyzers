@@ -104,10 +104,16 @@ public static class EnumProvider
 
         private static readonly Lazy<NavCodeAnalysis.Symbols.Accessibility> _internal =
             new(() => ParseEnum<NavCodeAnalysis.Symbols.Accessibility>(nameof(NavCodeAnalysis.Symbols.Accessibility.Internal)));
+        private static readonly Lazy<NavCodeAnalysis.Symbols.Accessibility> _local =
+            new(() => ParseEnum<NavCodeAnalysis.Symbols.Accessibility>(nameof(NavCodeAnalysis.Symbols.Accessibility.Local)));
+        private static readonly Lazy<NavCodeAnalysis.Symbols.Accessibility> _protected =
+            new(() => ParseEnum<NavCodeAnalysis.Symbols.Accessibility>(nameof(NavCodeAnalysis.Symbols.Accessibility.Protected)));
         private static readonly Lazy<NavCodeAnalysis.Symbols.Accessibility> _public =
             new(() => ParseEnum<NavCodeAnalysis.Symbols.Accessibility>(nameof(NavCodeAnalysis.Symbols.Accessibility.Public)));
 
         public static NavCodeAnalysis.Symbols.Accessibility Internal => _internal.Value;
+        public static NavCodeAnalysis.Symbols.Accessibility Local => _local.Value;
+        public static NavCodeAnalysis.Symbols.Accessibility Protected => _protected.Value;
         public static NavCodeAnalysis.Symbols.Accessibility Public => _public.Value;
     }
 
@@ -366,10 +372,13 @@ public static class EnumProvider
     /// </summary>
     public static class Feature
     {
-        private static readonly Lazy<NavCodeAnalysis.Feature> _ientifiersInEventSubscribers =
+        private static readonly Lazy<NavCodeAnalysis.Feature> _addPageControlInPageCustomization =
+            new(() => ParseEnum<NavCodeAnalysis.Feature>(nameof(NavCodeAnalysis.Feature.AddPageControlInPageCustomization)));
+        private static readonly Lazy<NavCodeAnalysis.Feature> _identifiersInEventSubscribers =
             new(() => ParseEnum<NavCodeAnalysis.Feature>(nameof(NavCodeAnalysis.Feature.IdentifiersInEventSubscribers)));
 
-        public static NavCodeAnalysis.Feature IdentifiersInEventSubscribers => _ientifiersInEventSubscribers.Value;
+        public static NavCodeAnalysis.Feature AddPageControlInPageCustomization => _addPageControlInPageCustomization.Value;
+        public static NavCodeAnalysis.Feature IdentifiersInEventSubscribers => _identifiersInEventSubscribers.Value;
     }
 
     /// <summary>
@@ -572,6 +581,10 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Label)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _list =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.List)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _media =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Media)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _mediaSet =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.MediaSet)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _none =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.None)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _methodReference =
@@ -580,6 +593,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Option)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _page =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Page)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _pageExtension =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.PageExtension)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _query =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Query)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _record =
@@ -594,6 +609,10 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.SecretText)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _string =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.String)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _tableExtension =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.TableExtension)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _tableFilter =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.TableFilter)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _text =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Text)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _xmlPort =
@@ -620,10 +639,13 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind Joker => _joker.Value;
         public static NavCodeAnalysis.NavTypeKind Label => _label.Value;
         public static NavCodeAnalysis.NavTypeKind List => _list.Value;
+        public static NavCodeAnalysis.NavTypeKind Media => _media.Value;
+        public static NavCodeAnalysis.NavTypeKind MediaSet => _mediaSet.Value;
         public static NavCodeAnalysis.NavTypeKind None => _none.Value;
         public static NavCodeAnalysis.NavTypeKind Option => _methodReference.Value;
         public static NavCodeAnalysis.NavTypeKind MethodReference => _option.Value;
         public static NavCodeAnalysis.NavTypeKind Page => _page.Value;
+        public static NavCodeAnalysis.NavTypeKind PageExtension => _pageExtension.Value;
         public static NavCodeAnalysis.NavTypeKind Query => _query.Value;
         public static NavCodeAnalysis.NavTypeKind Record => _record.Value;
         public static NavCodeAnalysis.NavTypeKind RecordId => _recordId.Value;
@@ -631,8 +653,26 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind Report => _report.Value;
         public static NavCodeAnalysis.NavTypeKind SecretText => _secretText.Value;
         public static NavCodeAnalysis.NavTypeKind String => _string.Value;
+        public static NavCodeAnalysis.NavTypeKind TableExtension => _tableExtension.Value;
+        public static NavCodeAnalysis.NavTypeKind TableFilter => _tableFilter.Value;
         public static NavCodeAnalysis.NavTypeKind Text => _text.Value;
         public static NavCodeAnalysis.NavTypeKind XmlPort => _xmlPort.Value;
+    }
+
+
+    /// <summary>
+    /// OccurrenceKind enum values
+    /// </summary>
+    public static class ObsoleteStateKind
+    {
+        public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
+        CreateEnumDictionary<NavCodeAnalysis.ObsoleteStateKind>();
+
+        private static readonly Lazy<NavCodeAnalysis.ObsoleteStateKind> _no =
+            new(() => ParseEnum<NavCodeAnalysis.ObsoleteStateKind>(nameof(NavCodeAnalysis.ObsoleteStateKind.No)));
+
+        public static NavCodeAnalysis.ObsoleteStateKind No => _no.Value;
+
     }
 
     /// <summary>
@@ -814,6 +854,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Access)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _assignable =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Assignable)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _allowInCustomizations =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.AllowInCustomizations)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _applicationArea =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ApplicationArea)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _autoIncrement =
@@ -832,6 +874,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.DrillDownPageId)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _editable =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Editable)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _enabled =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Enabled)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _extensible =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Extensible)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _inherentPermissions =
@@ -840,6 +884,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.LookupPageId)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _notBlank =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.NotBlank)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _obsoleteState =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ObsoleteState)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _scope =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Scope)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _showAs =
@@ -860,6 +906,7 @@ public static class EnumProvider
 
         public static NavCodeAnalysis.PropertyKind Access => _access.Value;
         public static NavCodeAnalysis.PropertyKind Assignable => _assignable.Value;
+        public static NavCodeAnalysis.PropertyKind AllowInCustomizations => _allowInCustomizations.Value;
         public static NavCodeAnalysis.PropertyKind ApplicationArea => _applicationArea.Value;
         public static NavCodeAnalysis.PropertyKind AutoIncrement => _autoIncrement.Value;
         public static NavCodeAnalysis.PropertyKind Caption => _caption.Value;
@@ -869,10 +916,12 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind DataPerCompany => _dataPerCompany.Value;
         public static NavCodeAnalysis.PropertyKind DrillDownPageId => _drillDownPageId.Value;
         public static NavCodeAnalysis.PropertyKind Editable => _editable.Value;
+        public static NavCodeAnalysis.PropertyKind Enabled => _enabled.Value;
         public static NavCodeAnalysis.PropertyKind Extensible => _extensible.Value;
         public static NavCodeAnalysis.PropertyKind InherentPermissions => _inherentPermissions.Value;
         public static NavCodeAnalysis.PropertyKind LookupPageId => _lookupPageId.Value;
         public static NavCodeAnalysis.PropertyKind NotBlank => _notBlank.Value;
+        public static NavCodeAnalysis.PropertyKind ObsoleteState => _obsoleteState.Value;
         public static NavCodeAnalysis.PropertyKind Scope => _scope.Value;
         public static NavCodeAnalysis.PropertyKind ShowAs => _showAs.Value;
         public static NavCodeAnalysis.PropertyKind ShowCaption => _showCaption.Value;

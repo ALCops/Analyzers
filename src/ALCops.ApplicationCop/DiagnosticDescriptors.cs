@@ -5,6 +5,16 @@ namespace ALCops.ApplicationCop;
 
 public static class DiagnosticDescriptors
 {
+    public static readonly DiagnosticDescriptor AllowInCustomizationsForOmittedFields = new(
+        id: DiagnosticIds.AllowInCustomizationsForOmittedFields,
+        title: ApplicationCopAnalyzers.AllowInCustomizationsForOmittedFieldsTitle,
+        messageFormat: ApplicationCopAnalyzers.AllowInCustomizationsForOmittedFieldsMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.AllowInCustomizationsForOmittedFieldsDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.AllowInCustomizationsForOmittedFields));
+
     public static readonly DiagnosticDescriptor CaptionRequired = new(
         id: DiagnosticIds.CaptionRequired,
         title: ApplicationCopAnalyzers.CaptionRequiredTitle,

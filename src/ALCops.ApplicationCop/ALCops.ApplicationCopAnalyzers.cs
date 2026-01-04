@@ -58,6 +58,33 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Fields that are not included on pages can still be exposed through page customizations. To avoid unintended visibility or customization behavior, the AllowInCustomizations property must be set explicitly for such fields..
+        /// </summary>
+        internal static string AllowInCustomizationsForOmittedFieldsDescription {
+            get {
+                return ResourceManager.GetString("AllowInCustomizationsForOmittedFieldsDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Field &apos;{0}&apos; is not exposed on any page and should explicitly define AllowInCustomizations..
+        /// </summary>
+        internal static string AllowInCustomizationsForOmittedFieldsMessageFormat {
+            get {
+                return ResourceManager.GetString("AllowInCustomizationsForOmittedFieldsMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Explicitly set AllowInCustomizations for excluded fields.
+        /// </summary>
+        internal static string AllowInCustomizationsForOmittedFieldsTitle {
+            get {
+                return ResourceManager.GetString("AllowInCustomizationsForOmittedFieldsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to All user-facing application objects and controls must explicitly define a Caption to ensure a consistent, accessible, and localizable user interface..
         /// </summary>
         internal static string CaptionRequiredDescription {

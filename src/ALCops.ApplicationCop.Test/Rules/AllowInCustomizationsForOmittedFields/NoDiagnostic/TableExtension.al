@@ -1,0 +1,21 @@
+tableextension 50101 MyTable extends MyTable
+{
+    fields
+    {
+        field(2; [|MyField|]; Integer) { }
+    }
+}
+
+pageextension 50000 MyPage extends MyPage
+{
+    layout
+    {
+        addlast(Content)
+        {
+            field(MyField; Rec.MyField) { }
+        }
+    }
+}
+
+table 50100 MyTable { fields { field(1; "Primary Key"; Code[10]) { } } }
+page 50000 MyPage { SourceTable = MyTable; }

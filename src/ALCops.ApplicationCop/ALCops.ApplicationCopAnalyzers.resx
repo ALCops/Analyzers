@@ -117,6 +117,15 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AllowInCustomizationsForOmittedFieldsTitle" xml:space="preserve">
+    <value>Explicitly set AllowInCustomizations for excluded fields</value>
+  </data>
+  <data name="AllowInCustomizationsForOmittedFieldsMessageFormat" xml:space="preserve">
+    <value>Field '{0}' is not exposed on any page and should explicitly define AllowInCustomizations.</value>
+  </data>
+  <data name="AllowInCustomizationsForOmittedFieldsDescription" xml:space="preserve">
+    <value>Fields that are not included on pages can still be exposed through page customizations. To avoid unintended visibility or customization behavior, the AllowInCustomizations property must be set explicitly for such fields.</value>
+  </data>
   <data name="CaptionRequiredTitle" xml:space="preserve">
     <value>Captions must be defined on user-facing objects and controls</value>
   </data>
