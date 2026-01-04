@@ -129,6 +129,15 @@
   <data name="ApplicationAreaRedundancyCodeAction" xml:space="preserve">
     <value>ALCops: Remove redundant ApplicationArea</value>
   </data>
+  <data name="AppManifestRuntimeBehindTitle" xml:space="preserve">
+  <value>App manifest runtime is behind target version</value>
+  </data>
+  <data name="AppManifestRuntimeBehindMessageFormat" xml:space="preserve">
+    <value>The specified runtime version in app.json is falling behind. The project targets {0} version {1} and the current runtime is {2}. Update the runtime to {3} for compatibility with the latest runtime features.</value>
+   </data>
+  <data name="AppManifestRuntimeBehindDescription" xml:space="preserve">
+    <value>Specifying a runtime version in app.json is optional. When a runtime is explicitly defined and falls behind the targeted application or platform, newer language features and runtime capabilities may be unavailable, leading to unnecessary limitations or inconsistencies.</value>
+  </data>
   <data name="CognitiveComplexityMetricTitle" xml:space="preserve">
     <value>Cognitive complexity metric</value>
   </data>

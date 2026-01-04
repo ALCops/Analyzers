@@ -94,6 +94,33 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Specifying a runtime version in app.json is optional. When a runtime is explicitly defined and falls behind the targeted application or platform, newer language features and runtime capabilities may be unavailable, leading to unnecessary limitations or inconsistencies..
+        /// </summary>
+        internal static string AppManifestRuntimeBehindDescription {
+            get {
+                return ResourceManager.GetString("AppManifestRuntimeBehindDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified runtime version in app.json is falling behind. The project targets {0} version {1} and the current runtime is {2}. Update the runtime to {3} for compatibility with the latest runtime features..
+        /// </summary>
+        internal static string AppManifestRuntimeBehindMessageFormat {
+            get {
+                return ResourceManager.GetString("AppManifestRuntimeBehindMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to App manifest runtime is behind target version.
+        /// </summary>
+        internal static string AppManifestRuntimeBehindTitle {
+            get {
+                return ResourceManager.GetString("AppManifestRuntimeBehindTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reports an individual Cognitive Complexity increment at the exact source location where complexity increases. Each diagnostic explains how the increment is composed, including the base increment and any additional nesting penalty. This diagnostic is intended to make the complexity calculation transparent and explainable..
         /// </summary>
         internal static string CognitiveComplexityIncrementDescription {

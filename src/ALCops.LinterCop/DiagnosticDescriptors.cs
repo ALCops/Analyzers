@@ -15,6 +15,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.ApplicationAreaRedundancyDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ApplicationAreaRedundancy));
 
+    public static readonly DiagnosticDescriptor AppManifestRuntimeBehind = new(
+        id: DiagnosticIds.AppManifestRuntimeBehind,
+        title: LinterCopAnalyzers.AppManifestRuntimeBehindMessageFormat,
+        messageFormat: LinterCopAnalyzers.AppManifestRuntimeBehindMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.AppManifestRuntimeBehindDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.AppManifestRuntimeBehind));
+
     public static readonly DiagnosticDescriptor CognitiveComplexityMetric = new(
         id: DiagnosticIds.CognitiveComplexityMetric,
         title: LinterCopAnalyzers.CognitiveComplexityMetricMessageFormat,
