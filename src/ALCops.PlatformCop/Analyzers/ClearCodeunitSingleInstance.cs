@@ -128,7 +128,7 @@ public class ClearCodeunitSingleInstance : DiagnosticAnalyzer
 
     private static bool IsSingleInstanceCodeunit(ICodeunitTypeSymbol codeunitTypeSymbol)
     {
-        IPropertySymbol? singleInstanceProperty = codeunitTypeSymbol.GetProperty(PropertyKind.SingleInstance);
+        IPropertySymbol? singleInstanceProperty = codeunitTypeSymbol.GetProperty(EnumProvider.PropertyKind.SingleInstance);
         if (singleInstanceProperty is null)
         {
             return false;
