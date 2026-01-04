@@ -90,8 +90,9 @@ public sealed class CyclomaticComplexityAndMaintainabilityIndex : DiagnosticAnal
                 cyclomaticComplexity,
                 settings.CyclomaticComplexityThreshold));
 
-        if (!context.IsDiagnosticEnabled(DiagnosticDescriptors.MaintainabilityIndexMetric) ||
-            !context.IsDiagnosticEnabled(DiagnosticDescriptors.MaintainabilityIndexThresholdExceeded))
+        var compilation = context.SemanticModel.Compilation;
+        if (!compilation.IsDiagnosticEnabled(DiagnosticDescriptors.MaintainabilityIndexMetric) ||
+            !compilation.IsDiagnosticEnabled(DiagnosticDescriptors.MaintainabilityIndexThresholdExceeded))
             return;
 
         var maintainabilityIndexMetric = Math.Round(CalculateMaintainabilityIndexMetric(context, body, descendantNodesAndTokens, cyclomaticComplexity));

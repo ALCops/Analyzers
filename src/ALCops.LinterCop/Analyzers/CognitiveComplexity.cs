@@ -1,7 +1,3 @@
-using System.Collections.Concurrent;
-#if NET8_0_OR_GREATER
-using System.Collections.Frozen;
-#endif
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
@@ -13,149 +9,15 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 
 namespace ALCops.LinterCop.Analyzers;
 
-/// <summary>
-/// Simple thread-safe object pool for Stack objects to reduce GC allocations.
-/// </summary>
-internal sealed class StackPool<T>
-{
-    private readonly ConcurrentBag<Stack<T>> _pool = new();
-    private readonly int _maxPoolSize;
-
-    public StackPool(int maxPoolSize = 16)
-    {
-        _maxPoolSize = maxPoolSize;
-    }
-
-    public Stack<T> Get()
-    {
-        if (_pool.TryTake(out var stack))
-            return stack;
-
-        return new Stack<T>(16); // Pre-allocate reasonable capacity
-    }
-
-    public void Return(Stack<T> stack)
-    {
-        stack.Clear();
-        if (_pool.Count < _maxPoolSize)
-            _pool.Add(stack);
-    }
-}
-
 [DiagnosticAnalyzer]
 public sealed class CognitiveComplexity : DiagnosticAnalyzer
 {
-    private sealed class CompilationAnalysisState
-    {
-        public Compilation Compilation { get; }
-        public int ComplexityThreshold { get; }
-
-        // Use string key (fully qualified name) for reliable cross-semantic-model symbol matching
-        private readonly ConcurrentDictionary<string, HashSet<IMethodSymbol>> _methodInvocationGraph;
-        private readonly ConcurrentDictionary<SyntaxTree, SemanticModel> _semanticModelCache;
-
-        // Index mapping method keys to their syntax nodes for O(1) lookup
-        private readonly Lazy<ConcurrentDictionary<string, (SyntaxTree tree, MethodDeclarationSyntax syntax)>> _methodIndex;
-
-        public CompilationAnalysisState(Compilation compilation, int complexityThreshold)
-        {
-            Compilation = compilation;
-            ComplexityThreshold = complexityThreshold;
-            _methodInvocationGraph = new();
-            _semanticModelCache = new();
-            _methodIndex = new Lazy<ConcurrentDictionary<string, (SyntaxTree, MethodDeclarationSyntax)>>(BuildMethodIndex);
-        }
-
-        public SemanticModel GetCachedSemanticModel(SyntaxTree tree)
-        {
-            return _semanticModelCache.GetOrAdd(tree, t => Compilation.GetSemanticModel(t));
-        }
-
-        public HashSet<IMethodSymbol> GetMethodInvocations(IMethodSymbol methodSymbol)
-        {
-            var key = GetMethodKey(methodSymbol);
-            return _methodInvocationGraph.GetOrAdd(key, _ => BuildMethodInvocations(key));
-        }
-
-        internal static string GetMethodKey(IMethodSymbol methodSymbol)
-        {
-            // Create a unique key using containing type and method name with parameter types
-            var containingType = methodSymbol.ContainingSymbol?.Name ?? string.Empty;
-            var parameters = string.Join(",", methodSymbol.Parameters.Select(p => p.ParameterType?.Name ?? "unknown"));
-            return $"{containingType}.{methodSymbol.Name}({parameters})";
-        }
-
-        /// <summary>
-        /// Builds an index of all method declarations for O(1) lookup.
-        /// This is lazily initialized on first use and shared across all analyses.
-        /// </summary>
-        private ConcurrentDictionary<string, (SyntaxTree tree, MethodDeclarationSyntax syntax)> BuildMethodIndex()
-        {
-            var index = new ConcurrentDictionary<string, (SyntaxTree, MethodDeclarationSyntax)>();
-
-            foreach (var tree in Compilation.SyntaxTrees)
-            {
-                var root = tree.GetRoot();
-                var semanticModel = GetCachedSemanticModel(tree);
-
-                // Use manual iteration instead of LINQ for better performance
-                foreach (var node in root.DescendantNodes())
-                {
-                    if (node is not MethodDeclarationSyntax methodDeclaration)
-                        continue;
-
-                    if (methodDeclaration.Body == null || methodDeclaration.Body.Statements.Count == 0)
-                        continue;
-
-                    if (semanticModel.GetDeclaredSymbol(methodDeclaration) is IMethodSymbol declaredSymbol)
-                    {
-                        var key = GetMethodKey(declaredSymbol);
-                        index.TryAdd(key, (tree, methodDeclaration));
-                    }
-                }
-            }
-
-            return index;
-        }
-
-        private HashSet<IMethodSymbol> BuildMethodInvocations(string methodKey)
-        {
-            var invokedMethods = new HashSet<IMethodSymbol>();
-
-            // O(1) lookup using the method index
-            if (!_methodIndex.Value.TryGetValue(methodKey, out var methodInfo))
-                return invokedMethods;
-
-            var (tree, methodDeclaration) = methodInfo;
-            var semanticModel = GetCachedSemanticModel(tree);
-
-            // Use manual iteration instead of LINQ OfType<T>() for better performance
-            foreach (var node in methodDeclaration.DescendantNodes())
-            {
-                if (node is not InvocationExpressionSyntax invocation)
-                    continue;
-
-                var symbolInfo = semanticModel.GetSymbolInfo(invocation);
-                if (symbolInfo.Symbol is IMethodSymbol invokedSymbol)
-                {
-                    invokedMethods.Add(invokedSymbol);
-                }
-            }
-
-            return invokedMethods;
-        }
-
-        public void Clear()
-        {
-            _methodInvocationGraph.Clear();
-            _semanticModelCache.Clear();
-        }
-    }
+    private int complexityThreshold;
+    private bool IsIncrementDiagnosticsEnabled;
 
     // Flow-Breaking Structures: These disrupt the linear execution of the code.
     // Each occurrence of these structures adds +1 complexity to the score.
-#if NET8_0_OR_GREATER
-    private static readonly FrozenSet<SyntaxKind> FlowBreakingKinds = new[]
+    private static readonly HashSet<SyntaxKind> flowBreakingKinds = new()
     {
         EnumProvider.SyntaxKind.IfStatement,
         EnumProvider.SyntaxKind.CaseStatement,
@@ -164,25 +26,13 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         EnumProvider.SyntaxKind.WhileStatement,
         EnumProvider.SyntaxKind.RepeatStatement,
         EnumProvider.SyntaxKind.ConditionalExpression // Ternary operator
-    }.ToFrozenSet();
-#else
-    private static readonly ImmutableHashSet<SyntaxKind> FlowBreakingKinds = ImmutableHashSet.Create(
-        EnumProvider.SyntaxKind.IfStatement,
-        EnumProvider.SyntaxKind.CaseStatement,
-        EnumProvider.SyntaxKind.ForStatement,
-        EnumProvider.SyntaxKind.ForEachStatement,
-        EnumProvider.SyntaxKind.WhileStatement,
-        EnumProvider.SyntaxKind.RepeatStatement,
-        EnumProvider.SyntaxKind.ConditionalExpression // Ternary operator
-    );
-#endif
+    };
 
     // Nested Structures: These introduce additional cognitive load due to nesting.
     // Unlike flow-breaking structures that always add complexity, nested structures only add an extra penalty when nested inside another structure.
     // Currently there's no difference between the Flow-Breaking Structures and Nested Structures in the AL Language.
     // For example in C# nestedStructures could contain try-catch-finally
-#if NET8_0_OR_GREATER
-    private static readonly FrozenSet<SyntaxKind> NestedStructures = new[]
+    private static readonly HashSet<SyntaxKind> nestedStructures = new()
     {
         EnumProvider.SyntaxKind.IfStatement,
         EnumProvider.SyntaxKind.CaseStatement,
@@ -191,90 +41,59 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         EnumProvider.SyntaxKind.WhileStatement,
         EnumProvider.SyntaxKind.RepeatStatement,
         EnumProvider.SyntaxKind.ConditionalExpression // Ternary operator
-    }.ToFrozenSet();
-#else
-    private static readonly ImmutableHashSet<SyntaxKind> NestedStructures = ImmutableHashSet.Create(
-        EnumProvider.SyntaxKind.IfStatement,
-        EnumProvider.SyntaxKind.CaseStatement,
-        EnumProvider.SyntaxKind.ForStatement,
-        EnumProvider.SyntaxKind.ForEachStatement,
-        EnumProvider.SyntaxKind.WhileStatement,
-        EnumProvider.SyntaxKind.RepeatStatement,
-        EnumProvider.SyntaxKind.ConditionalExpression // Ternary operator
-    );
-#endif
+    };
 
     // This HashSet defines specific identifiers that, in certain cases, restrict whether a statement qualifies as a guard clause.
     // Some exit commands (e.g., "Break", "Skip", "Quit") are only considered guard clauses if they are called on these identifiers.
-#if NET8_0_OR_GREATER
-    private static readonly FrozenSet<string> GuardClauseIdentifiers = new[]
+    private static readonly HashSet<string> guardClauseIdentifiers = new(StringComparer.OrdinalIgnoreCase)
     {
         "CurrReport",
         "CurrXMLport"
-    }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
-#else
-    private static readonly ImmutableHashSet<string> GuardClauseIdentifiers =
-        ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, "CurrReport", "CurrXMLport");
-#endif
+    };
 
     // This HashSet defines commands that act as guard clause exits, meaning they immediately alter the flow of execution.
     // These commands are typically used in scenarios where a function, loop, or process needs to be stopped or skipped under certain conditions.
     // However, "Exit" is not included in this set, as we can get the ExitStatementSyntax type directly on the Statement of the IfStatementSyntax
-#if NET8_0_OR_GREATER
-    private static readonly FrozenSet<string> GuardClauseExitCommands = new[]
+    private static readonly HashSet<string> guardClauseExitCommands = new(StringComparer.OrdinalIgnoreCase)
     {
         "Break",
         "Continue",
         "Error",
         "Quit",
         "Skip"
-    }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
-#else
-    private static readonly ImmutableHashSet<string> GuardClauseExitCommands =
-        ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, "Break", "Continue", "Error", "Quit", "Skip");
-#endif
+    };
 
-#if NET8_0_OR_GREATER
-    private static readonly FrozenSet<string> EventPublisherDecoratorNames = new[]
+    private static readonly HashSet<string> eventPublisherDecoratorNames = new(StringComparer.OrdinalIgnoreCase)
     {
         "BusinessEvent",
         "IntegrationEvent",
         "ExternalBusinessEvent"
-    }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
-#else
-    private static readonly ImmutableHashSet<string> EventPublisherDecoratorNames =
-        ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, "BusinessEvent", "IntegrationEvent", "ExternalBusinessEvent");
-#endif
-
-    // Object pool for stack reuse to reduce GC pressure in CalculateCognitiveComplexity
-    private static readonly StackPool<(SyntaxNode node, int nestingLevel)> TraversalStackPool = new();
+    };
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
             DiagnosticDescriptors.CognitiveComplexityMetric,
             DiagnosticDescriptors.CognitiveComplexityIncrement,
-            DiagnosticDescriptors.CognitiveComplexityThresholdExceeded
-        );
+            DiagnosticDescriptors.CognitiveComplexityThresholdExceeded);
 
     public override void Initialize(AnalysisContext context)
     {
         context.RegisterCompilationStartAction(compilationContext =>
         {
-            var state = new CompilationAnalysisState(
-                compilationContext.Compilation,
-                LoadCognitiveComplexityThreshold(compilationContext.Compilation));
+            var compilation = compilationContext.Compilation;
+            this.complexityThreshold = LoadCognitiveComplexityThreshold(compilation);
+            this.IsIncrementDiagnosticsEnabled = compilation.IsDiagnosticEnabled(DiagnosticDescriptors.CognitiveComplexityIncrement);
+            var recursion = new CognitiveComplexityRecursionGraphService(compilation);
+
 
             compilationContext.RegisterCodeBlockAction(codeBlockContext =>
             {
-                AnalyzeCognitiveComplexity(codeBlockContext, state);
+                AnalyzeCognitiveComplexity(codeBlockContext, recursion);
             });
-
-            // Clean up resources when compilation ends
-            compilationContext.RegisterCompilationEndAction(_ => state.Clear());
         });
     }
 
-    private void AnalyzeCognitiveComplexity(CodeBlockAnalysisContext context, CompilationAnalysisState state)
+    private void AnalyzeCognitiveComplexity(CodeBlockAnalysisContext context, CognitiveComplexityRecursionGraphService recursion)
     {
         if (context.IsObsolete() || context.CodeBlock is not MethodOrTriggerDeclarationSyntax methodOrTrigger)
             return;
@@ -286,76 +105,63 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
         if (methodOrTrigger.Body is null ||
             methodOrTrigger.Body.Statements.Count == 0 &&
-            methodOrTrigger.Attributes.Any(attr => EventPublisherDecoratorNames.Contains(attr.GetIdentifierOrLiteralValue() ?? string.Empty)))
+            methodOrTrigger.Attributes.Any(attr => eventPublisherDecoratorNames.Contains(attr.GetIdentifierOrLiteralValue() ?? string.Empty)))
             return;
 
-        int complexity = CalculateCognitiveComplexity(context, state, methodOrTrigger.Body);
-        if (complexity >= state.ComplexityThreshold)
+        int complexity = CalculateCognitiveComplexity(context, recursion, methodOrTrigger.Body);
+        if (complexity >= complexityThreshold)
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.CognitiveComplexityThresholdExceeded,
                 context.OwningSymbol.GetLocation(),
                 complexity,
-                state.ComplexityThreshold));
+                complexityThreshold));
         }
 
         context.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.CognitiveComplexityMetric,
             context.OwningSymbol.GetLocation(),
             complexity,
-            state.ComplexityThreshold));
+            complexityThreshold));
     }
 
-    private int CalculateCognitiveComplexity(CodeBlockAnalysisContext context, CompilationAnalysisState state, SyntaxNode root)
+    private int CalculateCognitiveComplexity(CodeBlockAnalysisContext context, CognitiveComplexityRecursionGraphService recursion, SyntaxNode root)
     {
         int complexity = 0;
-        var stack = TraversalStackPool.Get();
+        var stack = new Stack<(SyntaxNode node, int nestingLevel)>();
+        stack.Push((root, 0));
 
-        try
+        while (stack.Count > 0)
         {
-            stack.Push((root, 0));
+            var (node, nestingLevel) = stack.Pop();
 
-            while (stack.Count > 0)
+            if (node.IsKind(EnumProvider.SyntaxKind.IfStatement))
             {
-                var (node, nestingLevel) = stack.Pop();
-
-                if (node.IsKind(EnumProvider.SyntaxKind.IfStatement))
-                {
-                    ProcessIfStatement(context, ref stack, node, ref complexity, ref nestingLevel);
-                    continue; // Skip further processing for this IF node
-                }
-
-                if (IsFlowBreakingStructure(node) && !IsGuardClause(node))
-                {
-                    complexity += 1 + nestingLevel;
-                    RaiseIncrementDiagnostic(context, GetKeywordLocation(node, node.SpanStart), node.Kind.ToString(), nestingLevel);
-
-                    if (IsNestedStructure(node))
-                        nestingLevel++;
-                }
-
-                foreach (var child in node.ChildNodes())
-                {
-                    stack.Push((child, nestingLevel));
-                }
+                ProcessIfStatement(context, ref stack, node, ref complexity, ref nestingLevel);
+                continue; // Skip further processing for this IF node
             }
 
-            if (context.CodeBlock.IsKind(EnumProvider.SyntaxKind.MethodDeclaration))
+            if (IsFlowBreakingStructure(node) && !IsGuardClause(node))
             {
-                var detector = new RecursionDetector(state);
-                complexity += detector.CalculateComplexity(
-                    context,
-                    root,
-                    location => RaiseIncrementDiagnostic(context, location, "RecursionCycle", 0),
-                    context.CancellationToken);
+                complexity += 1 + nestingLevel;
+                RaiseIncrementDiagnostic(context, GetKeywordLocation(node, node.SpanStart), node.Kind.ToString(), nestingLevel);
+
+                if (IsNestedStructure(node))
+                    nestingLevel++;
             }
 
-            return complexity;
+            foreach (var child in node.ChildNodes())
+            {
+                stack.Push((child, nestingLevel));
+            }
         }
-        finally
+
+        if (context.CodeBlock.IsKind(EnumProvider.SyntaxKind.MethodDeclaration))
         {
-            TraversalStackPool.Return(stack);
+            complexity += CalculateRecursionComplexity(context, recursion, root);
         }
+
+        return complexity;
     }
 
     // The 'else if' increment causes a problem
@@ -403,24 +209,21 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     private static bool IsFlowBreakingStructure(SyntaxNode node)
     {
         // Fast path for common flow-breaking structures
-        if (FlowBreakingKinds.Contains(node.Kind))
+        if (flowBreakingKinds.Contains(node.Kind))
             return true;
 
-        var kind = node.Kind;
-
         // Apply Cognitive Complexity discount for consecutive logical operators
+        var kind = node.Kind;
         if (kind == EnumProvider.SyntaxKind.LogicalAndExpression ||
             kind == EnumProvider.SyntaxKind.LogicalOrExpression ||
             kind == EnumProvider.SyntaxKind.LogicalXorExpression)
-        {
-            return node.Parent?.Kind != kind;
-        }
+            return node.Parent.Kind != node.Kind;
 
         return false;
     }
 
     private static bool IsNestedStructure(SyntaxNode node) =>
-        NestedStructures.Contains(node.Kind);
+        nestedStructures.Contains(node.Kind);
 
     private static bool IsGuardClause(SyntaxNode node)
     {
@@ -441,7 +244,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         {
             // if not <condition> then continue;
             IdentifierNameSyntax identifier when identifier.GetIdentifierOrLiteralValue() is { } value
-                => GuardClauseExitCommands.Contains(value),
+                => guardClauseExitCommands.Contains(value),
 
             InvocationExpressionSyntax invocation => IsGuardInvocation(invocation),
             _ => false
@@ -456,7 +259,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
             // if not <condition> then error;
             IdentifierNameSyntax identifier when identifier.GetIdentifierOrLiteralValue() is { } value
-                => GuardClauseExitCommands.Contains(value),
+                => guardClauseExitCommands.Contains(value),
             _ => false
         };
     }
@@ -467,91 +270,61 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             return false;
 
         // if not <condition> then CurrReport.Break() or .Skip() or .Quit();
-        return GuardClauseIdentifiers.Contains(identifierValue) &&
-               GuardClauseExitCommands.Contains(memberAccess.GetNameStringValue() ?? string.Empty);
+        return guardClauseIdentifiers.Contains(identifierValue) &&
+               guardClauseExitCommands.Contains(memberAccess.GetNameStringValue() ?? string.Empty);
     }
 
     #region Recursion
 
-    /// <summary>
-    /// Detects direct and indirect recursion cycles in method call graphs.
-    /// Encapsulates recursion detection logic for better separation of concerns.
-    /// </summary>
-    private sealed class RecursionDetector
+    private int CalculateRecursionComplexity(CodeBlockAnalysisContext context, CognitiveComplexityRecursionGraphService recursion, SyntaxNode root)
     {
-        private readonly CompilationAnalysisState _state;
-        private readonly HashSet<string> _visited = new();
+        if (recursion is null)
+            return 0;
 
-        public RecursionDetector(CompilationAnalysisState state)
+        if (context.OwningSymbol is not IMethodSymbol currentMethod)
+            return 0;
+
+        int increment = 0;
+        int currentId = currentMethod.Id;
+
+        var visited = new HashSet<int>();
+
+        foreach (var invocation in root.DescendantNodes().OfType<InvocationExpressionSyntax>())
         {
-            _state = state;
+            var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation, context.CancellationToken);
+            if (symbolInfo.Symbol is not IMethodSymbol invokedMethod)
+                continue;
+
+            visited.Clear();
+            if (IsPathTo(recursion, invokedMethod.Id, currentId, visited))
+            {
+                increment++;
+                RaiseIncrementDiagnostic(context, GetKeywordLocation(invocation, invocation.SpanStart), "RecursionCycle", 0);
+            }
         }
 
-        /// <summary>
-        /// Calculates recursion complexity by detecting cycles from invocations back to the current method.
-        /// </summary>
-        public int CalculateComplexity(
-            CodeBlockAnalysisContext context,
-            SyntaxNode root,
-            Action<Location> onRecursionFound,
-            CancellationToken cancellationToken)
-        {
-            int increment = 0;
+        return increment;
+    }
 
-            if (context.OwningSymbol is not IMethodSymbol currentMethod)
-                return increment;
+    private static bool IsPathTo(CognitiveComplexityRecursionGraphService recursion, int fromId, int targetId, HashSet<int> visited)
+    {
+        if (fromId == targetId)
+            return true;
 
-            var currentMethodKey = CompilationAnalysisState.GetMethodKey(currentMethod);
-
-            // Use manual iteration instead of LINQ OfType<T>() for better performance
-            foreach (var node in root.DescendantNodes())
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (node is not InvocationExpressionSyntax invocation)
-                    continue;
-
-                var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation, cancellationToken);
-                if (symbolInfo.Symbol is IMethodSymbol invokedMethod)
-                {
-                    // Check if there is a path from the invoked method back to the current method.
-                    _visited.Clear();
-                    if (HasPathTo(invokedMethod, currentMethodKey, cancellationToken))
-                    {
-                        increment++;
-                        onRecursionFound(GetKeywordLocation(invocation, invocation.SpanStart));
-                    }
-                }
-            }
-
-            return increment;
-        }
-
-        /// <summary>
-        /// Checks if there is a path from the given method to the target method key (detecting cycles).
-        /// </summary>
-        private bool HasPathTo(IMethodSymbol from, string targetKey, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var fromKey = CompilationAnalysisState.GetMethodKey(from);
-
-            if (string.Equals(fromKey, targetKey, StringComparison.Ordinal))
-                return true;
-
-            if (!_visited.Add(fromKey))
-                return false;
-
-            var invokedMethods = _state.GetMethodInvocations(from);
-
-            foreach (var invokedMethod in invokedMethods)
-            {
-                if (HasPathTo(invokedMethod, targetKey, cancellationToken))
-                    return true;
-            }
-
+        if (!visited.Add(fromId))
             return false;
+
+        var invokedIds = recursion.GetInvocationIds(fromId);
+        if (invokedIds.IsDefaultOrEmpty)
+            return false;
+
+        foreach (var nextId in invokedIds)
+        {
+            if (IsPathTo(recursion, nextId, targetId, visited))
+                return true;
         }
+
+        return false;
     }
 
     #endregion
@@ -564,8 +337,11 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         return settings.CognitiveComplexityThreshold;
     }
 
-    private static void RaiseIncrementDiagnostic(CodeBlockAnalysisContext context, Location location, string category, int nestingPenalty)
+    private void RaiseIncrementDiagnostic(CodeBlockAnalysisContext context, Location location, string category, int nestingPenalty)
     {
+        if (!this.IsIncrementDiagnosticsEnabled)
+            return;
+
         context.ReportDiagnostic(
             Diagnostic.Create(
                 DiagnosticDescriptors.CognitiveComplexityIncrement,
@@ -597,10 +373,9 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             RepeatStatementSyntax repeatStatement =>
                 repeatStatement.RepeatKeywordToken.GetLocation(),
 
-#if NET8_0_OR_GREATER
             ConditionalExpressionSyntax conditionalExpression =>
                 conditionalExpression.QuestionToken.GetLocation(),
-#endif
+
             BinaryExpressionSyntax binaryExpression when
                 node.IsKind(EnumProvider.SyntaxKind.LogicalAndExpression) ||
                 node.IsKind(EnumProvider.SyntaxKind.LogicalOrExpression) ||
