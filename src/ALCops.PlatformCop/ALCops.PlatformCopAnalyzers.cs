@@ -499,6 +499,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Calling these methods on a page without a SourceTable results in invalid or unpredictable runtime behavior, because the page has no table context to operate on..
+        /// </summary>
+        internal static string PageRecordMethodRequiresSourceTableDescription {
+            get {
+                return ResourceManager.GetString("PageRecordMethodRequiresSourceTableDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SourceTable property is not defined on Page &apos;{0}&apos;. Method &apos;{1}&apos; requires a SourceTable..
+        /// </summary>
+        internal static string PageRecordMethodRequiresSourceTableMessageFormat {
+            get {
+                return ResourceManager.GetString("PageRecordMethodRequiresSourceTableMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Page record methods require a SourceTable.
+        /// </summary>
+        internal static string PageRecordMethodRequiresSourceTableTitle {
+            get {
+                return ResourceManager.GetString("PageRecordMethodRequiresSourceTableTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to This rule ensures that calls to the built-in .Get() procedure on Record objects have the correct number and types of arguments matching the primary key (PK) of the record in question..
         /// </summary>
         internal static string RecordGetProcedureArgumentsDescription {

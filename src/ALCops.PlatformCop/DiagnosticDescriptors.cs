@@ -145,6 +145,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.PageRecordArgumentMismatchDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.PageRecordArgumentMismatch));
 
+    public static readonly DiagnosticDescriptor PageRecordMethodRequiresSourceTable = new(
+        id: DiagnosticIds.PageRecordMethodRequiresSourceTable,
+        title: PlatformCopAnalyzers.PageRecordMethodRequiresSourceTableTitle,
+        messageFormat: PlatformCopAnalyzers.PageRecordMethodRequiresSourceTableMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.PageRecordMethodRequiresSourceTableDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PageRecordMethodRequiresSourceTable));
+
     public static readonly DiagnosticDescriptor RecordGetProcedureArguments = new(
         id: DiagnosticIds.RecordGetProcedureArguments,
         title: PlatformCopAnalyzers.RecordGetProcedureArgumentsTitle,

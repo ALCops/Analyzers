@@ -256,29 +256,14 @@ public sealed class PageRecordArgumentMismatch : DiagnosticAnalyzer
             if (symbol is null)
                 continue;
 
-            if (TryResolvePageTypeFromSymbol(symbol, out pageType))
-                return true;
+            pageType = symbol.GetPageTypeSymbol();
+            if (pageType is null)
+                continue;
+
+            return true;
         }
 
         return false;
-    }
-
-    private static bool TryResolvePageTypeFromSymbol(ISymbol symbol, out IPageTypeSymbol? pageType)
-    {
-        pageType = null;
-
-        var original = symbol.OriginalDefinition ?? symbol;
-        var typeSymbol = original.GetTypeSymbol();
-        if (typeSymbol is null)
-            return false;
-
-        typeSymbol = typeSymbol.OriginalDefinition as ITypeSymbol ?? typeSymbol;
-
-        if (typeSymbol is not IPageTypeSymbol page)
-            return false;
-
-        pageType = page;
-        return true;
     }
 
     private static bool AreSameTable(ITableTypeSymbol expected, ITableTypeSymbol actual)

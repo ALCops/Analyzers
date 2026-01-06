@@ -1,10 +1,18 @@
 using System.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 
 namespace ALCops.Common.Extensions;
 
 public static class ISymbolExtensions
 {
+    public static IPageTypeSymbol? GetPageTypeSymbol(this ISymbol symbol)
+    {
+        var declaredType = (symbol.OriginalDefinition ?? symbol).GetTypeSymbol();
+        declaredType = (declaredType?.OriginalDefinition as ITypeSymbol) ?? declaredType;
+        return declaredType as IPageTypeSymbol;
+    }
+
     private static readonly Lazy<PropertyInfo?> _isObsoletePendingMoveProperty =
         new(() => typeof(ISymbol).GetProperty("IsObsoletePendingMove"));
 
