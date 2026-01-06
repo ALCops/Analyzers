@@ -472,6 +472,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This rule validates that record arguments passed to page-related operations match the page&apos;s SourceTable..
+        /// </summary>
+        internal static string PageRecordArgumentMismatchDescription {
+            get {
+                return ResourceManager.GetString("PageRecordArgumentMismatchDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Argument {0}: cannot convert from {1} to {2}..
+        /// </summary>
+        internal static string PageRecordArgumentMismatchMessageFormat {
+            get {
+                return ResourceManager.GetString("PageRecordArgumentMismatchMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Page record argument does not match source table.
+        /// </summary>
+        internal static string PageRecordArgumentMismatchTitle {
+            get {
+                return ResourceManager.GetString("PageRecordArgumentMismatchTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to This rule ensures that calls to the built-in .Get() procedure on Record objects have the correct number and types of arguments matching the primary key (PK) of the record in question..
         /// </summary>
         internal static string RecordGetProcedureArgumentsDescription {

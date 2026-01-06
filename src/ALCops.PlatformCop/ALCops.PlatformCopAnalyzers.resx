@@ -126,6 +126,15 @@
   <data name="AccessPropertyExplicitlySetDescription" xml:space="preserve">
     <value>Every AL object should explicitly specify its Access property to make its intended accessibility clear. Explicitly setting Access prevents accidental exposure or over-restriction of objects and forces conscious design decisions about visibility.</value>
   </data>
+  <data name="PageRecordArgumentMismatchTitle" xml:space="preserve">
+  <value>Page record argument does not match source table</value>
+  </data>
+  <data name="PageRecordArgumentMismatchMessageFormat" xml:space="preserve">
+    <value>Argument {0}: cannot convert from {1} to {2}.</value>
+  </data>
+  <data name="PageRecordArgumentMismatchDescription" xml:space="preserve">
+    <value>This rule validates that record arguments passed to page-related operations match the page's SourceTable.</value>
+  </data>
   <data name="AutoCalcFieldsOnlyOnFlowFieldsTitle" xml:space="preserve">
     <value>Avoids a runtime error from using AutoCalcFields on a field that is not a FlowField or a field of type Blob.</value>
   </data>
