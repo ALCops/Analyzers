@@ -12,8 +12,8 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(FilterStringSingleQuoteEscapingCodeFix))]
 public sealed class FilterStringSingleQuoteEscapingCodeFix : CodeFixProvider
 {
-    private const string NonEmptyFilterExpr = "<>''";
-    private const string NonEmptyFilterExprAsValueText = "'<>'''";
+    private const string InvalidNotEmptyFilterLiteralTokenText = "'<>'''";
+    private const string NonEmptyFilterStringLiteralText = "<>''";
 
     private class FilterStringSingleQuoteEscapingCodeAction : CodeAction.DocumentChangeAction
     {
@@ -73,12 +73,12 @@ public sealed class FilterStringSingleQuoteEscapingCodeFix : CodeFixProvider
         if (stringLiteral is null)
             return document;
 
-        if (!string.Equals(stringLiteral.Value.ValueText, NonEmptyFilterExprAsValueText, StringComparison.Ordinal))
+        if (!string.Equals(stringLiteral.Value.ValueText, InvalidNotEmptyFilterLiteralTokenText, StringComparison.Ordinal))
             return document;
 
         var fixedStringLiteral =
             SyntaxFactory.StringLiteralValue(
-                SyntaxFactory.Literal(NonEmptyFilterExpr));
+                SyntaxFactory.Literal(NonEmptyFilterStringLiteralText));
 
         var root = await syntaxRootTask.ConfigureAwait(false);
         if (root is null)
