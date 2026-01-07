@@ -210,6 +210,18 @@
   <data name="ExtensiblePropertyExplicitlySetCodeAction" xml:space="preserve">
     <value>ALCops: Set Extensible property to platform default</value>
   </data>
+  <data name="FilterStringSingleQuoteEscapingTitle" xml:space="preserve">
+    <value>Invalid single-quote escaping in filter string</value>
+  </data>
+  <data name="FilterStringSingleQuoteEscapingMessageFormat" xml:space="preserve">
+    <value>Filter string {0} uses incorrect single-quote escaping for a not-empty filter.</value>
+  </data>
+  <data name="FilterStringSingleQuoteEscapingDescription" xml:space="preserve">
+    <value>A filter string representing an is-not-empty condition is incorrectly escaped.</value>
+  </data>
+  <data name="FilterStringSingleQuoteEscapingCodeAction" xml:space="preserve">
+    <value>ALCops: Fix single-quote escaping in filter string</value>
+  </data>
   <data name="FlowFilterFieldAssignmentTitle" xml:space="preserve">
     <value>Set values for FlowFilter fields using filtering methods</value>
   </data>

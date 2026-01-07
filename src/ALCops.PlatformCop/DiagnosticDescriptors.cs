@@ -85,6 +85,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.ExtensiblePropertyExplicitlySetDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ExtensiblePropertyExplicitlySet));
 
+    public static readonly DiagnosticDescriptor FilterStringSingleQuoteEscaping = new(
+        id: DiagnosticIds.FilterStringSingleQuoteEscaping,
+        title: PlatformCopAnalyzers.FilterStringSingleQuoteEscapingTitle,
+        messageFormat: PlatformCopAnalyzers.FilterStringSingleQuoteEscapingMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.FilterStringSingleQuoteEscapingDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.FilterStringSingleQuoteEscaping));
+
     public static readonly DiagnosticDescriptor FlowFilterFieldAssignment = new(
         id: DiagnosticIds.FlowFilterFieldAssignment,
         title: PlatformCopAnalyzers.FlowFilterFieldAssignmentTitle,

@@ -310,6 +310,42 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Fix single-quote escaping in filter string.
+        /// </summary>
+        internal static string FilterStringSingleQuoteEscapingCodeAction {
+            get {
+                return ResourceManager.GetString("FilterStringSingleQuoteEscapingCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A filter string representing an is-not-empty condition is incorrectly escaped..
+        /// </summary>
+        internal static string FilterStringSingleQuoteEscapingDescription {
+            get {
+                return ResourceManager.GetString("FilterStringSingleQuoteEscapingDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Filter string {0} uses incorrect single-quote escaping for a not-empty filter..
+        /// </summary>
+        internal static string FilterStringSingleQuoteEscapingMessageFormat {
+            get {
+                return ResourceManager.GetString("FilterStringSingleQuoteEscapingMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid single-quote escaping in filter string.
+        /// </summary>
+        internal static string FilterStringSingleQuoteEscapingTitle {
+            get {
+                return ResourceManager.GetString("FilterStringSingleQuoteEscapingTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Directly assigning values to FlowFilter fields bypasses their purpose and invalidates the filtering logic, resulting in incorrect or unintended calculations. Instead, use the .SetFilter() or .SetRange() methods to define the appropriate filters..
         /// </summary>
         internal static string FlowFilterFieldAssignmentDescription {

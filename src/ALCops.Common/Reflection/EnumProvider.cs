@@ -1545,6 +1545,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.TriggerDeclaration)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _trueKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.TrueKeyword)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _unaryEqualsFilterExpression =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.UnaryEqualsFilterExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _unaryNotExpression =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.UnaryNotExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _untilKeyword =
@@ -1679,6 +1681,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind TextConstDataType => _textConstDataType.Value;
         public static NavCodeAnalysis.SyntaxKind TriggerDeclaration => _triggerDeclaration.Value;
         public static NavCodeAnalysis.SyntaxKind TrueKeyword => _trueKeyword.Value;
+        public static NavCodeAnalysis.SyntaxKind UnaryEqualsFilterExpression => _unaryEqualsFilterExpression.Value;
         public static NavCodeAnalysis.SyntaxKind UnaryNotExpression => _unaryNotExpression.Value;
         public static NavCodeAnalysis.SyntaxKind UntilKeyword => _untilKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind VarKeyword => _varKeyword.Value;
