@@ -306,4 +306,22 @@
   <data name="SetRangeWithFilterOperatorsCodeAction" xml:space="preserve">
     <value>ALCops: Replace SetRange with SetFilter</value>
   </data>
+  <data name="TransferFieldsNameMismatchTitle" xml:space="preserve">
+    <value>Inconsistent field names across TransferFields</value>
+  </data>
+  <data name="TransferFieldsNameMismatchMessageFormat" xml:space="preserve">
+    <value>Field with ID {0} resolves to different field names ({3} ≠ {4}) between TransferFields-coupled tables {1} and {2}.</value>
+  </data>
+  <data name="TransferFieldsNameMismatchDescription" xml:space="preserve">
+    <value>The same field ID is used with different field names in tables coupled via TransferFields. While this does not cause a runtime error, it increases the risk of accidental coupling of fields with different intent.</value>
+  </data>
+  <data name="TransferFieldsTypeMismatchTitle" xml:space="preserve">
+    <value>Incompatible field types across TransferFields</value>
+  </data>
+  <data name="TransferFieldsTypeMismatchMessageFormat" xml:space="preserve">
+    <value>Field with ID {0} has incompatible field types ({3} ≠ {4}) between TransferFields-coupled tables {1} and {2}.</value>
+  </data>
+  <data name="TransferFieldsTypeMismatchDescription" xml:space="preserve">
+    <value>Tables coupled via TransferFields must define matching field types for the same field ID. A type mismatch will result in a runtime error when TransferFields is executed, as incompatible field types cannot be safely copied.</value>
+  </data>
 </root>

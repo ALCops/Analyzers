@@ -26,4 +26,14 @@ public static class CompilationHelper
 
         return symbolWithId.OfType<IApplicationObjectTypeSymbol>().ToImmutableArray();
     }
+
+    public static ImmutableArray<IApplicationObjectTypeSymbol> GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection(Compilation compilation, SymbolKind kind)
+    {
+        var referenceManager = GetReferenceManager(compilation);
+        var referencingModule = GetCompiledModule(compilation);
+
+        var symbolWithId = referenceManager.GetObjectSymbolsByKindAcrossModules(referencingModule, kind);
+
+        return symbolWithId.OfType<IApplicationObjectTypeSymbol>().ToImmutableArray();
+    }
 }

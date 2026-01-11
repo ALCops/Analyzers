@@ -11,6 +11,9 @@ public static class CompilationExtensions
     public static ImmutableArray<IApplicationObjectTypeSymbol> GetApplicationObjectTypeSymbolsByIdAcrossModulesWithReflection(this Compilation compilation, SymbolKind kind, int id)
         => CompilationHelper.GetApplicationObjectTypeSymbolsByIdAcrossModulesWithReflection(compilation, kind, id);
 
+    public static ImmutableArray<IApplicationObjectTypeSymbol> GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection(this Compilation compilation, SymbolKind kind)
+        => CompilationHelper.GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection(compilation, kind);
+
     public static bool IsDiagnosticEnabled(this Compilation compilation, DiagnosticDescriptor descriptor)
     {
         if (compilation.Options.SpecificDiagnosticOptions.TryGetValue(descriptor.Id, out var report))

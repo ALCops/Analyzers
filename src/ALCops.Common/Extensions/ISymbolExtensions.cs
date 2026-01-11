@@ -13,6 +13,19 @@ public static class ISymbolExtensions
         return declaredType as IPageTypeSymbol;
     }
 
+    public static string GetFullyQualifiedObjectName(this ISymbol symbol, bool quoteIdentifierIfNeeded = false)
+    {
+        var symbolName = quoteIdentifierIfNeeded
+               ? symbol.Name.QuoteIdentifierIfNeededWithReflection()
+               : symbol.Name;
+
+        var containingNamespace = symbol.GetContainingNamespaceQualifiedNameWithReflection();
+        if (string.IsNullOrEmpty(containingNamespace))
+            return symbolName;
+
+        return $"{containingNamespace}.{symbolName}";
+    }
+
     private static readonly Lazy<PropertyInfo?> _isObsoletePendingMoveProperty =
         new(() => typeof(ISymbol).GetProperty("IsObsoletePendingMove"));
 

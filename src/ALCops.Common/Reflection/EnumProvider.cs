@@ -1339,6 +1339,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.DotToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _elifKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ElifKeyword)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _emptyProperty =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EmptyProperty)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _equalsToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EqualsToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _endOfLineTrivia =
@@ -1367,6 +1369,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Field)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _fieldGroup =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.FieldGroup)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _globalVarSection =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.GlobalVarSection)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _identifierName =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.IdentifierName)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _identifierEqualsLiteral =
@@ -1553,6 +1557,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.UntilKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _varKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.VarKeyword)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _varSection =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.VarSection)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _whileKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.WhileKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _whileStatement =
@@ -1580,6 +1586,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind DataType => _dataType.Value;
         public static NavCodeAnalysis.SyntaxKind DotToken => _dotToken.Value;
         public static NavCodeAnalysis.SyntaxKind ElifKeyword => _elifKeyword.Value;
+        public static NavCodeAnalysis.SyntaxKind EmptyProperty => _emptyProperty.Value;
         public static NavCodeAnalysis.SyntaxKind EqualsToken => _equalsToken.Value;
         public static NavCodeAnalysis.SyntaxKind EndOfLineTrivia => _endOfLineTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind EnumExtensionType => _enumExtensionType.Value;
@@ -1594,6 +1601,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind ForStatement => _forStatement.Value;
         public static NavCodeAnalysis.SyntaxKind Field => _field.Value;
         public static NavCodeAnalysis.SyntaxKind FieldGroup => _fieldGroup.Value;
+        public static NavCodeAnalysis.SyntaxKind GlobalVarSection => _globalVarSection.Value;
         public static NavCodeAnalysis.SyntaxKind IdentifierName => _identifierName.Value;
         public static NavCodeAnalysis.SyntaxKind IdentifierEqualsLiteral => _identifierEqualsLiteral.Value;
         public static NavCodeAnalysis.SyntaxKind IdentifierToken => _identifierToken.Value;
@@ -1685,6 +1693,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind UnaryNotExpression => _unaryNotExpression.Value;
         public static NavCodeAnalysis.SyntaxKind UntilKeyword => _untilKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind VarKeyword => _varKeyword.Value;
+        public static NavCodeAnalysis.SyntaxKind VarSection => _varSection.Value;
         public static NavCodeAnalysis.SyntaxKind WhileKeyword => _whileKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind WhileStatement => _whileStatement.Value;
         public static NavCodeAnalysis.SyntaxKind XmlPortKeyword => _xmlPortKeyword.Value;

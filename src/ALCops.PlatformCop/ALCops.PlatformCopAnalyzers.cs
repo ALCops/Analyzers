@@ -623,5 +623,59 @@ namespace ALCops.PlatformCop {
                 return ResourceManager.GetString("SetRangeWithFilterOperatorsTitle", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The same field ID is used with different field names in tables coupled via TransferFields. While this does not cause a runtime error, it increases the risk of accidental coupling of fields with different intent..
+        /// </summary>
+        internal static string TransferFieldsNameMismatchDescription {
+            get {
+                return ResourceManager.GetString("TransferFieldsNameMismatchDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Field with ID {0} resolves to different field names ({3} ≠ {4}) between TransferFields-coupled tables {1} and {2}..
+        /// </summary>
+        internal static string TransferFieldsNameMismatchMessageFormat {
+            get {
+                return ResourceManager.GetString("TransferFieldsNameMismatchMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Inconsistent field names across TransferFields.
+        /// </summary>
+        internal static string TransferFieldsNameMismatchTitle {
+            get {
+                return ResourceManager.GetString("TransferFieldsNameMismatchTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tables coupled via TransferFields must define matching field types for the same field ID. A type mismatch will result in a runtime error when TransferFields is executed, as incompatible field types cannot be safely copied..
+        /// </summary>
+        internal static string TransferFieldsTypeMismatchDescription {
+            get {
+                return ResourceManager.GetString("TransferFieldsTypeMismatchDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Field with ID {0} has incompatible field types ({3} ≠ {4}) between TransferFields-coupled tables {1} and {2}..
+        /// </summary>
+        internal static string TransferFieldsTypeMismatchMessageFormat {
+            get {
+                return ResourceManager.GetString("TransferFieldsTypeMismatchMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Incompatible field types across TransferFields.
+        /// </summary>
+        internal static string TransferFieldsTypeMismatchTitle {
+            get {
+                return ResourceManager.GetString("TransferFieldsTypeMismatchTitle", resourceCulture);
+            }
+        }
     }
 }

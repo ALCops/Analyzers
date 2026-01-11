@@ -185,6 +185,26 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.SetRangeWithFilterOperatorsDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.SetRangeWithFilterOperators));
 
+    public static readonly DiagnosticDescriptor TransferFieldsNameMismatch = new(
+        id: DiagnosticIds.TransferFieldsNameMismatch,
+        title: PlatformCopAnalyzers.TransferFieldsNameMismatchTitle,
+        messageFormat: PlatformCopAnalyzers.TransferFieldsNameMismatchMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.TransferFieldsNameMismatchDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TransferFieldsNameMismatch));
+
+    public static readonly DiagnosticDescriptor TransferFieldsTypeMismatch = new(
+        id: DiagnosticIds.TransferFieldsTypeMismatch,
+        title: PlatformCopAnalyzers.TransferFieldsTypeMismatchTitle,
+        messageFormat: PlatformCopAnalyzers.TransferFieldsTypeMismatchMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.TransferFieldsTypeMismatchDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TransferFieldsTypeMismatch));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLower());
