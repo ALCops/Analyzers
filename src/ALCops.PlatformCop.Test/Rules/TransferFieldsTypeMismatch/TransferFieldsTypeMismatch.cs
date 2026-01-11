@@ -31,6 +31,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("InvocationWithVarParam")]
         [TestCase("TableExt_Multiple_SameBase")]
         [TestCase("TableExtension")]
+        [TestCase("TableExtensionTypeWithLength")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))

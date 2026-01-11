@@ -341,21 +341,28 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     private static bool AreFieldTypesEquivalent(IFieldSymbol left, IFieldSymbol right)
     {
 #if NETSTANDARD2_1
-        if (left.ToDisplayString() != right.ToDisplayString())
-            return false;
-        
-        return true;
+        var lt = (ITypeSymbol)left;
+        var rt = (ITypeSymbol)right;
 #else
-        if (left.Type?.ToDisplayString() != right.Type?.ToDisplayString())
-            return false;
-
-        var lt = left.Type?.OriginalDefinition;
-        var rt = right.Type?.OriginalDefinition;
+        var lt = left.Type;
+        var rt = right.Type;
+#endif
         if (lt is null || rt is null)
             return false;
 
-        return SameApplicationObject(lt, rt);
+        // If both are application-object types (Record/Enum/etc.)
+        if (lt is IApplicationObjectTypeSymbol && rt is IApplicationObjectTypeSymbol)
+            return SameApplicationObject(lt.OriginalDefinition, rt.OriginalDefinition);
+
+        // Otherwise compare the rendered type, which includes Code[20]/Text[50]
+#if NETSTANDARD2_1
+        var lts = lt.ToString();
+        var rts = rt.ToString();
+#else
+        var lts = lt.ToDisplayString();
+        var rts = rt.ToDisplayString();
 #endif
+        return string.Equals(lts, rts, StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool AreFieldNamesEquivalent(IFieldSymbol left, IFieldSymbol right)
