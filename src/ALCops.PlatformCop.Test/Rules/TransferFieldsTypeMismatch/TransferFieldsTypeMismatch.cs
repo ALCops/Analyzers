@@ -35,7 +35,7 @@ namespace ALCops.PlatformCop.Test
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["TableExtension", "TableExt_Multiple_SameBase"],
+                ["TableExt_Multiple_SameBase", "TableExtension", "TableExtensionTypeWithLength"],
                 testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");
