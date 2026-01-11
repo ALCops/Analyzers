@@ -6,6 +6,36 @@ namespace ALCops.PlatformCop.Helpers;
 
 internal static class TransferFieldsRelations
 {
+#if NETSTANDARD2_1
+    // C# 9 records require 'System.Runtime.CompilerServices.IsExternalInit' which doesn't exist in netstandard2.1.
+    // We use a regular class for netstandard2.1 and a record for .NET 8+ to maintain compatibility with both targets.
+    internal readonly struct ObjectName
+    {
+        public string Namespace { get; }
+        public string Name { get; }
+
+        public ObjectName(string @namespace, string name)
+        {
+            Namespace = @namespace;
+            Name = name;
+        }
+
+        public override string ToString() =>
+            string.IsNullOrEmpty(Namespace) ? Name : $"{Namespace}.{Name}";
+    }
+
+    internal readonly struct TableRelation
+    {
+        public ObjectName Table { get; }
+        public ObjectName RelatedTable { get; }
+
+        public TableRelation(ObjectName table, ObjectName relatedTable)
+        {
+            Table = table;
+            RelatedTable = relatedTable;
+        }
+    }
+#else
     internal readonly record struct ObjectName(string Namespace, string Name)
     {
         public override string ToString() =>
@@ -13,6 +43,7 @@ internal static class TransferFieldsRelations
     }
 
     internal readonly record struct TableRelation(ObjectName Table, ObjectName RelatedTable);
+#endif
 
     internal static readonly ImmutableArray<TableRelation> TableRelations =
         ImmutableArray.Create(

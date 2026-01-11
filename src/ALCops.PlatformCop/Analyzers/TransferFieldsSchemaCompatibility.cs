@@ -183,8 +183,8 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 minTypeMismatchId,
                 sourceDisplay,
                 targetDisplay,
-                sourceById[minTypeMismatchId].Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString(),
-                targetById[minTypeMismatchId].Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString()));
+                GetToDisplayStringSafe(sourceById[minTypeMismatchId]),
+                GetToDisplayStringSafe(targetById[minTypeMismatchId])));
         }
     }
 
@@ -340,9 +340,13 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
 
     private static bool AreFieldTypesEquivalent(IFieldSymbol left, IFieldSymbol right)
     {
+#if NETSTANDARD2_1
+        var lt = left.OriginalDefinition;
+        var rt = right.OriginalDefinition;
+#else
         var lt = left.Type?.OriginalDefinition;
         var rt = right.Type?.OriginalDefinition;
-
+#endif
         if (lt is null || rt is null)
             return false;
 
@@ -394,8 +398,8 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 fieldId,
                 sourceDisplay,
                 targetDisplay,
-                sourceField.Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString(),
-                targetField.Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString()));
+                GetToDisplayStringSafe(sourceField),
+                GetToDisplayStringSafe(targetField)));
             return;
         }
     }
@@ -441,11 +445,21 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 fieldId,
                 sourceDisplay,
                 targetDisplay,
-                sourceField.Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString(),
-                targetField.Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString()));
+                GetToDisplayStringSafe(sourceField),
+                GetToDisplayStringSafe(targetField)));
             return;
         }
     }
+
+    private static string GetToDisplayStringSafe(IFieldSymbol fieldSymbol)
+    {
+#if NETSTANDARD2_1
+        return fieldSymbol.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString();
+#else
+        return fieldSymbol.Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString();
+#endif
+    }
+
 
     private static bool IsLocationInCompilation(Location location, Compilation compilation)
     {
