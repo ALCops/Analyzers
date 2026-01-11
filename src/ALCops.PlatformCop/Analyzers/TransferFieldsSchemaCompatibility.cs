@@ -341,16 +341,21 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     private static bool AreFieldTypesEquivalent(IFieldSymbol left, IFieldSymbol right)
     {
 #if NETSTANDARD2_1
-        var lt = left.OriginalDefinition;
-        var rt = right.OriginalDefinition;
+        if (left.ToDisplayString() != right.ToDisplayString())
+            return false;
+        
+        return true;
 #else
+        if (left.Type?.ToDisplayString() != right.Type?.ToDisplayString())
+            return false;
+
         var lt = left.Type?.OriginalDefinition;
         var rt = right.Type?.OriginalDefinition;
-#endif
         if (lt is null || rt is null)
             return false;
 
         return SameApplicationObject(lt, rt);
+#endif
     }
 
     private static bool AreFieldNamesEquivalent(IFieldSymbol left, IFieldSymbol right)
