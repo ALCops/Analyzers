@@ -347,7 +347,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (left is IApplicationObjectTypeSymbol && right is IApplicationObjectTypeSymbol)
             return SameApplicationObject(lDef, rDef);
 
-        return string.Equals(left.ToString(), right.ToString(), StringComparison.OrdinalIgnoreCase)
+        return string.Equals(left.ToString(), right.ToString(), StringComparison.OrdinalIgnoreCase);
 #else
         var lt = left.Type;
         var rt = right.Type;
