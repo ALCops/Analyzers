@@ -461,12 +461,14 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     private static string GetToDisplayStringSafe(IFieldSymbol fieldSymbol)
     {
 #if NETSTANDARD2_1
-        return fieldSymbol.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString();
+        if (fieldSymbol.DeclaringSyntaxReference?.GetSyntax() is not FieldSyntax leftSyntax)
+            return EnumProvider.NavTypeKind.None.ToString();
+
+        return leftSyntax.Type.ToString();
 #else
         return fieldSymbol.Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString();
 #endif
     }
-
 
     private static bool IsLocationInCompilation(Location location, Compilation compilation)
     {
