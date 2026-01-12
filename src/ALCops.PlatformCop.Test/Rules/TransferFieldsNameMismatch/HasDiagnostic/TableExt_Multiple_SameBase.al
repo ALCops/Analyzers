@@ -11,7 +11,7 @@ tableextension 50101 MyCustomerExt2 extends Customer
 {
     fields
     {
-        [|field(50101; MyFieldB; Text[50]) { }|] // Same ID (50101) as in MyContactExt2, different type
+        [|field(50101; MyOtherFieldB; Integer) { }|] // Same ID (50101) as in MyContactExt2, different name
     }
 }
 
@@ -19,7 +19,7 @@ tableextension 50102 MyContactExt extends Contact
 {
     fields
     {
-        [|field(50101; MyFieldB; Integer) { }|] // Same ID (50100) as in MyCustomerExt2, different type
+        [|field(50101; MyFieldB; Integer) { }|] // Same ID (50100) as in MyCustomerExt2, different name
     }
 }
 
