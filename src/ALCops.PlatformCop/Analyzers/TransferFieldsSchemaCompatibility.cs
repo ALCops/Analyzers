@@ -364,7 +364,11 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (lt is IApplicationObjectTypeSymbol && rt is IApplicationObjectTypeSymbol)
             return SameApplicationObject(lt.OriginalDefinition, rt.OriginalDefinition);
 
+#if NETSTANDARD2_1
+        return string.Equals(lt.ToDisplayStringWithReflection(), rt.ToDisplayStringWithReflection(), StringComparison.OrdinalIgnoreCase);
+#else
         return string.Equals(lt.ToDisplayString(), rt.ToDisplayString(), StringComparison.OrdinalIgnoreCase);
+#endif
     }
 
     private static bool AreFieldNamesEquivalent(IFieldSymbol left, IFieldSymbol right)
@@ -468,7 +472,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     private static string GetToDisplayStringSafe(IFieldSymbol fieldSymbol)
     {
 #if NETSTANDARD2_1
-        return fieldSymbol.OriginalDefinition.GetTypeSymbol().ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString();
+        return fieldSymbol.OriginalDefinition.GetTypeSymbol().ToDisplayStringWithReflection() ?? EnumProvider.NavTypeKind.None.ToString();
 #else
         return fieldSymbol.Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString();
 #endif

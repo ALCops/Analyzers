@@ -60,4 +60,49 @@ public static class SymbolHelper
             return null;
         }
     }
+
+#if NETSTANDARD2_1
+    /// Handling breaking changes between different versions of Microsoft.Dynamics.Nav.CodeAnalysis
+    /// .ToDisplayString() < 13.0 vs .ToDisplayString(SymbolDisplayFormat) >= 13.0
+    private static readonly Lazy<Func<ISymbol, string>> _toDisplayString = new(CreateToDisplayStringInvoker);
+    private static Func<ISymbol, string> CreateToDisplayStringInvoker()
+    {
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public;
+
+        // Prefer newer overload: ToDisplayString(SymbolDisplayFormat)
+        var withFormat =
+            typeof(ISymbol).GetMethod(
+                "ToDisplayString",
+                flags,
+                binder: null,
+                types: new[] { typeof(SymbolDisplayFormat) },
+                modifiers: null);
+
+        if (withFormat is not null)
+            return s => (string)withFormat.Invoke(s, new object?[] { null })!;
+
+        // Fallback: ToDisplayString()
+        var parameterless =
+            typeof(ISymbol).GetMethod(
+                "ToDisplayString",
+                flags,
+                binder: null,
+                types: Type.EmptyTypes,
+                modifiers: null);
+
+        if (parameterless is not null)
+            return s => (string)parameterless.Invoke(s, null)!;
+
+        // Absolute fallback
+        return s => s.Name ?? string.Empty;
+    }
+
+    public static string ToDisplayStringWithReflection(ISymbol? symbol)
+    {
+        if (symbol is null)
+            return string.Empty;
+
+        return _toDisplayString.Value(symbol);
+    }
+#endif
 }
