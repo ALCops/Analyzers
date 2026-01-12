@@ -95,9 +95,6 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (sourceTable is null || targetTable is null)
             return;
 
-        if (TryFindTableRelation(sourceTable) is not null)
-            return;
-
         var tableExtensions = GetCachedTableExtensions(ctx.Compilation);
         var sourceFields = BuildEffectiveFields(sourceTable, tableExtensions);
         var targetFields = BuildEffectiveFields(targetTable, tableExtensions);
@@ -110,6 +107,8 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
 
         if (sourceById.Count == 0 || targetById.Count == 0)
             return;
+
+        var hasTableRelationEntry = TryFindTableRelation(sourceTable) is not null;
 
         var hasTypeMismatch = false;
         var hasNameMismatch = false;
@@ -131,29 +130,38 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
             if (typeMismatch)
             {
                 var diagnosticId = DiagnosticDescriptors.TransferFieldsTypeMismatch.Id;
-                if (IsFieldSuppressed(diagnosticId, sourceField) || IsFieldSuppressed(diagnosticId, targetField))
-                    continue;
 
-                hasTypeMismatch = true;
-                if (id < minTypeMismatchId)
-                    minTypeMismatchId = id;
+                if (!(IsFieldSuppressed(diagnosticId, sourceField) || IsFieldSuppressed(diagnosticId, targetField)))
+                {
+                    hasTypeMismatch = true;
+                    if (id < minTypeMismatchId)
+                        minTypeMismatchId = id;
 
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, locationField: sourceField, sourceField, targetField, id, sourceTable, targetTable);
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, locationField: targetField, sourceField, targetField, id, sourceTable, targetTable);
+                    if (!hasTableRelationEntry)
+                    {
+                        ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, locationField: sourceField, sourceField, targetField, id, sourceTable, targetTable);
+                        ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, locationField: targetField, sourceField, targetField, id, sourceTable, targetTable);
+                    }
+                }
             }
 
             if (nameMismatch)
             {
                 var diagnosticId = DiagnosticDescriptors.TransferFieldsNameMismatch.Id;
-                if (IsFieldSuppressed(diagnosticId, sourceField) || IsFieldSuppressed(diagnosticId, targetField))
-                    continue;
 
-                hasNameMismatch = true;
-                if (id < minNameMismatchId)
-                    minNameMismatchId = id;
+                if (!(IsFieldSuppressed(diagnosticId, sourceField) || IsFieldSuppressed(diagnosticId, targetField)))
+                {
 
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, locationField: sourceField, sourceField, targetField, id, sourceTable, targetTable);
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, locationField: targetField, sourceField, targetField, id, sourceTable, targetTable);
+                    hasNameMismatch = true;
+                    if (id < minNameMismatchId)
+                        minNameMismatchId = id;
+
+                    if (!hasTableRelationEntry)
+                    {
+                        ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, locationField: sourceField, sourceField, targetField, id, sourceTable, targetTable);
+                        ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, locationField: targetField, sourceField, targetField, id, sourceTable, targetTable);
+                    }
+                }
             }
         }
 
@@ -341,12 +349,12 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     private static bool AreFieldTypesEquivalent(IFieldSymbol left, IFieldSymbol right)
     {
 #if NETSTANDARD2_1
-        var leftSyntax = left.DeclaringSyntaxReference?.GetSyntax() as FieldSyntax;
-        var rightSyntax = right.DeclaringSyntaxReference?.GetSyntax() as FieldSyntax;
-        if (leftSyntax is null || rightSyntax is null)
+        var ltas = left.TypeAsString();
+        var rtas = right.TypeAsString();
+        if (ltas is null || rtas is null)
             return true; // no source available => cannot know reliably so assume equivalent
 
-        return string.Equals(leftSyntax.Type.ToString(), rightSyntax.Type.ToString(), StringComparison.OrdinalIgnoreCase);
+        return string.Equals(ltas, rtas, StringComparison.OrdinalIgnoreCase);
 #else
         var lt = left.Type;
         var rt = right.Type;
@@ -461,10 +469,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     private static string GetToDisplayStringSafe(IFieldSymbol fieldSymbol)
     {
 #if NETSTANDARD2_1
-        if (fieldSymbol.DeclaringSyntaxReference?.GetSyntax() is not FieldSyntax leftSyntax)
-            return EnumProvider.NavTypeKind.None.ToString();
-
-        return leftSyntax.Type.ToString();
+        return fieldSymbol.TypeAsString() ?? EnumProvider.NavTypeKind.None.ToString();
 #else
         return fieldSymbol.Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString();
 #endif
