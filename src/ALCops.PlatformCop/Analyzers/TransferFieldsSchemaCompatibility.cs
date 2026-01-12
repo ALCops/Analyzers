@@ -6,6 +6,9 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
+#if NETSTANDARD2_1
+using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
+#endif
 using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 using static ALCops.PlatformCop.Helpers.TransferFieldsRelations;
 
@@ -349,15 +352,12 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     private static bool AreFieldTypesEquivalent(IFieldSymbol left, IFieldSymbol right)
     {
 #if NETSTANDARD2_1
-        var ltas = left.TypeAsString();
-        var rtas = right.TypeAsString();
-        if (ltas is null || rtas is null)
-            return true; // no source available => cannot know reliably so assume equivalent
-
-        return string.Equals(ltas, rtas, StringComparison.OrdinalIgnoreCase);
+        var lt = left.OriginalDefinition.GetTypeSymbol();
+        var rt = right.OriginalDefinition.GetTypeSymbol();
 #else
         var lt = left.Type;
         var rt = right.Type;
+#endif
         if (lt is null || rt is null)
             return false;
 
@@ -365,7 +365,6 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
             return SameApplicationObject(lt.OriginalDefinition, rt.OriginalDefinition);
 
         return string.Equals(lt.ToDisplayString(), rt.ToDisplayString(), StringComparison.OrdinalIgnoreCase);
-#endif
     }
 
     private static bool AreFieldNamesEquivalent(IFieldSymbol left, IFieldSymbol right)
@@ -469,7 +468,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     private static string GetToDisplayStringSafe(IFieldSymbol fieldSymbol)
     {
 #if NETSTANDARD2_1
-        return fieldSymbol.TypeAsString() ?? EnumProvider.NavTypeKind.None.ToString();
+        return fieldSymbol.OriginalDefinition.GetTypeSymbol().ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString();
 #else
         return fieldSymbol.Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString();
 #endif
