@@ -40,6 +40,12 @@ namespace ALCops.PlatformCop.Test
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");
 
+            SkipTestIfVersionIsTooLow(
+                ["TableExtensionTypeWithLength"],
+                testCase,
+                "16.0",
+                "In .NET Standard 2.1 there's a different on the .ToDisplayString() method");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
