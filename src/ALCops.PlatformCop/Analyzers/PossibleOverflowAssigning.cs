@@ -90,8 +90,13 @@ public sealed class PossibleOverflowAssigning : DiagnosticAnalyzer
                     DiagnosticDescriptors.PossibleOverflowAssigning,
                     sourceOperand.Syntax.GetLocation(),
                     properties,
+#if NETSTANDARD2_1
+                    variableSymbol.GetTypeSymbol().ToDisplayStringWithReflection(),
+                    targetTypeSymbol.ToDisplayStringWithReflection()));
+#else
                     variableSymbol.GetTypeSymbol().ToDisplayString(),
                     targetTypeSymbol.ToDisplayString()));
+#endif
         }
     }
 
@@ -302,8 +307,13 @@ public sealed class PossibleOverflowAssigning : DiagnosticAnalyzer
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.PossibleOverflowAssigning,
                     invocation.Arguments[index].Syntax.GetLocation(),
+#if NETSTANDARD2_1
+                    $"{argumentType.ToDisplayStringWithReflection()}{lengthSuffix}",
+                    fieldType.ToDisplayStringWithReflection()));
+#else
                     $"{argumentType.ToDisplayString()}{lengthSuffix}",
                     fieldType.ToDisplayString()));
+#endif
             }
         }
     }
@@ -488,7 +498,11 @@ public sealed class PossibleOverflowAssigning : DiagnosticAnalyzer
 
     private static string GetDisplayString(IArgument argument, IInvocationExpression operation)
     {
+#if NETSTANDARD2_1
+        return ((IConversionExpression)argument.Value).Operand.Type.ToDisplayStringWithReflection();
+#else
         return ((IConversionExpression)argument.Value).Operand.Type.ToDisplayString();
+#endif
     }
 
     private List<int> GetArgumentIndexes(IOperation operand)
