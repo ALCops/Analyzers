@@ -3,7 +3,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 
 namespace ALCops.Common.Extensions;
 
-public static class ArgumentExtensions
+public static class ArgumentInterfaceExtensions
 {
     public static ITypeSymbol? GetTypeSymbol(this IArgument argument)
     {

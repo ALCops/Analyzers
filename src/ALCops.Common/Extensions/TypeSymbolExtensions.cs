@@ -4,29 +4,8 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 
 namespace ALCops.Common.Extensions;
 
-public static class TypeSymbolExtensions
+public static class TypeSymbolInterfaceExtensions
 {
-    public static IMethodSymbol? FindMethodByNameAcrossModules(this IApplicationObjectTypeSymbol applicationObject, string memberName, Compilation compilation)
-    {
-        foreach (ISymbol member in applicationObject.GetMembers(memberName))
-        {
-            if (member.Kind == EnumProvider.SymbolKind.Method)
-                return (IMethodSymbol)member;
-        }
-        foreach (var extensionsAcrossModule in compilation.GetApplicationObjectExtensionTypeSymbolsAcrossModules(applicationObject))
-        {
-            foreach (var member in extensionsAcrossModule.GetMembers(memberName))
-            {
-                if (member.Kind == EnumProvider.SymbolKind.Method)
-                {
-                    IMethodSymbol firstMethod = (IMethodSymbol)member;
-                    return firstMethod;
-                }
-            }
-        }
-        return null;
-    }
-
     public static int GetTypeLength(this ITypeSymbol type, ref bool isError)
     {
         if (!type.IsTextType())

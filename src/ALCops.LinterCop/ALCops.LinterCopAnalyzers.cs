@@ -373,6 +373,60 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The internal method is declared but never used. Unused procedures increase maintenance cost and reduce code clarity. Remove the procedure if it is no longer needed..
+        /// </summary>
+        internal static string InternalProcedureNotReferencedDescription {
+            get {
+                return ResourceManager.GetString("InternalProcedureNotReferencedDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The {0} method {1} in {2} {3} (Access = {4}) is declared but never used..
+        /// </summary>
+        internal static string InternalProcedureNotReferencedMessageFormat {
+            get {
+                return ResourceManager.GetString("InternalProcedureNotReferencedMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The internal method is declared but never used..
+        /// </summary>
+        internal static string InternalProcedureNotReferencedTitle {
+            get {
+                return ResourceManager.GetString("InternalProcedureNotReferencedTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This internal procedure is only referenced within its declaring object. Using internal visibility is unnecessary in this case. Making the procedure local reduces the exposed surface area and improves intent clarity..
+        /// </summary>
+        internal static string InternalProcedureOnlyUsedInCurrentObjectDescription {
+            get {
+                return ResourceManager.GetString("InternalProcedureOnlyUsedInCurrentObjectDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The {0} method {1} is only used in the object {2} {3} (Access = {4}) in which it is declared. Consider making the procedure local..
+        /// </summary>
+        internal static string InternalProcedureOnlyUsedInCurrentObjectMessageFormat {
+            get {
+                return ResourceManager.GetString("InternalProcedureOnlyUsedInCurrentObjectMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The internal method is only used in the object in which it is declared..
+        /// </summary>
+        internal static string InternalProcedureOnlyUsedInCurrentObjectTitle {
+            get {
+                return ResourceManager.GetString("InternalProcedureOnlyUsedInCurrentObjectTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reports the maintainability index of a method or trigger. The maintainability index is a composite metric derived from cyclomatic complexity, Halstead volume, and code size, providing an overall indication of how easy the code is to understand, modify, and maintain..
         /// </summary>
         internal static string MaintainabilityIndexMetricDescription {

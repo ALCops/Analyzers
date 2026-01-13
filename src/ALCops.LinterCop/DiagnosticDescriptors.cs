@@ -115,6 +115,26 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.IdentifiersInEventSubscribersDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.IdentifiersInEventSubscribers));
 
+    public static readonly DiagnosticDescriptor InternalProcedureNotReferenced = new(
+        id: DiagnosticIds.InternalProcedureNotReferenced,
+        title: LinterCopAnalyzers.InternalProcedureNotReferencedTitle,
+        messageFormat: LinterCopAnalyzers.InternalProcedureNotReferencedMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.InternalProcedureNotReferencedDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.InternalProcedureNotReferenced));
+
+    public static readonly DiagnosticDescriptor InternalProcedureOnlyUsedInCurrentObject = new(
+        id: DiagnosticIds.InternalProcedureOnlyUsedInCurrentObject,
+        title: LinterCopAnalyzers.InternalProcedureOnlyUsedInCurrentObjectTitle,
+        messageFormat: LinterCopAnalyzers.InternalProcedureOnlyUsedInCurrentObjectMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.InternalProcedureOnlyUsedInCurrentObjectDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.InternalProcedureOnlyUsedInCurrentObject));
+
     public static readonly DiagnosticDescriptor MaintainabilityIndexMetric = new(
         id: DiagnosticIds.MaintainabilityIndexMetric,
         title: LinterCopAnalyzers.MaintainabilityIndexMetricTitle,

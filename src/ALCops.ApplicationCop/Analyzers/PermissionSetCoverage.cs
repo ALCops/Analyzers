@@ -40,7 +40,7 @@ public sealed class PermissionSetCoverage : DiagnosticAnalyzer
             return;
 
         ImmutableHashSet<(PermissionObjectKind, int)> permissionSymbols = GetPermissionSymbols(moduleSymbol);
-        IEnumerable<XDocument> permissionSetDocuments = FileSystemExtensions.GetPermissionSetDocuments(ctx.Compilation.FileSystem);
+        IEnumerable<XDocument> permissionSetDocuments = FileSystemInterfaceExtensions.GetPermissionSetDocuments(ctx.Compilation.FileSystem);
         IEnumerable<ISymbol> objects = moduleSymbol.GetObjectSymbols(EnumProvider.SymbolKind.Codeunit);
         objects = objects.Concat(moduleSymbol.GetObjectSymbols(EnumProvider.SymbolKind.Page));
         objects = objects.Concat(moduleSymbol.GetObjectSymbols(EnumProvider.SymbolKind.Query));
