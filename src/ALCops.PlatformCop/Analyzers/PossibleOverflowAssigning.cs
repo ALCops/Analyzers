@@ -271,7 +271,11 @@ public sealed class PossibleOverflowAssigning : DiagnosticAnalyzer
 
         for (int index = 0; index < table.PrimaryKey.Fields.Length; index++)
         {
+#if NETSTANDARD2_1
+            var fieldType = table.PrimaryKey.Fields[index].OriginalDefinition.GetTypeSymbol();
+#else
             var fieldType = table.PrimaryKey.Fields[index].Type;
+#endif
             var argumentType = invocation.Arguments[index].GetTypeSymbol();
 
             if (fieldType is null || argumentType is null || argumentType.HasLength)
