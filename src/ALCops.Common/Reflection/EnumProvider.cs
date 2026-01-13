@@ -198,6 +198,23 @@ public static class EnumProvider
     }
 
     /// <summary>
+    /// BinaryOperationKind enum values
+    /// </summary>
+    public static class BinaryOperationKind
+    {
+        public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
+            CreateEnumDictionary<NavCodeAnalysis.BinaryOperationKind>();
+
+        private static readonly Lazy<NavCodeAnalysis.BinaryOperationKind> _booleanConditionalOr =
+            new(() => ParseEnum<NavCodeAnalysis.BinaryOperationKind>(nameof(NavCodeAnalysis.BinaryOperationKind.BooleanConditionalOr)));
+        private static readonly Lazy<NavCodeAnalysis.BinaryOperationKind> _booleanOr =
+            new(() => ParseEnum<NavCodeAnalysis.BinaryOperationKind>(nameof(NavCodeAnalysis.BinaryOperationKind.BooleanOr)));
+
+        public static NavCodeAnalysis.BinaryOperationKind BooleanConditionalOr => _booleanConditionalOr.Value;
+        public static NavCodeAnalysis.BinaryOperationKind BooleanOr => _booleanOr.Value;
+    }
+
+    /// <summary>
     /// BlankNumbersKind enum values
     /// </summary>
     public static class BlankNumbersKind
@@ -1302,6 +1319,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ArrayIndexExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _assignmentStatement =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.AssignmentStatement)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _block =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Block)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _booleanLiteralValue =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.BooleanLiteralValue)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _caseLine =
@@ -1577,6 +1596,7 @@ public static class EnumProvider
 
         public static NavCodeAnalysis.SyntaxKind ArrayIndexExpression => _arrayIndexExpression.Value;
         public static NavCodeAnalysis.SyntaxKind AssignmentStatement => _assignmentStatement.Value;
+        public static NavCodeAnalysis.SyntaxKind Block => _block.Value;
         public static NavCodeAnalysis.SyntaxKind BooleanLiteralValue => _booleanLiteralValue.Value;
         public static NavCodeAnalysis.SyntaxKind CaseLine => _caseLine.Value;
         public static NavCodeAnalysis.SyntaxKind CaseStatement => _caseStatement.Value;
