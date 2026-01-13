@@ -192,6 +192,9 @@
   <data name="DataClassificationRedundancyDescription" xml:space="preserve">
     <value>When a DataClassification is defined on a table, it automatically applies to all fields of that table. Setting the same DataClassification again on individual fields is redundant and adds unnecessary noise to the object definition.</value>
   </data>
+  <data name="DataClassificationRedundancyCodeAction" xml:space="preserve">
+    <value>ALCops: Remove redundant DataClassification</value>
+  </data>
   <data name="ErrorInvocationUsingTextConstantTitle" xml:space="preserve">
     <value>Use Error with ErrorInfo or Label instead of Text</value>
   </data>
@@ -219,8 +222,14 @@
   <data name="IdentifiersInEventSubscribersDescription" xml:space="preserve">
     <value>Starting with Business Central 2023 wave 1 (BC22), event subscriber arguments support identifier syntax rather than string literals. Using identifiers enables full Visual Studio Code navigation features such as Go To Definition and Find All References, improving code readability, refactor safety, and maintainability.</value>
   </data>
-  <data name="DataClassificationRedundancyCodeAction" xml:space="preserve">
-    <value>ALCops: Remove redundant DataClassification</value>
+  <data name="InterfaceObjectNameGuideTitle" xml:space="preserve">
+    <value>Use the standard 'I' prefix for interface object names.</value>
+  </data>
+  <data name="InterfaceObjectNameGuideMessageFormat" xml:space="preserve">
+  <value>Interface '{0}' must start with a capital 'I' and must not contain a space directly after it.</value>
+  </data>
+  <data name="InterfaceObjectNameGuideDescription" xml:space="preserve">
+    <value>Interfaces must follow the widely adopted naming convention of starting with a capital 'I' without any intervening spaces. This aligns AL interface naming with established conventions in languages such as C#.</value>
   </data>
   <data name="MaintainabilityIndexMetricTitle" xml:space="preserve">
     <value>Maintainability index metric</value>

@@ -373,6 +373,33 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Interfaces must follow the widely adopted naming convention of starting with a capital &apos;I&apos; without any intervening spaces. This aligns AL interface naming with established conventions in languages such as C#..
+        /// </summary>
+        internal static string InterfaceObjectNameGuideDescription {
+            get {
+                return ResourceManager.GetString("InterfaceObjectNameGuideDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Interface &apos;{0}&apos; must start with a capital &apos;I&apos; and must not contain a space directly after it..
+        /// </summary>
+        internal static string InterfaceObjectNameGuideMessageFormat {
+            get {
+                return ResourceManager.GetString("InterfaceObjectNameGuideMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use the standard &apos;I&apos; prefix for interface object names..
+        /// </summary>
+        internal static string InterfaceObjectNameGuideTitle {
+            get {
+                return ResourceManager.GetString("InterfaceObjectNameGuideTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reports the maintainability index of a method or trigger. The maintainability index is a composite metric derived from cyclomatic complexity, Halstead volume, and code size, providing an overall indication of how easy the code is to understand, modify, and maintain..
         /// </summary>
         internal static string MaintainabilityIndexMetricDescription {
