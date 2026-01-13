@@ -242,6 +242,7 @@
   </data>
   <data name="DataClassificationRedundancyCodeAction" xml:space="preserve">
     <value>ALCops: Remove redundant DataClassification</value>
+  </data>
   <data name="InterfaceObjectNameGuideTitle" xml:space="preserve">
     <value>Use the standard 'I' prefix for interface object names.</value>
   </data>
