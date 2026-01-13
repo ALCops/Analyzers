@@ -234,6 +234,15 @@
   <data name="GuidEmptyStringComparisonCodeAction" xml:space="preserve">
     <value>ALCops: Use IsNullGuid()</value>
   </data>
+  <data name="IsHandledParameterAssignmentTitle" xml:space="preserve">
+    <value>Incorrect 'IsHandled' parameter assignment.</value>
+  </data>
+  <data name="IsHandledParameterAssignmentMessageFormat" xml:space="preserve">
+    <value>Do not set the 'IsHandled' parameter to 'false' or any value that may be evaluated as false.</value>
+  </data>
+  <data name="IsHandledParameterAssignmentDescription" xml:space="preserve">
+    <value>The 'IsHandled' parameter must always be set to 'true' when handled. Avoid assigning 'false' or any value that may be evaluated as false.</value>
+  </data>
   <data name="JsonTokenJPathUsesDoubleQuotesTitle" xml:space="preserve">
     <value>Use two single quotes instead of double quotes in JPath expressions</value>
   </data>

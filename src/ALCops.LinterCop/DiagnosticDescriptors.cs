@@ -134,6 +134,15 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: LinterCopAnalyzers.InternalProcedureOnlyUsedInCurrentObjectDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.InternalProcedureOnlyUsedInCurrentObject));
+    public static readonly DiagnosticDescriptor InterfaceObjectNameGuide = new(
+        id: DiagnosticIds.InterfaceObjectNameGuide,
+        title: LinterCopAnalyzers.InterfaceObjectNameGuideTitle,
+        messageFormat: LinterCopAnalyzers.InterfaceObjectNameGuideMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: false,
+        description: LinterCopAnalyzers.InterfaceObjectNameGuideDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.InterfaceObjectNameGuide));
 
     public static readonly DiagnosticDescriptor MaintainabilityIndexMetric = new(
         id: DiagnosticIds.MaintainabilityIndexMetric,

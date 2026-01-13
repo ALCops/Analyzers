@@ -409,6 +409,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The &apos;IsHandled&apos; parameter must always be set to &apos;true&apos; when handled. Avoid assigning &apos;false&apos; or any value that may be evaluated as false..
+        /// </summary>
+        internal static string IsHandledParameterAssignmentDescription {
+            get {
+                return ResourceManager.GetString("IsHandledParameterAssignmentDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Do not set the &apos;IsHandled&apos; parameter to &apos;false&apos; or any value that may be evaluated as false..
+        /// </summary>
+        internal static string IsHandledParameterAssignmentMessageFormat {
+            get {
+                return ResourceManager.GetString("IsHandledParameterAssignmentMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Incorrect &apos;IsHandled&apos; parameter assignment..
+        /// </summary>
+        internal static string IsHandledParameterAssignmentTitle {
+            get {
+                return ResourceManager.GetString("IsHandledParameterAssignmentTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Replace double quotes (&quot;) with two single quotes (&apos;&apos;).
         /// </summary>
         internal static string JsonTokenJPathUsesDoubleQuotesCodeAction {

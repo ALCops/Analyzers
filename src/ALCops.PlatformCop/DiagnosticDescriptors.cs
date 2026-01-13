@@ -115,6 +115,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.GuidEmptyStringComparisonDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.GuidEmptyStringComparison));
 
+    public static readonly DiagnosticDescriptor IsHandledParameterAssignment = new(
+        id: DiagnosticIds.IsHandledParameterAssignment,
+        title: PlatformCopAnalyzers.IsHandledParameterAssignmentTitle,
+        messageFormat: PlatformCopAnalyzers.IsHandledParameterAssignmentMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.IsHandledParameterAssignmentDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.IsHandledParameterAssignment));
+
     public static readonly DiagnosticDescriptor JsonTokenJPathUsesDoubleQuotes = new(
         id: DiagnosticIds.JsonTokenJPathUsesDoubleQuotes,
         title: PlatformCopAnalyzers.JsonTokenJPathUsesDoubleQuotesTitle,
