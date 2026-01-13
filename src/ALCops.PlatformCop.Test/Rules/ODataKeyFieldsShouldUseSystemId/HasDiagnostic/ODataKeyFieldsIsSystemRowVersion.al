@@ -7,6 +7,7 @@ page 50100 MyApiPage
     EntitySetName = 'MyEntitySetName';
     SourceTable = MyTable;
     DelayedInsert = true;
+    ODataKeyFields = [|SystemRowVersion|];
 
     layout
     {
@@ -14,9 +15,7 @@ page 50100 MyApiPage
         {
             repeater(Group)
             {
-                field(MyField; Rec.MyField)
-                {
-                }
+                field(SystemRowVersion; Rec.SystemRowVersion) { }
             }
         }
     }

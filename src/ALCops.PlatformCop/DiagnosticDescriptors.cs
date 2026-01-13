@@ -155,6 +155,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.ListObjectsAreOneBasedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ListObjectsAreOneBased));
 
+    public static readonly DiagnosticDescriptor ODataKeyFieldsShouldUseSystemId = new(
+        id: DiagnosticIds.ODataKeyFieldsShouldUseSystemId,
+        title: PlatformCopAnalyzers.ODataKeyFieldsShouldUseSystemIdTitle,
+        messageFormat: PlatformCopAnalyzers.ODataKeyFieldsShouldUseSystemIdMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.ODataKeyFieldsShouldUseSystemIdDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ODataKeyFieldsShouldUseSystemId));
+
     public static readonly DiagnosticDescriptor OperatorAndPlaceholderInFilterExpression = new(
         id: DiagnosticIds.OperatorAndPlaceholderInFilterExpression,
         title: PlatformCopAnalyzers.OperatorAndPlaceholderInFilterExpressionTitle,

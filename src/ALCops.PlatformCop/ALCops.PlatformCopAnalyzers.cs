@@ -535,6 +535,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The ODataKeyFields property defines the unique and stable key for OData exposure. Using SystemId is strongly recommended because it is immutable and guaranteed not to change over the lifetime of a record. Using other fields can lead to unstable OData URLs, broken integrations, and data consistency issues..
+        /// </summary>
+        internal static string ODataKeyFieldsShouldUseSystemIdDescription {
+            get {
+                return ResourceManager.GetString("ODataKeyFieldsShouldUseSystemIdDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The ODataKeyFields property is set to &apos;{0}&apos;, but should use the SystemId field..
+        /// </summary>
+        internal static string ODataKeyFieldsShouldUseSystemIdMessageFormat {
+            get {
+                return ResourceManager.GetString("ODataKeyFieldsShouldUseSystemIdMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The ODataKeyFields property should use the SystemId field..
+        /// </summary>
+        internal static string ODataKeyFieldsShouldUseSystemIdTitle {
+            get {
+                return ResourceManager.GetString("ODataKeyFieldsShouldUseSystemIdTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Wrap filter expression in StrSubstNo().
         /// </summary>
         internal static string OperatorAndPlaceholderInFilterExpressionCodeAction {

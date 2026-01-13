@@ -25,4 +25,5 @@ public static class DiagnosticIds
     public static readonly string PossibleOverflowAssigning = "PC0022";
     public static readonly string IsHandledParameterAssignment = "PC0023";
     public static readonly string ApplicationAreaOnApiPage = "PC0024";
+    public static readonly string ODataKeyFieldsShouldUseSystemId = "PC0025";
 }

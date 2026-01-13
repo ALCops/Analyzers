@@ -906,6 +906,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.NotBlank)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _obsoleteState =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ObsoleteState)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _oDataKeyFields =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ODataKeyFields)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _scope =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Scope)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _showAs =
@@ -942,6 +944,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind LookupPageId => _lookupPageId.Value;
         public static NavCodeAnalysis.PropertyKind NotBlank => _notBlank.Value;
         public static NavCodeAnalysis.PropertyKind ObsoleteState => _obsoleteState.Value;
+        public static NavCodeAnalysis.PropertyKind ODataKeyFields => _oDataKeyFields.Value;
         public static NavCodeAnalysis.PropertyKind Scope => _scope.Value;
         public static NavCodeAnalysis.PropertyKind ShowAs => _showAs.Value;
         public static NavCodeAnalysis.PropertyKind ShowCaption => _showCaption.Value;

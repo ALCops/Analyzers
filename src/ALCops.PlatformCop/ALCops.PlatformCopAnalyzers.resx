@@ -276,6 +276,15 @@
   <data name="ListObjectsAreOneBasedDescription" xml:space="preserve">
     <value>List objects are 1-based, meaning indexing starts from 1 instead of the conventional 0.</value>
   </data>
+  <data name="ODataKeyFieldsShouldUseSystemIdTitle" xml:space="preserve">
+    <value>The ODataKeyFields property should use the SystemId field.</value>
+  </data>
+  <data name="ODataKeyFieldsShouldUseSystemIdMessageFormat" xml:space="preserve">
+    <value>The ODataKeyFields property is set to '{0}', but should use the SystemId field.</value>
+  </data>
+  <data name="ODataKeyFieldsShouldUseSystemIdDescription" xml:space="preserve">
+    <value>The ODataKeyFields property defines the unique and stable key for OData exposure. Using SystemId is strongly recommended because it is immutable and guaranteed not to change over the lifetime of a record. Using other fields can lead to unstable OData URLs, broken integrations, and data consistency issues.</value>
+  </data>
   <data name="OperatorAndPlaceholderInFilterExpressionTitle" xml:space="preserve">
     <value>Avoid unsupported operators with placeholders in SetFilter expressions</value>
   </data>
