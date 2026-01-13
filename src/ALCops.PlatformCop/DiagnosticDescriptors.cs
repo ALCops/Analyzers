@@ -15,6 +15,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.AccessPropertyExplicitlySetDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.AccessPropertyExplicitlySet));
 
+    public static readonly DiagnosticDescriptor ApplicationAreaOnApiPage = new(
+        id: DiagnosticIds.ApplicationAreaOnApiPage,
+        title: PlatformCopAnalyzers.ApplicationAreaOnApiPageTitle,
+        messageFormat: PlatformCopAnalyzers.ApplicationAreaOnApiPageMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.ApplicationAreaOnApiPageDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ApplicationAreaOnApiPage));
+
     public static readonly DiagnosticDescriptor AutoCalcFieldsOnlyOnFlowFields = new(
         id: DiagnosticIds.AutoCalcFieldsOnlyOnFlowFields,
         title: PlatformCopAnalyzers.AutoCalcFieldsOnlyOnFlowFieldsTitle,

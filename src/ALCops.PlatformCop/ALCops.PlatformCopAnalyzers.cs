@@ -85,6 +85,42 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Remove &apos;ApplicationArea&apos; property.
+        /// </summary>
+        internal static string ApplicationAreaOnApiPageCodeAction {
+            get {
+                return ResourceManager.GetString("ApplicationAreaOnApiPageCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The ApplicationArea property has no effect on API pages. API pages are consumed programmatically and do not participate in the user interface personalization model. Keeping this property on API pages adds noise without functional value and should be removed to keep the code clean..
+        /// </summary>
+        internal static string ApplicationAreaOnApiPageDescription {
+            get {
+                return ResourceManager.GetString("ApplicationAreaOnApiPageDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &apos;ApplicationArea&apos; property is not applicable to API pages and should be removed..
+        /// </summary>
+        internal static string ApplicationAreaOnApiPageMessageFormat {
+            get {
+                return ResourceManager.GetString("ApplicationAreaOnApiPageMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &apos;ApplicationArea&apos; property is not applicable to API pages..
+        /// </summary>
+        internal static string ApplicationAreaOnApiPageTitle {
+            get {
+                return ResourceManager.GetString("ApplicationAreaOnApiPageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to AutoCalcFields should only be used for FlowFields or Blob fields.
         /// </summary>
         internal static string AutoCalcFieldsOnlyOnFlowFieldsDescription {

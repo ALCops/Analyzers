@@ -126,6 +126,18 @@
   <data name="AccessPropertyExplicitlySetDescription" xml:space="preserve">
     <value>Every AL object should explicitly specify its Access property to make its intended accessibility clear. Explicitly setting Access prevents accidental exposure or over-restriction of objects and forces conscious design decisions about visibility.</value>
   </data>
+  <data name="ApplicationAreaOnApiPageTitle" xml:space="preserve">
+    <value>The 'ApplicationArea' property is not applicable to API pages.</value>
+  </data>
+  <data name="ApplicationAreaOnApiPageMessageFormat" xml:space="preserve">
+  <value>The 'ApplicationArea' property is not applicable to API pages and should be removed.</value>
+  </data>
+  <data name="ApplicationAreaOnApiPageDescription" xml:space="preserve">
+    <value>The ApplicationArea property has no effect on API pages. API pages are consumed programmatically and do not participate in the user interface personalization model. Keeping this property on API pages adds noise without functional value and should be removed to keep the code clean.</value>
+  </data>
+  <data name="ApplicationAreaOnApiPageCodeAction" xml:space="preserve">
+    <value>ALCops: Remove 'ApplicationArea' property</value>
+  </data>
   <data name="AutoCalcFieldsOnlyOnFlowFieldsTitle" xml:space="preserve">
     <value>Avoids a runtime error from using AutoCalcFields on a field that is not a FlowField or a field of type Blob.</value>
   </data>
