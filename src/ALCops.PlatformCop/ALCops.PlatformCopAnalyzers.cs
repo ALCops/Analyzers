@@ -562,6 +562,51 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Add MaxLength property to Label declaration.
+        /// </summary>
+        internal static string PossibleOverflowAssigningAppendMaxLengthToLabelCodeAction {
+            get {
+                return ResourceManager.GetString("PossibleOverflowAssigningAppendMaxLengthToLabelCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ALCops: Refactor by wrapping with Text.CopyStr(...).
+        /// </summary>
+        internal static string PossibleOverflowAssigningApplyCopyStrCodeAction {
+            get {
+                return ResourceManager.GetString("PossibleOverflowAssigningApplyCopyStrCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reports cases where a Text/Label (or a computed Text such as concatenation) can exceed the maximum length of the target type (e.g., assigning to Code[20], Text[10], or a field with a smaller MaxLength)..
+        /// </summary>
+        internal static string PossibleOverflowAssigningDescription {
+            get {
+                return ResourceManager.GetString("PossibleOverflowAssigningDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Possible overflow assigning &apos;{0}&apos; to &apos;{1}&apos;..
+        /// </summary>
+        internal static string PossibleOverflowAssigningMessageFormat {
+            get {
+                return ResourceManager.GetString("PossibleOverflowAssigningMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Possible overflow when assigning text to a smaller target type..
+        /// </summary>
+        internal static string PossibleOverflowAssigningTitle {
+            get {
+                return ResourceManager.GetString("PossibleOverflowAssigningTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to This rule ensures that calls to the built-in .Get() procedure on Record objects have the correct number and types of arguments matching the primary key (PK) of the record in question..
         /// </summary>
         internal static string RecordGetProcedureArgumentsDescription {

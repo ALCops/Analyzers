@@ -294,6 +294,21 @@
   <data name="RecordGetProcedureArgumentsDescription" xml:space="preserve">
     <value>This rule ensures that calls to the built-in .Get() procedure on Record objects have the correct number and types of arguments matching the primary key (PK) of the record in question.</value>
   </data>
+  <data name="PossibleOverflowAssigningTitle" xml:space="preserve">
+    <value>Possible overflow when assigning text to a smaller target type.</value>
+  </data>
+  <data name="PossibleOverflowAssigningMessageFormat" xml:space="preserve">
+    <value>Possible overflow assigning '{0}' to '{1}'.</value>
+  </data>
+  <data name="PossibleOverflowAssigningDescription" xml:space="preserve">
+    <value>Reports cases where a Text/Label (or a computed Text such as concatenation) can exceed the maximum length of the target type (e.g., assigning to Code[20], Text[10], or a field with a smaller MaxLength).</value>
+  </data>
+  <data name="PossibleOverflowAssigningAppendMaxLengthToLabelCodeAction" xml:space="preserve">
+    <value>ALCops: Add MaxLength property to Label declaration</value>
+  </data>
+  <data name="PossibleOverflowAssigningApplyCopyStrCodeAction" xml:space="preserve">
+    <value>ALCops: Refactor by wrapping with Text.CopyStr(...)</value>
+  </data>
   <data name="SetRangeWithFilterOperatorsTitle" xml:space="preserve">
     <value>Filter operators should not be used in SetRange</value>
   </data>

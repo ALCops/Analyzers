@@ -175,6 +175,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.RecordGetProcedureArgumentsDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.RecordGetProcedureArguments));
 
+    public static readonly DiagnosticDescriptor PossibleOverflowAssigning = new(
+        id: DiagnosticIds.PossibleOverflowAssigning,
+        title: PlatformCopAnalyzers.PossibleOverflowAssigningTitle,
+        messageFormat: PlatformCopAnalyzers.PossibleOverflowAssigningMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.PossibleOverflowAssigningDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PossibleOverflowAssigning));
+
     public static readonly DiagnosticDescriptor SetRangeWithFilterOperators = new(
         id: DiagnosticIds.SetRangeWithFilterOperators,
         title: PlatformCopAnalyzers.SetRangeWithFilterOperatorsTitle,
