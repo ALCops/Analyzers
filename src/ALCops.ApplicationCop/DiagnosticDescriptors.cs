@@ -95,6 +95,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.LabelLockedMustHaveTokSuffixDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.LabelLockedMustHaveTokSuffix));
 
+    public static readonly DiagnosticDescriptor LabelTokenRequiresTokSuffix = new(
+        id: DiagnosticIds.LabelTokenRequiresTokSuffix,
+        title: ApplicationCopAnalyzers.LabelTokenRequiresTokSuffixTitle,
+        messageFormat: ApplicationCopAnalyzers.LabelTokenRequiresTokSuffixMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.LabelTokenRequiresTokSuffixDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.LabelTokenRequiresTokSuffix));
+
     public static readonly DiagnosticDescriptor LabelWithTokSuffixMustBeLocked = new(
         id: DiagnosticIds.LabelWithTokSuffixMustBeLocked,
         title: ApplicationCopAnalyzers.LabelWithTokSuffixMustBeLockedTitle,

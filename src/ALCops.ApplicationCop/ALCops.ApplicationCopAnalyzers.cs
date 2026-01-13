@@ -409,6 +409,33 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to When a label value is identical to its name, the label represents a fixed token rather than translatable text. Such labels must use the &apos;Tok&apos; suffix to make this intent explicit..
+        /// </summary>
+        internal static string LabelTokenRequiresTokSuffixDescription {
+            get {
+                return ResourceManager.GetString("LabelTokenRequiresTokSuffixDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Label &apos;{0}&apos; represents a token but does not use the required &apos;Tok&apos; suffix..
+        /// </summary>
+        internal static string LabelTokenRequiresTokSuffixMessageFormat {
+            get {
+                return ResourceManager.GetString("LabelTokenRequiresTokSuffixMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use the &apos;Tok&apos; suffix for token labels..
+        /// </summary>
+        internal static string LabelTokenRequiresTokSuffixTitle {
+            get {
+                return ResourceManager.GetString("LabelTokenRequiresTokSuffixTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Set Locked property to true.
         /// </summary>
         internal static string LabelWithTokSuffixMustBeLockedCodeAction {

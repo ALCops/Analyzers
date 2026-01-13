@@ -207,6 +207,15 @@
   <data name="LabelLockedMustHaveTokSuffixDescription" xml:space="preserve">
     <value>A label with the Locked property set to true is explicitly marked as non-translatable and represents a hardcoded value. To make this intent explicit and consistent, locked labels must be suffixed with 'Tok'.</value>
   </data>
+  <data name="LabelTokenRequiresTokSuffixTitle" xml:space="preserve">
+  <value>Use the 'Tok' suffix for token labels.</value>
+  </data>
+  <data name="LabelTokenRequiresTokSuffixMessageFormat" xml:space="preserve">
+  <value>Label '{0}' represents a token but does not use the required 'Tok' suffix.</value>
+  </data>
+  <data name="LabelTokenRequiresTokSuffixDescription" xml:space="preserve">
+    <value>When a label value is identical to its name, the label represents a fixed token rather than translatable text. Such labels must use the 'Tok' suffix to make this intent explicit.</value>
+  </data>
   <data name="LabelWithTokSuffixMustBeLockedTitle" xml:space="preserve">
     <value>Labels suffixed with Tok must be locked.</value>
   </data>
