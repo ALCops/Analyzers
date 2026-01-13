@@ -2,6 +2,9 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 
 namespace ALCops.Common.Extensions;
 
+// Acts as a lightweight adapter between ALCops analyzers and the AppSourceCop configuration
+// This indirection avoids an ALCops analyzers to take a direct dependency on
+// Microsoft.Dynamics.Nav.Analyzers.Common, while still exposing the required configuration
 public static class AppSourceCopConfigurationProvider
 {
     public static AppSourceCopConfiguration? GetAppSourceCopConfiguration(Compilation compilation)
