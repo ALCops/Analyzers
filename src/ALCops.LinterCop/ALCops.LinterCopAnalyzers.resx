@@ -117,6 +117,15 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ApiPageCanonicalFieldNameGuideTitle" xml:space="preserve">
+    <value>Give field more describing name.</value>
+  </data>
+  <data name="ApiPageCanonicalFieldNameGuideMessageFormat" xml:space="preserve">
+    <value>Consider naming field with a more descriptive name: '{0}'.</value>
+  </data>
+  <data name="ApiPageCanonicalFieldNameGuideDescription" xml:space="preserve">
+    <value>It is common for API pages to give certain fields a more describing name.</value>
+  </data>
   <data name="ApplicationAreaRedundancyTitle" xml:space="preserve">
     <value>Redundant ApplicationArea on page</value>
   </data>

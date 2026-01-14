@@ -58,6 +58,33 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to It is common for API pages to give certain fields a more describing name..
+        /// </summary>
+        internal static string ApiPageCanonicalFieldNameGuideDescription {
+            get {
+                return ResourceManager.GetString("ApiPageCanonicalFieldNameGuideDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Consider naming field with a more descriptive name: &apos;{0}&apos;..
+        /// </summary>
+        internal static string ApiPageCanonicalFieldNameGuideMessageFormat {
+            get {
+                return ResourceManager.GetString("ApiPageCanonicalFieldNameGuideMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Give field more describing name..
+        /// </summary>
+        internal static string ApiPageCanonicalFieldNameGuideTitle {
+            get {
+                return ResourceManager.GetString("ApiPageCanonicalFieldNameGuideTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Remove redundant ApplicationArea.
         /// </summary>
         internal static string ApplicationAreaRedundancyCodeAction {

@@ -5,6 +5,16 @@ namespace ALCops.LinterCop;
 
 public static class DiagnosticDescriptors
 {
+    public static readonly DiagnosticDescriptor ApiPageCanonicalFieldNameGuide = new(
+        id: DiagnosticIds.ApiPageCanonicalFieldNameGuide,
+        title: LinterCopAnalyzers.ApiPageCanonicalFieldNameGuideMessageFormat,
+        messageFormat: LinterCopAnalyzers.ApiPageCanonicalFieldNameGuideMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.ApiPageCanonicalFieldNameGuideDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ApiPageCanonicalFieldNameGuide));
+
     public static readonly DiagnosticDescriptor ApplicationAreaRedundancy = new(
         id: DiagnosticIds.ApplicationAreaRedundancy,
         title: LinterCopAnalyzers.ApplicationAreaRedundancyMessageFormat,
