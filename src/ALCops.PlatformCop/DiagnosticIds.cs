@@ -26,4 +26,5 @@ public static class DiagnosticIds
     public static readonly string IsHandledParameterAssignment = "PC0023";
     public static readonly string ApplicationAreaOnApiPage = "PC0024";
     public static readonly string ODataKeyFieldsShouldUseSystemId = "PC0025";
+    public static readonly string MandatoryFieldMissingOnApiPage = "PC0026";
 }

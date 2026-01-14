@@ -155,6 +155,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.ListObjectsAreOneBasedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ListObjectsAreOneBased));
 
+    public static readonly DiagnosticDescriptor MandatoryFieldMissingOnApiPage = new(
+         id: DiagnosticIds.MandatoryFieldMissingOnApiPage,
+         title: PlatformCopAnalyzers.MandatoryFieldMissingOnApiPageTitle,
+         messageFormat: PlatformCopAnalyzers.MandatoryFieldMissingOnApiPageMessageFormat,
+         category: Category.Design,
+         defaultSeverity: DiagnosticSeverity.Warning,
+         isEnabledByDefault: true,
+         description: PlatformCopAnalyzers.MandatoryFieldMissingOnApiPageDescription,
+         helpLinkUri: GetHelpUri(DiagnosticIds.MandatoryFieldMissingOnApiPage));
+
     public static readonly DiagnosticDescriptor ODataKeyFieldsShouldUseSystemId = new(
         id: DiagnosticIds.ODataKeyFieldsShouldUseSystemId,
         title: PlatformCopAnalyzers.ODataKeyFieldsShouldUseSystemIdTitle,

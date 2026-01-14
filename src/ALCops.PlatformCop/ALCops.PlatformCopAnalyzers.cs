@@ -535,6 +535,42 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Add missing fields.
+        /// </summary>
+        internal static string MandatoryFieldMissingOnApiPageCodeAction {
+            get {
+                return ResourceManager.GetString("MandatoryFieldMissingOnApiPageCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to API pages must expose a minimal set of mandatory system fields to ensure correct identification, change tracking, and webhook support..
+        /// </summary>
+        internal static string MandatoryFieldMissingOnApiPageDescription {
+            get {
+                return ResourceManager.GetString("MandatoryFieldMissingOnApiPageDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &quot;Field &apos;Rec.{0}&apos; exposed with the name &apos;{1}&apos; should always be included on API Pages.&quot;.
+        /// </summary>
+        internal static string MandatoryFieldMissingOnApiPageMessageFormat {
+            get {
+                return ResourceManager.GetString("MandatoryFieldMissingOnApiPageMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Mandatory fields must be exposed on API pages..
+        /// </summary>
+        internal static string MandatoryFieldMissingOnApiPageTitle {
+            get {
+                return ResourceManager.GetString("MandatoryFieldMissingOnApiPageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The ODataKeyFields property defines the unique and stable key for OData exposure. Using SystemId is strongly recommended because it is immutable and guaranteed not to change over the lifetime of a record. Using other fields can lead to unstable OData URLs, broken integrations, and data consistency issues..
         /// </summary>
         internal static string ODataKeyFieldsShouldUseSystemIdDescription {

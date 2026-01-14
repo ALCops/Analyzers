@@ -276,6 +276,18 @@
   <data name="ListObjectsAreOneBasedDescription" xml:space="preserve">
     <value>List objects are 1-based, meaning indexing starts from 1 instead of the conventional 0.</value>
   </data>
+  <data name="MandatoryFieldMissingOnApiPageTitle" xml:space="preserve">
+    <value>Mandatory fields must be exposed on API pages.</value>
+  </data>
+  <data name="MandatoryFieldMissingOnApiPageMessageFormat" xml:space="preserve">
+    <value>"Field 'Rec.{0}' exposed with the name '{1}' should always be included on API Pages."</value>
+  </data>
+  <data name="MandatoryFieldMissingOnApiPageDescription" xml:space="preserve">
+    <value>API pages must expose a minimal set of mandatory system fields to ensure correct identification, change tracking, and webhook support.</value>
+  </data>
+  <data name="MandatoryFieldMissingOnApiPageCodeAction" xml:space="preserve">
+    <value>ALCops: Add missing fields</value>
+  </data>
   <data name="ODataKeyFieldsShouldUseSystemIdTitle" xml:space="preserve">
     <value>The ODataKeyFields property should use the SystemId field.</value>
   </data>
