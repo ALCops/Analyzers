@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
@@ -108,7 +109,7 @@ public sealed class MandatoryFieldMissingOnApiPageCodeFix : CodeFixProvider
             referenceField?
                 .GetLastToken()
                 .TrailingTrivia
-                .FirstOrDefault(t => t.IsKind(SyntaxKind.EndOfLineTrivia));
+                .FirstOrDefault(t => t.IsKind(EnumProvider.SyntaxKind.EndOfLineTrivia));
 
         var newControls = new List<ControlBaseSyntax>(missing.Count);
         foreach (var (RecField, ControlName) in missing)
@@ -140,16 +141,16 @@ public sealed class MandatoryFieldMissingOnApiPageCodeFix : CodeFixProvider
             : SyntaxFactory.TriviaList(endOfLineTrivia.Value);
 
         return SyntaxFactory.PageField(
-            SyntaxFactory.Token(SyntaxKind.FieldKeyword),
-            SyntaxFactory.Token(SyntaxKind.OpenParenToken),
+            SyntaxFactory.Token(EnumProvider.SyntaxKind.FieldKeyword),
+            SyntaxFactory.Token(EnumProvider.SyntaxKind.OpenParenToken),
             SyntaxFactory.IdentifierName(controlName),
-            SyntaxFactory.Token(SyntaxKind.SemicolonToken),
+            SyntaxFactory.Token(EnumProvider.SyntaxKind.SemicolonToken),
             CreateRecFieldExpression(fieldName),
-            SyntaxFactory.Token(empty, SyntaxKind.CloseParenToken, space),
-            SyntaxFactory.Token(empty, SyntaxKind.OpenBraceToken, space),
+            SyntaxFactory.Token(empty, EnumProvider.SyntaxKind.CloseParenToken, space),
+            SyntaxFactory.Token(empty, EnumProvider.SyntaxKind.OpenBraceToken, space),
             SyntaxFactory.PropertyList(),
             default,
-            SyntaxFactory.Token(empty, SyntaxKind.CloseBraceToken, eol));
+            SyntaxFactory.Token(empty, EnumProvider.SyntaxKind.CloseBraceToken, eol));
     }
 
     private static QualifiedNameSyntax CreateRecFieldExpression(string fieldName)
