@@ -35,6 +35,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.ConfirmImplementConfirmManagementDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ConfirmImplementConfirmManagement));
 
+    public static readonly DiagnosticDescriptor DuplicateToolTipBetweenPageAndTable = new(
+        id: DiagnosticIds.DuplicateToolTipBetweenPageAndTable,
+        title: ApplicationCopAnalyzers.DuplicateToolTipBetweenPageAndTableTitle,
+        messageFormat: ApplicationCopAnalyzers.DuplicateToolTipBetweenPageAndTableMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.DuplicateToolTipBetweenPageAndTableDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.DuplicateToolTipBetweenPageAndTable));
+
     public static readonly DiagnosticDescriptor EmptyCaptionLocked = new(
         id: DiagnosticIds.EmptyCaptionLocked,
         title: ApplicationCopAnalyzers.EmptyCaptionLockedTitle,
@@ -224,6 +234,16 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: false,
         description: ApplicationCopAnalyzers.TableDataPerCompanyDeclarationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TableDataPerCompanyDeclaration));
+
+    public static readonly DiagnosticDescriptor TableFieldToolTipShouldBeDefined = new(
+        id: DiagnosticIds.TableFieldToolTipShouldBeDefined,
+        title: ApplicationCopAnalyzers.TableFieldToolTipShouldBeDefinedTitle,
+        messageFormat: ApplicationCopAnalyzers.TableFieldToolTipShouldBeDefinedMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.TableFieldToolTipShouldBeDefinedDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TableFieldToolTipShouldBeDefined));
 
     public static readonly DiagnosticDescriptor ToolTipDoNotUseLineBreaks = new(
          id: DiagnosticIds.ToolTipDoNotUseLineBreaks,

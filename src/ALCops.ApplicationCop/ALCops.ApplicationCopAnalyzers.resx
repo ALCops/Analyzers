@@ -147,6 +147,15 @@
   <data name="ConfirmImplementConfirmManagementDescriptionCodeAction" xml:space="preserve">
     <value>ALCops: Refactor to use "Confirm Management" codeunit</value>
   </data>
+  <data name="DuplicateToolTipBetweenPageAndTableTitle" xml:space="preserve">
+    <value>Duplicate ToolTip between page and table field.</value>
+  </data>
+  <data name="DuplicateToolTipBetweenPageAndTableMessageFormat" xml:space="preserve">
+    <value>The ToolTip property of page field '{0}'' and it's table field '{1}'' have the same value and therefore the page field's ToolTip can be removed.</value>
+  </data>
+  <data name="DuplicateToolTipBetweenPageAndTableDescription" xml:space="preserve">
+    <value>Informs the user that it is better to only apply the ToolTip property on the table field when the page fields ToolTip is the same.</value>
+  </data>
   <data name="EmptyCaptionLockedTitle" xml:space="preserve">
     <value>Empty captions should be locked</value>
   </data>
@@ -350,6 +359,15 @@
   </data>
   <data name="TableDataPerCompanyDeclarationDescription" xml:space="preserve">
     <value>In projects where company data isolation matters, table objects must explicitly define the DataPerCompany property. Relying on implicit defaults makes the data scope unclear and can lead to incorrect assumptions about whether data is shared across companies or stored per company.</value>
+  </data>
+  <data name="TableFieldToolTipShouldBeDefinedTitle" xml:space="preserve">
+  <value>Table field must define a ToolTip.</value>
+  </data>
+  <data name="TableFieldToolTipShouldBeDefinedMessageFormat" xml:space="preserve">
+    <value>A value for the ToolTip property is missing for the table field '{0}' of page field '{1}'. Consider adding a ToolTip for table field '{0}' and/or removing the ToolTip from page field '{1}'.</value>
+  </data>
+  <data name="TableFieldToolTipShouldBeDefinedDescription" xml:space="preserve">
+    <value>Informs the user that it is better to apply the ToolTip property on the table field instead of the page field.</value>
   </data>
   <data name="ToolTipDoNotUseLineBreaksTitle" xml:space="preserve">
     <value>Do not use line breaks in ToolTip</value>

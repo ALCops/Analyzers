@@ -24,6 +24,14 @@ public static class SymbolInterfaceExtensions
         return declaredType as IPageTypeSymbol;
     }
 
+    public static IEnumerable<IControlSymbol>? GetFlattenedControls(this ISymbol? symbol) =>
+        symbol switch
+        {
+            IPageBaseTypeSymbol page => page.FlattenedControls,
+            IPageExtensionBaseTypeSymbol pageExtension => pageExtension.AddedControlsFlattened,
+            _ => null
+        };
+
     public static string GetFullyQualifiedObjectName(this ISymbol symbol, bool quoteIdentifierIfNeeded = false)
     {
         var symbolName = quoteIdentifierIfNeeded

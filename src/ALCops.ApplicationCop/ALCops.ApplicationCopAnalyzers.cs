@@ -148,6 +148,33 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Informs the user that it is better to only apply the ToolTip property on the table field when the page fields ToolTip is the same..
+        /// </summary>
+        internal static string DuplicateToolTipBetweenPageAndTableDescription {
+            get {
+                return ResourceManager.GetString("DuplicateToolTipBetweenPageAndTableDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The ToolTip property of page field &apos;{0}&apos;&apos; and it&apos;s table field &apos;{1}&apos;&apos; have the same value and therefore the page field&apos;s ToolTip can be removed..
+        /// </summary>
+        internal static string DuplicateToolTipBetweenPageAndTableMessageFormat {
+            get {
+                return ResourceManager.GetString("DuplicateToolTipBetweenPageAndTableMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Duplicate ToolTip between page and table field..
+        /// </summary>
+        internal static string DuplicateToolTipBetweenPageAndTableTitle {
+            get {
+                return ResourceManager.GetString("DuplicateToolTipBetweenPageAndTableTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ALCops: Set Locked property to true.
         /// </summary>
         internal static string EmptyCaptionLockedCodeAction {
@@ -756,6 +783,33 @@ namespace ALCops.ApplicationCop {
         internal static string TableDataPerCompanyDeclarationTitle {
             get {
                 return ResourceManager.GetString("TableDataPerCompanyDeclarationTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Informs the user that it is better to apply the ToolTip property on the table field instead of the page field..
+        /// </summary>
+        internal static string TableFieldToolTipShouldBeDefinedDescription {
+            get {
+                return ResourceManager.GetString("TableFieldToolTipShouldBeDefinedDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A value for the ToolTip property is missing for the table field &apos;{0}&apos; of page field &apos;{1}&apos;. Consider adding a ToolTip for table field &apos;{0}&apos; and/or removing the ToolTip from page field &apos;{1}&apos;..
+        /// </summary>
+        internal static string TableFieldToolTipShouldBeDefinedMessageFormat {
+            get {
+                return ResourceManager.GetString("TableFieldToolTipShouldBeDefinedMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Table field must define a ToolTip..
+        /// </summary>
+        internal static string TableFieldToolTipShouldBeDefinedTitle {
+            get {
+                return ResourceManager.GetString("TableFieldToolTipShouldBeDefinedTitle", resourceCulture);
             }
         }
         

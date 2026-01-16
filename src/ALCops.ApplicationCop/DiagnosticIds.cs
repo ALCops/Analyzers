@@ -29,4 +29,6 @@ public static class DiagnosticIds
     public static readonly string LineSeparatorShouldUseTypeHelper = "AC0025";
     public static readonly string AllowInCustomizationsForOmittedFields = "AC0026";
     public static readonly string LabelTokenRequiresTokSuffix = "AC0027";
+    public static readonly string TableFieldToolTipShouldBeDefined = "AC0028";
+    public static readonly string DuplicateToolTipBetweenPageAndTable = "AC0029";
 }

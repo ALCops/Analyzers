@@ -1,0 +1,19 @@
+﻿page 50100 MyPage
+{
+    SourceTable = MyTable;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(GroupName)
+            {
+                field(MyField; Rec.MyField)
+                {
+                    [|ToolTip = 'MyToolTip';|]
+                }
+            }
+        }
+    }
+}
+table 50100 MyTable { fields { field(1; MyField; Code[20]) { } } }
