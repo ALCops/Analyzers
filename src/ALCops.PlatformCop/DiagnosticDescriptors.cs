@@ -235,6 +235,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.SetRangeWithFilterOperatorsDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.SetRangeWithFilterOperators));
 
+    public static readonly DiagnosticDescriptor TemporaryRecordTriggerInvocation = new(
+         id: DiagnosticIds.TemporaryRecordTriggerInvocation,
+         title: PlatformCopAnalyzers.TemporaryRecordTriggerInvocationTitle,
+         messageFormat: PlatformCopAnalyzers.TemporaryRecordTriggerInvocationMessageFormat,
+         category: Category.Design,
+         defaultSeverity: DiagnosticSeverity.Warning,
+         isEnabledByDefault: true,
+         description: PlatformCopAnalyzers.TemporaryRecordTriggerInvocationDescription,
+         helpLinkUri: GetHelpUri(DiagnosticIds.TemporaryRecordTriggerInvocation));
+
     public static readonly DiagnosticDescriptor TransferFieldsNameMismatch = new(
         id: DiagnosticIds.TransferFieldsNameMismatch,
         title: PlatformCopAnalyzers.TransferFieldsNameMismatchTitle,

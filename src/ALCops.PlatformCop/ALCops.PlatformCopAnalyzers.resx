@@ -363,6 +363,15 @@
   <data name="SetRangeWithFilterOperatorsCodeAction" xml:space="preserve">
     <value>ALCops: Replace SetRange with SetFilter</value>
   </data>
+  <data name="TemporaryRecordTriggerInvocationTitle" xml:space="preserve">
+    <value>Avoid triggering table logic on temporary records</value>
+  </data>
+  <data name="TemporaryRecordTriggerInvocationMessageFormat" xml:space="preserve">
+    <value>Do not execute table triggers or validation methods on temporary record variables.</value>
+  </data>
+  <data name="TemporaryRecordTriggerInvocationDescription" xml:space="preserve">
+    <value>Executing table triggers (Insert, Modify, Delete, DeleteAll, ModifyAll) or calling Validate on temporary record variables causes the temporary scope to be lost. This can result in unintended database changes because the record is no longer treated as temporary. Only execute triggers when the table itself is defined as temporary. </value>
+  </data>
   <data name="TransferFieldsNameMismatchTitle" xml:space="preserve">
     <value>Inconsistent field names across TransferFields</value>
   </data>

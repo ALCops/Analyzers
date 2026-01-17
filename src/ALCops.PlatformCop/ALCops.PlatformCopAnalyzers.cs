@@ -796,6 +796,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Executing table triggers (Insert, Modify, Delete, DeleteAll, ModifyAll) or calling Validate on temporary record variables causes the temporary scope to be lost. This can result in unintended database changes because the record is no longer treated as temporary. Only execute triggers when the table itself is defined as temporary. .
+        /// </summary>
+        internal static string TemporaryRecordTriggerInvocationDescription {
+            get {
+                return ResourceManager.GetString("TemporaryRecordTriggerInvocationDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Do not execute table triggers or validation methods on temporary record variables..
+        /// </summary>
+        internal static string TemporaryRecordTriggerInvocationMessageFormat {
+            get {
+                return ResourceManager.GetString("TemporaryRecordTriggerInvocationMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Avoid triggering table logic on temporary records.
+        /// </summary>
+        internal static string TemporaryRecordTriggerInvocationTitle {
+            get {
+                return ResourceManager.GetString("TemporaryRecordTriggerInvocationTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The same field ID is used with different field names in tables coupled via TransferFields. While this does not cause a runtime error, it increases the risk of accidental coupling of fields with different intent..
         /// </summary>
         internal static string TransferFieldsNameMismatchDescription {
