@@ -23,6 +23,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("PageWithToolTip")]
         public async Task HasDiagnostic(string testCase)
         {
+            RequireMinimumVersion(
+                "14.0",
+                "No support for ToolTip property on table objects before AL version 14");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -34,6 +38,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("PageWithToolTip")]
         public async Task NoDiagnostic(string testCase)
         {
+            RequireMinimumVersion(
+                "14.0",
+                "No support for ToolTip property on table objects before AL version 14");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
