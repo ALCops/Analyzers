@@ -512,7 +512,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     private static string GetToDisplayStringSafe(IFieldSymbol fieldSymbol)
     {
 #if NETSTANDARD2_1
-        return fieldSymbol.OriginalDefinition.GetTypeSymbol().ToDisplayStringWithReflection() ?? EnumProvider.EnumProvider.NavTypeKind.None.ToString();
+        return fieldSymbol.OriginalDefinition.GetTypeSymbol().ToDisplayStringWithReflection() ?? EnumProvider.NavTypeKind.None.ToString();
 #else
         return fieldSymbol.Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString();
 #endif
