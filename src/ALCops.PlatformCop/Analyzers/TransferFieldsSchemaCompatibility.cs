@@ -4,6 +4,7 @@ using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 #if NETSTANDARD2_1
@@ -111,7 +112,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (sourceById.Count == 0 || targetById.Count == 0)
             return;
 
-        var hasTableRelationEntry = TryFindTableRelation(sourceTable) is not null;
+        var hasTableRelationEntry = HasTableRelation(sourceTable);
 
         var hasTypeMismatch = false;
         var hasNameMismatch = false;
@@ -207,24 +208,28 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (tableExtension.Target is not ITableTypeSymbol sourceTable)
             return;
 
-        if (TryFindTableRelation(sourceTable) is not { } tableRelation)
+        var relations = TryFindBySource(sourceTable);
+        if (!relations.Any())
             return;
 
-        var targetObjectName =
-            tableRelation.Table.Name == sourceTable.Name ? tableRelation.RelatedTable :
-            tableRelation.RelatedTable.Name == sourceTable.Name ? tableRelation.Table :
-            throw new InvalidOperationException("Source table not part of relation.");
+        foreach (var relation in relations)
+        {
+            AnalyzeTableExtensionForRelation(ctx, relation);
+        }
+    }
 
+    private static void AnalyzeTableExtensionForRelation(SymbolAnalysisContext ctx, TableRelation relation)
+    {
         var tableExtensions = GetCachedTableExtensions(ctx.Compilation);
 
         var sourceTableExtensions =
             tableExtensions
-                .Where(te => te.Target is not null && te.Target.Name.Equals(sourceTable.Name))
+                .Where(te => te.Target is not null && te.Target.Name.Equals(relation.Source.Name))
                 .SelectMany(x => x.AddedFields);
 
         var targetTableExtensions =
             tableExtensions
-                .Where(te => te.Target is not null && te.Target.Name.Equals(targetObjectName.Name))
+                .Where(te => te.Target is not null && te.Target.Name.Equals(relation.Target.Name))
                 .SelectMany(x => x.AddedFields);
 
         if (!sourceTableExtensions.Any() || !targetTableExtensions.Any())
@@ -232,9 +237,6 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
 
         var sourceById = BuildFieldMapById(sourceTableExtensions);
         var targetById = BuildFieldMapById(targetTableExtensions);
-
-        if (sourceById.Count == 0 || targetById.Count == 0)
-            return;
 
         foreach (var kvp in sourceById)
         {
@@ -253,8 +255,8 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 if (IsFieldSuppressed(diagnosticId, sourceField) || IsFieldSuppressed(diagnosticId, targetField))
                     continue;
 
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, sourceField, sourceField, targetField, id, sourceTable.GetFullyQualifiedObjectName(true), targetObjectName.ToString());
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, targetField, sourceField, targetField, id, targetObjectName.ToString(), sourceTable.GetFullyQualifiedObjectName(true));
+                ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, sourceField, sourceField, targetField, id, relation.Source.Name, relation.Target.Name);
+                ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, targetField, sourceField, targetField, id, relation.Target.Name, relation.Source.Name);
             }
 
             if (nameMismatch)
@@ -263,8 +265,8 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 if (IsFieldSuppressed(diagnosticId, sourceField) || IsFieldSuppressed(diagnosticId, targetField))
                     continue;
 
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, sourceField, sourceField, targetField, id, sourceTable.GetFullyQualifiedObjectName(true), targetObjectName.ToString());
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, targetField, sourceField, targetField, id, targetObjectName.ToString(), sourceTable.GetFullyQualifiedObjectName(true));
+                ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, sourceField, sourceField, targetField, id, relation.Source.Name, relation.Target.Name);
+                ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, targetField, sourceField, targetField, id, relation.Target.Name, relation.Source.Name);
             }
         }
     }
@@ -349,33 +351,35 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         return map;
     }
 
-    private static bool AreFieldTypesEquivalent(IFieldSymbol left, IFieldSymbol right)
+    private static bool AreFieldTypesEquivalent(IFieldSymbol source, IFieldSymbol target)
     {
 #if NETSTANDARD2_1
-        var lt = left.OriginalDefinition.GetTypeSymbol();
-        var rt = right.OriginalDefinition.GetTypeSymbol();
+        var sourceType = source.OriginalDefinition.GetTypeSymbol();
+        var targetType = target.OriginalDefinition.GetTypeSymbol();
 #else
-        var lt = left.Type;
-        var rt = right.Type;
+        var sourceType = source.Type;
+        var targetType = target.Type;
 #endif
-        if (lt is null || rt is null)
+        if (sourceType is null || targetType is null)
             return false;
 
-        if (lt is IApplicationObjectTypeSymbol && rt is IApplicationObjectTypeSymbol)
-            return SameApplicationObject(lt.OriginalDefinition, rt.OriginalDefinition);
+        if (sourceType is IApplicationObjectTypeSymbol && targetType is IApplicationObjectTypeSymbol)
+            return SameApplicationObject(sourceType.OriginalDefinition, targetType.OriginalDefinition);
 
-#if NETSTANDARD2_1
-        return string.Equals(lt.ToDisplayStringWithReflection(), rt.ToDisplayStringWithReflection(), StringComparison.OrdinalIgnoreCase);
-#else
-        return string.Equals(lt.ToDisplayString(), rt.ToDisplayString(), StringComparison.OrdinalIgnoreCase);
-#endif
+        if (sourceType.HasLength && targetType.HasLength)
+        {
+            if (sourceType.Length > targetType.Length)
+                return false;
+        }
+
+        return sourceType.GetNavTypeKindSafe() == targetType.GetNavTypeKindSafe();
     }
 
-    private static bool AreFieldNamesEquivalent(IFieldSymbol left, IFieldSymbol right)
+    private static bool AreFieldNamesEquivalent(IFieldSymbol source, IFieldSymbol target)
     {
-        var leftName = (left.Name ?? string.Empty).UnquoteIdentifier();
-        var rightName = (right.Name ?? string.Empty).UnquoteIdentifier();
-        return string.Equals(leftName, rightName, StringComparison.OrdinalIgnoreCase);
+        var sourceName = (source.Name ?? string.Empty).UnquoteIdentifier();
+        var targetName = (target.Name ?? string.Empty).UnquoteIdentifier();
+        return string.Equals(sourceName, targetName, StringComparison.OrdinalIgnoreCase);
     }
 
     private static void ReportField(
@@ -487,20 +491,20 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         return GetCachedCompilationPaths(compilation).Contains(path);
     }
 
-    private static bool SameApplicationObject(ISymbol? left, ISymbol? right)
+    private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
     {
-        if (left is null || right is null)
+        if (source is null || target is null)
             return false;
 
-        left = left.OriginalDefinition;
-        right = right.OriginalDefinition;
+        source = source.OriginalDefinition;
+        target = target.OriginalDefinition;
 
-        if (ReferenceEquals(left, right))
+        if (ReferenceEquals(source, target))
             return true;
 
-        if (left is ISymbolWithId lId && right is ISymbolWithId rId)
-            return lId.Id == rId.Id && left.Kind == right.Kind;
+        if (source is ISymbolWithId lId && target is ISymbolWithId rId)
+            return lId.Id == rId.Id && source.Kind == target.Kind;
 
-        return left.Equals(right);
+        return source.Equals(target);
     }
 }

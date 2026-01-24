@@ -385,7 +385,7 @@
     <value>Incompatible field types across TransferFields</value>
   </data>
   <data name="TransferFieldsTypeMismatchMessageFormat" xml:space="preserve">
-    <value>Field with ID {0} has incompatible field types ({3} ≠ {4}) between TransferFields-coupled tables {1} and {2}.</value>
+    <value>Field with ID {0} has incompatible field types ({3} → {4}) between TransferFields-coupled tables {1} and {2}.</value>
   </data>
   <data name="TransferFieldsTypeMismatchDescription" xml:space="preserve">
     <value>Tables coupled via TransferFields must define matching field types for the same field ID. A type mismatch will result in a runtime error when TransferFields is executed, as incompatible field types cannot be safely copied.</value>

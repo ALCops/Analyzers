@@ -859,7 +859,7 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Field with ID {0} has incompatible field types ({3} ≠ {4}) between TransferFields-coupled tables {1} and {2}..
+        ///   Looks up a localized string similar to Field with ID {0} has incompatible field types ({3} → {4}) between TransferFields-coupled tables {1} and {2}..
         /// </summary>
         internal static string TransferFieldsTypeMismatchMessageFormat {
             get {
