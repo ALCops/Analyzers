@@ -101,7 +101,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
 
         var tableExtensions = GetCachedTableExtensions(ctx.Compilation);
         var sourceFields = BuildEffectiveFields(sourceTable, tableExtensions);
-        var targetFields = BuildEffectiveFields(targetTable, tableExtensions);
+        var targetFields = BuildEffectiveFields(targetTable, tableExtensions, IsInitPrimaryKeyFieldsEnabled(invocation));
 
         if (sourceFields.IsEmpty || targetFields.IsEmpty)
             return;
@@ -196,7 +196,9 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 sourceDisplay,
                 targetDisplay,
                 GetToDisplayStringSafe(sourceById[minTypeMismatchId]),
-                GetToDisplayStringSafe(targetById[minTypeMismatchId])));
+                GetToDisplayStringSafe(targetById[minTypeMismatchId]),
+                sourceById[minTypeMismatchId].Name.QuoteIdentifierIfNeededWithReflection(),
+                targetById[minTypeMismatchId].Name.QuoteIdentifierIfNeededWithReflection()));
         }
     }
 
@@ -289,6 +291,15 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         return false;
     }
 
+    private static bool IsInitPrimaryKeyFieldsEnabled(IInvocationExpression invocation)
+    {
+        if (invocation.Arguments.Length < 2)
+            return true; // Default is true
+
+        var constant = invocation.Arguments[1].Value.ConstantValue;
+        return constant.HasValue && constant.Value is true;
+    }
+
     private static bool IsSkipFieldsNotMatchingTypeEnabled(IInvocationExpression invocation)
     {
         if (invocation.Arguments.Length < 3)
@@ -313,39 +324,51 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
 
     private static ImmutableArray<IFieldSymbol> BuildEffectiveFields(
         ITableTypeSymbol table,
-        ImmutableArray<ITableExtensionTypeSymbol> allTableExtensions)
+        ImmutableArray<ITableExtensionTypeSymbol> allTableExtensions,
+        bool includePrimaryKeyFields = true)
     {
-        var baseFields = table.Fields;
+        var pkFields =
+            !includePrimaryKeyFields && table.PrimaryKey is not null
+                ? table.PrimaryKey.Fields
+                : default;
+
+        var baseBuilder = ImmutableArray.CreateBuilder<IFieldSymbol>(table.Fields.Length);
+
+        foreach (var field in table.Fields)
+        {
+            var id = field.Id;
+
+            if (id == 0 || id >= 2_000_000_000)
+                continue;
+
+            if (!pkFields.IsDefaultOrEmpty &&
+                pkFields.Any(pk => pk.Id == id))
+                continue;
+
+            baseBuilder.Add(field);
+        }
 
         var extensionFields =
             allTableExtensions
                 .Where(ext => SameApplicationObject(ext.Target, table))
-                .SelectMany(ext => ext.AddedFields)
-                .ToImmutableArray();
+                .SelectMany(ext => ext.AddedFields);
 
-        if (extensionFields.IsEmpty)
-            return baseFields;
-
-        return baseFields.AddRange(extensionFields);
+        return baseBuilder.ToImmutable();
     }
 
     private static Dictionary<int, IFieldSymbol> BuildFieldMapById(IEnumerable<IFieldSymbol> fields)
     {
-        var map = new Dictionary<int, IFieldSymbol>();
+        var map = fields is ICollection<IFieldSymbol> collection
+            ? new Dictionary<int, IFieldSymbol>(collection.Count)
+            : new Dictionary<int, IFieldSymbol>();
 
         foreach (var field in fields)
         {
-            if (field is ISymbolWithId withId)
-            {
-                var id = (int)withId.Id;
-                if (id >= 2000000000)
-                    continue;
+            if (field.FieldClass != EnumProvider.FieldClassKind.Normal)
+                continue;
 
-                if (field.FieldClass != EnumProvider.FieldClassKind.Normal)
-                    continue;
-
-                map[id] = field;
-            }
+            var id = field.Id;
+            map[id] = field;
         }
 
         return map;
@@ -384,6 +407,13 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         {
             if (sourceType.Length > targetType.Length)
                 return false;
+        }
+
+        // Explicitly allow Code → Text assignments
+        if (sourceKind == EnumProvider.NavTypeKind.Code &&
+            targetKind == EnumProvider.NavTypeKind.Text)
+        {
+            return true;
         }
 
         return sourceKind == targetKind;
@@ -457,7 +487,9 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 sourceDisplay,
                 targetDisplay,
                 GetToDisplayStringSafe(sourceField),
-                GetToDisplayStringSafe(targetField)));
+                GetToDisplayStringSafe(targetField),
+                sourceField.Name.QuoteIdentifierIfNeededWithReflection(),
+                targetField.Name.QuoteIdentifierIfNeededWithReflection()));
             return;
         }
     }
@@ -504,7 +536,9 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 sourceDisplay,
                 targetDisplay,
                 GetToDisplayStringSafe(sourceField),
-                GetToDisplayStringSafe(targetField)));
+                GetToDisplayStringSafe(targetField),
+                sourceField.Name.QuoteIdentifierIfNeededWithReflection(),
+                targetField.Name.QuoteIdentifierIfNeededWithReflection()));
             return;
         }
     }

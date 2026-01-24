@@ -260,7 +260,7 @@ public static class DiagnosticDescriptors
         title: PlatformCopAnalyzers.TransferFieldsTypeMismatchTitle,
         messageFormat: PlatformCopAnalyzers.TransferFieldsTypeMismatchMessageFormat,
         category: Category.Design,
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: PlatformCopAnalyzers.TransferFieldsTypeMismatchDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TransferFieldsTypeMismatch));
