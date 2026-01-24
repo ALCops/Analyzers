@@ -416,7 +416,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
             return true;
         }
 
-        return sourceKind == targetKind;
+        return sourceKind.Equals(targetKind);
     }
 
     private static bool IsNumeric(NavTypeKind kind)
