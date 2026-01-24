@@ -96,10 +96,10 @@ internal static class TransferFieldsRelations
         public Version? MinVersion { get; }
         public Version? MaxVersion { get; }
 
-        public TableRelation(ObjectName table, ObjectName relatedTable, Version? minVersion, Version? maxVersion)
+        public TableRelation(ObjectName source, ObjectName target, Version? minVersion, Version? maxVersion)
         {
-            Table = table;
-            RelatedTable = relatedTable;
+            Source = source;
+            Target = target;
             MinVersion = minVersion;
             MaxVersion = maxVersion;
         }
