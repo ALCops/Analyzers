@@ -387,6 +387,16 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (sourceType is null || targetType is null)
             return false;
 
+        var sourceKind = sourceType.GetNavTypeKindSafe();
+        var targetKind = targetType.GetNavTypeKindSafe();
+
+        // Explicitly allow Enum → Integer assignments
+        if (sourceKind == EnumProvider.NavTypeKind.Enum &&
+            targetKind == EnumProvider.NavTypeKind.Integer)
+        {
+            return true;
+        }
+
         if (sourceType is IApplicationObjectTypeSymbol &&
             targetType is IApplicationObjectTypeSymbol)
         {
@@ -394,9 +404,6 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 sourceType.OriginalDefinition,
                 targetType.OriginalDefinition);
         }
-
-        var sourceKind = sourceType.GetNavTypeKindSafe();
-        var targetKind = targetType.GetNavTypeKindSafe();
 
         if (IsNumeric(sourceKind) && IsNumeric(targetKind))
         {
