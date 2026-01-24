@@ -360,11 +360,25 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         var sourceType = source.Type;
         var targetType = target.Type;
 #endif
+
         if (sourceType is null || targetType is null)
             return false;
 
-        if (sourceType is IApplicationObjectTypeSymbol && targetType is IApplicationObjectTypeSymbol)
-            return SameApplicationObject(sourceType.OriginalDefinition, targetType.OriginalDefinition);
+        if (sourceType is IApplicationObjectTypeSymbol &&
+            targetType is IApplicationObjectTypeSymbol)
+        {
+            return SameApplicationObject(
+                sourceType.OriginalDefinition,
+                targetType.OriginalDefinition);
+        }
+
+        var sourceKind = sourceType.GetNavTypeKindSafe();
+        var targetKind = targetType.GetNavTypeKindSafe();
+
+        if (IsNumeric(sourceKind) && IsNumeric(targetKind))
+        {
+            return IsNumericAssignmentSafe(sourceKind, targetKind);
+        }
 
         if (sourceType.HasLength && targetType.HasLength)
         {
@@ -372,7 +386,29 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 return false;
         }
 
-        return sourceType.GetNavTypeKindSafe() == targetType.GetNavTypeKindSafe();
+        return sourceKind == targetKind;
+    }
+
+    private static bool IsNumeric(NavTypeKind kind)
+    {
+        return kind == EnumProvider.NavTypeKind.Integer
+            || kind == EnumProvider.NavTypeKind.BigInteger
+            || kind == EnumProvider.NavTypeKind.Decimal;
+    }
+
+    private static bool IsNumericAssignmentSafe(
+        NavTypeKind source,
+        NavTypeKind target)
+    {
+        if (source == target)
+            return true;
+
+        // Integer → BigInteger or Decimal is allowed
+        if (source == EnumProvider.NavTypeKind.Integer &&
+            (target == EnumProvider.NavTypeKind.BigInteger || target == EnumProvider.NavTypeKind.Decimal))
+            return true;
+
+        return false;
     }
 
     private static bool AreFieldNamesEquivalent(IFieldSymbol source, IFieldSymbol target)
@@ -476,7 +512,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     private static string GetToDisplayStringSafe(IFieldSymbol fieldSymbol)
     {
 #if NETSTANDARD2_1
-        return fieldSymbol.OriginalDefinition.GetTypeSymbol().ToDisplayStringWithReflection() ?? EnumProvider.NavTypeKind.None.ToString();
+        return fieldSymbol.OriginalDefinition.GetTypeSymbol().ToDisplayStringWithReflection() ?? EnumProvider.EnumProvider.NavTypeKind.None.ToString();
 #else
         return fieldSymbol.Type?.ToDisplayString() ?? EnumProvider.NavTypeKind.None.ToString();
 #endif

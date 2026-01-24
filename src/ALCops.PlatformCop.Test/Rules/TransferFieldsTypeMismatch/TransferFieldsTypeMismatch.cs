@@ -31,7 +31,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("InvocationWithVarParam")]
         [TestCase("TableExt_Multiple_SameBase")]
         [TestCase("TableExtension")]
-        [TestCase("TableExtensionTypeWithLength")]
+        [TestCase("TableExtensionTypeWithType")]
+        [TestCase("TableExtensionTypeWithTypeLength")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -56,6 +57,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("BuiltInInvocation")]
         [TestCase("Invocation_Pragma")]
         [TestCase("InvocationSkipFieldsNotMatchingType")]
+        [TestCase("InvocationWithType")]
+        [TestCase("InvocationWithTypeLength")]
         [TestCase("TableExt_Paired_Extension_Pragma")]
         [TestCase("TableExt_Paired_SingleTableExt")]
         [TestCase("TableExt_Unpaired")]
