@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Setup
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Get BC DevTools
         id: get-bc-devtools
@@ -53,10 +53,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Build
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
 
@@ -168,10 +168,10 @@ jobs:
       fail-fast: false
     name: Test v${{ matrix.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
 
@@ -186,7 +186,7 @@ jobs:
       # ALCops.ApplicationCop
       - name: Download ALCops.ApplicationCop biniaries
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ALCops.ApplicationCop
           path: ./src/ALCops.ApplicationCop/bin/Release/
@@ -209,7 +209,7 @@ jobs:
       # ALCops.DocumentationCop
       - name: Download ALCops.DocumentationCop biniaries
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ALCops.DocumentationCop
           path: ./src/ALCops.DocumentationCop/bin/Release/
@@ -232,7 +232,7 @@ jobs:
       # ALCops.FormattingCop
       - name: Download ALCops.FormattingCop biniaries
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ALCops.FormattingCop
           path: ./src/ALCops.FormattingCop/bin/Release/
@@ -255,7 +255,7 @@ jobs:
       # ALCops.LinterCop
       - name: Download ALCops.LinterCop biniaries
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ALCops.LinterCop
           path: ./src/ALCops.LinterCop/bin/Release/
@@ -278,7 +278,7 @@ jobs:
       # ALCops.PlatformCop
       - name: Download ALCops.PlatformCop biniaries
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ALCops.PlatformCop
           path: ./src/ALCops.PlatformCop/bin/Release/
@@ -301,7 +301,7 @@ jobs:
       # ALCops.TestAutomationCop
       - name: Download ALCops.TestAutomationCop biniaries
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ALCops.TestAutomationCop
           path: ./src/ALCops.TestAutomationCop/bin/Release/
@@ -349,10 +349,10 @@ jobs:
       checks: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download all test artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: test-*
           merge-multiple: true
