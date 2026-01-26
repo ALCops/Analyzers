@@ -62,9 +62,17 @@ public sealed class TableRelationFieldLength : DiagnosticAnalyzer
             DiagnosticDescriptors.TableRelationFieldLength,
             currentField.GetLocation(),
             relatedField.Length,
+#if NETSTANDARD2_1
+            relatedField.ToDisplayStringWithReflection().QuoteIdentifierIfNeededWithReflection(),
+#else
             relatedField.ToDisplayString().QuoteIdentifierIfNeededWithReflection(),
+#endif
             currentField.Length,
+#if NETSTANDARD2_1
+            currentField.ToDisplayStringWithReflection().QuoteIdentifierIfNeededWithReflection()));
+#else
             currentField.ToDisplayString().QuoteIdentifierIfNeededWithReflection()));
+#endif
     }
 
     private IFieldSymbol? ResolveRelatedField(SymbolAnalysisContext ctx, TableRelationPropertyValueSyntax tableRelation)
