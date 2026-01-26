@@ -363,6 +363,15 @@
   <data name="SetRangeWithFilterOperatorsCodeAction" xml:space="preserve">
     <value>ALCops: Replace SetRange with SetFilter</value>
   </data>
+  <data name="TableRelationFieldLengthTitle" xml:space="preserve">
+    <value>Table relation field length mismatch</value>
+  </data>
+  <data name="TableRelationFieldLengthMessageFormat" xml:space="preserve">
+    <value>The related field has length {0} ({1}) which is longer than the current field length {2} ({3})</value>
+  </data>
+  <data name="TableRelationFieldLengthDescription" xml:space="preserve">
+    <value>The field with table relation should have at least the same length as the referenced field.</value>
+  </data>
   <data name="TemporaryRecordTriggerInvocationTitle" xml:space="preserve">
     <value>Avoid triggering table logic on temporary records</value>
   </data>

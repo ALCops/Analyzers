@@ -28,4 +28,5 @@ public static class DiagnosticIds
     public static readonly string ODataKeyFieldsShouldUseSystemId = "PC0025";
     public static readonly string MandatoryFieldMissingOnApiPage = "PC0026";
     public static readonly string TemporaryRecordTriggerInvocation = "PC0027";
+    public static readonly string TableRelationFieldLength = "PC0028";
 }

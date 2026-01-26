@@ -796,6 +796,33 @@ namespace ALCops.PlatformCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The field with table relation should have at least the same length as the referenced field..
+        /// </summary>
+        internal static string TableRelationFieldLengthDescription {
+            get {
+                return ResourceManager.GetString("TableRelationFieldLengthDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The related field has length {0} ({1}) which is longer than the current field length {2} ({3}).
+        /// </summary>
+        internal static string TableRelationFieldLengthMessageFormat {
+            get {
+                return ResourceManager.GetString("TableRelationFieldLengthMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Table relation field length mismatch.
+        /// </summary>
+        internal static string TableRelationFieldLengthTitle {
+            get {
+                return ResourceManager.GetString("TableRelationFieldLengthTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Executing table triggers (Insert, Modify, Delete, DeleteAll, ModifyAll) or calling Validate on temporary record variables causes the temporary scope to be lost. This can result in unintended database changes because the record is no longer treated as temporary. Only execute triggers when the table itself is defined as temporary. .
         /// </summary>
         internal static string TemporaryRecordTriggerInvocationDescription {
