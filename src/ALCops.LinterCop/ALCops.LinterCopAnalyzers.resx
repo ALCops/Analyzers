@@ -147,6 +147,18 @@
   <data name="AppManifestRuntimeBehindDescription" xml:space="preserve">
     <value>Specifying a runtime version in app.json is optional. When a runtime is explicitly defined and falls behind the targeted application or platform, newer language features and runtime capabilities may be unavailable, leading to unnecessary limitations or inconsistencies.</value>
   </data>
+  <data name="BuiltInDateTimeMethodTitle" xml:space="preserve">
+    <value>Use new Date/Time/DateTime methods for extracting parts</value>
+  </data>
+  <data name="BuiltInDateTimeMethodMessageFormat" xml:space="preserve">
+    <value>Use the new method {0}.{1} to extract specific parts of date/time values.</value>
+  </data>
+  <data name="BuiltInDateTimeMethodDescription" xml:space="preserve">
+    <value>Replace outdated functions for extracting specific parts of Date, Time, and DateTime types (such as day, month, hour, or second) with the new, modernized methods.</value>
+  </data>
+  <data name="BuiltInDateTimeMethodCodeAction" xml:space="preserve">
+    <value>ALCops: Use modern Date/Time/DateTime method</value>
+  </data>
   <data name="CognitiveComplexityMetricTitle" xml:space="preserve">
     <value>Cognitive complexity metric</value>
   </data>

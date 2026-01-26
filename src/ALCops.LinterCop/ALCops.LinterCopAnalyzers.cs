@@ -148,6 +148,42 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to APClops: Use modern Date/Time/DateTime method.
+        /// </summary>
+        internal static string BuiltInDateTimeMethodCodeAction {
+            get {
+                return ResourceManager.GetString("BuiltInDateTimeMethodCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Replace outdated functions for extracting specific parts of Date, Time, and DateTime types (such as day, month, hour, or second) with the new, modernized methods..
+        /// </summary>
+        internal static string BuiltInDateTimeMethodDescription {
+            get {
+                return ResourceManager.GetString("BuiltInDateTimeMethodDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use the new method {0}.{1} to extract specific parts of date/time values..
+        /// </summary>
+        internal static string BuiltInDateTimeMethodMessageFormat {
+            get {
+                return ResourceManager.GetString("BuiltInDateTimeMethodMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use new Date/Time/DateTime methods for extracting parts.
+        /// </summary>
+        internal static string BuiltInDateTimeMethodTitle {
+            get {
+                return ResourceManager.GetString("BuiltInDateTimeMethodTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reports an individual Cognitive Complexity increment at the exact source location where complexity increases. Each diagnostic explains how the increment is composed, including the base increment and any additional nesting penalty. This diagnostic is intended to make the complexity calculation transparent and explainable..
         /// </summary>
         internal static string CognitiveComplexityIncrementDescription {
