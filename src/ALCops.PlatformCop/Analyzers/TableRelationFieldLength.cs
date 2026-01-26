@@ -127,8 +127,11 @@ public sealed class TableRelationFieldLength : DiagnosticAnalyzer
         if (string.IsNullOrEmpty(tableName))
             return null;
 
+#if NETSTANDARD2_1
+        var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModules(EnumProvider.SymbolKind.Table, tableName);
+#else
         var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModulesAndNamespaces(EnumProvider.SymbolKind.Table, tableName);
-
+#endif
         return tableSymbols.FirstOrDefault() is ITableTypeSymbol table && table.PrimaryKey.Fields.Length == 1
             ? table.PrimaryKey.Fields[0]
             : null;
@@ -136,8 +139,11 @@ public sealed class TableRelationFieldLength : DiagnosticAnalyzer
 
     private static IFieldSymbol? GetFieldFromTable(string tableName, string fieldName, Compilation compilation)
     {
+#if NETSTANDARD2_1
+        var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModules(EnumProvider.SymbolKind.Table, tableName);
+#else
         var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModulesAndNamespaces(EnumProvider.SymbolKind.Table, tableName);
-
+#endif
         return tableSymbols.FirstOrDefault() is ITableTypeSymbol table
             ? table.Fields.FirstOrDefault(f => f.Name == fieldName)
             : null;
