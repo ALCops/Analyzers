@@ -19,6 +19,8 @@ public static class DiagnosticIds
     public static readonly string InternalProcedureOnlyUsedInCurrentObject = "LC0053";
     public static readonly string InterfaceObjectNameGuide = "LC0054";
     public static readonly string ApiPageCanonicalFieldNameGuide = "LC0063";
+    public static readonly string UseIsEmptyMethodInsteadOfCount = "LC0081";
+    public static readonly string UseQueryOrFindWithNextInsteadOfCount = "LC0082";
     public static readonly string PageStyleStringLiteral = "LC0086";
     public static readonly string CognitiveComplexityMetric = "LC0089";
     public static readonly string CognitiveComplexityIncrement = "LC0089i";

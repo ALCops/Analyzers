@@ -214,6 +214,26 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.RecordInstanceIsolationLevelDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.RecordInstanceIsolationLevel));
 
+    public static readonly DiagnosticDescriptor UseIsEmptyMethodInsteadOfCount = new(
+        id: DiagnosticIds.UseIsEmptyMethodInsteadOfCount,
+        title: LinterCopAnalyzers.UseIsEmptyMethodInsteadOfCountTitle,
+        messageFormat: LinterCopAnalyzers.UseIsEmptyMethodInsteadOfCountMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.UseIsEmptyMethodInsteadOfCountDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UseIsEmptyMethodInsteadOfCount));
+
+    public static readonly DiagnosticDescriptor UseQueryOrFindWithNextInsteadOfCount = new(
+        id: DiagnosticIds.UseQueryOrFindWithNextInsteadOfCount,
+        title: LinterCopAnalyzers.UseQueryOrFindWithNextInsteadOfCountTitle,
+        messageFormat: LinterCopAnalyzers.UseQueryOrFindWithNextInsteadOfCountMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.UseQueryOrFindWithNextInsteadOfCountDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UseQueryOrFindWithNextInsteadOfCount));
+
     public static readonly DiagnosticDescriptor UseSecretTextForSensitiveText = new(
         id: DiagnosticIds.UseSecretTextForSensitiveText,
         title: LinterCopAnalyzers.UseSecretTextForSensitiveTextTitle,

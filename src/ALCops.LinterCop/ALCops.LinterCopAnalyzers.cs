@@ -643,6 +643,60 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to To check for the existence of records, use the more efficient Rec.IsEmpty() function instead of Rec.Count()..
+        /// </summary>
+        internal static string UseIsEmptyMethodInsteadOfCountDescription {
+            get {
+                return ResourceManager.GetString("UseIsEmptyMethodInsteadOfCountDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Avoid using {0}.Count() for checking record existence. Use {0}.IsEmpty() instead for better performance..
+        /// </summary>
+        internal static string UseIsEmptyMethodInsteadOfCountMessageFormat {
+            get {
+                return ResourceManager.GetString("UseIsEmptyMethodInsteadOfCountMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use Rec.IsEmpty() for checking record existence.
+        /// </summary>
+        internal static string UseIsEmptyMethodInsteadOfCountTitle {
+            get {
+                return ResourceManager.GetString("UseIsEmptyMethodInsteadOfCountTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Instead of relying on Rec.Count(), consider using a Query object or a combination of Rec.Find(&apos;-&apos;) and Rec.Next() for faster and more efficient record checks..
+        /// </summary>
+        internal static string UseQueryOrFindWithNextInsteadOfCountDescription {
+            get {
+                return ResourceManager.GetString("UseQueryOrFindWithNextInsteadOfCountDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Consider using a Query object or {0}.Find(&apos;-&apos;) together with {0}.Next() instead of {0}.Count() for faster and more efficient record checks..
+        /// </summary>
+        internal static string UseQueryOrFindWithNextInsteadOfCountMessageFormat {
+            get {
+                return ResourceManager.GetString("UseQueryOrFindWithNextInsteadOfCountMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Consider using a Query object or Rec.Find(&apos;-&apos;) with Rec.Next() for checking exactly one record.
+        /// </summary>
+        internal static string UseQueryOrFindWithNextInsteadOfCountTitle {
+            get {
+                return ResourceManager.GetString("UseQueryOrFindWithNextInsteadOfCountTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Using SecretText prevents confidential information such as API keys, tokens, passwords, and similar secrets from being exposed through the AL debugger during regular or snapshot debugging..
         /// </summary>
         internal static string UseSecretTextForSensitiveTextDescription {
