@@ -29,7 +29,7 @@ namespace ALCops.PlatformCop.Test
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["TableRelationLonger"],
+                ["TableExtRelationLonger"],
                 testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");
@@ -48,7 +48,7 @@ namespace ALCops.PlatformCop.Test
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["TableRelationEqual", "TableExtRelationShorter"],
+                ["TableExtRelationEqual", "TableExtRelationShorter"],
                 testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");
