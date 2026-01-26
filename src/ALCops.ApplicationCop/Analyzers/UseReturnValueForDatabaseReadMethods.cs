@@ -14,35 +14,41 @@ public class UseReturnValueForDatabaseReadMethods : DiagnosticAnalyzer
         ImmutableArray.Create(
             DiagnosticDescriptors.UseReturnValueForDatabaseReadMethods);
 
-    private static readonly HashSet<string> DatabaseReadMethods = ["Find", "FindFirst", "FindLast", "Get", "GetBySystemId"];
+    private static readonly ImmutableHashSet<string> DatabaseReadMethods =
+        ImmutableHashSet.Create(
+            StringComparer.OrdinalIgnoreCase,
+            "Find",
+            "FindFirst",
+            "FindLast",
+            "Get",
+            "GetBySystemId");
 
     public override void Initialize(AnalysisContext context) =>
         context.RegisterOperationAction(
-            AnalyzeAssignmentStatement,
+            AnalyzeInvocation,
             EnumProvider.OperationKind.InvocationExpression);
 
-    private void AnalyzeAssignmentStatement(OperationAnalysisContext ctx)
+    private void AnalyzeInvocation(OperationAnalysisContext ctx)
     {
-        if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression operation)
+        if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression invocation)
             return;
 
-        if (operation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod ||
-            operation.TargetMethod.ContainingSymbol?.Name != "Table" ||
-            !DatabaseReadMethods.Contains(operation.TargetMethod.Name))
+        if (invocation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod ||
+            invocation.TargetMethod.ContainingSymbol?.Name != "Table" ||
+            !DatabaseReadMethods.Contains(invocation.TargetMethod.Name))
             return;
 
-        if (ctx.Operation.Syntax.Parent.Kind == SyntaxKind.ExpressionStatement)
+        if (ctx.Operation.Syntax.Parent.Kind == EnumProvider.SyntaxKind.ExpressionStatement)
         {
-            var methodName = operation.TargetMethod.Name.ToString();
-            var node = operation.Syntax.DescendantNodesAndSelf()
-                    .OfType<IdentifierNameSyntax>()
-                    .FirstOrDefault(node => string.Equals(node.Identifier.ValueText, methodName, StringComparison.OrdinalIgnoreCase));
-            if (node is null)
+            var methodName = invocation.TargetMethod.Name;
+            if (invocation.Syntax is not InvocationExpressionSyntax invocationSyntax)
                 return;
+
+            var location = invocationSyntax.Expression.GetLocation();
 
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.UseReturnValueForDatabaseReadMethods,
-                node.GetLocation(),
+                location,
                 methodName));
         }
     }

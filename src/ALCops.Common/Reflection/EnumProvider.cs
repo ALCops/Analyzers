@@ -1375,7 +1375,7 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _lessThanToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LessThanToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _endOfLineTrivia =
-            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EndOfLineTrivia))); 
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EndOfLineTrivia)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _enumExtensionType =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EnumExtensionType)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _enumDataType =
@@ -1388,6 +1388,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Entitlement)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _exitStatement =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ExitStatement)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _expressionStatement =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ExpressionStatement)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _falseKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.FalseKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _fieldKeyword =
@@ -1640,6 +1642,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind EnumValue => _enumValue.Value;
         public static NavCodeAnalysis.SyntaxKind Entitlement => _entitlement.Value;
         public static NavCodeAnalysis.SyntaxKind ExitStatement => _exitStatement.Value;
+        public static NavCodeAnalysis.SyntaxKind ExpressionStatement => _expressionStatement.Value;
         public static NavCodeAnalysis.SyntaxKind FalseKeyword => _falseKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind FieldKeyword => _fieldKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind ForKeyword => _forKeyword.Value;
