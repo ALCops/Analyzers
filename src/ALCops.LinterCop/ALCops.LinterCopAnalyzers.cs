@@ -148,7 +148,7 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to APClops: Use modern Date/Time/DateTime method.
+        ///   Looks up a localized string similar to ALCops: Use modern Date/Time/DateTime method.
         /// </summary>
         internal static string BuiltInDateTimeMethodCodeAction {
             get {

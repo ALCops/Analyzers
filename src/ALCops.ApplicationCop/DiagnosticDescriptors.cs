@@ -285,6 +285,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.ToolTipShouldStartWithSpecifiesDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ToolTipShouldStartWithSpecifies));
 
+    public static readonly DiagnosticDescriptor UseReturnValueForDatabaseReadMethods = new(
+        id: DiagnosticIds.UseReturnValueForDatabaseReadMethods,
+        title: ApplicationCopAnalyzers.UseReturnValueForDatabaseReadMethodsTitle,
+        messageFormat: ApplicationCopAnalyzers.UseReturnValueForDatabaseReadMethodsMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.UseReturnValueForDatabaseReadMethodsDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UseReturnValueForDatabaseReadMethods));
+
     public static readonly DiagnosticDescriptor ZeroEnumValueReservedForEmpty = new(
         id: DiagnosticIds.ZeroEnumValueReservedForEmpty,
         title: ApplicationCopAnalyzers.ZeroEnumValueReservedForEmptyTitle,

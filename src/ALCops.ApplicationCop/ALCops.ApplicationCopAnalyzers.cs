@@ -922,6 +922,33 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Database read methods, like Record.Get(), returns a boolean indicating whether the record was successfully retrieved. Failing to use this return value can lead to uncaught errors, poor error handling, and a lack of actionable feedback for users when something goes wrong..
+        /// </summary>
+        internal static string UseReturnValueForDatabaseReadMethodsDescription {
+            get {
+                return ResourceManager.GetString("UseReturnValueForDatabaseReadMethodsDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The return value of the &apos;{0}&apos; method must be used to improve error handling or provide meaningful feedback to the user..
+        /// </summary>
+        internal static string UseReturnValueForDatabaseReadMethodsMessageFormat {
+            get {
+                return ResourceManager.GetString("UseReturnValueForDatabaseReadMethodsMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use return value for better error handling.
+        /// </summary>
+        internal static string UseReturnValueForDatabaseReadMethodsTitle {
+            get {
+                return ResourceManager.GetString("UseReturnValueForDatabaseReadMethodsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Zero (0) should be reserved as the empty Enum value. Business Central stores Enums as integers and does not support null; new records (and existing records after adding a field via table extension) default to 0, which makes non-empty meaning at 0 ambiguous..
         /// </summary>
         internal static string ZeroEnumValueReservedForEmptyDescription {

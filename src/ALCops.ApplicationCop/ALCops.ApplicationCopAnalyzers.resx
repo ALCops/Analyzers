@@ -405,6 +405,15 @@
   <data name="ToolTipShouldStartWithSpecifiesDescription" xml:space="preserve">
     <value>For field ToolTips, the Business Central user assistance model expects the text to start with the verb 'Specifies' to describe what the field represents.</value>
   </data>
+  <data name="UseReturnValueForDatabaseReadMethodsTitle" xml:space="preserve">
+    <value>Use return value for better error handling</value>
+  </data>
+  <data name="UseReturnValueForDatabaseReadMethodsMessageFormat" xml:space="preserve">
+    <value>The return value of the '{0}' method must be used to improve error handling or provide meaningful feedback to the user.</value>
+  </data>
+  <data name="UseReturnValueForDatabaseReadMethodsDescription" xml:space="preserve">
+    <value>Database read methods, like Record.Get(), returns a boolean indicating whether the record was successfully retrieved. Failing to use this return value can lead to uncaught errors, poor error handling, and a lack of actionable feedback for users when something goes wrong.</value>
+  </data>
   <data name="ZeroEnumValueReservedForEmptyTitle" xml:space="preserve">
     <value>Reserve Enum value zero (0) for empty value</value>
   </data>

@@ -31,4 +31,5 @@ public static class DiagnosticIds
     public static readonly string LabelTokenRequiresTokSuffix = "AC0027";
     public static readonly string TableFieldToolTipShouldBeDefined = "AC0028";
     public static readonly string DuplicateToolTipBetweenPageAndTable = "AC0029";
+    public static readonly string UseReturnValueForDatabaseReadMethods = "AC0030";
 }
