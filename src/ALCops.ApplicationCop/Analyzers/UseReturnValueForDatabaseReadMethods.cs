@@ -34,7 +34,7 @@ public class UseReturnValueForDatabaseReadMethods : DiagnosticAnalyzer
             return;
 
         if (invocation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod ||
-            invocation.TargetMethod.ContainingSymbol?.Name != "Table" ||
+            invocation.Instance?.Type.OriginalDefinition.Kind != EnumProvider.SymbolKind.Table ||
             !DatabaseReadMethods.Contains(invocation.TargetMethod.Name))
             return;
 

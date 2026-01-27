@@ -11,6 +11,8 @@ namespace ALCops.PlatformCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class SetRangeWithFilterOperators : DiagnosticAnalyzer
 {
+    private const string SetRangeMethodName = "SetRange";
+
     private readonly Lazy<Regex> replacementFieldPatternLazy = new Lazy<Regex>((Func<Regex>)(() => new Regex(@"%\d+", RegexOptions.Compiled)));
 
     private Regex ReplacementFieldPatternLazy => this.replacementFieldPatternLazy.Value;
@@ -29,8 +31,8 @@ public sealed class SetRangeWithFilterOperators : DiagnosticAnalyzer
             return;
 
         if (operation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod ||
-            operation.TargetMethod.Name != "SetRange" ||
-            operation.TargetMethod.ContainingSymbol?.Name != "Table" ||
+            operation.TargetMethod.Name != SetRangeMethodName ||
+            operation.Instance?.Type.OriginalDefinition.Kind != EnumProvider.SymbolKind.Table ||
             operation.Arguments.Length < 2)
             return;
 
