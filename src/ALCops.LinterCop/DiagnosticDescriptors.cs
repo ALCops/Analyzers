@@ -204,6 +204,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.ObjectIdInDeclarationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ObjectIdInDeclaration));
 
+    public static readonly DiagnosticDescriptor OptionTypeShouldBeEnum = new(
+        id: DiagnosticIds.OptionTypeShouldBeEnum,
+        title: LinterCopAnalyzers.OptionTypeShouldBeEnumTitle,
+        messageFormat: LinterCopAnalyzers.OptionTypeShouldBeEnumMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.OptionTypeShouldBeEnumDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.OptionTypeShouldBeEnum));
+
     public static readonly DiagnosticDescriptor PageStyleStringLiteral = new(
         id: DiagnosticIds.PageStyleStringLiteral,
         title: LinterCopAnalyzers.PageStyleStringLiteralTitle,

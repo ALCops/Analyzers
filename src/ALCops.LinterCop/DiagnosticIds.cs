@@ -23,6 +23,7 @@ public static class DiagnosticIds
     public static readonly string UseQueryOrFindWithNextInsteadOfCount = "LC0082";
     public static readonly string BuiltInDateTimeMethod = "LC0083";
     public static readonly string PageStyleStringLiteral = "LC0086";
+    public static readonly string OptionTypeShouldBeEnum = "LC0088";
     public static readonly string CognitiveComplexityMetric = "LC0089";
     public static readonly string CognitiveComplexityIncrement = "LC0089i";
     public static readonly string CognitiveComplexityThresholdExceeded = "LC0090";

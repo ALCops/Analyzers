@@ -616,6 +616,33 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enums are preferred over Option types because they provide stronger typing, better extensibility, and clearer intent. Using Enums reduces error-prone patterns commonly associated with Option fields and improves maintainability and versioning of AL code..
+        /// </summary>
+        internal static string OptionTypeShouldBeEnumDescription {
+            get {
+                return ResourceManager.GetString("OptionTypeShouldBeEnumDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Prefer using an Enum instead of an Option type..
+        /// </summary>
+        internal static string OptionTypeShouldBeEnumMessageFormat {
+            get {
+                return ResourceManager.GetString("OptionTypeShouldBeEnumMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Prefer Enum over Option type.
+        /// </summary>
+        internal static string OptionTypeShouldBeEnumTitle {
+            get {
+                return ResourceManager.GetString("OptionTypeShouldBeEnumTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Adopting the use of the new PageStyle datatype allows to more easily get the supported pagestyles via IntelliSense and avoids incorrect behaviour when a typo is made in hardcoded strings or label variables..
         /// </summary>
         internal static string PageStyleStringLiteralDescription {

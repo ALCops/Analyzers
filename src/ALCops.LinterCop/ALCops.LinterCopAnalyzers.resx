@@ -306,6 +306,15 @@
   <data name="ObjectIdInDeclarationActionTitle" xml:space="preserve">
     <value>ALCops: Replace id with name of object reference</value>
   </data>
+  <data name="OptionTypeShouldBeEnumTitle" xml:space="preserve">
+    <value>Prefer Enum over Option type</value>
+  </data>
+  <data name="OptionTypeShouldBeEnumMessageFormat" xml:space="preserve">
+    <value>Prefer using an Enum instead of an Option type.</value>
+  </data>
+  <data name="OptionTypeShouldBeEnumDescription" xml:space="preserve">
+    <value>Enums are preferred over Option types because they provide stronger typing, better extensibility, and clearer intent. Using Enums reduces error-prone patterns commonly associated with Option fields and improves maintainability and versioning of AL code.</value>
+  </data>
   <data name="PageStyleStringLiteralTitle" xml:space="preserve">
     <value>Use the new PageStyle datatype instead string literals</value>
   </data>
