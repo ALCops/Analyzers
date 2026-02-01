@@ -1606,6 +1606,10 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.WhileKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _whileStatement =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.WhileStatement)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _xmlElement =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.XmlElement)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _xmlNameAttribute =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.XmlNameAttribute)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _xmlPortKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.XmlPortKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _xmlPortObject =
@@ -1749,7 +1753,9 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind VarSection => _varSection.Value;
         public static NavCodeAnalysis.SyntaxKind WhileKeyword => _whileKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind WhileStatement => _whileStatement.Value;
+        public static NavCodeAnalysis.SyntaxKind XmlElement => _xmlElement.Value;
         public static NavCodeAnalysis.SyntaxKind XmlPortKeyword => _xmlPortKeyword.Value;
+        public static NavCodeAnalysis.SyntaxKind XmlNameAttribute => _xmlNameAttribute.Value;
         public static NavCodeAnalysis.SyntaxKind XmlPortObject => _xmlPortObject.Value;
     }
 

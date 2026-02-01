@@ -45,6 +45,16 @@ public static class DiagnosticDescriptors
         description: DocumentationCopAnalyzers.WriteToFlowFieldRequiresCommentDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.WriteToFlowFieldRequiresComment));
 
+    public static readonly DiagnosticDescriptor XmlDocumentationProcedureConsistency = new(
+        id: DiagnosticIds.XmlDocumentationProcedureConsistency,
+        title: DocumentationCopAnalyzers.XmlDocumentationProcedureConsistencyTitle,
+        messageFormat: DocumentationCopAnalyzers.XmlDocumentationProcedureConsistencyMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: DocumentationCopAnalyzers.XmlDocumentationProcedureConsistencyDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.XmlDocumentationProcedureConsistency));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/documentationcop/{0}/", identifier.ToLower());

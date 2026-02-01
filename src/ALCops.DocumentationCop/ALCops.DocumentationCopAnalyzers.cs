@@ -164,5 +164,32 @@ namespace ALCops.DocumentationCop {
                 return ResourceManager.GetString("WriteToFlowFieldRequiresCommentTitle", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The XML documentation for a procedure must accurately reflect its signature..
+        /// </summary>
+        internal static string XmlDocumentationProcedureConsistencyDescription {
+            get {
+                return ResourceManager.GetString("XmlDocumentationProcedureConsistencyDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The XML documentation does not match the procedure signature..
+        /// </summary>
+        internal static string XmlDocumentationProcedureConsistencyMessageFormat {
+            get {
+                return ResourceManager.GetString("XmlDocumentationProcedureConsistencyMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to XML documentation must match the procedure signature.
+        /// </summary>
+        internal static string XmlDocumentationProcedureConsistencyTitle {
+            get {
+                return ResourceManager.GetString("XmlDocumentationProcedureConsistencyTitle", resourceCulture);
+            }
+        }
     }
 }

@@ -153,4 +153,13 @@
   <data name="WriteToFlowFieldRequiresCommentDescription" xml:space="preserve">
     <value>FlowFields are calculated fields and are not intended to be written to. Writing to a FlowField, whether accidental or intentional, can lead to runtime errors.</value>
   </data>
+  <data name="XmlDocumentationProcedureConsistencyTitle" xml:space="preserve">
+    <value>XML documentation must match the procedure signature</value>
+  </data>
+  <data name="XmlDocumentationProcedureConsistencyMessageFormat" xml:space="preserve">
+    <value>The XML documentation does not match the procedure signature.</value>
+  </data>
+  <data name="XmlDocumentationProcedureConsistencyDescription" xml:space="preserve">
+    <value>The XML documentation for a procedure must accurately reflect its signature.</value>
+  </data>
 </root>
