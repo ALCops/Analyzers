@@ -54,6 +54,12 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("MultiplePermissionsDifferentType")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["PageExtensionSourceTable"],
+                testCase,
+                "13.0",
+                "No support for tableextensions when target itself is already declared in the same module");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 

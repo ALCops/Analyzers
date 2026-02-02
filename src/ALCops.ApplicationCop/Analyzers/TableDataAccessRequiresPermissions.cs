@@ -19,8 +19,7 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
     private static readonly ImmutableDictionary<string, char> MethodPermissionMap =
         ImmutableDictionary.CreateRange(
             StringComparer.OrdinalIgnoreCase,
-            new[]
-            {
+            [
                 // read
                 new KeyValuePair<string, char>("Find", 'r'),
                 new KeyValuePair<string, char>("FindFirst", 'r'),
@@ -40,7 +39,7 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
                 // delete
                 new KeyValuePair<string, char>("Delete", 'd'),
                 new KeyValuePair<string, char>("DeleteAll", 'd'),
-            });
+            ]);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -98,6 +97,8 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
             invocation.Syntax.GetLocation(),
             tableType);
     }
+
+
 
     private void CheckXmlportNodeObjectPermission(SymbolAnalysisContext ctx)
     {
@@ -249,7 +250,7 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         }
     }
 
-    private bool TableHasInherentPermission(ITableTypeSymbol table, char requestedPermission)
+    private static bool TableHasInherentPermission(ITableTypeSymbol table, char requestedPermission)
     {
         IPropertySymbol? permissionProperty = table.GetProperty(EnumProvider.PropertyKind.InherentPermissions);
         // InherentPermissions = RIMD;
@@ -260,7 +261,6 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
 
         return false;
     }
-
 
     private static char? GetRequiredPermission(string methodName)
     {
