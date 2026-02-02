@@ -47,7 +47,7 @@ public class AnalyzeCountMethod : DiagnosticAnalyzer
             invocation.TargetMethod.ContainingSymbol?.Name != "Table")
             return;
 
-        if (invocation.Instance?.GetSymbol() is not IVariableSymbol { Type: IRecordTypeSymbol recordTypeSymbol } || recordTypeSymbol.Temporary)
+        if (invocation.Instance?.Type is not IRecordTypeSymbol recordTypeSymbol || recordTypeSymbol.Temporary)
             return;
 
         if (invocation.Syntax.Parent is not BinaryExpressionSyntax binaryExpression)

@@ -760,6 +760,42 @@ namespace ALCops.ApplicationCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Add missing permissions.
+        /// </summary>
+        internal static string TableDataAccessRequiresPermissionsCodeAction {
+            get {
+                return ResourceManager.GetString("TableDataAccessRequiresPermissionsCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Code that reads from or writes to table data must declare the required Permissions on the containing object. This ensures the code can run using indirect permissions, which is required when table access is restricted by the user&apos;s license. .
+        /// </summary>
+        internal static string TableDataAccessRequiresPermissionsDescription {
+            get {
+                return ResourceManager.GetString("TableDataAccessRequiresPermissionsDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The object does not declare permission &quot;{0}&quot; for tabledata &quot;{1}&quot;.
+        /// </summary>
+        internal static string TableDataAccessRequiresPermissionsMessageFormat {
+            get {
+                return ResourceManager.GetString("TableDataAccessRequiresPermissionsMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Table data access requires explicit object permissions.
+        /// </summary>
+        internal static string TableDataAccessRequiresPermissionsTitle {
+            get {
+                return ResourceManager.GetString("TableDataAccessRequiresPermissionsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to In projects where company data isolation matters, table objects must explicitly define the DataPerCompany property. Relying on implicit defaults makes the data scope unclear and can lead to incorrect assumptions about whether data is shared across companies or stored per company..
         /// </summary>
         internal static string TableDataPerCompanyDeclarationDescription {

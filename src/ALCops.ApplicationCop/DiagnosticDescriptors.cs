@@ -225,6 +225,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.RunPageImplementPageManagementDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.RunPageImplementPageManagement));
 
+    public static readonly DiagnosticDescriptor TableDataAccessRequiresPermissions = new(
+        id: DiagnosticIds.TableDataAccessRequiresPermissions,
+        title: ApplicationCopAnalyzers.TableDataAccessRequiresPermissionsTitle,
+        messageFormat: ApplicationCopAnalyzers.TableDataAccessRequiresPermissionsMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.TableDataAccessRequiresPermissionsDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TableDataAccessRequiresPermissions));
+
     public static readonly DiagnosticDescriptor TableDataPerCompanyDeclaration = new(
         id: DiagnosticIds.TableDataPerCompanyDeclaration,
         title: ApplicationCopAnalyzers.TableDataPerCompanyDeclarationTitle,

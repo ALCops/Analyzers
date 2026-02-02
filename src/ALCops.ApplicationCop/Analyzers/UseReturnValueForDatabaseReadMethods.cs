@@ -3,6 +3,7 @@ using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
 namespace ALCops.ApplicationCop.Analyzers;
@@ -33,9 +34,13 @@ public class UseReturnValueForDatabaseReadMethods : DiagnosticAnalyzer
         if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression invocation)
             return;
 
-        if (invocation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod ||
-            invocation.Instance?.Type.OriginalDefinition.Kind != EnumProvider.SymbolKind.Table ||
-            !DatabaseReadMethods.Contains(invocation.TargetMethod.Name))
+        if (invocation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
+            return;
+
+        if (invocation.Instance?.Type is not IRecordTypeSymbol)
+            return;
+
+        if (!DatabaseReadMethods.Contains(invocation.TargetMethod.Name))
             return;
 
         if (ctx.Operation.Syntax.Parent.Kind == EnumProvider.SyntaxKind.ExpressionStatement)
