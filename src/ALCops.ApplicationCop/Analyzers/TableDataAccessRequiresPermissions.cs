@@ -98,8 +98,6 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
             tableType);
     }
 
-
-
     private void CheckXmlportNodeObjectPermission(SymbolAnalysisContext ctx)
     {
         if (ctx.IsObsolete())
@@ -152,16 +150,31 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
 
     private void CheckReportDataItemObjectPermission(SymbolAnalysisContext ctx)
     {
-        if (ctx.IsObsolete()) return;
-        if (ctx.Symbol.GetBooleanPropertyValue(EnumProvider.PropertyKind.UseTemporary) == true) return;
-        if (((ITableTypeSymbol)((IRecordTypeSymbol)((IReportDataItemSymbol)ctx.Symbol).GetTypeSymbol()).OriginalDefinition).TableType == EnumProvider.TableTypeKind.Temporary) return;
+        if (ctx.IsObsolete())
+            return;
 
-        IPropertySymbol? objectPermissions = ctx.Symbol.GetContainingApplicationObjectTypeSymbol()?.GetProperty(EnumProvider.PropertyKind.Permissions);
-        ITypeSymbol targetSymbol = ((IReportDataItemSymbol)ctx.Symbol).GetTypeSymbol();
-        CheckProcedureInvocation(objectPermissions, targetSymbol, 'r', ctx.ReportDiagnostic, ctx.Symbol.GetLocation(), (ITableTypeSymbol)targetSymbol.OriginalDefinition);
+        if (ctx.Symbol.GetBooleanPropertyValue(EnumProvider.PropertyKind.UseTemporary) is true)
+            return;
+
+        if (ctx.Symbol is not IReportDataItemSymbol reportDataItemSymbol)
+            return;
+
+        if (reportDataItemSymbol.GetTypeSymbol() is not IRecordTypeSymbol recordType)
+            return;
+
+        if (recordType.Temporary)
+            return;
+
+        var objectPermissions = ctx.Symbol.GetContainingApplicationObjectTypeSymbol()?.GetProperty(EnumProvider.PropertyKind.Permissions);
+
+        CheckProcedureInvocation(
+            objectPermissions,
+            recordType,
+            'r',
+            ctx.ReportDiagnostic,
+            ctx.Symbol.GetLocation(),
+            (ITableTypeSymbol)recordType.OriginalDefinition);
     }
-
-
 
     private static bool ProcedureHasInherentPermission(IEnumerable<IAttributeSymbol> inherentPermissions, ITypeSymbol variableType, char requestedPermission)
     {
@@ -195,7 +208,7 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         return false;
     }
 
-    private void CheckProcedureInvocation(IPropertySymbol? objectPermissions, ITypeSymbol variableType, char requestedPermission, Action<Diagnostic> ReportDiagnostic, Microsoft.Dynamics.Nav.CodeAnalysis.Text.Location location, ITableTypeSymbol targetTable)
+    private static void CheckProcedureInvocation(IPropertySymbol? objectPermissions, ITypeSymbol variableType, char requestedPermission, Action<Diagnostic> ReportDiagnostic, Microsoft.Dynamics.Nav.CodeAnalysis.Text.Location location, ITableTypeSymbol targetTable)
     {
         if (targetTable.Id > 2000000000)
             return;
