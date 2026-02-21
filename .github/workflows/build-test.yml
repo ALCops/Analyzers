@@ -89,7 +89,7 @@ jobs:
         run: dotnet build ./src/ALCops.ApplicationCop/ALCops.ApplicationCop.csproj --configuration Release --no-restore
 
       - name: Upload ALCops.ApplicationCop artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ALCops.ApplicationCop
           path: ./src/ALCops.ApplicationCop/bin/Release/
@@ -102,7 +102,7 @@ jobs:
         run: dotnet build ./src/ALCops.DocumentationCop/ALCops.DocumentationCop.csproj --configuration Release --no-restore
 
       - name: Upload ALCops.DocumentationCop artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ALCops.DocumentationCop
           path: ./src/ALCops.DocumentationCop/bin/Release/
@@ -115,7 +115,7 @@ jobs:
         run: dotnet build ./src/ALCops.FormattingCop/ALCops.FormattingCop.csproj --configuration Release --no-restore
 
       - name: Upload ALCops.FormattingCop artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ALCops.FormattingCop
           path: ./src/ALCops.FormattingCop/bin/Release/
@@ -128,7 +128,7 @@ jobs:
         run: dotnet build ./src/ALCops.LinterCop/ALCops.LinterCop.csproj --configuration Release --no-restore
 
       - name: Upload ALCops.LinterCop artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ALCops.LinterCop
           path: ./src/ALCops.LinterCop/bin/Release/          
@@ -141,7 +141,7 @@ jobs:
         run: dotnet build ./src/ALCops.PlatformCop/ALCops.PlatformCop.csproj --configuration Release --no-restore
 
       - name: Upload ALCops.PlatformCop artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ALCops.PlatformCop
           path: ./src/ALCops.PlatformCop/bin/Release/
@@ -154,7 +154,7 @@ jobs:
         run: dotnet build ./src/ALCops.TestAutomationCop/ALCops.TestAutomationCop.csproj --configuration Release --no-restore
 
       - name: Upload ALCops.TestAutomationCop artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ALCops.TestAutomationCop
           path: ./src/ALCops.TestAutomationCop/bin/Release/          
@@ -333,7 +333,7 @@ jobs:
           
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-results-${{ matrix.version }}
           path: |
