@@ -44,6 +44,12 @@ namespace ALCops.TestAutomationCop.Test
         [TestCase("HttpClientHandler")]
         public async Task NoDiagnosticWithTargetOnPrem(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["HttpClientHandler"],
+                testCase,
+                "15.0",
+                "No support for HttpClientHandler as a is not a valid attribute");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
