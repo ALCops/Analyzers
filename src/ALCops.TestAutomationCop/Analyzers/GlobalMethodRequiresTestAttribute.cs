@@ -60,6 +60,7 @@ public sealed class GlobalMethodRequiresTestAttribute : DiagnosticAnalyzer
     {
         return kind == EnumProvider.AttributeKind.ConfirmHandler
             || kind == EnumProvider.AttributeKind.FilterPageHandler
+            || kind == EnumProvider.AttributeKind.HttpClientHandler
             || kind == EnumProvider.AttributeKind.HyperlinkHandler
             || kind == EnumProvider.AttributeKind.MessageHandler
             || kind == EnumProvider.AttributeKind.ModalPageHandler

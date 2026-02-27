@@ -148,6 +148,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.EventSubscriber)));
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _filterPageHandler =
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.FilterPageHandler)));
+        private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _httpClientHandler =
+            new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.HttpClientHandler)));
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _hyperlinkHandler =
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.HyperlinkHandler)));
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _inherentPermissions =
@@ -184,6 +186,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.InternalSyntax.AttributeKind ConfirmHandler => _confirmHandler.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind EventSubscriber => _eventSubscriber.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind FilterPageHandler => _filterPageHandler.Value;
+        public static NavCodeAnalysis.InternalSyntax.AttributeKind HttpClientHandler => _httpClientHandler.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind HyperlinkHandler => _hyperlinkHandler.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind InherentPermissions => _inherentPermissions.Value;
         public static NavCodeAnalysis.InternalSyntax.AttributeKind IntegrationEvent => _integrationEvent.Value;
