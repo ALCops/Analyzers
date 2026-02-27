@@ -149,7 +149,11 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _filterPageHandler =
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.FilterPageHandler)));
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _httpClientHandler =
+#if NETSTANDARD2_1
+            new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>("HttpClientHandler"));
+#else
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.HttpClientHandler)));
+#endif
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _hyperlinkHandler =
             new(() => ParseEnum<NavCodeAnalysis.InternalSyntax.AttributeKind>(nameof(NavCodeAnalysis.InternalSyntax.AttributeKind.HyperlinkHandler)));
         private static readonly Lazy<NavCodeAnalysis.InternalSyntax.AttributeKind> _inherentPermissions =
