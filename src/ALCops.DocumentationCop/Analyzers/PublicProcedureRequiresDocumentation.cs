@@ -45,7 +45,7 @@ public sealed class PublicProcedureRequiresDocumentation : DiagnosticAnalyzer
 
     private static bool HasXmlDocumentation(MethodDeclarationSyntax method)
     {
-        var trivia = method.ProcedureKeyword.LeadingTrivia;
+        var trivia = method.GetLeadingTrivia();
 
         return trivia.Any(t =>
             t.Kind == EnumProvider.SyntaxKind.SingleLineDocumentationCommentTrivia ||

@@ -21,6 +21,7 @@ namespace ALCops.DocumentationCop.Test
         [Test]
         [TestCase("Procedure")]
         [TestCase("ProcedureWithComment")]
+        [TestCase("ProcedureWithAttribute")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -32,6 +33,8 @@ namespace ALCops.DocumentationCop.Test
         [Test]
         [TestCase("CodeunitAccessInternal")]
         [TestCase("ProcedureDocumentationComment")]
+        [TestCase("ProcedureDocumentationCommentWithAttribute")]
+        [TestCase("ProcedureDocumentationCommentWithMultipleAttributes")]
         [TestCase("ProcedureInternal")]
         [TestCase("ProcedureLocal")]
         public async Task NoDiagnostic(string testCase)
