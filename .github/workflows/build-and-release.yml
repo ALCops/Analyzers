@@ -97,7 +97,7 @@ jobs:
 
       - name: Build Changelog
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: mikepenz/release-changelog-builder-action@v6
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           ignorePreReleases: ${{ steps.gitversion.outputs.PreReleaseTag == '' }}
