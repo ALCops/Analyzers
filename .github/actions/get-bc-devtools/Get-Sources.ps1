@@ -8,6 +8,10 @@ Normalizes to objects with: version, uri, type. Emits compressed JSON to STDOUT.
 
 #>
 
+param(
+    [string]$JsonPath = "$PSScriptRoot\TargetFramework.json"
+)
+
 $ErrorActionPreference = 'Stop'
 
 function Get-TargetFrameworkCache {
@@ -40,7 +44,7 @@ function Get-TargetFrameworkCache {
 }
 
 # Read TargetFramework data for lookup
-$targetFrameworkCache = Get-TargetFrameworkCache
+$targetFrameworkCache = Get-TargetFrameworkCache -JsonPath $JsonPath
 
 $marketplace = & "$PSScriptRoot/Marketplace.ps1" | ConvertFrom-Json
 

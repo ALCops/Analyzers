@@ -264,7 +264,7 @@ function Get-AssetInfo {
         Write-Warning "  Failed to process $PackageVersion`: $($_.Exception.Message)"
         return [PSCustomObject]@{
             TargetFramework = "error"
-            AssemblyVersion = "error"
+            Version         = "error"
         }
     }
     finally {
