@@ -104,11 +104,45 @@ runs:
           exit 1
         }
 
+    - name: Extract ALLanguage.vsix from BCArtifact
+      id: extract-vsix
+      if: steps.determine-bc-devtools-asset.outputs.asset-type == 'BCArtifact'
+      shell: pwsh
+      env:
+        ARCHIVE_PATH: ${{ steps.download-bc-devtools-asset.outputs.path }}
+        RUNNER_TEMP: ${{ runner.temp }}
+      run: |
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+        $archive = [System.IO.Compression.ZipFile]::OpenRead($env:ARCHIVE_PATH)
+        try {
+          $vsixEntry = $archive.Entries | Where-Object {
+            ($_.FullName -replace '\\', '/') -ieq 'ALLanguage.vsix'
+          } | Select-Object -First 1
+
+          if (-not $vsixEntry) {
+            Write-Error "❌ ALLanguage.vsix not found in BCArtifact archive: $($env:ARCHIVE_PATH)"
+            exit 1
+          }
+
+          $vsixPath = Join-Path $env:RUNNER_TEMP 'ALLanguage.vsix'
+          Write-Output "Extracting ALLanguage.vsix to: $vsixPath"
+          [System.IO.Compression.ZipFileExtensions]::ExtractToFile($vsixEntry, $vsixPath, $true)
+
+          $fileSizeMB = [math]::Round((Get-Item $vsixPath).Length / 1MB, 2)
+          Write-Output "✅ ALLanguage.vsix extracted successfully ($fileSizeMB MB)"
+
+          echo "path=$vsixPath" >> $env:GITHUB_OUTPUT
+        }
+        finally {
+          $archive.Dispose()
+        }
+
     - name: Extract BC DevTools asset
       # if: steps.get_platform_artifact.outputs.cache-hit != 'true'
       shell: pwsh
       env:
-        ARCHIVE_PATH: ${{ steps.download-bc-devtools-asset.outputs.path }}
+        ARCHIVE_PATH: ${{ steps.extract-vsix.outputs.path || steps.download-bc-devtools-asset.outputs.path }}
         ASSET_TYPE: ${{ steps.determine-bc-devtools-asset.outputs.asset-type }}
         TARGET_PATH: ${{ inputs.target-path }}
         ACTION_PATH: ${{ github.action_path }}
