@@ -67,38 +67,59 @@ function Get-RemoteFileSize {
 }
 
 function Get-RemoteBytes {
+    <#
+    .SYNOPSIS
+    Download a byte range from a remote URL with retry logic.
+    #>
     param(
         [string]$Url,
         [long]$Start,
-        [long]$Length
+        [long]$Length,
+        [int]$MaxRetries = 3
     )
 
     Write-Verbose "    Range GET bytes=${Start}-$($Start + $Length - 1) ($([math]::Round($Length / 1KB, 1)) KB)..."
 
-    $request = [System.Net.HttpWebRequest]::Create($Url)
-    $request.Method = 'GET'
-    $request.AddRange([long]$Start, [long]($Start + $Length - 1))
-    $request.AllowAutoRedirect = $true
-    $request.Timeout = 120000
+    for ($attempt = 1; $attempt -le $MaxRetries; $attempt++) {
+        try {
+            $request = [System.Net.HttpWebRequest]::Create($Url)
+            $request.Method = 'GET'
+            $request.AddRange([long]$Start, [long]($Start + $Length - 1))
+            $request.AllowAutoRedirect = $true
+            # Escalating timeouts: 15 s, 30 s, 60 s
+            $timeoutMs = @(15000, 30000, 60000)[$attempt - 1]
+            $request.Timeout = $timeoutMs
+            $request.ReadWriteTimeout = $timeoutMs
 
-    $response = $request.GetResponse()
-    $stream = $response.GetResponseStream()
-    $ms = [System.IO.MemoryStream]::new()
-    $stream.CopyTo($ms)
-    $stream.Close()
-    $response.Close()
+            $response = $request.GetResponse()
+            $stream = $response.GetResponseStream()
+            $ms = [System.IO.MemoryStream]::new()
+            $stream.CopyTo($ms)
+            $stream.Close()
+            $response.Close()
 
-    $bytes = $ms.ToArray()
-    $ms.Close()
-    $script:TotalBytesDownloaded += $bytes.Length
+            $bytes = $ms.ToArray()
+            $ms.Close()
+            $script:TotalBytesDownloaded += $bytes.Length
 
-    # If the server returned the full file instead of a partial response, the
-    # offsets will be wrong. Detect this by checking response size vs requested.
-    if ($bytes.Length -gt ($Length * 1.1 + 4096)) {
-        throw "Server returned $($bytes.Length) bytes instead of the requested $Length. Range requests may not be supported."
+            # Detect server ignoring the Range header (returns full file)
+            if ($bytes.Length -gt ($Length * 1.1 + 4096)) {
+                throw "Server returned $($bytes.Length) bytes instead of the requested $Length. Range requests may not be supported."
+            }
+
+            return , $bytes
+        }
+        catch {
+            if ($attempt -lt $MaxRetries) {
+                $wait = @(5, 10)[($attempt - 1)]
+                Write-Warning "    Attempt $attempt/$MaxRetries failed: $($_.Exception.Message). Retrying in ${wait}s..."
+                Start-Sleep -Seconds $wait
+            }
+            else {
+                throw
+            }
+        }
     }
-
-    return , $bytes
 }
 
 # ===== Binary-read helpers =====
