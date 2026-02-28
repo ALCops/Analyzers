@@ -114,17 +114,18 @@ runs:
         ACTION_PATH: ${{ github.action_path }}
       run: |
         $pathInArchive = switch ($env:ASSET_TYPE) {
-          'VSIX' { 'extension/bin/Analyzers' }
-          'NuGet' { 'tools/net8.0/any' }
+          'VSIX'       { 'extension/bin/Analyzers' }
+          'NuGet'      { 'tools/net8.0/any' }
+          'BCArtifact' { '' }
           default { 
-            Write-Error "Invalid asset-type: $($env:ASSET_TYPE). Must be 'VSIX' or 'NuGet'."
+            Write-Error "Invalid asset-type: $($env:ASSET_TYPE). Must be 'VSIX', 'NuGet', or 'BCArtifact'."
             exit 1
           }
         }
 
         Write-Output "Extracting $($env:ASSET_TYPE) from path: $pathInArchive"
 
-        & "$env:ACTION_PATH\Extract-RequiredFiles.ps1" -DestinationPath $env:TARGET_PATH -ArchivePath $env:ARCHIVE_PATH -PathInArchive $pathInArchive
+        & "$env:ACTION_PATH\..\shared\Extract-RequiredFiles.ps1" -DestinationPath $env:TARGET_PATH -ArchivePath $env:ARCHIVE_PATH -PathInArchive $pathInArchive
 
     # - name: Add platform artifact to cache
     #   id: add_hash

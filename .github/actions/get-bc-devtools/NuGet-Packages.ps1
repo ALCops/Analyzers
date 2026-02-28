@@ -73,6 +73,9 @@ if (-not $idx -or -not $idx.versions) {
 
 $versions = @($idx.versions)
 
+# Align version floor with Marketplace.ps1: ignore versions below 12.0.0
+$versions = $versions | Where-Object { [System.Version]::Parse(($_ -split '-')[0]) -ge [System.Version]::Parse('12.0.0') }
+
 if (-not $IncludePrerelease) {
     # filter out versions that contain a hyphen (SemVer pre-release)
     $versions = $versions | Where-Object { $_ -notmatch '-' }

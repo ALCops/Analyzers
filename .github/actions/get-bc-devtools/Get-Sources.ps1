@@ -109,8 +109,38 @@ foreach ($item in $nupkgs) {
     }
 }
 
-# TODO: Combine, drop nulls and de-duplicate
-$sources = @($vsixSources + $nugetSources) 
+$bcArtifacts = & "$PSScriptRoot/BC-Artifacts.ps1" | ConvertFrom-Json
+
+$bcArtifactLatest =
+($bcArtifacts | Where-Object { $_.select -eq 'Current' } | Select-Object -First 1).version
+
+$bcArtifactPreview =
+($bcArtifacts | Where-Object { $_.isBeta -eq $true } |
+Sort-Object { [version]$_.version } -Descending |
+Select-Object -First 1).version
+
+$bcArtifactSources =
+foreach ($item in $bcArtifacts) {
+    # Get Version and TargetFramework from JSON data if available using PackageType and PackageVersion
+    $lookupKey = "BCArtifact:$($item.version)"
+    $frameworkInfo = $targetFrameworkCache[$lookupKey]
+    $frameworkInfoVersion = if ($frameworkInfo) { $frameworkInfo.Version } else { "" }
+    $frameworkInfoTFM = if ($frameworkInfo) { $frameworkInfo.TargetFramework } else { "" }
+
+    [PSCustomObject]@{
+        version        = $frameworkInfoVersion
+        packageType    = 'BCArtifact'
+        packageVersion = $item.version
+        isLatest       = ($item.version -eq $bcArtifactLatest)
+        isPreview      = ($item.version -eq $bcArtifactPreview)
+        isBeta         = $item.isBeta
+        uri            = $item.assetUri
+        tfm            = $frameworkInfoTFM
+    }
+}
+
+# Combine sources, filtering out entries without a download URI
+$sources = @($vsixSources + $nugetSources + $bcArtifactSources) | Where-Object { $_.uri }
 
 # Best-effort version sorting (with fall back to string compare)
 $sources = $sources | Sort-Object { 
