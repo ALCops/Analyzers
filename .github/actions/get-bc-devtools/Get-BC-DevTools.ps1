@@ -149,6 +149,21 @@ function Get-AssemblyInfo {
                 }
             }
         }
+
+        # Last-resort fallback: some assemblies (e.g. older BC BCArtifact builds) are compiled
+        # without emitting TargetFrameworkAttribute at all. Infer the TFM from the referenced
+        # assemblies instead — a reference to 'netstandard' reliably identifies netstandard2.0
+        # builds, and a reference to 'System.Runtime' with no netstandard reference indicates net8.0+.
+        if ($targetFramework -eq 'unknown') {
+            $refNames = $assembly.GetReferencedAssemblies() | ForEach-Object { $_.Name }
+            $netstdRef = $assembly.GetReferencedAssemblies() | Where-Object { $_.Name -eq 'netstandard' }
+            if ($netstdRef) {
+                $targetFramework = "netstandard$($netstdRef.Version.Major).$($netstdRef.Version.Minor)"
+            }
+            elseif ('System.Runtime' -in $refNames) {
+                $targetFramework = 'net8.0'
+            }
+        }
         
         return [PSCustomObject]@{
             TargetFramework = $targetFramework
