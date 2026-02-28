@@ -16,7 +16,8 @@ $ErrorActionPreference = 'Stop'
 
 function Get-TargetFrameworkCache {
     param(
-        [string]$JsonPath = "$PSScriptRoot\TargetFramework.json"
+        [Parameter(Mandatory)]
+        [string]$JsonPath
     )
     
     if (Test-Path $JsonPath) {
