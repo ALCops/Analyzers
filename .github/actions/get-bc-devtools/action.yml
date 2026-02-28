@@ -1,6 +1,12 @@
 name: Get sources for Microsoft Dynamics Business Central Development Tools
 description: Retrieves all available sources for Microsoft Dynamics Business Central Development Tools from VS Marketplace and NuGet, resolves their target frameworks and returns a unified source list.
 
+inputs:
+  json-path:
+    description: Path to the TargetFramework.json cache file. Defaults to runner temp so the file is never written back to the checkout.
+    required: false
+    default: ${{ runner.temp }}/TargetFramework.json
+
 outputs:
   sources:
     description: Stringified JSON object of sources for the Microsoft Dynamics Business Central Development Tools
@@ -22,7 +28,7 @@ runs:
         $ErrorActionPreference = 'Stop'
 
         # Retrieve all sources
-        $sources = & "${{github.action_path}}/Get-BC-DevTools.ps1" | ConvertFrom-Json
+        $sources = & "${{github.action_path}}/Get-BC-DevTools.ps1" -JsonPath "${{ inputs.json-path }}" | ConvertFrom-Json
         Write-Host "Retrieved $($sources.Count) sources for Microsoft Dynamics Business Central Development Tools."
 
         # Deduplicate by version; prefer NuGet > VSIX > BCArtifact for the same version

@@ -285,7 +285,7 @@ try {
     
     # Step 2: Get all sources using Get-Sources.ps1
     Write-Host "Retrieving BC DevTools sources..." -ForegroundColor Yellow
-    $sourcesJson = & "$PSScriptRoot\Get-Sources.ps1"
+    $sourcesJson = & "$PSScriptRoot\Get-Sources.ps1" -JsonPath $JsonPath
     $allSources = $sourcesJson | ConvertFrom-Json
     Write-Host "Found $($allSources.Count) total sources from BC DevTools" -ForegroundColor Green
     
@@ -337,7 +337,7 @@ try {
     
     # Step 5b: Output the updated sources as JSON (like the original Get-BC-DevTools.ps1)
     Write-Host "Retrieving updated BC DevTools sources with TargetFramework data..." -ForegroundColor Yellow
-    $updatedSourcesJson = & "$PSScriptRoot\Get-Sources.ps1"
+    $updatedSourcesJson = & "$PSScriptRoot\Get-Sources.ps1" -JsonPath $JsonPath
     
     # Emit the JSON to STDOUT for the get-bc-devtools action
     Write-Output $updatedSourcesJson

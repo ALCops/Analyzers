@@ -31,9 +31,35 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Restore TargetFramework.json cache
+        id: restore-tfm-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/TargetFramework.json
+          # Unique key so we never get an exact hit; restore-keys picks up the latest saved entry
+          key: tfm-json-${{ github.run_id }}
+          restore-keys: tfm-json-
+
       - name: Get BC DevTools
         id: get-bc-devtools
         uses: ./.github/actions/get-bc-devtools
+
+      - name: Hash TargetFramework.json
+        id: hash-tfm
+        shell: bash
+        run: |
+          if [ -f "${{ runner.temp }}/TargetFramework.json" ]; then
+            echo "hash=$(sha256sum '${{ runner.temp }}/TargetFramework.json' | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          else
+            echo "hash=missing" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save TargetFramework.json cache
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/TargetFramework.json
+          # Content-based key: only creates a new entry when the file actually changed
+          key: tfm-json-${{ steps.hash-tfm.outputs.hash }}
 
       - name: Setup matrix for test
         id: setup-test-matrix

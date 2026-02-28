@@ -1,0 +1,21 @@
+name: Scheduled Build
+
+# Runs daily to:
+# 1. Keep the TargetFramework.json GitHub Actions cache alive (evicted after 7 days of no access).
+# 2. Pick up any newly published BC DevTools versions automatically.
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 06:00 UTC every day
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    uses: ./.github/workflows/build-test.yml
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+    with:
+      draft-check: false
