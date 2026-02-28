@@ -1,12 +1,5 @@
 [
   {
-    "version": "17.0.32.58609",
-    "packageType": "BCArtifact",
-    "packageVersion": "28.0.46665.46890",
-    "targetFramework": "net8.0",
-    "beta": true
-  },
-  {
     "version": "17.0.32.53955",
     "packageType": "NuGet",
     "packageVersion": "17.0.32.53955-beta",
@@ -157,20 +150,6 @@
     "version": "17.0.26.46427",
     "packageType": "VSIX",
     "packageVersion": "17.0.1750311",
-    "targetFramework": "net8.0",
-    "beta": true
-  },
-  {
-    "version": "16.4.33.5886",
-    "packageType": "BCArtifact",
-    "packageVersion": "27.4.45366.46864",
-    "targetFramework": "net8.0",
-    "beta": false
-  },
-  {
-    "version": "16.4.33.4744",
-    "packageType": "BCArtifact",
-    "packageVersion": "27.5.46879.0",
     "targetFramework": "net8.0",
     "beta": true
   },
