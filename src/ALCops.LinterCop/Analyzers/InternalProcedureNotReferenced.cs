@@ -192,7 +192,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
                 IApplicationObjectTypeSymbol? objectSymbol = methodSymbol.GetContainingApplicationObjectTypeSymbol();
                 if (objectSymbol is null) continue;
 
-                Diagnostic diagnostic = Diagnostic.Create(DiagnosticDescriptors.InternalProcedureNotReferenced, methodSymbol.OriginalDefinition.GetLocation(), methodSymbol.DeclaredAccessibility.ToString().ToLowerInvariant(), methodSymbol.Name.QuoteIdentifierIfNeeded(), objectSymbol.NavTypeKind, objectSymbol.Name.QuoteIdentifierIfNeeded(), objectSymbol.DeclaredAccessibility);
+                Diagnostic diagnostic = Diagnostic.Create(DiagnosticDescriptors.InternalProcedureNotReferenced, methodSymbol.OriginalDefinition.GetLocation(), methodSymbol.DeclaredAccessibility.ToString().ToLowerInvariant(), methodSymbol.Name.QuoteIdentifierIfNeededWithReflection(), objectSymbol.NavTypeKind, objectSymbol.Name.QuoteIdentifierIfNeededWithReflection(), objectSymbol.DeclaredAccessibility);
                 action(diagnostic);
             }
         }
@@ -207,7 +207,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
                 IApplicationObjectTypeSymbol? objectSymbol = methodSymbol.GetContainingApplicationObjectTypeSymbol();
                 if (objectSymbol is null) continue;
 
-                Diagnostic diagnostic = Diagnostic.Create(DiagnosticDescriptors.InternalProcedureOnlyUsedInCurrentObject, methodSymbol.OriginalDefinition.GetLocation(), methodSymbol.DeclaredAccessibility.ToString().ToLowerInvariant(), methodSymbol.Name.QuoteIdentifierIfNeeded(), objectSymbol.NavTypeKind, objectSymbol.Name.QuoteIdentifierIfNeeded(), objectSymbol.DeclaredAccessibility);
+                Diagnostic diagnostic = Diagnostic.Create(DiagnosticDescriptors.InternalProcedureOnlyUsedInCurrentObject, methodSymbol.OriginalDefinition.GetLocation(), methodSymbol.DeclaredAccessibility.ToString().ToLowerInvariant(), methodSymbol.Name.QuoteIdentifierIfNeededWithReflection(), objectSymbol.NavTypeKind, objectSymbol.Name.QuoteIdentifierIfNeededWithReflection(), objectSymbol.DeclaredAccessibility);
                 action(diagnostic);
             }
         }
