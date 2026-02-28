@@ -34,6 +34,7 @@ runs:
         # Deduplicate by version; prefer NuGet > VSIX > BCArtifact for the same version
         $typePriority = @{ 'NuGet' = 1; 'VSIX' = 2; 'BCArtifact' = 3 }
         $sources = $sources |
+            Where-Object { $_.version } |
             Group-Object version |
             ForEach-Object {
                 $_.Group | Sort-Object { if ($typePriority.ContainsKey($_.packageType)) { $typePriority[$_.packageType] } else { 99 } } | Select-Object -First 1
