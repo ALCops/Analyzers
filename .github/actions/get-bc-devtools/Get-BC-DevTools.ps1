@@ -301,11 +301,8 @@ try {
     }
     
     # Step 4: Process missing versions
-    $isGH = $null -ne $env:GITHUB_ACTIONS
     $newResults = @()
     foreach ($source in $sourcesToProcess) {
-        if ($isGH) { Write-Host "::group::Processing $($source.packageVersion) ($($source.packageType))" }
-
         $assemblyInfo = Get-AssetInfo -Source $source
 
         $newEntry = [PSCustomObject]@{
@@ -317,8 +314,6 @@ try {
         }
        
         $newResults += $newEntry
-
-        if ($isGH) { Write-Host "::endgroup::" }
     }
     
     # Step 5a: Update TargetFramework.json
