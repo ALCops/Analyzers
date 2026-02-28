@@ -116,7 +116,7 @@ runs:
         $pathInArchive = switch ($env:ASSET_TYPE) {
           'VSIX'       { 'extension/bin/Analyzers' }
           'NuGet'      { 'tools/net8.0/any' }
-          'BCArtifact' { '' }
+          'BCArtifact' { 'extension/bin/Analyzers' }
           default { 
             Write-Error "Invalid asset-type: $($env:ASSET_TYPE). Must be 'VSIX', 'NuGet', or 'BCArtifact'."
             exit 1
