@@ -21,7 +21,6 @@ public sealed class AccessPropertyExplicitlySet : DiagnosticAnalyzer
             this.AnalyzeAccessProperty,
             EnumProvider.SymbolKind.Codeunit,
             EnumProvider.SymbolKind.Enum,
-            EnumProvider.SymbolKind.Field,
             EnumProvider.SymbolKind.Interface,
             EnumProvider.SymbolKind.PermissionSet,
             EnumProvider.SymbolKind.Query,
@@ -39,16 +38,6 @@ public sealed class AccessPropertyExplicitlySet : DiagnosticAnalyzer
             kind == EnumProvider.SymbolKind.Interface)
         {
             if (!IsEnumOrInterfaceAccessSupported(ctx.Compilation))
-                return;
-        }
-
-        if (kind == EnumProvider.SymbolKind.Field)
-        {
-            var containing = ctx.Symbol.ContainingSymbol;
-            if (containing is null)
-                return;
-
-            if (containing.GetContainingObjectTypeSymbol().IsObsolete())
                 return;
         }
 
