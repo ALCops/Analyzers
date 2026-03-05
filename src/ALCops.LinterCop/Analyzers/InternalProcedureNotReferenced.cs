@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
+using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.InternalSyntax;
@@ -19,7 +20,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
         private readonly PooledDictionary<IMethodSymbol, string> internalMethodsUnused = PooledDictionary<IMethodSymbol, string>.GetInstance();
         private readonly PooledDictionary<IMethodSymbol, string> internalMethodsUsedInCurrentObject = PooledDictionary<IMethodSymbol, string>.GetInstance();
         private readonly PooledDictionary<IMethodSymbol, string> internalMethodsUsedInOtherObjects = PooledDictionary<IMethodSymbol, string>.GetInstance();
-        private readonly AttributeKind[] attributeKindsOfMethodsToSkip = new AttributeKind[] { AttributeKind.ConfirmHandler, AttributeKind.FilterPageHandler, AttributeKind.HyperlinkHandler, AttributeKind.MessageHandler, AttributeKind.ModalPageHandler, AttributeKind.PageHandler, AttributeKind.RecallNotificationHandler, AttributeKind.ReportHandler, AttributeKind.RequestPageHandler, AttributeKind.SendNotificationHandler, AttributeKind.SessionSettingsHandler, AttributeKind.StrMenuHandler, AttributeKind.Test };
+        private readonly AttributeKind[] attributeKindsOfMethodsToSkip = new AttributeKind[] { EnumProvider.AttributeKind.ConfirmHandler, EnumProvider.AttributeKind.FilterPageHandler, EnumProvider.AttributeKind.HyperlinkHandler, EnumProvider.AttributeKind.MessageHandler, EnumProvider.AttributeKind.ModalPageHandler, EnumProvider.AttributeKind.PageHandler, EnumProvider.AttributeKind.RecallNotificationHandler, EnumProvider.AttributeKind.ReportHandler, EnumProvider.AttributeKind.RequestPageHandler, EnumProvider.AttributeKind.SendNotificationHandler, EnumProvider.AttributeKind.SessionSettingsHandler, EnumProvider.AttributeKind.StrMenuHandler, EnumProvider.AttributeKind.Test };
 
         public MethodSymbolAnalyzer(CompilationAnalysisContext compilationAnalysisContext)
         {
@@ -37,7 +38,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
                 while (objectMemberEnumerator.MoveNext())
                 {
                     ISymbol objectMember = objectMemberEnumerator.Current;
-                    if (objectMember.Kind == SymbolKind.Method)
+                    if (objectMember.Kind == EnumProvider.SymbolKind.Method)
                     {
                         if (objectMember is IMethodSymbol methodSymbol && MethodNeedsReferenceCheck(methodSymbol))
                         {
@@ -51,7 +52,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
 
         private bool MethodNeedsReferenceCheck(IMethodSymbol methodSymbol)
         {
-            if (methodSymbol.MethodKind != MethodKind.Method)
+            if (methodSymbol.MethodKind != EnumProvider.MethodKind.Method)
             {
                 return false;
             }
@@ -69,13 +70,20 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
             {
                 return false;
             }
+            // Skip all methods in internal test codeunits
+            if (objectSymbol is ICodeunitTypeSymbol codeunitSymbol &&
+                codeunitSymbol.Subtype == EnumProvider.CodeunitSubtypeKind.Test &&
+                objectSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Internal)
+            {
+                return false;
+            }
             if (!methodSymbol.IsInternal)
             {
                 // Check if public procedure in internal object
-                if (methodSymbol.DeclaredAccessibility == Accessibility.Public && objectSymbol is not null)
+                if (methodSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Public && objectSymbol is not null)
                 {
                     // If the containing object is not an internal object, then we do not need to check for references for this public procedure.
-                    if (objectSymbol.DeclaredAccessibility != Accessibility.Internal)
+                    if (objectSymbol.DeclaredAccessibility != EnumProvider.Accessibility.Internal)
                     {
                         return false;
                     }
@@ -90,7 +98,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
             if (methodSymbol.Parameters.Length == 1)
             {
                 ITypeSymbol firstParameterTypeSymbol = methodSymbol.Parameters[0].ParameterType;
-                if (firstParameterTypeSymbol.GetNavTypeKindSafe() == NavTypeKind.Notification || firstParameterTypeSymbol.GetNavTypeKindSafe() == NavTypeKind.ErrorInfo)
+                if (firstParameterTypeSymbol.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Notification || firstParameterTypeSymbol.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.ErrorInfo)
                 {
                     return false;
                 }
@@ -124,7 +132,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
                     {
                         return;
                     }
-                    if (syntaxNode.Parent.IsKind(SyntaxKind.MethodDeclaration) || !syntaxNode.IsKind(SyntaxKind.IdentifierName))
+                    if (syntaxNode.Parent.IsKind(EnumProvider.SyntaxKind.MethodDeclaration) || !syntaxNode.IsKind(EnumProvider.SyntaxKind.IdentifierName))
                     {
                         return;
                     }
@@ -132,7 +140,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
                     {
                         return;
                     }
-                    if (methodSymbols.ContainsValue(identifierNameSyntax.Identifier.ValueText.ToLowerInvariant()) && TryGetSymbolFromIdentifier(semanticModel, identifierNameSyntax, SymbolKind.Method, out var methodSymbol))
+                    if (methodSymbols.ContainsValue(identifierNameSyntax.Identifier.ValueText.ToLowerInvariant()) && TryGetSymbolFromIdentifier(semanticModel, identifierNameSyntax, EnumProvider.SymbolKind.Method, out var methodSymbol))
                     {
                         if (methodSymbol is not null)
                         {

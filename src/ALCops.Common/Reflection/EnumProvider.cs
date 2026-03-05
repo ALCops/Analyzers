@@ -620,6 +620,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.MediaSet)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _none =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.None)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _notification =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Notification)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _methodReference =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.MethodReference)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _option =
@@ -675,6 +677,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind Media => _media.Value;
         public static NavCodeAnalysis.NavTypeKind MediaSet => _mediaSet.Value;
         public static NavCodeAnalysis.NavTypeKind None => _none.Value;
+        public static NavCodeAnalysis.NavTypeKind Notification => _notification.Value;
         public static NavCodeAnalysis.NavTypeKind Option => _methodReference.Value;
         public static NavCodeAnalysis.NavTypeKind MethodReference => _option.Value;
         public static NavCodeAnalysis.NavTypeKind Page => _page.Value;

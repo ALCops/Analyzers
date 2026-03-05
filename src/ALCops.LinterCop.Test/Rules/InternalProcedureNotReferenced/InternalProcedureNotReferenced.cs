@@ -26,6 +26,7 @@ namespace ALCops.LinterCop.Test
         // [TestCase("Codeunit_UnusedInternalOverloads")]
         // [TestCase("InternalCodeunit_UnusedInternal")]
         // [TestCase("InternalCodeunit_UnusedPublic")]
+        // [TestCase("PublicTestCodeunit_UnusedInternal")]
         // public async Task HasDiagnostic(string testCase)
         // {
         //     var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -38,6 +39,7 @@ namespace ALCops.LinterCop.Test
         // [TestCase("ErrorInfoParameter")]
         // [TestCase("ImplementsInterfaceMethod")]
         // [TestCase("IntegrationEvent")]
+        // [TestCase("InternalTestCodeunit")]
         // [TestCase("MessageHandlerAttribute")]
         // [TestCase("NotificationParameter")]
         // [TestCase("Obsolete")]
