@@ -70,13 +70,6 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
             {
                 return false;
             }
-            // Skip all methods in internal test codeunits
-            if (objectSymbol is ICodeunitTypeSymbol codeunitSymbol &&
-                codeunitSymbol.Subtype == EnumProvider.CodeunitSubtypeKind.Test &&
-                objectSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Internal)
-            {
-                return false;
-            }
             if (!methodSymbol.IsInternal)
             {
                 // Check if public procedure in internal object
