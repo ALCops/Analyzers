@@ -45,6 +45,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("FieldTypeNotSupported")]
         [TestCase("FlowFilterField")]
         [TestCase("ObsoleteStatePending")]
+        [TestCase("ObsoleteStateRemoved")]
         [TestCase("TableExtension")]
         public async Task NoDiagnostic(string testCase)
         {

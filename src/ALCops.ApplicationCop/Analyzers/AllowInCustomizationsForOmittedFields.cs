@@ -129,12 +129,8 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
             if (field.GetProperty(EnumProvider.PropertyKind.AllowInCustomizations) is not null)
                 continue;
 
-            var obsoleteState = field.GetEnumPropertyValue<ObsoleteStateKind>(EnumProvider.PropertyKind.ObsoleteState);
-            if (obsoleteState is not null &&
-               obsoleteState.Value != EnumProvider.ObsoleteStateKind.No)
-            {
+            if (field.IsObsolete())
                 continue;
-            }
 
             var navTypeKind = field.OriginalDefinition.GetTypeSymbol().GetNavTypeKindSafe();
             if (!IsSupportedType(navTypeKind))
