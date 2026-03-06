@@ -97,7 +97,7 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
         {
             if (!AreFieldCompatible(invocation.Arguments[i], table.PrimaryKey.Fields[i]))
             {
-                if (IsOptionMemberAccessOnMatchingPrimaryKeyField(invocation.Arguments[i], table.PrimaryKey.Fields[i]))
+                if (IsOptionMemberAccessOnMatchingPrimaryKeyField(invocation.Arguments[i], table.PrimaryKey.Fields[i], table))
                     continue;
 
                 var argumentType = invocation.Arguments[i].GetTypeSymbol();
@@ -151,7 +151,7 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
         return true;
     }
 
-    private static bool IsOptionMemberAccessOnMatchingPrimaryKeyField(IArgument argument, IFieldSymbol primaryKeyField)
+    private static bool IsOptionMemberAccessOnMatchingPrimaryKeyField(IArgument argument, IFieldSymbol primaryKeyField, ITableTypeSymbol table)
     {
         IOperation current = argument.Value;
         while (current is IConversionExpression conversion)
@@ -161,6 +161,11 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
             return false;
 
         if (optionAccess.Instance is not IFieldAccess fieldAccess)
+            return false;
+
+        // Verify the field access is on the same table as the .Get() invocation
+        if (fieldAccess.FieldSymbol.GetContainingObjectTypeSymbol() is not ITableTypeSymbol fieldTable ||
+            !fieldTable.Equals(table))
             return false;
 
         return SemanticFacts.IsSameName(fieldAccess.FieldSymbol.Name, primaryKeyField.Name);

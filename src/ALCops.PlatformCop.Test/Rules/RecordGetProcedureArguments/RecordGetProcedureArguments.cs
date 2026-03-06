@@ -27,6 +27,7 @@ public class RecordGetProcedureArguments : NavCodeAnalysisBase
     [TestCase("RecordGetGlobalVariable")]
     [TestCase("RecordGetLocalVariable")]
     [TestCase("RecordGetMethod")]
+    [TestCase("RecordGetOptionMemberAccessCrossTable")]
     [TestCase("RecordGetOptionMemberAccessMismatchPrimaryKey")]
     [TestCase("RecordGetParameter")]
     [TestCase("RecordGetReportDataItem")]
