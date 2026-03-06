@@ -97,6 +97,9 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
         {
             if (!AreFieldCompatible(invocation.Arguments[i], table.PrimaryKey.Fields[i]))
             {
+                if (IsOptionMemberAccessOnMatchingPrimaryKeyField(invocation.Arguments[i], table.PrimaryKey.Fields[i]))
+                    continue;
+
                 var argumentType = invocation.Arguments[i].GetTypeSymbol();
 #if NETSTANDARD2_1
                 var fieldType = table.PrimaryKey.Fields[i].OriginalDefinition.GetTypeSymbol();
@@ -146,6 +149,21 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
             return false;
 
         return true;
+    }
+
+    private static bool IsOptionMemberAccessOnMatchingPrimaryKeyField(IArgument argument, IFieldSymbol primaryKeyField)
+    {
+        IOperation current = argument.Value;
+        while (current is IConversionExpression conversion)
+            current = conversion.Operand;
+
+        if (current is not IOptionAccess optionAccess)
+            return false;
+
+        if (optionAccess.Instance is not IFieldAccess fieldAccess)
+            return false;
+
+        return SemanticFacts.IsSameName(fieldAccess.FieldSymbol.Name, primaryKeyField.Name);
     }
 
     private static bool IsSingletonTable(ITableTypeSymbol table)
