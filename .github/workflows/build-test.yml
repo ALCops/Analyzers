@@ -33,7 +33,7 @@ jobs:
 
       - name: Restore TargetFramework.json cache
         id: restore-tfm-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ runner.temp }}/TargetFramework.json
           # Unique key so we never get an exact hit; restore-keys picks up the latest saved entry
@@ -55,7 +55,7 @@ jobs:
           fi
 
       - name: Save TargetFramework.json cache
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ runner.temp }}/TargetFramework.json
           # Content-based key: only creates a new entry when the file actually changed
