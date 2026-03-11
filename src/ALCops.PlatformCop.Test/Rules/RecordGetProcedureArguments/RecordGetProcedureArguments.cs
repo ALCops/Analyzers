@@ -20,8 +20,8 @@ public class RecordGetProcedureArguments : NavCodeAnalysisBase
     }
 
     [Test]
-    [TestCase("ImplicitConversiontCodeToEnum")]
-    [TestCase("ImplicitConversiontEnumToAnotherEnum")]
+    [TestCase("ImplicitConversionCodeToEnum")]
+    [TestCase("ImplicitConversionEnumToAnotherEnum")]
     [TestCase("RecordGetCodeFieldLengthTooLong")]
     [TestCase("RecordGetEnum")]
     [TestCase("RecordGetGlobalVariable")]
@@ -44,8 +44,9 @@ public class RecordGetProcedureArguments : NavCodeAnalysisBase
     }
 
     [Test]
-    [TestCase("ImplicitConversiontIntegerToEnum")]
-    [TestCase("ImplicitConversiontLabelToCode")]
+    [TestCase("ImplicitConversionIntegerToEnumFromInteger")]
+    [TestCase("ImplicitConversionIntegerToOption")]
+    [TestCase("ImplicitConversionLabelToCode")]
     [TestCase("PrimaryKeyAsInteger")]
     [TestCase("RecordGetBuiltInMethodRecordId")]
     [TestCase("RecordGetCode10ToCode20")]

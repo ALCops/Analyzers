@@ -95,27 +95,31 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
 
         for (int i = 0; i < invocation.Arguments.Length; i++)
         {
-            if (!AreFieldCompatible(invocation.Arguments[i], table.PrimaryKey.Fields[i]))
+            if (IsFieldBasedOptionAccess(invocation.Arguments[i]))
             {
                 if (IsOptionMemberAccessOnMatchingPrimaryKeyField(invocation.Arguments[i], table.PrimaryKey.Fields[i], table))
                     continue;
+            }
+            else if (AreFieldCompatible(invocation.Arguments[i], table.PrimaryKey.Fields[i]))
+            {
+                continue;
+            }
 
-                var argumentType = invocation.Arguments[i].GetTypeSymbol();
+            var argumentType = invocation.Arguments[i].GetTypeSymbol();
 #if NETSTANDARD2_1
-                var fieldType = table.PrimaryKey.Fields[i].OriginalDefinition.GetTypeSymbol();
+            var fieldType = table.PrimaryKey.Fields[i].OriginalDefinition.GetTypeSymbol();
 #else
-                var fieldType = table.PrimaryKey.Fields[i].Type;
+            var fieldType = table.PrimaryKey.Fields[i].Type;
 #endif
 
-                string expectedArgs = $"Argument at position {i + 1} has an invalid type; expected '{fieldType}', found '{argumentType}'";
+            string expectedArgs = $"Argument at position {i + 1} has an invalid type; expected '{fieldType}', found '{argumentType}'";
 
-                ctx.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.RecordGetProcedureArguments,
-                    ctx.Operation.Syntax.GetLocation(),
-                    table.Name,
-                    expectedArgs));
-                return;
-            }
+            ctx.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.RecordGetProcedureArguments,
+                ctx.Operation.Syntax.GetLocation(),
+                table.Name,
+                expectedArgs));
+            return;
         }
     }
 
@@ -149,6 +153,15 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
             return false;
 
         return true;
+    }
+
+    private static bool IsFieldBasedOptionAccess(IArgument argument)
+    {
+        IOperation current = argument.Value;
+        while (current is IConversionExpression conversion)
+            current = conversion.Operand;
+
+        return current is IOptionAccess { Instance: IFieldAccess };
     }
 
     private static bool IsOptionMemberAccessOnMatchingPrimaryKeyField(IArgument argument, IFieldSymbol primaryKeyField, ITableTypeSymbol table)

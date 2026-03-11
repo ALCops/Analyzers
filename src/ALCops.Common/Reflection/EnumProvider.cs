@@ -678,8 +678,8 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind MediaSet => _mediaSet.Value;
         public static NavCodeAnalysis.NavTypeKind None => _none.Value;
         public static NavCodeAnalysis.NavTypeKind Notification => _notification.Value;
-        public static NavCodeAnalysis.NavTypeKind Option => _methodReference.Value;
-        public static NavCodeAnalysis.NavTypeKind MethodReference => _option.Value;
+        public static NavCodeAnalysis.NavTypeKind Option => _option.Value;
+        public static NavCodeAnalysis.NavTypeKind MethodReference => _methodReference.Value;
         public static NavCodeAnalysis.NavTypeKind Page => _page.Value;
         public static NavCodeAnalysis.NavTypeKind PageExtension => _pageExtension.Value;
         public static NavCodeAnalysis.NavTypeKind Query => _query.Value;
