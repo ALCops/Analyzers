@@ -27,4 +27,5 @@ public static class DiagnosticIds
     public static readonly string CognitiveComplexityMetric = "LC0089";
     public static readonly string CognitiveComplexityIncrement = "LC0089i";
     public static readonly string CognitiveComplexityThresholdExceeded = "LC0090";
+    public static readonly string AllowInCustomizationsRedundancy = "LC0094";
 }

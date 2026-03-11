@@ -15,6 +15,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.ApiPageCanonicalFieldNameGuideDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ApiPageCanonicalFieldNameGuide));
 
+    public static readonly DiagnosticDescriptor AllowInCustomizationsRedundancy = new(
+        id: DiagnosticIds.AllowInCustomizationsRedundancy,
+        title: LinterCopAnalyzers.AllowInCustomizationsRedundancyMessageFormat,
+        messageFormat: LinterCopAnalyzers.AllowInCustomizationsRedundancyMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.AllowInCustomizationsRedundancyDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.AllowInCustomizationsRedundancy));
+
     public static readonly DiagnosticDescriptor ApplicationAreaRedundancy = new(
         id: DiagnosticIds.ApplicationAreaRedundancy,
         title: LinterCopAnalyzers.ApplicationAreaRedundancyMessageFormat,

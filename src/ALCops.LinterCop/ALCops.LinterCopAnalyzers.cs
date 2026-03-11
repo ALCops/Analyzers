@@ -58,6 +58,42 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Remove redundant AllowInCustomizations.
+        /// </summary>
+        internal static string AllowInCustomizationsRedundancyCodeAction {
+            get {
+                return ResourceManager.GetString("AllowInCustomizationsRedundancyCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When AllowInCustomizations is defined on a table or tableextension, it automatically applies to all fields. Setting the same AllowInCustomizations again on individual fields is redundant and adds unnecessary noise to the object definition..
+        /// </summary>
+        internal static string AllowInCustomizationsRedundancyDescription {
+            get {
+                return ResourceManager.GetString("AllowInCustomizationsRedundancyDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AllowInCustomizations matches the table-level AllowInCustomizations and can be removed..
+        /// </summary>
+        internal static string AllowInCustomizationsRedundancyMessageFormat {
+            get {
+                return ResourceManager.GetString("AllowInCustomizationsRedundancyMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redundant AllowInCustomizations on field.
+        /// </summary>
+        internal static string AllowInCustomizationsRedundancyTitle {
+            get {
+                return ResourceManager.GetString("AllowInCustomizationsRedundancyTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to It is common for API pages to give certain fields a more describing name..
         /// </summary>
         internal static string ApiPageCanonicalFieldNameGuideDescription {

@@ -363,4 +363,16 @@
   <data name="UseSecretTextForSensitiveTextDescription" xml:space="preserve">
     <value>Using SecretText prevents confidential information such as API keys, tokens, passwords, and similar secrets from being exposed through the AL debugger during regular or snapshot debugging.</value>
   </data>
+  <data name="AllowInCustomizationsRedundancyTitle" xml:space="preserve">
+    <value>Redundant AllowInCustomizations on field</value>
+  </data>
+  <data name="AllowInCustomizationsRedundancyMessageFormat" xml:space="preserve">
+    <value>AllowInCustomizations matches the table-level AllowInCustomizations and can be removed.</value>
+  </data>
+  <data name="AllowInCustomizationsRedundancyDescription" xml:space="preserve">
+    <value>When AllowInCustomizations is defined on a table or tableextension, it automatically applies to all fields. Setting the same AllowInCustomizations again on individual fields is redundant and adds unnecessary noise to the object definition.</value>
+  </data>
+  <data name="AllowInCustomizationsRedundancyCodeAction" xml:space="preserve">
+    <value>ALCops: Remove redundant AllowInCustomizations</value>
+  </data>
 </root>
