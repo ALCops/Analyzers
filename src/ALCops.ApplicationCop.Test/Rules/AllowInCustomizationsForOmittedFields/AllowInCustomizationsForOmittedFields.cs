@@ -33,6 +33,12 @@ namespace ALCops.ApplicationCop.Test
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");
 
+            SkipTestIfVersionIsTooLow(
+                ["TableExtensionBaseTableHasAllowInCustomizations"],
+                testCase,
+                "16.0",
+                "AllowInCustomizations on table/tableextension level is not supported before AL 16.0");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -58,6 +64,12 @@ namespace ALCops.ApplicationCop.Test
                 testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");
+
+            SkipTestIfVersionIsTooLow(
+                ["AllowInCustomizationsOnTable", "AllowInCustomizationsOnTableExtension"],
+                testCase,
+                "16.0",
+                "AllowInCustomizations on table/tableextension level is not supported before AL 16.0");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
