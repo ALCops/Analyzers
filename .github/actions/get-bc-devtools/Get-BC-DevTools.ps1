@@ -179,6 +179,32 @@ function Get-AssemblyInfo {
     }
 }
 
+function Remove-StaleEntries {
+    param(
+        [array]$ExistingData,
+        [array]$AllSources
+    )
+    
+    if ($AllSources.Count -eq 0) {
+        Write-Host "Skipping stale-entry pruning: no active sources returned (upstream may be unavailable)" -ForegroundColor Yellow
+        return $ExistingData
+    }
+
+    $activeKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($source in $AllSources) {
+        [void]$activeKeys.Add("$($source.packageType):$($source.packageVersion)")
+    }
+
+    $pruned = @($ExistingData | Where-Object { $activeKeys.Contains("$($_.PackageType):$($_.PackageVersion)") })
+    $removedCount = $ExistingData.Count - $pruned.Count
+
+    if ($removedCount -gt 0) {
+        Write-Host "Pruned $removedCount stale entries from TargetFramework.json" -ForegroundColor Yellow
+    }
+
+    return $pruned
+}
+
 function Get-AssetInfo {
     param(
         [PSCustomObject]$Source
@@ -292,10 +318,23 @@ try {
     # Step 3: Compare and find missing versions
     $missingSources = Find-MissingVersions -ExistingData $existingData -AllSources $allSources
     
-    if ($missingSources.Count -eq 0) {
+    # Step 3b: Prune stale entries no longer present in any source
+    $preExistingCount = $existingData.Count
+    $existingData = Remove-StaleEntries -ExistingData $existingData -AllSources $allSources
+    $entriesWerePruned = $existingData.Count -lt $preExistingCount
+
+    if ($missingSources.Count -eq 0 -and -not $entriesWerePruned) {
         Write-Host "No missing versions found. TargetFramework.json is up to date!" -ForegroundColor Green
         
         # Emit the JSON to STDOUT for the get-bc-devtools action
+        Write-Output $sourcesJson
+        return
+    }
+
+    if ($missingSources.Count -eq 0) {
+        Write-Host "No missing versions found, but stale entries were pruned." -ForegroundColor Green
+        Save-TargetFrameworkJson -Data $existingData -JsonPath $JsonPath
+        
         Write-Output $sourcesJson
         return
     }
