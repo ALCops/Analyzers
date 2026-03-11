@@ -6,13 +6,13 @@ namespace ALCops.FormattingCop.Test
     public class CasingMismatchBuiltInMethod : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
-        private static readonly Analyzers.CasingMismatchBuiltInMethod _analyzer = new();
+        private static readonly Analyzers.CasingMismatchIdentifier _analyzer = new();
         private string _testCasePath;
 
         [SetUp]
         public void Setup()
         {
-            _fixture = RoslynFixtureFactory.Create<Analyzers.CasingMismatchBuiltInMethod>();
+            _fixture = RoslynFixtureFactory.Create<Analyzers.CasingMismatchIdentifier>();
 
             _testCasePath = Path.Combine(
                 Directory.GetParent(
