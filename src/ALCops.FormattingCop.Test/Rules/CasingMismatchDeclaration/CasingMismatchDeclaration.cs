@@ -6,13 +6,13 @@ namespace ALCops.FormattingCop.Test
     public class CasingMismatchDeclaration : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
-        private static readonly Analyzers.CasingMismatchDeclaration _analyzer = new();
+        private static readonly Analyzers.CasingMismatchIdentifier _analyzer = new();
         private string _testCasePath;
 
         [SetUp]
         public void Setup()
         {
-            _fixture = RoslynFixtureFactory.Create<Analyzers.CasingMismatchDeclaration>();
+            _fixture = RoslynFixtureFactory.Create<Analyzers.CasingMismatchIdentifier>();
 
             _testCasePath = Path.Combine(
                 Directory.GetParent(
@@ -27,6 +27,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("LabelDataType")]
         [TestCase("LabelProperties")]
         [TestCase("LengthDataType")]
+        [TestCase("MemberAccessField")]
         [TestCase("OptionDataType")]
         [TestCase("Property")]
         [TestCase("TextConstDataType")]
@@ -54,6 +55,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("LabelDataType")]
         [TestCase("LabelProperties")]
         [TestCase("LengthDataType")]
+        [TestCase("MemberAccessField")]
         [TestCase("OptionDataType")]
         [TestCase("Property")]
         [TestCase("TextConstDataType")]
