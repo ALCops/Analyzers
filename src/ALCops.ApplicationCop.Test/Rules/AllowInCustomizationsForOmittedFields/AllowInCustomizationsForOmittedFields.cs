@@ -24,10 +24,11 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("TableExtension")]
         [TestCase("TableExtensionBaseDrillDownPageId")]
         [TestCase("TableExtensionBaseLookupPageId")]
+        [TestCase("TableExtensionBaseTableHasAllowInCustomizations")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["TableExtension", "TableExtensionBaseDrillDownPageId", "TableExtensionBaseLookupPageId"],
+                ["TableExtension", "TableExtensionBaseDrillDownPageId", "TableExtensionBaseLookupPageId", "TableExtensionBaseTableHasAllowInCustomizations"],
                 testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");
@@ -40,6 +41,9 @@ namespace ALCops.ApplicationCop.Test
 
         [Test]
         [TestCase("AllowInCustomizationsIsSet")]
+        [TestCase("AllowInCustomizationsOnField")]
+        [TestCase("AllowInCustomizationsOnTable")]
+        [TestCase("AllowInCustomizationsOnTableExtension")]
         [TestCase("DisabledField")]
         [TestCase("FieldOnPage")]
         [TestCase("FieldTypeNotSupported")]
@@ -50,7 +54,7 @@ namespace ALCops.ApplicationCop.Test
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["TableExtension"],
+                ["TableExtension", "AllowInCustomizationsOnTableExtension"],
                 testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");

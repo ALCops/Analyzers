@@ -30,6 +30,9 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
         if (ctx.IsObsolete())
             return;
 
+        if (ctx.Symbol.GetProperty(EnumProvider.PropertyKind.AllowInCustomizations) is not null)
+            return;
+
         if (!TryGetTableOrTargetTable(ctx.Symbol, out var table, out var isTableExtension))
             return;
 
