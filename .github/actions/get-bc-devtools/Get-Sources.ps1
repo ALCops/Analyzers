@@ -47,7 +47,12 @@ function Get-TargetFrameworkCache {
 # Read TargetFramework data for lookup
 $targetFrameworkCache = Get-TargetFrameworkCache -JsonPath $JsonPath
 
-$marketplace = & "$PSScriptRoot/Marketplace.ps1" | ConvertFrom-Json
+$marketplace = try {
+    & "$PSScriptRoot/Marketplace.ps1" | ConvertFrom-Json
+}
+catch {
+    throw "Marketplace query failed: $($_.Exception.Message)"
+}
 
 $marketplaceLatest = $marketplace `
 | Where-Object properties -ne $null `
@@ -80,7 +85,12 @@ foreach ($item in $marketplace) {
     }
 }
 
-$nupkgs = & "$PSScriptRoot/NuGet-Packages.ps1" | ConvertFrom-Json
+$nupkgs = try {
+    & "$PSScriptRoot/NuGet-Packages.ps1" | ConvertFrom-Json
+}
+catch {
+    throw "NuGet package query failed: $($_.Exception.Message)"
+}
 
 $nugetLatest =
 $nupkgs |
@@ -114,7 +124,12 @@ foreach ($item in $nupkgs) {
     }
 }
 
-$bcArtifacts = & "$PSScriptRoot/BC-Artifacts.ps1" | ConvertFrom-Json
+$bcArtifacts = try {
+    & "$PSScriptRoot/BC-Artifacts.ps1" | ConvertFrom-Json
+}
+catch {
+    throw "BC Artifacts query failed: $($_.Exception.Message)"
+}
 
 $bcArtifactLatest =
 ($bcArtifacts | Where-Object { $_.select -eq 'Current' } | Select-Object -First 1).version

@@ -7,22 +7,38 @@ Marketplace publisher short name. Default: ms-dynamics-smb
 
 .PARAMETER Extension
 Extension short name. Default: al
+
+.PARAMETER TimeoutSec
+HTTP timeout per attempt. Default: 30
+
+.PARAMETER Retries
+Number of retry attempts on transient failures. Default: 3
 #>
 
 [CmdletBinding()]
 param(
     [string]$Publisher = 'ms-dynamics-smb',
-    [string]$Extension = 'al'
+    [string]$Extension = 'al',
+    [int]$TimeoutSec = 30,
+    [int]$Retries = 3
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ($Retries -lt 1) {
+    $Retries = 1
+}
 
 function Invoke-MarketplaceQuery {
     param(
         [Parameter(Mandatory)]
         [string]$Publisher,
         [Parameter(Mandatory)]
-        [string]$Extension
+        [string]$Extension,
+        [Parameter(Mandatory)]
+        [int]$TimeoutSec,
+        [Parameter(Mandatory)]
+        [int]$Retries
     )
 
     # Build the extension identifier used in filterType 7
@@ -54,7 +70,31 @@ function Invoke-MarketplaceQuery {
 
     $uri = 'https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery?api-version=3.0-preview.1'
 
-    $response = Invoke-RestMethod -Method POST -Uri $uri -ContentType 'application/json' -Body ($payload | ConvertTo-Json -Depth 10)
+    $context = if ($env:GITHUB_ACTIONS) { "GitHub Actions; $env:GITHUB_REPOSITORY" } else { $env:COMPUTERNAME }
+    $headers = @{
+        'User-Agent' = "PowerShell/$($PSVersionTable.PSVersion) MarketplaceQuery/1.0 ($context)"
+    }
+
+    # Retry loop with exponential backoff
+    $response = $null
+    $attempt = 0
+    $lastErr = $null
+
+    while (-not $response -and $attempt -lt $Retries) {
+        try {
+            $attempt++
+            $response = Invoke-RestMethod -Method POST -Uri $uri -ContentType 'application/json' -Headers $headers -Body ($payload | ConvertTo-Json -Depth 10) -TimeoutSec $TimeoutSec
+        }
+        catch {
+            $lastErr = $_
+            if ($attempt -ge $Retries) {
+                throw "Failed to query VS Marketplace for '$extensionId' after $attempt attempt(s). $($_.Exception.Message)"
+            }
+            $backoffSec = [Math]::Min(2 * $attempt, 10)
+            Write-Warning "VS Marketplace request failed (attempt $attempt/$Retries): $($_.Exception.Message). Retrying in ${backoffSec}s..."
+            Start-Sleep -Seconds $backoffSec
+        }
+    }
 
     if (-not $response.results -or -not $response.results[0].extensions) {
         throw "No extensions returned for '$extensionId'."
@@ -91,7 +131,7 @@ function ConvertTo-Version {
 }
 
 # Query the marketplace
-$marketplace = Invoke-MarketplaceQuery -Publisher $Publisher -Extension $Extension
+$marketplace = Invoke-MarketplaceQuery -Publisher $Publisher -Extension $Extension -TimeoutSec $TimeoutSec -Retries $Retries
 
 # Hardcoded filter for minimum AL Language version 12.x
 $marketplaceFiltered = $marketplace.versions | Where-Object { $(ConvertTo-Version($_.version)) -ge [System.Version]::Parse("12.0.0") }
