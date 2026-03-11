@@ -25,6 +25,13 @@ namespace ALCops.LinterCop.Test
         [TestCase("RedundantAllowInCustomizationsTableExtension")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["RedundantAllowInCustomizations", "RedundantAllowInCustomizationsTableExtension"],
+                testCase,
+                "16.0",
+                "AllowInCustomizations property is not supported in versions prior to 16.0."
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -38,6 +45,13 @@ namespace ALCops.LinterCop.Test
         [TestCase("ObsoleteField")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["NoAllowInCustomizationsOnField", "NonRedundantAllowInCustomizations", "ObsoleteField"],
+                testCase,
+                "16.0",
+                "AllowInCustomizations property is not supported in versions prior to 16.0."
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
