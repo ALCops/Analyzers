@@ -42,6 +42,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("Codeunit")]
         [TestCase("Enum")]
         [TestCase("Table")]
+        [TestCase("VariableNamedAfterKeyword")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

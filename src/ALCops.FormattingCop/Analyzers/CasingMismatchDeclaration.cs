@@ -54,6 +54,19 @@ public sealed class CasingMismatchDeclaration : DiagnosticAnalyzer
         EnumProvider.SyntaxKind.XmlPortObject
     };
 
+    // All AL keyword texts (e.g., "continue", "if", "begin") for skipping identifiers named after keywords.
+    // Built using the same Enum.GetNames pattern as DataTypeSyntaxKinds in CasingMismatchKeyword.
+    private static readonly Lazy<HashSet<string>> KeywordTexts = new(() =>
+        Enum.GetNames(typeof(SyntaxKind))
+            .Where(name => name.AsSpan().EndsWith("Keyword"))
+            .Select(name => Enum.Parse<SyntaxKind>(name))
+            .Select(SyntaxFactory.Token)
+            .Where(token => token.Kind != SyntaxKind.None)
+            .Select(token => token.ValueText)
+            .Where(text => !string.IsNullOrEmpty(text))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase)!,
+        LazyThreadSafetyMode.PublicationOnly);
+
     public override void Initialize(AnalysisContext context)
     {
         context.RegisterSymbolAction(
@@ -491,27 +504,15 @@ public sealed class CasingMismatchDeclaration : DiagnosticAnalyzer
                            node.Parent.Kind != EnumProvider.SyntaxKind.UnaryNotExpression)
             .ToLookup(node => node.Identifier.ValueText, StringComparer.Ordinal);
 
-#if NET8_0_OR_GREATER
-        var continueKeywordText = SyntaxFacts.GetText(EnumProvider.SyntaxKind.ContinueKeyword);
-#endif
-
         foreach (var groupNode in groupNodes)
         {
             var representative = groupNode.OrderBy(node => node.Position).Last();
 
-#if NET8_0_OR_GREATER
-            // Special handling for 'continue' keyword as the semantic model will returns null on this identifier
-            if (string.Equals(representative.Identifier.ValueText, continueKeywordText, StringComparison.OrdinalIgnoreCase))
-            {
-                foreach (var node in groupNode)
-                {
-                    ctx.CancellationToken.ThrowIfCancellationRequested();
-                    CompareIdentifier(ctx, node.Identifier, continueKeywordText);
-                }
-
+            // Skip identifiers whose name matches an AL keyword (e.g., var Continue: Boolean).
+            // These are user-defined names, not keyword usage. The semantic model returns null for them.
+            if (representative.Identifier.ValueText is string identifierText
+                && KeywordTexts.Value.Contains(identifierText))
                 continue;
-            }
-#endif
 
             if (semanticModel.GetSymbolInfo(representative, ctx.CancellationToken).Symbol is not ISymbol symbol)
             {

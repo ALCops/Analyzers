@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 
@@ -54,7 +55,9 @@ public sealed class CasingMismatchKeyword : DiagnosticAnalyzer
             if (string.IsNullOrEmpty(tokenText))
                 continue;
 
-            if (token.Parent is null || !token.Kind.IsKeyword() || DataTypeSyntaxKinds.Contains(token.Parent.Kind))
+            if (token.Parent is null || !token.Kind.IsKeyword()
+                || DataTypeSyntaxKinds.Contains(token.Parent.Kind)
+                || token.Parent.Kind == EnumProvider.SyntaxKind.IdentifierName)
                 continue;
 
             var canonicalToken = SyntaxFactory.Token(token.Kind);

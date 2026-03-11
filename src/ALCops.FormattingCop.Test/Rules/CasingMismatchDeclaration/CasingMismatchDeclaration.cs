@@ -58,6 +58,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("Property")]
         [TestCase("TextConstDataType")]
         [TestCase("TriggerDeclaration")]
+        [TestCase("VariableNamedAfterKeyword")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
