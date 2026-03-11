@@ -17,18 +17,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
             DiagnosticDescriptors.CasingMismatch,
             DiagnosticDescriptors.CasingMismatchImproveDiagnostic);
 
-    public override void Initialize(AnalysisContext context)
-    {
-        context.RegisterOperationAction(
-            AnalyzeOperation,
-                EnumProvider.OperationKind.InvocationExpression,
-                EnumProvider.OperationKind.FieldAccess,
-                EnumProvider.OperationKind.GlobalReferenceExpression,
-                EnumProvider.OperationKind.LocalReferenceExpression,
-                EnumProvider.OperationKind.ParameterReferenceExpression,
-                EnumProvider.OperationKind.ReturnValueReferenceExpression,
-                EnumProvider.OperationKind.XmlPortDataItemAccess);
-
+    public override void Initialize(AnalysisContext context) =>
         context.RegisterSymbolAction(
             AnalyzeDeclarations,
                 EnumProvider.SymbolKind.Codeunit,
@@ -48,77 +37,6 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 EnumProvider.SymbolKind.Table,
                 EnumProvider.SymbolKind.TableExtension,
                 EnumProvider.SymbolKind.XmlPort);
-    }
-
-    #region Operation Analysis
-
-    private static void AnalyzeOperation(OperationAnalysisContext ctx)
-    {
-        var operation = ctx.Operation;
-        string targetName = operation.Kind switch
-        {
-            var k when k == EnumProvider.OperationKind.InvocationExpression && operation is IInvocationExpression invocation
-                => invocation.TargetMethod.Name,
-            var k when k == EnumProvider.OperationKind.FieldAccess && operation is IFieldAccess fieldAccess
-                => fieldAccess.FieldSymbol.Name,
-            var k when k == EnumProvider.OperationKind.GlobalReferenceExpression
-                => ((IGlobalReferenceExpression)operation).GlobalVariable.Name,
-            var k when k == EnumProvider.OperationKind.LocalReferenceExpression
-                => ((ILocalReferenceExpression)operation).LocalVariable.Name,
-            var k when k == EnumProvider.OperationKind.ParameterReferenceExpression
-                => ((IParameterReferenceExpression)operation).Parameter.Name,
-            var k when k == EnumProvider.OperationKind.ReturnValueReferenceExpression
-                => ((IReturnValueReferenceExpression)operation).ReturnValue.Name,
-            var k when k == EnumProvider.OperationKind.XmlPortDataItemAccess
-                => ((IXmlPortNodeAccess)operation).XmlPortNodeSymbol.Name,
-            _ => string.Empty
-        };
-
-        if (string.IsNullOrEmpty(targetName))
-            return;
-
-        ReadOnlySpan<char> targetSpan = targetName.AsSpan();
-        SyntaxNode opSyntax = operation.Syntax;
-        var opSyntaxUnquoted = opSyntax.ToString().UnquoteIdentifier();
-
-        if (OnlyDiffersInCasing(opSyntaxUnquoted.AsSpan(), targetSpan))
-        {
-            ReportCasingMismatch(ctx, opSyntax.GetLocation(), targetName, opSyntax.ToString());
-            return;
-        }
-
-        foreach (var descendant in opSyntax.DescendantNodes())
-        {
-            ctx.CancellationToken.ThrowIfCancellationRequested();
-
-            var descendantUnquoted = descendant.ToString().UnquoteIdentifier();
-            if (OnlyDiffersInCasing(descendantUnquoted.AsSpan(), targetSpan))
-            {
-                ReportCasingMismatch(ctx, opSyntax.GetLocation(), targetName, descendantUnquoted);
-                return;
-            }
-        }
-    }
-
-    private static bool OnlyDiffersInCasing(ReadOnlySpan<char> left, ReadOnlySpan<char> right) =>
-        left.Equals(right, StringComparison.OrdinalIgnoreCase) &&
-        !left.Equals(right, StringComparison.Ordinal);
-
-    private static void ReportCasingMismatch(OperationAnalysisContext ctx, Location location, string canonical, string actual)
-    {
-        var properties = ImmutableDictionary<string, string>.Empty
-            .Add("CanonicalText", canonical);
-
-        ctx.ReportDiagnostic(
-            Diagnostic.Create(
-                DiagnosticDescriptors.CasingMismatch,
-                location,
-                properties,
-                canonical,
-                actual));
-    }
-
-    #endregion
 
     #region Declaration Analysis
 
@@ -264,12 +182,6 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 int start = (children.Length > 0 && children[0] is IdentifierNameSyntax) ? 1 : 0;
                 for (int i = start; i < children.Length; i++)
                     ProcessNode(ctx, children[i], identifiers, qualifiedNames, triggers);
-                continue;
-            }
-
-            if (child is MemberAccessExpressionSyntax memberAccess)
-            {
-                ProcessNode(ctx, memberAccess.Expression, identifiers, qualifiedNames, triggers);
                 continue;
             }
 
