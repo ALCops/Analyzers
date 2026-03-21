@@ -71,13 +71,13 @@ jobs:
 
       # Git Version
       - name: GitVersion - Setup
-        uses: gittools/actions/gitversion/setup@v4.3.3
+        uses: gittools/actions/gitversion/setup@v4.4.2
         with:
           versionSpec: "6.3.x"
 
       - name: GitVersion - Determine
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v4.3.3
+        uses: gittools/actions/gitversion/execute@v4.4.2
 
       # Pack and publish
       - name: Pack
