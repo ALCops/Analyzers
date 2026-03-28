@@ -6,7 +6,7 @@ namespace ALCops.PlatformCop.Test
     public class MandatoryFieldMissingOnApiPage : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
-        private static readonly Analyzers.FilterStringSingleQuoteEscaping _analyzer = new();
+        private static readonly Analyzers.MandatoryFieldMissingOnApiPage _analyzer = new();
         private string _testCasePath;
 
         [SetUp]
@@ -36,6 +36,8 @@ namespace ALCops.PlatformCop.Test
 
         [Test]
         [TestCase("FieldsIdAndLastModifiedDateTimeDeclared")]
+        [TestCase("NoFieldsExposed")]
+        [TestCase("NoSourceTable")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

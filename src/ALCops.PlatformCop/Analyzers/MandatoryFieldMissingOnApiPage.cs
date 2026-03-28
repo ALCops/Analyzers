@@ -40,6 +40,9 @@ public sealed class MandatoryFieldMissingOnApiPage : DiagnosticAnalyzer
             .Where(c => c.ControlKind == EnumProvider.ControlKind.Field && c.RelatedFieldSymbol is not null)
             .ToArray();
 
+        if (fieldControls.Length == 0)
+            return;
+
         var exposed = new HashSet<(string FieldName, string ControlName)>();
         foreach (var c in fieldControls)
         {
