@@ -384,7 +384,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish unified test report
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: Test results
           report-title: 'ALCops Test Results'
