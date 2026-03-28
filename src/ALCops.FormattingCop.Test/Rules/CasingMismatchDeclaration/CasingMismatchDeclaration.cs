@@ -33,6 +33,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("TextConstDataType")]
         [TestCase("TestType")]
         [TestCase("TriggerDeclaration")]
+        [TestCase("ObjectTypeOptionAccess")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -69,6 +70,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("TestType")]
         [TestCase("TriggerDeclaration")]
         [TestCase("VariableNamedAfterKeyword")]
+        [TestCase("ObjectTypeOptionAccess")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
