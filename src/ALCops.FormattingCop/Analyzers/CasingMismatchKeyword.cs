@@ -22,23 +22,23 @@ public sealed class CasingMismatchKeyword : DiagnosticAnalyzer
     {
         context.RegisterSymbolAction(
             this.AnalyzeTokens,
-                SymbolKind.Codeunit,
-                SymbolKind.Entitlement,
-                SymbolKind.Enum,
-                SymbolKind.EnumExtension,
-                SymbolKind.Interface,
-                SymbolKind.Page,
-                SymbolKind.PageExtension,
-                SymbolKind.PermissionSet,
-                SymbolKind.PermissionSetExtension,
-                SymbolKind.Profile,
-                SymbolKind.ProfileExtension,
-                SymbolKind.Query,
-                SymbolKind.Report,
-                SymbolKind.ReportExtension,
-                SymbolKind.Table,
-                SymbolKind.TableExtension,
-                SymbolKind.XmlPort);
+                EnumProvider.SymbolKind.Codeunit,
+                EnumProvider.SymbolKind.Entitlement,
+                EnumProvider.SymbolKind.Enum,
+                EnumProvider.SymbolKind.EnumExtension,
+                EnumProvider.SymbolKind.Interface,
+                EnumProvider.SymbolKind.Page,
+                EnumProvider.SymbolKind.PageExtension,
+                EnumProvider.SymbolKind.PermissionSet,
+                EnumProvider.SymbolKind.PermissionSetExtension,
+                EnumProvider.SymbolKind.Profile,
+                EnumProvider.SymbolKind.ProfileExtension,
+                EnumProvider.SymbolKind.Query,
+                EnumProvider.SymbolKind.Report,
+                EnumProvider.SymbolKind.ReportExtension,
+                EnumProvider.SymbolKind.Table,
+                EnumProvider.SymbolKind.TableExtension,
+                EnumProvider.SymbolKind.XmlPort);
     }
 
     private void AnalyzeTokens(SymbolAnalysisContext ctx)
@@ -61,7 +61,7 @@ public sealed class CasingMismatchKeyword : DiagnosticAnalyzer
                 continue;
 
             var canonicalToken = SyntaxFactory.Token(token.Kind);
-            if (canonicalToken.Kind == SyntaxKind.None)
+            if (canonicalToken.Kind == EnumProvider.SyntaxKind.None)
                 continue;
 
             if (canonicalToken.ValueText.AsSpan().Equals(tokenText.AsSpan(), StringComparison.Ordinal))
