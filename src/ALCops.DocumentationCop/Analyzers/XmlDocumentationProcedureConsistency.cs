@@ -58,31 +58,28 @@ public sealed class XmlDocumentationProcedureConsistency : DiagnosticAnalyzer
             }
         }
 
-        // excess documentation comment return value
-        if (docCommentReturns is not null && methodDeclarationSyntax.ReturnValue is null)
+        var tryFunctionAttribute =
+            methodDeclarationSyntax.Attributes
+                .FirstOrDefault(attr =>
+                    string.Equals(
+                        attr.Name.Identifier.ValueText?.UnquoteIdentifier(),
+                        "TryFunction",
+                        StringComparison.OrdinalIgnoreCase));
+
+        // excess documentation comment return value (TryFunction has implicit boolean return, so <returns> is valid)
+        if (docCommentReturns is not null && methodDeclarationSyntax.ReturnValue is null && tryFunctionAttribute is null)
             ctx.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.XmlDocumentationProcedureConsistency, docCommentReturns.GetLocation()));
 
         // return value without documentation comment
-        if (docCommentReturns is null && (methodDeclarationSyntax.ReturnValue is not null))
+        if (docCommentReturns is null && methodDeclarationSyntax.ReturnValue is not null)
             ctx.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.XmlDocumentationProcedureConsistency, methodDeclarationSyntax.ReturnValue.GetLocation()));
 
         // method with TryFunction decorator without return in documentation comment
-        if (docCommentReturns is null)
+        if (docCommentReturns is null && tryFunctionAttribute is not null)
         {
-            var tryFunctionAttribute =
-                methodDeclarationSyntax.Attributes
-                    .FirstOrDefault(attr =>
-                        string.Equals(
-                            attr.Name.Identifier.ValueText?.UnquoteIdentifier(),
-                            "TryFunction",
-                            StringComparison.OrdinalIgnoreCase));
-
-            if (tryFunctionAttribute is not null)
-            {
-                ctx.ReportDiagnostic(Diagnostic.Create(
-                        DiagnosticDescriptors.XmlDocumentationProcedureConsistency,
-                        tryFunctionAttribute.Name.GetLocation()));
-            }
+            ctx.ReportDiagnostic(Diagnostic.Create(
+                    DiagnosticDescriptors.XmlDocumentationProcedureConsistency,
+                    tryFunctionAttribute.Name.GetLocation()));
         }
 
         // check documentation comment parameters against method syntax
