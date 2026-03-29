@@ -5,7 +5,7 @@ codeunit 50100 MyCodeunit
     /// </summary>
     /// [|<returns></returns>|]
     [TryFunction]
-    procedure MyProcedure()
+    procedure MyTryFunction()
     begin
     end;
 }
