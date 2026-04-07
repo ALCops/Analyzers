@@ -230,19 +230,16 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
             if (fieldSymbol.FieldClass != EnumProvider.FieldClassKind.Normal)
                 return;
 
+#if NETSTANDARD2_1
+            var fieldType = fieldSymbol.OriginalDefinition.GetTypeSymbol();
+            if (fieldType?.NavTypeKind == EnumProvider.NavTypeKind.Blob)
+                return;
+#else
             if (fieldSymbol.Type?.NavTypeKind == EnumProvider.NavTypeKind.Blob)
                 return;
+#endif
 
-            ISymbol? instanceSymbol = null;
-            try
-            {
-                instanceSymbol = operation.Instance?.GetSymbol();
-            }
-            catch (InvalidCastException)
-            {
-                // BoundObjectAccess SDK bug workaround
-            }
-
+            ISymbol? instanceSymbol = operation.Instance?.GetSymbol();
             if (instanceSymbol is null ||
                 !string.Equals(instanceSymbol.Name, _variableName, StringComparison.OrdinalIgnoreCase))
                 return;
