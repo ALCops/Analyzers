@@ -769,6 +769,42 @@ namespace ALCops.LinterCop {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ALCops: Add SetLoadFields.
+        /// </summary>
+        internal static string UsePartialRecordsOnReadCodeAction {
+            get {
+                return ResourceManager.GetString("UsePartialRecordsOnReadCodeAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When reading records from the database using Get, Find, FindFirst, FindLast, or FindSet, use SetLoadFields to specify which fields to load. This avoids loading all normal fields (including those from table extensions), reducing SQL joins and data transfer. For performance reasons, it is not recommended to use partial records on a record that will do inserts, deletes, renames, field transfers, or copies to temporary records..
+        /// </summary>
+        internal static string UsePartialRecordsOnReadDescription {
+            get {
+                return ResourceManager.GetString("UsePartialRecordsOnReadDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use SetLoadFields before &apos;{0}.{1}()&apos; to improve performance by loading only the fields that are needed..
+        /// </summary>
+        internal static string UsePartialRecordsOnReadMessageFormat {
+            get {
+                return ResourceManager.GetString("UsePartialRecordsOnReadMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use partial records on read operation.
+        /// </summary>
+        internal static string UsePartialRecordsOnReadTitle {
+            get {
+                return ResourceManager.GetString("UsePartialRecordsOnReadTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Instead of relying on Rec.Count(), consider using a Query object or a combination of Rec.Find(&apos;-&apos;) and Rec.Next() for faster and more efficient record checks..
         /// </summary>
         internal static string UseQueryOrFindWithNextInsteadOfCountDescription {

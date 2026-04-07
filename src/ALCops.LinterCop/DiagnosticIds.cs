@@ -28,4 +28,5 @@ public static class DiagnosticIds
     public static readonly string CognitiveComplexityIncrement = "LC0089i";
     public static readonly string CognitiveComplexityThresholdExceeded = "LC0090";
     public static readonly string AllowInCustomizationsRedundancy = "LC0094";
+    public static readonly string UsePartialRecordsOnRead = "LC0095";
 }
