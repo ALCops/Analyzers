@@ -1,0 +1,67 @@
+---
+applyTo: 'src/ALCops.*/**'
+---
+
+# netstandard2.1 Backward Compatibility
+
+All analyzer and common projects multi-target in CI: `netstandard2.1;net8.0`. Several C# 9+ features require `System.Runtime.CompilerServices.IsExternalInit`, which does not exist in `netstandard2.1`. Code that compiles fine locally (net8.0 only) will fail in CI without conditional compilation guards.
+
+## Features that require guards
+
+| Feature | Problem on netstandard2.1 | Guard pattern |
+|---|---|---|
+| `record` / `record struct` | CS0518: `IsExternalInit` is not defined | `#if NETSTANDARD2_1` with manual struct/class |
+| `init` property accessors | CS0518: `IsExternalInit` is not defined | `#if NETSTANDARD2_1` with `set` accessor |
+| `with` expressions on structs | Depends on `IsExternalInit` | Avoid or guard with `#if` |
+
+## Required pattern for record types
+
+Use `#if NETSTANDARD2_1` to provide a manual struct for the older target, and a `record struct` for net8.0+:
+
+```csharp
+#if NETSTANDARD2_1
+    private readonly struct MyInfo
+    {
+        public string Name { get; }
+        public int Value { get; }
+
+        public MyInfo(string name, int value)
+        {
+            Name = name;
+            Value = value;
+        }
+    }
+#else
+    private readonly record struct MyInfo(string Name, int Value);
+#endif
+```
+
+## Required pattern for init-only properties
+
+Use `set` instead of `init` on netstandard2.1:
+
+```csharp
+#if NETSTANDARD2_1
+    public string? MyProperty { get; set; }
+#else
+    public string? MyProperty { get; init; }
+#endif
+```
+
+## Existing examples in the codebase
+
+| File | Pattern |
+|---|---|
+| `ALCops.LinterCop/Analyzers/CognitiveComplexityRecursionGraphService.cs` | `MethodDeclarationInfo` record struct |
+| `ALCops.LinterCop/Analyzers/UsePartialRecordsOnRead.cs` | `ReadInfo` record struct |
+| `ALCops.PlatformCop/Analyzers/TransferFieldsRelations.cs` | `ObjectName` and `TableRelation` record structs |
+| `ALCops.Common/Helpers/AppSourceCopConfigurationProvider.cs` | `init` to `set` accessor |
+| `ALCops.LinterCop/CodeFixes/BuiltInDateTimeMethod.cs` | `CodeFixProperties` record |
+| `ALCops.LinterCop/CodeFixes/ObjectIdInDeclaration.cs` | `CodeFixProperties` record |
+
+## Checklist before committing
+
+1. Search your new/modified files for `record `, `record struct`, and `{ get; init` patterns.
+2. If any are present, wrap them in `#if NETSTANDARD2_1` / `#else` / `#endif` guards.
+3. The netstandard2.1 block must use a regular `struct` or `class` with explicit constructor and get-only properties (no `init`).
+4. When in doubt, look at existing examples listed above.

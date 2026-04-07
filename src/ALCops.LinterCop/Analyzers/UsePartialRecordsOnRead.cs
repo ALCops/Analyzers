@@ -128,7 +128,21 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
         public bool PassedToFunction { get; set; }
     }
 
+#if NETSTANDARD2_1
+    private readonly struct ReadInfo
+    {
+        public Location Location { get; }
+        public string MethodName { get; }
+
+        public ReadInfo(Location location, string methodName)
+        {
+            Location = location;
+            MethodName = methodName;
+        }
+    }
+#else
     private readonly record struct ReadInfo(Location Location, string MethodName);
+#endif
 
     private sealed class SetLoadFieldsWalker : OperationWalker
     {
