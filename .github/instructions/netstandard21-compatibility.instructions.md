@@ -20,9 +20,11 @@ Some `Microsoft.Dynamics.Nav.CodeAnalysis` APIs only exist in newer SDK versions
 
 | API | Available in | netstandard2.1 workaround |
 |---|---|---|
-| `IFieldSymbol.Type` | net8.0 only | `fieldSymbol.OriginalDefinition.GetTypeSymbol()` |
+| `IFieldSymbol.Type` | net8.0 only | `fieldSymbol.OriginalDefinition.GetTypeSymbol()` (requires `using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols`) |
 
 ### Pattern for `IFieldSymbol.Type`
+
+Requires `using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;` for the `GetTypeSymbol()` extension method on netstandard2.1.
 
 ```csharp
 #if NETSTANDARD2_1
@@ -90,5 +92,5 @@ Use `set` instead of `init` on netstandard2.1:
 1. Search your new/modified files for `record `, `record struct`, and `{ get; init` patterns.
 2. If any are present, wrap them in `#if NETSTANDARD2_1` / `#else` / `#endif` guards.
 3. The netstandard2.1 block must use a regular `struct` or `class` with explicit constructor and get-only properties (no `init`).
-4. Search for `IFieldSymbol` `.Type` usage; use `OriginalDefinition.GetTypeSymbol()` on netstandard2.1.
+4. Search for `IFieldSymbol` `.Type` usage; use `OriginalDefinition.GetTypeSymbol()` on netstandard2.1 (requires `using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols`).
 5. When in doubt, look at existing examples listed above.
