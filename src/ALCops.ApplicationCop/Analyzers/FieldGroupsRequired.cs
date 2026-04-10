@@ -54,8 +54,8 @@ public sealed class FieldGroupsRequired : DiagnosticAnalyzer
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.FieldGroupsRequired,
                 location,
-                fieldGroupName,
-                table.Name));
+                table.Name,
+                fieldGroupName));
         }
     }
 
