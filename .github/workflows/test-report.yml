@@ -1,0 +1,51 @@
+name: Test Report
+
+# Publishes test results for pull requests, including PRs from forks.
+# Fork PRs receive a read-only GITHUB_TOKEN, so dorny/test-reporter cannot create
+# check runs from the PR workflow itself. This workflow_run trigger runs in the
+# context of the base repository with full permissions.
+# See: https://github.com/dorny/test-reporter#recommended-setup-for-public-repositories
+
+on:
+  workflow_run:
+    workflows: ['Pull Request']
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  report:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    name: Report
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish unified test report
+        uses: dorny/test-reporter@v3
+        with:
+          name: Test results
+          report-title: 'ALCops Test Results'
+          path: "**/*.trx"
+          reporter: dotnet-trx
+          use-actions-summary: 'false'
+          list-suites: 'failed'
+          list-tests: 'failed'
+          collapsed: 'never'
+          fail-on-error: true
+          fail-on-empty: true

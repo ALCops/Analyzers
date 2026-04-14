@@ -365,7 +365,7 @@ jobs:
           path: |
             **/TestResults_${{ matrix.version }}.trx
   report:
-    if: ${{ always() && (!inputs.draft-check || github.event.pull_request.draft == false) }}
+    if: ${{ always() && github.event_name != 'pull_request' && (!inputs.draft-check || github.event.pull_request.draft == false) }}
     needs: [setup, build, test]
     runs-on: ubuntu-latest
     name: Report
