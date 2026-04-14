@@ -211,6 +211,7 @@ jobs:
 
       # ALCops.ApplicationCop
       - name: Download ALCops.ApplicationCop biniaries
+        if: ${{ !cancelled() }}
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
@@ -218,11 +219,12 @@ jobs:
           path: ./src/ALCops.ApplicationCop/bin/Release/
 
       - name: Restore ALCops.ApplicationCop.Test
+        if: ${{ !cancelled() }}
         continue-on-error: true
         run: dotnet restore ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
       - name: Run ALCops.ApplicationCop.Test
-        continue-on-error: true
+        if: ${{ !cancelled() }}
         run: >
           dotnet test ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
@@ -234,6 +236,7 @@ jobs:
 
       # ALCops.DocumentationCop
       - name: Download ALCops.DocumentationCop biniaries
+        if: ${{ !cancelled() }}
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
@@ -241,11 +244,12 @@ jobs:
           path: ./src/ALCops.DocumentationCop/bin/Release/
 
       - name: Restore ALCops.DocumentationCop.Test
+        if: ${{ !cancelled() }}
         continue-on-error: true
         run: dotnet restore ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
       - name: Run ALCops.DocumentationCop.Test
-        continue-on-error: true
+        if: ${{ !cancelled() }}
         run: >
           dotnet test ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
@@ -257,6 +261,7 @@ jobs:
           
       # ALCops.FormattingCop
       - name: Download ALCops.FormattingCop biniaries
+        if: ${{ !cancelled() }}
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
@@ -264,11 +269,12 @@ jobs:
           path: ./src/ALCops.FormattingCop/bin/Release/
 
       - name: Restore ALCops.FormattingCop.Test
+        if: ${{ !cancelled() }}
         continue-on-error: true
         run: dotnet restore ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
       - name: Run ALCops.FormattingCop.Test
-        continue-on-error: true
+        if: ${{ !cancelled() }}
         run: >
           dotnet test ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
@@ -280,6 +286,7 @@ jobs:
 
       # ALCops.LinterCop
       - name: Download ALCops.LinterCop biniaries
+        if: ${{ !cancelled() }}
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
@@ -287,11 +294,12 @@ jobs:
           path: ./src/ALCops.LinterCop/bin/Release/
 
       - name: Restore ALCops.LinterCop.Test
+        if: ${{ !cancelled() }}
         continue-on-error: true
         run: dotnet restore ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
       - name: Run ALCops.LinterCop.Test
-        continue-on-error: true
+        if: ${{ !cancelled() }}
         run: >
           dotnet test ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
@@ -303,6 +311,7 @@ jobs:
 
       # ALCops.PlatformCop
       - name: Download ALCops.PlatformCop biniaries
+        if: ${{ !cancelled() }}
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
@@ -310,11 +319,12 @@ jobs:
           path: ./src/ALCops.PlatformCop/bin/Release/
 
       - name: Restore ALCops.PlatformCop.Test
+        if: ${{ !cancelled() }}
         continue-on-error: true
         run: dotnet restore ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
       - name: Run ALCops.PlatformCop.Test
-        continue-on-error: true
+        if: ${{ !cancelled() }}
         run: >
           dotnet test ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
@@ -326,6 +336,7 @@ jobs:
 
       # ALCops.TestAutomationCop
       - name: Download ALCops.TestAutomationCop biniaries
+        if: ${{ !cancelled() }}
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
@@ -333,11 +344,12 @@ jobs:
           path: ./src/ALCops.TestAutomationCop/bin/Release/
 
       - name: Restore ALCops.TestAutomationCop.Test
+        if: ${{ !cancelled() }}
         continue-on-error: true
         run: dotnet restore ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
       - name: Run ALCops.TestAutomationCop.Test
-        continue-on-error: true
+        if: ${{ !cancelled() }}
         run: >
           dotnet test ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
@@ -364,35 +376,3 @@ jobs:
           name: test-results-${{ matrix.version }}
           path: |
             **/TestResults_${{ matrix.version }}.trx
-  report:
-    if: ${{ always() && github.event_name != 'pull_request' && (!inputs.draft-check || github.event.pull_request.draft == false) }}
-    needs: [setup, build, test]
-    runs-on: ubuntu-latest
-    name: Report
-    permissions:
-      contents: read
-      actions: read
-      checks: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Download all test artifacts
-        uses: actions/download-artifact@v8
-        with:
-          pattern: test-*
-          merge-multiple: true
-
-      - name: Publish unified test report
-        uses: dorny/test-reporter@v3
-        with:
-          name: Test results
-          report-title: 'ALCops Test Results'
-          path: "**/*.trx"
-          reporter: dotnet-trx
-          use-actions-summary: 'false'
-          list-suites: 'failed'
-          list-tests: 'failed'
-          collapsed: 'never'
-          fail-on-error: true
-          fail-on-empty: true

@@ -66,36 +66,28 @@ Analyzer projects:
 
 2. **`build`** - Sets up .NET 8.0.x, installs BC DevTools for both TFMs (lowest versions), then builds each analyzer project individually (`dotnet restore` + `dotnet build --configuration Release`). Uploads each project's `bin/Release/` as a separate artifact.
 
-3. **`test`** - Uses `strategy.matrix` from `setup` output (`fromJSON`). For each matrix entry (BC version + TFM), downloads build artifacts, restores test projects with `/p:NavTargetFramework=${{ matrix.tfm }}`, runs `dotnet test` for each analyzer's test project. All test steps use `continue-on-error: true` so all cops are tested even if one fails. Merges `.trx` results with `dotnet-trx-merge` and uploads per-version test results.
-
-4. **`report`** - Downloads all test artifacts, publishes a unified test report via `dorny/test-reporter` with `fail-on-error: true` and `fail-on-empty: true`. **Skipped for `pull_request` events** (fork PRs get a read-only token that cannot create check runs). PR test reporting is handled by `test-report.yml` instead.
+3. **`test`** - Uses `strategy.matrix` from `setup` output (`fromJSON`). For each matrix entry (BC version + TFM), downloads build artifacts, restores test projects with `/p:NavTargetFramework=${{ matrix.tfm }}`, runs `dotnet test` for each analyzer's test project. Download and restore steps use `continue-on-error: true` (infrastructure issues shouldn't fail the job). Test run steps use `if: !cancelled()` without `continue-on-error`, so all cops run even if one fails, but test failures properly fail the job. Merges `.trx` results with `dotnet-trx-merge` and uploads per-version test results. Test reporting (check runs) is handled by the separate `test-report.yml` workflow.
 
 ### `pull-request.yml` (PR validation)
 
 **Triggers:** `pull_request` targeting `main` or `release/**` (same path filters as CI/CD; excludes `*.md`).
 
-**Permissions:** `contents: read`, `actions: read`, `checks: write`, `pull-requests: write`
+**Permissions:** `contents: read`, `actions: read`
 
 **Jobs:**
 - Calls `build-test.yml` with `draft-check: true`.
 - Skips entirely when merging from `release/**` into `main` (condition: `!(github.base_ref == 'main' && startsWith(github.head_ref, 'release/'))`).
 
-**Note:** Test reporting for PRs is handled by `test-report.yml` (see below), not by the `report` job in `build-test.yml`. This is required because fork PRs receive a read-only `GITHUB_TOKEN` that cannot create check runs.
+### `test-report.yml` (Test reporting)
 
-### `test-report.yml` (PR test reporting)
-
-**Triggers:** `workflow_run` on the "Pull Request" workflow, `types: [completed]`.
+**Triggers:** `workflow_run` on `['Pull Request', 'CI/CD', 'Scheduled Build']` workflows, `types: [completed]`.
 
 **Permissions:** `contents: read`, `actions: read`, `checks: write`, `pull-requests: write`
 
-**Purpose:** Publishes test results for pull requests (including PRs from forks). Runs in the context of the base repository with full permissions, bypassing the read-only token restriction that applies to fork PRs.
-
-**Why this exists:** GitHub restricts the `GITHUB_TOKEN` to read-only for PRs from forks (security policy). `dorny/test-reporter` needs `checks: write` to create check runs via the Checks API. This `workflow_run`-triggered workflow runs in the base repo's context with a full-permission token.
+**Purpose:** Centralized test reporting for all workflows. Publishes test results via `dorny/test-reporter` as check runs. Runs as a separate `workflow_run`-triggered workflow so that fork PRs get test reports (fork PRs receive a read-only `GITHUB_TOKEN` that prevents check run creation from within the PR workflow).
 
 **Jobs:**
 - **`report`** - Downloads test result artifacts from the triggering workflow run, then publishes a unified test report via `dorny/test-reporter`. Only runs when the triggering workflow completed (not cancelled/skipped). Uses `fail-on-error: true` and `fail-on-empty: true`.
-
-**Design note:** The `report` job in `build-test.yml` is skipped for `pull_request` events (`github.event_name != 'pull_request'`). This avoids the fork PR permission error while keeping inline reporting for push, schedule, and manual triggers.
 
 ### `scheduled-build.yml` (Daily scheduled build)
 
@@ -287,7 +279,7 @@ No other custom secrets or environment variables are required. The BC DevTools s
 ### Adding a new analyzer project
 1. Add build steps (restore + build + upload artifact) to the `build` job in `build-test.yml`.
 2. Add test steps (download artifact + restore + test) to the `test` job in `build-test.yml`.
-3. Follow the exact pattern of existing analyzers: `continue-on-error: true` on test steps, pass `/p:NavTargetFramework=${{ matrix.tfm }}`, use the same TRX logger format.
+3. Follow the exact pattern of existing analyzers: `continue-on-error: true` on download/restore steps, `if: !cancelled()` on all cop steps (download, restore, test), no `continue-on-error` on test steps (so failures properly gate releases), pass `/p:NavTargetFramework=${{ matrix.tfm }}`, use the same TRX logger format.
 
 ### Modifying the build matrix
 - The matrix is fully dynamic; you rarely need to change it manually.
@@ -304,8 +296,8 @@ No other custom secrets or environment variables are required. The BC DevTools s
 ### Common pitfalls
 - **BC DevTools source discovery depends on external APIs.** VS Marketplace, NuGet.org, and BC Artifacts CDN can all be temporarily unavailable. The scripts have retry logic, but transient failures may still occur.
 - **`TargetFramework.json` cache** is persisted via GitHub Actions cache. The scheduled build keeps it alive. If the cache is evicted, the next run re-analyzes all versions (slower but self-healing).
-- **Test steps use `continue-on-error: true`.** A single failing analyzer does not block other analyzers from being tested. The `report` job with `fail-on-error: true` is what ultimately fails the workflow.
-- **Fork PR test reporting uses a separate workflow.** `test-report.yml` is triggered by `workflow_run` because fork PRs receive a read-only `GITHUB_TOKEN` that cannot create check runs. The `report` job in `build-test.yml` is skipped for `pull_request` events. This `workflow_run` file must exist on the default branch (main) before it can trigger. See `dorny/test-reporter`'s [recommended setup for public repositories](https://github.com/dorny/test-reporter#recommended-setup-for-public-repositories).
+- **Test steps use `if: !cancelled()` without `continue-on-error`.** This ensures all 6 cops are tested even if one fails, while properly failing the job when tests fail. Download and restore steps keep `continue-on-error: true` (infrastructure issues shouldn't directly fail the job). The `test` job failure gates the `release` job in `build-and-release.yml`.
+- **Test reporting uses a separate `workflow_run` workflow.** `test-report.yml` is triggered by `workflow_run` for all workflows (Pull Request, CI/CD, Scheduled Build). This is required because fork PRs receive a read-only `GITHUB_TOKEN` that cannot create check runs. Using a centralized workflow also avoids duplicating `dorny/test-reporter` configuration. The `workflow_run` file must exist on the default branch (main) before it can trigger. See `dorny/test-reporter`'s [recommended setup for public repositories](https://github.com/dorny/test-reporter#recommended-setup-for-public-repositories).
 - **Path filters exclude `*.md` files.** Documentation-only changes do not trigger CI.
 - **Release branch PRs into main skip validation.** This is intentional to avoid redundant builds.
 - **NuGet publish uses `--skip-duplicate`.** Re-publishing an existing version is a no-op, not an error.
