@@ -253,7 +253,7 @@
     <value>Integration events must not be declared in codeunits with Access set to Internal</value>
   </data>
   <data name="IntegrationEventInInternalCodeunitMessageFormat" xml:space="preserve">
-    <value>Integration event '{0}' is declared in a codeunit with Access = Interna`, making it inaccessible to extensions. Remove the Access property or declare the event as an InternalEvent.</value>
+    <value>Integration event '{0}' is declared in a codeunit with Access = Internal`, making it inaccessible to extensions. Remove the Access property or declare the event as an InternalEvent.</value>
   </data>
   <data name="IntegrationEventInInternalCodeunitDescription" xml:space="preserve">
     <value>Integration events are designed to be consumed by extensions and therefore must be accessible outside the defining app. When an IntegrationEvent is declared in a codeunit with Access = Internal, the event cannot be subscribed to by extensions, rendering it ineffective.</value>
