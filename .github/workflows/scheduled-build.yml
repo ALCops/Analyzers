@@ -15,5 +15,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      checks: write
+      pull-requests: write
     with:
       draft-check: false
