@@ -372,8 +372,6 @@ jobs:
     permissions:
       contents: read
       actions: read
-      checks: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@v6
 
@@ -390,7 +388,7 @@ jobs:
           report-title: 'ALCops Test Results'
           path: "**/*.trx"
           reporter: dotnet-trx
-          use-actions-summary: 'false'
+          use-actions-summary: 'true'
           list-suites: 'failed'
           list-tests: 'failed'
           collapsed: 'never'
