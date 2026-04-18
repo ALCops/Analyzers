@@ -14,7 +14,7 @@
         <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Remove="ALCops.DocumentationCopAnalyzers.cs" />
+        <Compile Condition="'$(ContinuousIntegrationBuild)' == 'true'" Remove="ALCops.DocumentationCopAnalyzers.cs" />
         <EmbeddedResource Update="ALCops.DocumentationCopAnalyzers.resx">
             <Generator>MSBuild:Compile</Generator>
             <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>

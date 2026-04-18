@@ -60,8 +60,5 @@ nunit-*.xml
 # Specific files from the .serena folder
 .serena/**
 
-# MSBuild-generated strongly-typed resource classes (resx → .cs)
-ALCops.*Analyzers.cs
-
 # Microsoft.Dynamics.BusinessCentral.Development.Tools
 **/*Microsoft.Dynamics.BusinessCentral.Development.Tools*
