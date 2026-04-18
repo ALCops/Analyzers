@@ -14,8 +14,9 @@
         <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Condition="'$(ContinuousIntegrationBuild)' == 'true'" Remove="ALCops.TestAutomationCopAnalyzers.cs" />
+        <Compile Remove="ALCops.TestAutomationCopAnalyzers.cs" />
         <EmbeddedResource Update="ALCops.TestAutomationCopAnalyzers.resx">
+            <LogicalName>ALCops.TestAutomationCop.TestAutomationCopAnalyzers.resources</LogicalName>
             <Generator>MSBuild:Compile</Generator>
             <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
             <StronglyTypedNamespace>ALCops.TestAutomationCop</StronglyTypedNamespace>

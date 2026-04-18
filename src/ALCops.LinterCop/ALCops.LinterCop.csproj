@@ -14,8 +14,9 @@
         <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Condition="'$(ContinuousIntegrationBuild)' == 'true'" Remove="ALCops.LinterCopAnalyzers.cs" />
+        <Compile Remove="ALCops.LinterCopAnalyzers.cs" />
         <EmbeddedResource Update="ALCops.LinterCopAnalyzers.resx">
+            <LogicalName>ALCops.LinterCop.LinterCopAnalyzers.resources</LogicalName>
             <Generator>MSBuild:Compile</Generator>
             <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
             <StronglyTypedNamespace>ALCops.LinterCop</StronglyTypedNamespace>

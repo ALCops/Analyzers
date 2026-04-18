@@ -14,8 +14,9 @@
         <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Condition="'$(ContinuousIntegrationBuild)' == 'true'" Remove="ALCops.FormattingCopAnalyzers.cs" />
+        <Compile Remove="ALCops.FormattingCopAnalyzers.cs" />
         <EmbeddedResource Update="ALCops.FormattingCopAnalyzers.resx">
+            <LogicalName>ALCops.FormattingCop.FormattingCopAnalyzers.resources</LogicalName>
             <Generator>MSBuild:Compile</Generator>
             <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
             <StronglyTypedNamespace>ALCops.FormattingCop</StronglyTypedNamespace>
