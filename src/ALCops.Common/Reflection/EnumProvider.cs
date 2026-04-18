@@ -577,6 +577,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ObsoleteState)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _oDataKeyFields =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ODataKeyFields)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _optionCaption =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.OptionCaption)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _permissions =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Permissions)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _scope =
@@ -622,6 +624,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind NotBlank => _notBlank.Value;
         public static NavCodeAnalysis.PropertyKind ObsoleteState => _obsoleteState.Value;
         public static NavCodeAnalysis.PropertyKind ODataKeyFields => _oDataKeyFields.Value;
+        public static NavCodeAnalysis.PropertyKind OptionCaption => _optionCaption.Value;
         public static NavCodeAnalysis.PropertyKind Permissions => _permissions.Value;
         public static NavCodeAnalysis.PropertyKind Scope => _scope.Value;
         public static NavCodeAnalysis.PropertyKind ShowAs => _showAs.Value;
@@ -764,6 +767,12 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.ReportDataItem)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _reportExtension =
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.ReportExtension)));
+        private static readonly Lazy<NavCodeAnalysis.SymbolKind> _reportLabel =
+            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.ReportLabel)));
+        private static readonly Lazy<NavCodeAnalysis.SymbolKind> _requestPage =
+            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.RequestPage)));
+        private static readonly Lazy<NavCodeAnalysis.SymbolKind> _requestPageExtension =
+            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.RequestPageExtension)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _table =
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Table)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _tableExtension =
@@ -800,6 +809,9 @@ public static class EnumProvider
         public static NavCodeAnalysis.SymbolKind Report => _report.Value;
         public static NavCodeAnalysis.SymbolKind ReportDataItem => _reportDataItem.Value;
         public static NavCodeAnalysis.SymbolKind ReportExtension => _reportExtension.Value;
+        public static NavCodeAnalysis.SymbolKind ReportLabel => _reportLabel.Value;
+        public static NavCodeAnalysis.SymbolKind RequestPage => _requestPage.Value;
+        public static NavCodeAnalysis.SymbolKind RequestPageExtension => _requestPageExtension.Value;
         public static NavCodeAnalysis.SymbolKind Table => _table.Value;
         public static NavCodeAnalysis.SymbolKind TableExtension => _tableExtension.Value;
         public static NavCodeAnalysis.SymbolKind Undefined => _undefined.Value;

@@ -244,6 +244,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.RecordInstanceIsolationLevelDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.RecordInstanceIsolationLevel));
 
+    public static readonly DiagnosticDescriptor TranslatableTextShouldBeTranslated = new(
+        id: DiagnosticIds.TranslatableTextShouldBeTranslated,
+        title: LinterCopAnalyzers.TranslatableTextShouldBeTranslatedTitle,
+        messageFormat: LinterCopAnalyzers.TranslatableTextShouldBeTranslatedMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.TranslatableTextShouldBeTranslatedDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TranslatableTextShouldBeTranslated));
+
     public static readonly DiagnosticDescriptor UseIsEmptyMethodInsteadOfCount = new(
         id: DiagnosticIds.UseIsEmptyMethodInsteadOfCount,
         title: LinterCopAnalyzers.UseIsEmptyMethodInsteadOfCountTitle,

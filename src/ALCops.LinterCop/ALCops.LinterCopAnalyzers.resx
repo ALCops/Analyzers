@@ -384,4 +384,13 @@
   <data name="AllowInCustomizationsRedundancyCodeAction" xml:space="preserve">
     <value>ALCops: Remove redundant AllowInCustomizations</value>
   </data>
+  <data name="TranslatableTextShouldBeTranslatedTitle" xml:space="preserve">
+    <value>Translatable text should be translated</value>
+  </data>
+  <data name="TranslatableTextShouldBeTranslatedMessageFormat" xml:space="preserve">
+    <value>Missing translation for '{0}' in language(s): {1}</value>
+  </data>
+  <data name="TranslatableTextShouldBeTranslatedDescription" xml:space="preserve">
+    <value>All translatable texts (captions, tooltips, labels, option captions) should have translations in the project's XLIFF files for every target language. Missing translations cause the application to display the source language text to users in other locales, degrading the user experience.</value>
+  </data>
 </root>
