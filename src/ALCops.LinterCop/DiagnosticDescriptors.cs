@@ -194,6 +194,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.MaintainabilityIndexThresholdExceededDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.MaintainabilityIndexThresholdExceeded));
 
+    public static readonly DiagnosticDescriptor NamingPattern = new(
+        id: DiagnosticIds.NamingPattern,
+        title: LinterCopAnalyzers.NamingPatternTitle,
+        messageFormat: LinterCopAnalyzers.NamingPatternMessageFormat,
+        category: Category.Naming,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.NamingPatternDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.NamingPattern));
+
     public static readonly DiagnosticDescriptor ObjectIdInDeclaration = new(
         id: DiagnosticIds.ObjectIdInDeclaration,
         title: LinterCopAnalyzers.ObjectIdInDeclarationTitle,

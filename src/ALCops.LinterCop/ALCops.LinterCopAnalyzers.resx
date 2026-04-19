@@ -288,6 +288,15 @@
   <data name="MaintainabilityIndexThresholdExceededDescription" xml:space="preserve">
     <value>The maintainability index provides an overall indication of code maintainability based on complexity, size, and structural characteristics. When this value falls at or below the configured threshold, the code is considered difficult to maintain, increasing the likelihood of defects and long-term maintenance cost.</value>
   </data>
+  <data name="NamingPatternTitle" xml:space="preserve">
+    <value>Name does not match naming convention</value>
+  </data>
+  <data name="NamingPatternMessageFormat" xml:space="preserve">
+    <value>{0} name "{1}" {2} match {3} "{4}"</value>
+  </data>
+  <data name="NamingPatternDescription" xml:space="preserve">
+    <value>Validates names of procedures, variables, parameters, return values, objects, fields, actions, enum values, and controls against configurable naming patterns. By default, enforces Microsoft naming conventions (PascalCase for identifiers, no special characters in fields and variables). Custom allow/disallow patterns can be configured per target in alcops.json.</value>
+  </data>
   <data name="ObjectIdInDeclarationTitle" xml:space="preserve">
     <value>Do not use Object IDs as object references</value>
   </data>
