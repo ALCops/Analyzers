@@ -36,10 +36,24 @@ public static class ALCopsSettingsProvider
     /// <returns>The settings instance (never null)</returns>
     public static ALCopsSettings GetSettings(string? workspacePath)
     {
-        if (string.IsNullOrEmpty(workspacePath))
+        string key = workspacePath ?? string.Empty;
+
+        if (_cache.TryGetValue(key, out ALCopsSettings? cached))
+            return cached;
+
+        if (string.IsNullOrEmpty(key))
             return new ALCopsSettings();
 
-        return _cache.GetOrAdd(workspacePath, LoadSettings);
+        return _cache.GetOrAdd(key, LoadSettings);
+    }
+
+    /// <summary>
+    /// Pre-populates the settings cache for a given workspace path.
+    /// Intended for test use. Call <see cref="ClearCache"/> in test teardown to clean up.
+    /// </summary>
+    public static void SetSettings(string workspacePath, ALCopsSettings settings)
+    {
+        _cache[workspacePath] = settings;
     }
 
     private static ALCopsSettings LoadSettings(string workspacePath)

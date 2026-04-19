@@ -38,7 +38,7 @@ These decisions were made during the initial design and should be preserved unle
 | ManifestHelper exception handling | Catch `FileNotFoundException` and treat as null manifest | `ManifestHelper.GetManifest` loads `Microsoft.Dynamics.Nav.Analyzers.Common` assembly via reflection; this assembly isn't present in test contexts |
 | Null manifest behavior | Proceed with analysis (don't skip) | Tests create minimal compilations without manifests; real projects always have manifests |
 | XLIFF caching | Load once in CompilationStartAction | Avoid re-parsing per symbol |
-| Settings | `LanguagesToTranslate` array in `alcops.json` | Match original feature; allows filtering to specific languages |
+| Settings | `LanguagesToTranslate` array in `alcops.json` | Override semantics: when set, these are the available languages (XLIFF files only parsed for matching languages); when unset, discover from XLIFF files |
 | Locked labels | Skip (no diagnostic) | Locked labels are intentionally untranslated |
 | Locked detection | Syntax-based via `CommaSeparatedIdentifierEqualsLiteralList` | Label sub-properties aren't exposed as semantic symbols |
 | Obsolete symbols | Skip (no diagnostic) | Standard ALCops convention |
@@ -137,6 +137,16 @@ This matches the AL compiler's XLIFF generation behavior exactly.
 | PageControlToolTip | Page control with untranslated tooltip |
 | ReportLabel | Report label without translation |
 
+### HasDiagnosticWithLanguagesToTranslateNoXliff (1 case)
+| Test case | Scenario |
+|---|---|
+| LocalLabel | LanguagesToTranslate=["da-DK"], no XLIFF files. Settings declare required languages without XLIFF files. |
+
+### HasDiagnosticWithLanguagesToTranslatePartialXliff (1 case)
+| Test case | Scenario |
+|---|---|
+| LocalLabel | LanguagesToTranslate=["da-DK","de-DE"], only da-DK XLIFF. Settings add de-DE as required language. |
+
 ### NoDiagnostic (2 cases)
 | Test case | Suppression reason |
 |---|---|
@@ -146,7 +156,7 @@ This matches the AL compiler's XLIFF generation behavior exactly.
 ### NoDiagnosticNoXliff (1 case)
 | Test case | Suppression reason |
 |---|---|
-| NoXliffFiles | No XLIFF files present in file system |
+| NoXliffFiles | No XLIFF files present in file system, no LanguagesToTranslate setting |
 
 ## Test infrastructure
 
@@ -160,11 +170,14 @@ The `CreateFixtureWithoutXliff()` helper creates a fixture with:
 - A `MemoryFileSystem` containing no files
 - The `TranslatableTextShouldBeTranslated` analyzer
 
+### Settings injection for tests
+
+Tests that need `LanguagesToTranslate` use `ALCopsSettingsProvider.SetSettings("", settings)` to inject settings for the empty workspace path returned by `MemoryFileSystem.GetDirectoryPath()`. A `[TearDown]` calls `ALCopsSettingsProvider.ClearCache()` to avoid cross-test pollution.
+
 ## Phase 2 roadmap (not yet implemented)
 
 - **Translated NoDiagnostic test**: Test case where translation exists and is properly translated
 - **Multiple languages test**: Test with multiple XLIFF files, some translated, some not
-- **LanguagesToTranslate filter test**: Test the language filter setting
 - **Page extension controls test**: Test page extension with added controls
 - **Table extension fields test**: Test table extension with added fields
 - **Multi-extension folding test**: Test multiple extensions on the same target (the bug fix scenario)

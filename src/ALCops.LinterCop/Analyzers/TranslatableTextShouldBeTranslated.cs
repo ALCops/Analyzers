@@ -252,6 +252,10 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
 
     private static TranslationIndex? BuildTranslationIndex(IFileSystem fileSystem, string appName, string[]? languagesToTranslate)
     {
+        HashSet<string>? languageFilter = languagesToTranslate is { Length: > 0 }
+            ? new HashSet<string>(languagesToTranslate, StringComparer.OrdinalIgnoreCase)
+            : null;
+
         IEnumerable<string> xliffFiles;
         try
         {
@@ -259,15 +263,18 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         }
         catch (DirectoryNotFoundException)
         {
+            if (languageFilter is { Count: > 0 })
+                return new TranslationIndex(
+                    new HashSet<string>(languageFilter, StringComparer.OrdinalIgnoreCase),
+                    new Dictionary<string, HashSet<string>>(StringComparer.Ordinal));
+
             return null;
         }
 
-        HashSet<string> availableLanguages = new(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> availableLanguages = languageFilter is not null
+            ? new HashSet<string>(languageFilter, StringComparer.OrdinalIgnoreCase)
+            : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         List<(string Language, XDocument Document)> parsedFiles = new();
-
-        HashSet<string>? languageFilter = languagesToTranslate is { Length: > 0 }
-            ? new HashSet<string>(languagesToTranslate, StringComparer.OrdinalIgnoreCase)
-            : null;
 
         foreach (string xliffPath in xliffFiles)
         {

@@ -1,3 +1,4 @@
+using ALCops.Common.Settings;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using RoslynTestKit;
 
@@ -27,6 +28,12 @@ namespace ALCops.LinterCop.Test
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
                     Path.Combine("Rules", nameof(TranslatableTextShouldBeTranslated)));
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            ALCopsSettingsProvider.ClearCache();
         }
 
         private static AnalyzerTestFixture CreateFixtureWithEmptyXliff()
@@ -105,6 +112,46 @@ namespace ALCops.LinterCop.Test
 
             var fixture = CreateFixtureWithoutXliff();
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
+        [TestCase("LocalLabel")]
+        public async Task HasDiagnosticWithLanguagesToTranslateNoXliff(string testCase)
+        {
+            RequireMinimumVersion("16.0",
+                "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
+
+            ALCopsSettingsProvider.SetSettings("", new ALCopsSettings
+            {
+                LanguagesToTranslate = ["da-DK"]
+            });
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithoutXliff();
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
+        [TestCase("LocalLabel")]
+        public async Task HasDiagnosticWithLanguagesToTranslatePartialXliff(string testCase)
+        {
+            RequireMinimumVersion("16.0",
+                "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
+
+            ALCopsSettingsProvider.SetSettings("", new ALCopsSettings
+            {
+                LanguagesToTranslate = ["da-DK", "de-DE"]
+            });
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithEmptyXliff();
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
         }
     }
 }
