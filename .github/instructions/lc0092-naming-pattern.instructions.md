@@ -21,7 +21,7 @@ Validates names of procedures, variables, parameters, return values, objects, fi
 | Category | Naming |
 | Severity | Warning |
 | Enabled by default | true |
-| MessageFormat | `{0} name "{1}" {2} match {3} "{4}"` |
+| MessageFormat | `{0} name "{1}" {2}` |
 | Version gate | None |
 
 ## Design decisions
@@ -40,6 +40,11 @@ Validates names of procedures, variables, parameters, return values, objects, fi
 | netstandard2.1 | Full support | No net8.0-only APIs used |
 | Regex safety | 2-second timeout, catch ArgumentException and RegexMatchTimeoutException | Protects against ReDoS |
 | AppSourceCop exception handling | try-catch in CompilationStart | `GetAppSourceCopConfiguration` may throw in test contexts |
+| Message UX | Four-tier strategy: description → suggestion → regex explainer → raw regex | Progressive enhancement; most users see human-readable messages |
+| Built-in descriptions | Hardcoded per default pattern | Best UX for out-of-box experience |
+| AllowDescription/DisallowDescription | Optional user-provided description fields in settings | Users can provide custom descriptions for their custom patterns |
+| Auto-suggestion | Pattern-specific name transformation | `^[A-Z]` capitalizes first char, `[%&!?]` removes disallowed chars |
+| RegexExplainer | Mini parser for common constructs (char classes, anchors) | Translates simple regex to English when no description available |
 
 ## Architecture
 
@@ -79,6 +84,40 @@ Resolves effective patterns per target using a three-level cascade:
 
 Inheritance map: LocalProcedure, GlobalProcedure, EventSubscriber, EventDeclaration all inherit from Procedure.
 
+Returns `ResolvedPatterns` containing: compiled `Regex`, original pattern string, and description (for both allow and disallow).
+
+### ResolvedPatterns (inner class)
+
+Carries all resolved data per target:
+- `AllowRegex` / `DisallowRegex`: Compiled `Regex` objects (null if no pattern)
+- `AllowPatternString` / `DisallowPatternString`: Original pattern strings (for fallback display)
+- `AllowDescription` / `DisallowDescription`: Human descriptions (built-in or user-provided)
+
+### Diagnostic message assembly (BuildMessage)
+
+Four-tier priority, first match wins:
+1. **Description**: From built-in defaults or user `AllowDescription`/`DisallowDescription`
+2. **Auto-suggestion**: For recognized patterns, appends `. Consider: "SuggestedName"` 
+3. **Regex explainer**: `RegexExplainer.TryExplain()` translates simple patterns to English
+4. **Raw regex**: `must match pattern "{regex}"` fallback
+
+### RegexExplainer (inner static class)
+
+Translates common regex constructs to English. Handles:
+- Anchors: `^` (start), `$` (end)
+- Character classes: `[A-Z]`, `[a-z]`, `[A-Za-z]`, `[A-Za-z0-9]`, `[0-9]`
+- Literal character lists: `[%&!?]` → "any of: %, &, !, ?"
+- Quantifiers: `*`, `+`, `?` (silently consumed)
+
+Returns null for patterns it can't parse (complex quantifiers, groups, lookahead/lookbehind).
+
+### Auto-suggestion generators (TryGenerateSuggestion)
+
+Pattern-specific name transformations:
+- `^[A-Z]` (allow) → Capitalize first character
+- `^[a-z]` (allow) → Lowercase first character
+- `[%&!?]` (disallow) → Remove matching characters
+
 ### Default patterns
 
 | Target | AllowPattern | DisallowPattern |
@@ -99,12 +138,12 @@ Inheritance map: LocalProcedure, GlobalProcedure, EventSubscriber, EventDeclarat
 {
   "NamingPatterns": {
     "Procedure": { "AllowPattern": "^[A-Z]", "DisallowPattern": "" },
-    "LocalProcedure": { "AllowPattern": "^[a-z]" }
+    "LocalProcedure": { "AllowPattern": "^[a-z]", "AllowDescription": "should start with a lowercase letter" }
   }
 }
 ```
 
-- Settings POCO: `ALCops.Common.Settings.NamingPattern` (AllowPattern, DisallowPattern)
+- Settings POCO: `ALCops.Common.Settings.NamingPattern` (AllowPattern, DisallowPattern, AllowDescription, DisallowDescription)
 - ALCopsSettings property: `Dictionary<string, NamingPattern>? NamingPatterns`
 - Lookup is case-insensitive on target name keys
 

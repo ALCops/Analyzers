@@ -166,35 +166,35 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         if (string.IsNullOrEmpty(name))
             return;
 
-        var (allowPattern, disallowPattern) = config.GetPatterns(target);
+        var resolved = config.GetPatterns(target);
 
-        if (allowPattern is not null)
+        if (resolved.AllowRegex is not null)
         {
-            if (!TryIsMatch(allowPattern, name))
+            if (!TryIsMatch(resolved.AllowRegex, name))
             {
+                var message = BuildMessage(
+                    name, resolved.AllowPatternString, resolved.AllowDescription, isAllow: true);
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.NamingPattern,
                     ctx.Symbol.GetLocation(),
                     kindDisplayName,
                     name,
-                    "must",
-                    "allow pattern",
-                    allowPattern.ToString()));
+                    message));
             }
         }
 
-        if (disallowPattern is not null)
+        if (resolved.DisallowRegex is not null)
         {
-            if (TryIsMatch(disallowPattern, name))
+            if (TryIsMatch(resolved.DisallowRegex, name))
             {
+                var message = BuildMessage(
+                    name, resolved.DisallowPatternString, resolved.DisallowDescription, isAllow: false);
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.NamingPattern,
                     ctx.Symbol.GetLocation(),
                     kindDisplayName,
                     name,
-                    "must not",
-                    "disallow pattern",
-                    disallowPattern.ToString()));
+                    message));
             }
         }
     }
@@ -205,37 +205,84 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         if (string.IsNullOrEmpty(name))
             return;
 
-        var (allowPattern, disallowPattern) = config.GetPatterns(target);
+        var resolved = config.GetPatterns(target);
 
-        if (allowPattern is not null)
+        if (resolved.AllowRegex is not null)
         {
-            if (!TryIsMatch(allowPattern, name))
+            if (!TryIsMatch(resolved.AllowRegex, name))
             {
+                var message = BuildMessage(
+                    name, resolved.AllowPatternString, resolved.AllowDescription, isAllow: true);
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.NamingPattern,
                     symbol.GetLocation(),
                     kindDisplayName,
                     name,
-                    "must",
-                    "allow pattern",
-                    allowPattern.ToString()));
+                    message));
             }
         }
 
-        if (disallowPattern is not null)
+        if (resolved.DisallowRegex is not null)
         {
-            if (TryIsMatch(disallowPattern, name))
+            if (TryIsMatch(resolved.DisallowRegex, name))
             {
+                var message = BuildMessage(
+                    name, resolved.DisallowPatternString, resolved.DisallowDescription, isAllow: false);
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.NamingPattern,
                     symbol.GetLocation(),
                     kindDisplayName,
                     name,
-                    "must not",
-                    "disallow pattern",
-                    disallowPattern.ToString()));
+                    message));
             }
         }
+    }
+
+    private static string BuildMessage(string name, string? patternString, string? description, bool isAllow)
+    {
+        var suggestion = TryGenerateSuggestion(name, patternString, isAllow);
+        var sugSuffix = suggestion is not null ? $". Consider: \"{suggestion}\"" : "";
+
+        // Tier 1: User or built-in description
+        if (!string.IsNullOrEmpty(description))
+            return $"{description}{sugSuffix}";
+
+        // Tier 3: Mini regex explainer
+        var explained = RegexExplainer.TryExplain(patternString, isAllow);
+        if (explained is not null)
+            return $"{explained}{sugSuffix}";
+
+        // Tier 4: Raw regex fallback
+        var verb = isAllow ? "must match" : "must not match";
+        return $"{verb} pattern \"{patternString}\"{sugSuffix}";
+    }
+
+    private static string? TryGenerateSuggestion(string name, string? patternString, bool isAllow)
+    {
+        if (string.IsNullOrEmpty(patternString) || string.IsNullOrEmpty(name))
+            return null;
+
+        if (isAllow)
+        {
+            // ^[A-Z] - capitalize first character
+            if (patternString == @"^[A-Z]" && name.Length > 0 && char.IsLower(name[0]))
+                return char.ToUpperInvariant(name[0]) + name.Substring(1);
+
+            // ^[a-z] - lowercase first character
+            if (patternString == @"^[a-z]" && name.Length > 0 && char.IsUpper(name[0]))
+                return char.ToLowerInvariant(name[0]) + name.Substring(1);
+        }
+        else
+        {
+            // [%&!?] - remove disallowed characters
+            if (patternString == @"[%&!?]")
+            {
+                var cleaned = Regex.Replace(name, @"[%&!?]", "");
+                return cleaned != name ? cleaned : null;
+            }
+        }
+
+        return null;
     }
 
     private static bool TryIsMatch(Regex pattern, string input)
@@ -346,17 +393,17 @@ public sealed class NamingPattern : DiagnosticAnalyzer
 
     internal sealed class NamingPatternConfig
     {
-        private static readonly Dictionary<NamingTarget, (string? Allow, string? Disallow)> BuiltInDefaults = new()
+        private static readonly Dictionary<NamingTarget, (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc)> BuiltInDefaults = new()
         {
-            [NamingTarget.Procedure] = (@"^[A-Z]", null),
-            [NamingTarget.Variable] = (@"^[A-Z]", @"[%&!?]"),
-            [NamingTarget.Parameter] = (@"^[A-Z]", null),
-            [NamingTarget.ReturnValue] = (@"^[A-Z]", null),
-            [NamingTarget.Object] = (@"^[A-Z]", null),
-            [NamingTarget.Field] = (@"^[A-Za-z]", @"[%&!?]"),
-            [NamingTarget.Action] = (@"^[A-Z]", null),
-            [NamingTarget.EnumValue] = (@"^[A-Z]", null),
-            [NamingTarget.Control] = (@"^[A-Z]", null),
+            [NamingTarget.Procedure] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
+            [NamingTarget.Variable] = (@"^[A-Z]", @"[%&!?]", "should start with an uppercase letter", "should not contain special characters (%, &, !, ?)"),
+            [NamingTarget.Parameter] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
+            [NamingTarget.ReturnValue] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
+            [NamingTarget.Object] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
+            [NamingTarget.Field] = (@"^[A-Za-z]", @"[%&!?]", "should start with a letter", "should not contain special characters (%, &, !, ?)"),
+            [NamingTarget.Action] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
+            [NamingTarget.EnumValue] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
+            [NamingTarget.Control] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
         };
 
         private static readonly Dictionary<NamingTarget, NamingTarget> InheritanceMap = new()
@@ -367,25 +414,29 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             [NamingTarget.EventDeclaration] = NamingTarget.Procedure,
         };
 
-        private readonly Dictionary<NamingTarget, (Regex? Allow, Regex? Disallow)> _resolvedPatterns;
+        private readonly Dictionary<NamingTarget, ResolvedPatterns> _resolvedPatterns;
 
         public NamingPatternConfig(Dictionary<string, NamingPatternSetting>? userOverrides)
         {
-            _resolvedPatterns = new Dictionary<NamingTarget, (Regex? Allow, Regex? Disallow)>();
+            _resolvedPatterns = new Dictionary<NamingTarget, ResolvedPatterns>();
 
             foreach (NamingTarget target in System.Enum.GetValues(typeof(NamingTarget)))
             {
-                var (allowStr, disallowStr) = ResolvePatternStrings(target, userOverrides);
-                _resolvedPatterns[target] = (
-                    CompilePattern(allowStr),
-                    CompilePattern(disallowStr));
+                var resolved = ResolvePatternStrings(target, userOverrides);
+                _resolvedPatterns[target] = new ResolvedPatterns(
+                    CompilePattern(resolved.Allow),
+                    CompilePattern(resolved.Disallow),
+                    resolved.Allow,
+                    resolved.Disallow,
+                    resolved.AllowDesc,
+                    resolved.DisallowDesc);
             }
         }
 
-        public (Regex? AllowPattern, Regex? DisallowPattern) GetPatterns(NamingTarget target) =>
-            _resolvedPatterns.TryGetValue(target, out var patterns) ? patterns : (null, null);
+        public ResolvedPatterns GetPatterns(NamingTarget target) =>
+            _resolvedPatterns.TryGetValue(target, out var patterns) ? patterns : ResolvedPatterns.Empty;
 
-        private static (string? Allow, string? Disallow) ResolvePatternStrings(
+        private static (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) ResolvePatternStrings(
             NamingTarget target, Dictionary<string, NamingPatternSetting>? userOverrides)
         {
             // Check if user has explicit override for this target
@@ -393,7 +444,9 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             {
                 return (
                     !string.IsNullOrEmpty(userSetting.AllowPattern) ? userSetting.AllowPattern : null,
-                    !string.IsNullOrEmpty(userSetting.DisallowPattern) ? userSetting.DisallowPattern : null);
+                    !string.IsNullOrEmpty(userSetting.DisallowPattern) ? userSetting.DisallowPattern : null,
+                    !string.IsNullOrEmpty(userSetting.AllowDescription) ? userSetting.AllowDescription : null,
+                    !string.IsNullOrEmpty(userSetting.DisallowDescription) ? userSetting.DisallowDescription : null);
             }
 
             // Check if this target inherits from a parent
@@ -404,7 +457,9 @@ public sealed class NamingPattern : DiagnosticAnalyzer
                 {
                     return (
                         !string.IsNullOrEmpty(parentSetting.AllowPattern) ? parentSetting.AllowPattern : null,
-                        !string.IsNullOrEmpty(parentSetting.DisallowPattern) ? parentSetting.DisallowPattern : null);
+                        !string.IsNullOrEmpty(parentSetting.DisallowPattern) ? parentSetting.DisallowPattern : null,
+                        !string.IsNullOrEmpty(parentSetting.AllowDescription) ? parentSetting.AllowDescription : null,
+                        !string.IsNullOrEmpty(parentSetting.DisallowDescription) ? parentSetting.DisallowDescription : null);
                 }
 
                 // Fall through to built-in default for parent
@@ -416,7 +471,7 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             if (BuiltInDefaults.TryGetValue(target, out var builtIn))
                 return builtIn;
 
-            return (null, null);
+            return (null, null, null, null);
         }
 
         private static bool TryGetUserOverride(
@@ -454,6 +509,138 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             {
                 return null;
             }
+        }
+    }
+
+    internal sealed class ResolvedPatterns
+    {
+        public static readonly ResolvedPatterns Empty = new(null, null, null, null, null, null);
+
+        public Regex? AllowRegex { get; }
+        public Regex? DisallowRegex { get; }
+        public string? AllowPatternString { get; }
+        public string? DisallowPatternString { get; }
+        public string? AllowDescription { get; }
+        public string? DisallowDescription { get; }
+
+        public ResolvedPatterns(
+            Regex? allowRegex, Regex? disallowRegex,
+            string? allowPatternString, string? disallowPatternString,
+            string? allowDescription, string? disallowDescription)
+        {
+            AllowRegex = allowRegex;
+            DisallowRegex = disallowRegex;
+            AllowPatternString = allowPatternString;
+            DisallowPatternString = disallowPatternString;
+            AllowDescription = allowDescription;
+            DisallowDescription = disallowDescription;
+        }
+    }
+
+    internal static class RegexExplainer
+    {
+        public static string? TryExplain(string? pattern, bool isAllow)
+        {
+            if (string.IsNullOrEmpty(pattern))
+                return null;
+
+            // Try to match known simple patterns and translate to English
+            var parts = new List<string>();
+            var pos = 0;
+
+            while (pos < pattern.Length)
+            {
+                if (pattern[pos] == '^')
+                {
+                    pos++;
+                    if (pos < pattern.Length && pattern[pos] == '[')
+                    {
+                        var charClass = TryParseCharacterClass(pattern, ref pos);
+                        if (charClass is null)
+                            return null;
+
+                        var verb = isAllow ? "must start with" : "must not start with";
+                        parts.Add($"{verb} {charClass}");
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                else if (pattern[pos] == '[')
+                {
+                    var charClass = TryParseCharacterClass(pattern, ref pos);
+                    if (charClass is null)
+                        return null;
+
+                    var verb = isAllow ? "must contain" : "must not contain";
+                    parts.Add($"{verb} {charClass}");
+                }
+                else if (pattern[pos] == '$')
+                {
+                    pos++;
+                    // End anchor, skip
+                }
+                else if (pattern[pos] == '.' || pattern[pos] == '*' || pattern[pos] == '+' || pattern[pos] == '?')
+                {
+                    // Quantifiers and wildcards: skip silently for simple patterns
+                    pos++;
+                }
+                else
+                {
+                    // Unrecognized construct, bail out
+                    return null;
+                }
+            }
+
+            return parts.Count > 0 ? string.Join(", ", parts) : null;
+        }
+
+        private static string? TryParseCharacterClass(string pattern, ref int pos)
+        {
+            if (pos >= pattern.Length || pattern[pos] != '[')
+                return null;
+
+            var endBracket = pattern.IndexOf(']', pos + 1);
+            if (endBracket < 0)
+                return null;
+
+            var content = pattern.Substring(pos + 1, endBracket - pos - 1);
+            pos = endBracket + 1;
+
+            return DescribeCharacterClass(content);
+        }
+
+        private static string? DescribeCharacterClass(string content)
+        {
+            // Common character class patterns
+            return content switch
+            {
+                "A-Z" => "uppercase letter A-Z",
+                "a-z" => "lowercase letter a-z",
+                "A-Za-z" or "a-zA-Z" => "letter a-z or A-Z",
+                "A-Za-z0-9" or "a-zA-Z0-9" => "letter or digit",
+                "0-9" => "digit 0-9",
+                _ => TryDescribeCharacterList(content)
+            };
+        }
+
+        private static string? TryDescribeCharacterList(string content)
+        {
+            // If content is only literal characters (no ranges), list them
+            if (content.Length == 0)
+                return null;
+
+            // Check for range patterns (contains '-' not at start/end)
+            for (int i = 1; i < content.Length - 1; i++)
+            {
+                if (content[i] == '-')
+                    return null; // Contains a range we don't recognize
+            }
+
+            // It's a list of literal characters
+            var chars = string.Join(", ", content.ToCharArray().Select(c => c.ToString()));
+            return $"any of: {chars}";
         }
     }
 }
