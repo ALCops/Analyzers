@@ -163,7 +163,7 @@
     <value>Cognitive complexity metric</value>
   </data>
   <data name="CognitiveComplexityMetricMessageFormat" xml:space="preserve">
-    <value>Cognitive Complexity: {0} (threshold ≤ {1})</value>
+    <value>Cognitive Complexity: {0} (threshold ≥ {1})</value>
   </data>
   <data name="CognitiveComplexityMetricDescription" xml:space="preserve">
     <value>Reports the Cognitive Complexity score of a procedure or trigger. This diagnostic is informational and is always reported, independent of any configured threshold.</value>
@@ -181,7 +181,7 @@
     <value>Cognitive Complexity exceeds threshold.</value>
   </data>
   <data name="CognitiveComplexityThresholdExceededMessageFormat" xml:space="preserve">
-    <value>Cognitive Complexity: {0} (threshold ≤ {1})</value>
+    <value>Cognitive Complexity: {0} (threshold ≥ {1})</value>
   </data>
   <data name="CognitiveComplexityThresholdExceededDescription" xml:space="preserve">
     <value>Indicates that the Cognitive Complexity of a procedure or trigger meets or exceeds the configured threshold. High Cognitive Complexity signals reduced readability and maintainability. Thresholds are configurable and should be interpreted in the context of the application domain and expected problem complexity.</value>
