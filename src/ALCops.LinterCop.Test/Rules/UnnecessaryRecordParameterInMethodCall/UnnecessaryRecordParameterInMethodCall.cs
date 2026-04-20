@@ -27,6 +27,11 @@ namespace ALCops.LinterCop.Test
         [TestCase("MultipleArguments")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["InternalPageExtensionMethodCall", "InternalTableExtensionMethodCall"],
+                "13.0",
+                "No support for tableextensions when target itself is already declared in the same module");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
