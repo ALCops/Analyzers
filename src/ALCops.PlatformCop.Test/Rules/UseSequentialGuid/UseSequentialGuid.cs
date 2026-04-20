@@ -32,6 +32,9 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ValidateSecondaryKeyField")]
         public async Task HasDiagnostic(string testCase)
         {
+            // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/guid/guid-createsequentialguid-method
+            RequireMinimumVersion("16.0", "Available with runtime version 16.0.");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
