@@ -393,6 +393,15 @@
   <data name="AllowInCustomizationsRedundancyCodeAction" xml:space="preserve">
     <value>ALCops: Remove redundant AllowInCustomizations</value>
   </data>
+  <data name="UnnecessaryRecordParameterInMethodCallTitle" xml:space="preserve">
+    <value>Unnecessary record parameter in method call</value>
+  </data>
+  <data name="UnnecessaryRecordParameterInMethodCallMessageFormat" xml:space="preserve">
+    <value>The record variable '{0}' is passed as an argument to a method that is already invoked on the same record. Remove the redundant parameter.</value>
+  </data>
+  <data name="UnnecessaryRecordParameterInMethodCallDescription" xml:space="preserve">
+    <value>When a method is invoked on a record variable using dot-notation (e.g. MyRecord.SomeProc()), the method already has access to the record through the implicit Rec variable. Passing the same record variable as an explicit parameter is redundant, obscures the real parameter list, and can mislead future readers about the method's intent. Similarly, when calling a sibling method inside a table or page, passing Rec explicitly is unnecessary because the callee already has access to it.</value>
+  </data>
   <data name="TranslatableTextShouldBeTranslatedTitle" xml:space="preserve">
     <value>Translatable text should be translated</value>
   </data>

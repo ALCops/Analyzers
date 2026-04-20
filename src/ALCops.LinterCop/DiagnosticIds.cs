@@ -31,4 +31,5 @@ public static class DiagnosticIds
     public static readonly string NamingPattern = "LC0092";
     public static readonly string AllowInCustomizationsRedundancy = "LC0094";
     public static readonly string UsePartialRecordsOnRead = "LC0095";
+    public static readonly string UnnecessaryRecordParameterInMethodCall = "LC0096";
 }

@@ -294,6 +294,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.UsePartialRecordsOnReadDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UsePartialRecordsOnRead));
 
+    public static readonly DiagnosticDescriptor UnnecessaryRecordParameterInMethodCall = new(
+        id: DiagnosticIds.UnnecessaryRecordParameterInMethodCall,
+        title: LinterCopAnalyzers.UnnecessaryRecordParameterInMethodCallTitle,
+        messageFormat: LinterCopAnalyzers.UnnecessaryRecordParameterInMethodCallMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.UnnecessaryRecordParameterInMethodCallDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UnnecessaryRecordParameterInMethodCall));
+
     public static readonly DiagnosticDescriptor UseSecretTextForSensitiveText = new(
         id: DiagnosticIds.UseSecretTextForSensitiveText,
         title: LinterCopAnalyzers.UseSecretTextForSensitiveTextTitle,
