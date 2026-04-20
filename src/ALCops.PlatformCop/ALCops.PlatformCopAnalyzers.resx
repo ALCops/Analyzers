@@ -399,4 +399,16 @@
   <data name="TransferFieldsTypeMismatchDescription" xml:space="preserve">
     <value>Tables coupled via TransferFields must define matching field types for the same field ID. A type mismatch will result in a runtime error when TransferFields is executed, as incompatible field types cannot be safely copied.</value>
   </data>
+  <data name="UseSequentialGuidTitle" xml:space="preserve">
+    <value>Use CreateSequentialGuid() instead of CreateGuid() for key fields</value>
+  </data>
+  <data name="UseSequentialGuidMessageFormat" xml:space="preserve">
+    <value>Use 'CreateSequentialGuid()' instead of '{0}'. {1}</value>
+  </data>
+  <data name="UseSequentialGuidDescription" xml:space="preserve">
+    <value>CreateGuid() generates random GUIDs that cause SQL index fragmentation when inserted into key fields. CreateSequentialGuid() produces partially-sequential GUIDs that reduce index fragmentation by 20-40%, improving insert, read, and update performance. Use CreateSequentialGuid() when the GUID is assigned to a field that is part of a table key.</value>
+  </data>
+  <data name="UseSequentialGuidCodeAction" xml:space="preserve">
+    <value>ALCops: Replace with CreateSequentialGuid()</value>
+  </data>
 </root>

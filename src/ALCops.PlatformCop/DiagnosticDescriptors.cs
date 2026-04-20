@@ -275,6 +275,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.TransferFieldsTypeMismatchDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TransferFieldsTypeMismatch));
 
+    public static readonly DiagnosticDescriptor UseSequentialGuid = new(
+        id: DiagnosticIds.UseSequentialGuid,
+        title: PlatformCopAnalyzers.UseSequentialGuidTitle,
+        messageFormat: PlatformCopAnalyzers.UseSequentialGuidMessageFormat,
+        category: Category.Performance,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.UseSequentialGuidDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UseSequentialGuid));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLower());

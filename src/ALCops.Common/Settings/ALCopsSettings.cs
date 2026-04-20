@@ -7,4 +7,5 @@ public sealed class ALCopsSettings
     public int MaintainabilityIndexThreshold { get; set; } = 20;
     public string[]? LanguagesToTranslate { get; set; }
     public Dictionary<string, NamingPattern>? NamingPatterns { get; set; }
+    public string? UseSequentialGuidScope { get; set; }
 }
