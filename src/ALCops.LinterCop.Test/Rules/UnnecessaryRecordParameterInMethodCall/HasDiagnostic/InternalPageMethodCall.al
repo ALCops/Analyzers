@@ -22,12 +22,12 @@ page 50100 MyPage
         }
     }
 
-    local procedure DoSth(var MyTableParam: Record MyTable)
+    local procedure MyProcedure(var MyTableParam: Record MyTable)
     begin
     end;
 
     trigger OnOpenPage()
     begin
-        DoSth([|Rec|]);
+        MyProcedure([|Rec|]);
     end;
 }

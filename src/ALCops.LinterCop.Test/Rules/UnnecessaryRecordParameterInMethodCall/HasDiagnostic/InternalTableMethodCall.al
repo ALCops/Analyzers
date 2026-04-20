@@ -5,8 +5,8 @@ table 50100 MyTable
         field(1; Name; Text[100]) { }
     }
 
-    procedure DoSth(MyTable2: Record MyTable)
+    procedure MyProcedure(MyTable2: Record MyTable)
     begin
-        DoSth([|Rec|]);
+        MyProcedure([|Rec|]);
     end;
 }

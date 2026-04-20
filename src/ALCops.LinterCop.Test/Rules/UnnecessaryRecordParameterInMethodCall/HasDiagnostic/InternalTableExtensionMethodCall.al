@@ -8,12 +8,12 @@ table 50100 MyTable
 
 tableextension 50100 MyTableExt extends MyTable
 {
-    procedure DoSth(var MyTableParam: Record MyTable)
+    procedure MyProcedure(var MyTableParam: Record MyTable)
     begin
     end;
 
-    procedure CallDoSth()
+    procedure CallMyProcedure()
     begin
-        DoSth([|Rec|]);
+        MyProcedure([|Rec|]);
     end;
 }

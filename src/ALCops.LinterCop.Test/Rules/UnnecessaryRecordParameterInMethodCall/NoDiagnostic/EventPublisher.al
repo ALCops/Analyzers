@@ -6,14 +6,14 @@ table 50100 MyTable
     }
 
     [IntegrationEvent(false, false)]
-    local procedure OnBeforeDoSth(var MyTableParam: Record MyTable; var IsHandled: Boolean)
+    local procedure OnBeforeMyProcedure(var MyTableParam: Record MyTable; var IsHandled: Boolean)
     begin
     end;
 
-    procedure DoSth()
+    procedure MyProcedure()
     var
         IsHandled: Boolean;
     begin
-        OnBeforeDoSth([|Rec|], IsHandled);
+        OnBeforeMyProcedure([|Rec|], IsHandled);
     end;
 }

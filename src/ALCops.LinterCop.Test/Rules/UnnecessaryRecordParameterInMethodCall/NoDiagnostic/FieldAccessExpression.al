@@ -5,17 +5,17 @@ table 50100 MyTable
         field(1; Name; Text[100]) { }
     }
 
-    procedure DoSth(MyParam: Text)
+    procedure MyProcedure(MyParam: Text)
     begin
     end;
 }
 
 codeunit 50100 MyCodeunit
 {
-    procedure MyProcedure()
+    procedure CallMyProcedure()
     var
         MyTable: Record MyTable;
     begin
-        MyTable.DoSth([|MyTable."Name"|]);
+        MyTable.MyProcedure([|MyTable."Name"|]);
     end;
 }

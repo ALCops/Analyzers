@@ -8,8 +8,8 @@ applyTo: 'src/ALCops.LinterCop/**/UnnecessaryRecordParameterInMethodCall*'
 
 Detects redundant record parameters passed to methods where the same record variable is already the invocation instance. Covers two patterns:
 
-1. **External call**: `MyRecord.DoSth(MyRecord)` from any context
-2. **Internal call**: `DoSth(Rec)` inside tables, pages, and their extensions
+1. **External call**: `MyRecord.MyProcedure(MyRecord)` from any context
+2. **Internal call**: `MyProcedure(Rec)` inside tables, pages, and their extensions
 
 **References:**
 - [BusinessCentral.LinterCop LC0094](https://github.com/StefanMaron/BusinessCentral.LinterCop/wiki/LC0094) (original rule)
@@ -37,7 +37,7 @@ Detects redundant record parameters passed to methods where the same record vari
 | CodeFix | None (v1) | Removing the arg breaks compilation without also changing the callee signature |
 | Module restriction | Current module only (object equality) | Avoids flagging calls to dependency methods the developer can't refactor |
 | Event publishers | Skip | Passing `Rec` to events is idiomatic AL; event signatures are public contracts |
-| Page local-only | Only flag `DoSth(Rec)` on pages when target method is `local` | Public/internal page methods accepting the source record is intentional API design for decoupling and testability. Tables flag all because the table IS the record. |
+| Page local-only | Only flag `MyProcedure(Rec)` on pages when target method is `local` | Public/internal page methods accepting the source record is intentional API design for decoupling and testability. Tables flag all because the table IS the record. |
 | Rec matching | `IsSynthesized` + `SemanticFacts.IsSameName` | Matches only the compiler-generated Rec variable (not user-declared globals). Name check discriminates Rec from xRec (both synthesized). |
 | Implicit `with` | Not affected | Implicit with only adds `Rec.` as a scope prefix for field/method lookup. It does NOT inject `Rec` as a method argument. `MyProcedure(Rec)` requires explicit mention of `Rec` regardless of implicit with. |
 | Category | Usage | Incorrect/discouraged use of AL constructs |
@@ -108,27 +108,27 @@ Arguments may be wrapped in `IConversionExpression` by the SDK. When `argument.V
 
 | Test case | Scenario |
 |---|---|
-| ExternalRecordMethodCall | `MyRecord.DoSth(MyRecord)` from a codeunit |
-| InternalTableMethodCall | `DoSth(Rec)` inside a table |
-| InternalPageMethodCall | `DoSth(Rec)` inside a page (local method) |
-| InternalTableExtensionMethodCall | `DoSth(Rec)` inside a table extension |
-| InternalPageExtensionMethodCall | `DoSth(Rec)` inside a page extension (local method) |
-| MultipleArguments | `MyRecord.DoSth(OtherParam, MyRecord)` flags matching arg |
+| ExternalRecordMethodCall | `MyRecord.MyProcedure(MyRecord)` from a codeunit |
+| InternalTableMethodCall | `MyProcedure(Rec)` inside a table |
+| InternalPageMethodCall | `MyProcedure(Rec)` inside a page (local method) |
+| InternalTableExtensionMethodCall | `MyProcedure(Rec)` inside a table extension |
+| InternalPageExtensionMethodCall | `MyProcedure(Rec)` inside a page extension (local method) |
+| MultipleArguments | `MyRecord.MyProcedure(OtherParam, MyRecord)` flags matching arg |
 
 ### NoDiagnostic (6 cases)
 
 | Test case | Suppression reason |
 |---|---|
-| DifferentParameter | `MyRecord.DoSth(MyRecord2)` different variable |
-| EventPublisher | `OnBeforeDoSth(Rec, IsHandled)` event publisher skipped |
+| DifferentParameter | `MyRecord.MyProcedure(MyRecord2)` different variable |
+| EventPublisher | `OnBeforeMyProcedure(Rec, IsHandled)` event publisher skipped |
 | BuiltInMethods | `Clear(MyTable)` built-in method |
 | PageRunModal | `Page.RunModal(Page::MyPage, MyTable)` built-in, not on the record |
-| FieldAccessExpression | `MyTable.DoSth(MyTable."Name")` field value, not the record |
+| FieldAccessExpression | `MyTable.MyProcedure(MyTable."Name")` field value, not the record |
 | PublicPageMethodWithRec | `CalculateInBackground(Rec)` on public page method (intentional API) |
 
 ## Phase 2 roadmap (not yet implemented)
 
 - **CodeFix**: Remove the redundant parameter from both call site and method signature
 - **RecordRef**: Extend to `RecordRef` variables
-- **xRec detection**: Flag `MyRecord.DoSth(xRec)` in contexts where xRec semantics are not needed
+- **xRec detection**: Flag `MyRecord.MyProcedure(xRec)` in contexts where xRec semantics are not needed
 - **Cross-module analysis**: Optional mode to flag cross-module calls (configurable)
