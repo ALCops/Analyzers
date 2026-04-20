@@ -29,6 +29,7 @@ namespace ALCops.LinterCop.Test
         {
             SkipTestIfVersionIsTooLow(
                 ["InternalPageExtensionMethodCall", "InternalTableExtensionMethodCall"],
+                testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");
 
