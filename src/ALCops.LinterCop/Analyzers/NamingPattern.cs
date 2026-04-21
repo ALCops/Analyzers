@@ -163,7 +163,28 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         if (ctx.IsObsolete())
             return;
 
+        // Skip controls on API objects (pages with PageType=API, queries with QueryType=API).
+        // API controls require camelCase per AA0102, which conflicts with the default PascalCase pattern.
+        if (IsInApiObject(ctx.Symbol))
+            return;
+
         CheckName(ctx, ctx.Symbol.Name, NamingTarget.Control, config, "Control");
+    }
+
+    private static bool IsInApiObject(ISymbol symbol)
+    {
+        var containingSymbol = symbol.ContainingSymbol;
+        while (containingSymbol is not null)
+        {
+            if (containingSymbol is IPageTypeSymbol pageType)
+                return pageType.PageType == EnumProvider.PageTypeKind.API;
+
+            if (containingSymbol is IQueryTypeSymbol queryType)
+                return queryType.QueryType == EnumProvider.QueryTypeKind.API;
+
+            containingSymbol = containingSymbol.ContainingSymbol;
+        }
+        return false;
     }
 
     private static void CheckName(SymbolAnalysisContext ctx, string name, NamingTarget target,

@@ -525,6 +525,17 @@ public static class EnumProvider
         public static NavCodeAnalysis.PageTypeKind API => _api.Value;
         public static NavCodeAnalysis.PageTypeKind List => _list.Value;
     }
+
+    /// <summary>
+    /// QueryTypeKind enum values
+    /// </summary>
+    public static class QueryTypeKind
+    {
+        private static readonly Lazy<NavCodeAnalysis.QueryTypeKind> _api =
+            new(() => ParseEnum<NavCodeAnalysis.QueryTypeKind>(nameof(NavCodeAnalysis.QueryTypeKind.API)));
+
+        public static NavCodeAnalysis.QueryTypeKind API => _api.Value;
+    }
     /// <summary>
     /// PropertyKind enum values
     /// </summary>
