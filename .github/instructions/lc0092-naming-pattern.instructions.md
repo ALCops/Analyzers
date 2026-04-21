@@ -33,7 +33,7 @@ Validates names of procedures, variables, parameters, return values, objects, fi
 | Single diagnostic ID | LC0092 for all 13 naming targets | Simpler user experience; message differentiates targets |
 | Settings format | `NamingPatterns` dictionary in alcops.json | PascalCase keys, named per target |
 | Default behavior | Built-in MS convention defaults, user can override | Immediate value without configuration |
-| Object affixes | Strip AppSourceCop affixes before checking | Avoids false positives on prefixed/suffixed names |
+| Object affixes | Strip AppSourceCop affixes before checking, trim whitespace | Avoids false positives on prefixed/suffixed names; handles common `"PTE MyCodeunit"` pattern where space separates affix from name |
 | Skip triggers | Yes | Platform-defined names, can't rename |
 | Skip interface implementations | Yes | Name is dictated by the interface |
 | Skip obsolete | Yes | Standard ALCops convention |

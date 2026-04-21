@@ -335,13 +335,13 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             if (name.StartsWith(affix, StringComparison.OrdinalIgnoreCase) &&
                 name.Length > affix.Length)
             {
-                return name.Substring(affix.Length);
+                return name.Substring(affix.Length).TrimStart();
             }
 
             if (name.EndsWith(affix, StringComparison.OrdinalIgnoreCase) &&
                 name.Length > affix.Length)
             {
-                return name.Substring(0, name.Length - affix.Length);
+                return name.Substring(0, name.Length - affix.Length).TrimEnd();
             }
         }
 
