@@ -193,14 +193,24 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         if (string.IsNullOrWhiteSpace(name))
             return;
 
+        // Strip & keyboard accelerator markers for action/control names.
+        // The & prefix designates keyboard shortcuts (e.g., "&Line" renders
+        // as underlined "L" for Alt+L). Only stripped for UI element names.
+        var nameForCheck = target is NamingTarget.Action or NamingTarget.Control
+            ? name.Replace("&", "")
+            : name;
+
+        if (string.IsNullOrWhiteSpace(nameForCheck))
+            return;
+
         var resolved = config.GetPatterns(target);
 
         if (resolved.AllowRegex is not null)
         {
-            if (!TryIsMatch(resolved.AllowRegex, name))
+            if (!TryIsMatch(resolved.AllowRegex, nameForCheck))
             {
                 var message = BuildMessage(
-                    name, resolved.AllowPatternString, resolved.AllowDescription, isAllow: true);
+                    nameForCheck, resolved.AllowPatternString, resolved.AllowDescription, isAllow: true);
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.NamingPattern,
                     ctx.Symbol.GetLocation(),
@@ -212,10 +222,10 @@ public sealed class NamingPattern : DiagnosticAnalyzer
 
         if (resolved.DisallowRegex is not null)
         {
-            if (TryIsMatch(resolved.DisallowRegex, name))
+            if (TryIsMatch(resolved.DisallowRegex, nameForCheck))
             {
                 var message = BuildMessage(
-                    name, resolved.DisallowPatternString, resolved.DisallowDescription, isAllow: false);
+                    nameForCheck, resolved.DisallowPatternString, resolved.DisallowDescription, isAllow: false);
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.NamingPattern,
                     ctx.Symbol.GetLocation(),

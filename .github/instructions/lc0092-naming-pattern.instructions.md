@@ -39,6 +39,7 @@ Validates names of procedures, variables, parameters, return values, objects, fi
 | Skip event subscriber params | Yes | Subscriber parameters must match publisher signature (AL0828); platform trigger params (`xRec`, `BelowxRec`, `RunTrigger`, etc.) can't be renamed |
 | Skip API object controls | Yes | API page/query controls require camelCase per AA0102; the default PascalCase pattern would always conflict |
 | Skip whitespace-only names | Yes | `value(0; " ")` is a common "empty" enum value pattern; not a naming issue |
+| Strip `&` accelerator for Action/Control | Yes | `&` before a character in action/control/group names is a Windows UI keyboard accelerator prefix (Alt+key shortcut), inherited from classic NAV/C/SIDE. Not stripped for other targets so fields/variables still flag `&` via their disallow pattern. |
 | Skip obsolete | Yes | Standard ALCops convention |
 | netstandard2.1 | Full support | No net8.0-only APIs used |
 | Regex safety | 2-second timeout, catch ArgumentException and RegexMatchTimeoutException | Protects against ReDoS |
@@ -177,7 +178,7 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 | ActionLowerCaseStart | Page action starting with lowercase |
 | ControlLowerCaseStart | Page control (group) starting with lowercase |
 
-### NoDiagnostic (8 cases)
+### NoDiagnostic (13 cases)
 
 | Test case | Suppression reason |
 |---|---|
@@ -191,6 +192,7 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 | EventSubscriberPlatformParams | Event subscriber with platform param `xRec` (skipped, params must match publisher) |
 | EventSubscriberUserParams | Event subscriber with user-defined lowercase param `myTable` matching publisher signature (skipped) |
 | ApiPageControlCamelCase | API page control with camelCase name (skipped, AA0102 requires camelCase) |
+| ActionAcceleratorKey | Action/group with `&` keyboard accelerator prefix (e.g., `"&Line"`, stripped before pattern matching) |
 | EnumValueBlankSpace | Enum value with whitespace-only name `" "` (skipped, common "empty" value pattern) |
 | ParameterPascalCase | Correctly named parameters |
 
