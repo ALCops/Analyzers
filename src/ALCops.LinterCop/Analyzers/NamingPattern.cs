@@ -93,6 +93,12 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         var target = ClassifyMethod(method);
         CheckName(ctx, method.Name, target, config, GetKindDisplayName(target));
 
+        // Skip parameter and return value checks for event subscribers.
+        // Subscriber parameters must match the publisher signature (AL0828);
+        // platform trigger params (xRec, BelowxRec, RunTrigger, etc.) can't be renamed.
+        if (target == NamingTarget.EventSubscriber)
+            return;
+
         // Check parameters
         foreach (var parameter in method.Parameters)
         {

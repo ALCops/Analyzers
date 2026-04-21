@@ -36,6 +36,7 @@ Validates names of procedures, variables, parameters, return values, objects, fi
 | Object affixes | Strip AppSourceCop affixes before checking, trim whitespace | Avoids false positives on prefixed/suffixed names; handles common `"PTE MyCodeunit"` pattern where space separates affix from name |
 | Skip triggers | Yes | Platform-defined names, can't rename |
 | Skip interface implementations | Yes | Name is dictated by the interface |
+| Skip event subscriber params | Yes | Subscriber parameters must match publisher signature (AL0828); platform trigger params (`xRec`, `BelowxRec`, `RunTrigger`, etc.) can't be renamed |
 | Skip obsolete | Yes | Standard ALCops convention |
 | netstandard2.1 | Full support | No net8.0-only APIs used |
 | Regex safety | 2-second timeout, catch ArgumentException and RegexMatchTimeoutException | Protects against ReDoS |
@@ -185,6 +186,7 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 | TriggerMethod | Trigger (skipped, platform-defined) |
 | InterfaceImplementingMethod | Interface implementation (skipped, can't rename) |
 | EventSubscriberPascalCase | Correctly named event subscriber |
+| EventSubscriberPlatformParams | Event subscriber with platform param `xRec` (skipped, params must match publisher) |
 | ParameterPascalCase | Correctly named parameters |
 
 ## Phase 2 roadmap (not yet implemented)
