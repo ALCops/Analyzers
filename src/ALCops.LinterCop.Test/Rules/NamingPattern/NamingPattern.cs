@@ -51,6 +51,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("ActionAcceleratorKey")]
         [TestCase("SingleLetterVariable")]
         [TestCase("SingleLetterParameter")]
+        [TestCase("UnderscorePrefix")]
         [TestCase("EnumValueBlankSpace")]
         [TestCase("ParameterPascalCase")]
         public async Task NoDiagnostic(string testCase)

@@ -50,6 +50,7 @@ Validates names of procedures, variables, parameters, return values, objects, fi
 | Auto-suggestion | Pattern-specific name transformation | `^[A-Z]` capitalizes first char, `^(?:[A-Za-z]$\|[A-Z])` capitalizes first char for multi-char names only, `[%&!?]` removes disallowed chars |
 | RegexExplainer | Mini parser for common constructs (char classes, anchors) | Translates simple regex to English when no description available |
 | Single-letter variable/parameter names | Exempt from uppercase-start requirement | Common idiom (`i`, `j`, `k` for loops, `t` for text). Aligned with pylint `good-names`, ESLint `id-length`, Checkstyle `allowOneCharVarInForLoop`. Default pattern changed from `^[A-Z]` to `^(?:[A-Za-z]$\|[A-Z])` for Variable and Parameter targets |
+| Underscore prefix for variables/parameters | Allow `_` followed by PascalCase | C# convention used in AL for variable disambiguation when the name collides with a parameter or type. PascalCase enforced after `_` (`_Text` passes, `_text` fails) to stay consistent with AL conventions. Pattern: `_[A-Z]` added to Variable and Parameter defaults |
 
 ## Architecture
 
@@ -128,8 +129,8 @@ Pattern-specific name transformations:
 | Target | AllowPattern | DisallowPattern |
 |---|---|---|
 | Procedure | `^[A-Z]` | (none) |
-| Variable | `^(?:[A-Za-z]$\|[A-Z])` | `[%&!?]` |
-| Parameter | `^(?:[A-Za-z]$\|[A-Z])` | (none) |
+| Variable | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z])` | `[%&!?]` |
+| Parameter | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z])` | (none) |
 | ReturnValue | `^[A-Z]` | (none) |
 | Object | `^[A-Z]` | (none) |
 | Field | `^[A-Za-z]` | `[%&!?]` |
@@ -197,6 +198,7 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 | EnumValueBlankSpace | Enum value with whitespace-only name `" "` (skipped, common "empty" value pattern) |
 | SingleLetterVariable | Single-letter lowercase variable names (`i`, `t`, `x`) in procedure (exempt by default pattern) |
 | SingleLetterParameter | Single-letter lowercase parameter names (`i`, `t`) in procedure signature (exempt by default pattern) |
+| UnderscorePrefix | Variable names with underscore prefix followed by PascalCase (`_Text`, `_MyVariable`) |
 | ParameterPascalCase | Correctly named parameters |
 
 ## Phase 2 roadmap (not yet implemented)
