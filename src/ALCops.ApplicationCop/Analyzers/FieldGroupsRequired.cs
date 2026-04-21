@@ -4,7 +4,6 @@ using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
-using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 
 namespace ALCops.ApplicationCop.Analyzers;
@@ -79,20 +78,17 @@ public sealed class FieldGroupsRequired : DiagnosticAnalyzer
     private static HashSet<ITableTypeSymbol> BuildTablesReferencedByPages(CompilationStartAnalysisContext ctx)
     {
         var result = new HashSet<ITableTypeSymbol>();
+        var declared = ctx.Compilation.GetDeclaredApplicationObjectSymbols();
 
-        foreach (var tree in ctx.Compilation.SyntaxTrees)
+        for (int i = 0; i < declared.Length; i++)
         {
-            var root = tree.GetRoot(ctx.CancellationToken);
-            var semanticModel = ctx.Compilation.GetSemanticModel(tree);
+            var symbol = declared[i];
 
-            foreach (var pageDeclaration in root.DescendantNodes().OfType<PageSyntax>())
-            {
-                if (semanticModel.GetDeclaredSymbol(pageDeclaration, ctx.CancellationToken) is not IPageTypeSymbol pageSymbol)
-                    continue;
+            if (symbol.GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Page)
+                continue;
 
-                if (pageSymbol.RelatedTable is ITableTypeSymbol table)
-                    result.Add(table);
-            }
+            if (symbol is IPageTypeSymbol page && page.RelatedTable is ITableTypeSymbol table)
+                result.Add(table);
         }
 
         return result;

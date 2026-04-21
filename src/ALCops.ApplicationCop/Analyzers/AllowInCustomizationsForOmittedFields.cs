@@ -17,12 +17,22 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
         ImmutableArray.Create(DiagnosticDescriptors.AllowInCustomizationsForOmittedFields);
 
     public override void Initialize(AnalysisContext context) =>
-        context.RegisterSymbolAction(
-            AnalyzeSymbol,
+        context.RegisterCompilationStartAction(OnCompilationStart);
+
+    private static void OnCompilationStart(CompilationStartAnalysisContext compilationCtx)
+    {
+        var (tablesWithPages, tableToReferencedFields) = BuildPageLookups(compilationCtx.Compilation);
+
+        compilationCtx.RegisterSymbolAction(
+            symbolCtx => AnalyzeSymbol(symbolCtx, tablesWithPages, tableToReferencedFields),
             EnumProvider.SymbolKind.Table,
             EnumProvider.SymbolKind.TableExtension);
+    }
 
-    private static void AnalyzeSymbol(SymbolAnalysisContext ctx)
+    private static void AnalyzeSymbol(
+        SymbolAnalysisContext ctx,
+        HashSet<ITableTypeSymbol> tablesWithPages,
+        Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>> tableToReferencedFields)
     {
         if (!VersionChecker.IsSupported(ctx.Symbol, EnumProvider.Feature.AddPageControlInPageCustomization))
             return;
@@ -40,10 +50,7 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
         if (candidateFields.Count == 0)
             return;
 
-        var relatedPages = GetRelatedPages(ctx.Compilation, table);
-
-        // Allow diagnostic if base table has Lookup/DrillDown page set even if no related pages exist directly
-        if (!relatedPages.Any())
+        if (!tablesWithPages.Contains(table))
         {
             if (!isTableExtension)
                 return;
@@ -52,14 +59,14 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
                 return;
         }
 
-        var referencedOnPages = GetReferencedPageFields(relatedPages);
+        tableToReferencedFields.TryGetValue(table, out var referencedOnPages);
 
         foreach (var field in candidateFields)
         {
             if (field.OriginalDefinition is not IFieldSymbol fieldKey)
                 continue;
 
-            if (referencedOnPages.Contains(fieldKey))
+            if (referencedOnPages is not null && referencedOnPages.Contains(fieldKey))
                 continue;
 
             var location =
@@ -77,20 +84,95 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
         }
     }
 
+    private static (HashSet<ITableTypeSymbol> tablesWithPages, Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>> tableToReferencedFields)
+        BuildPageLookups(Compilation compilation)
+    {
+        var tablesWithPages = new HashSet<ITableTypeSymbol>();
+        var tableToReferencedFields = new Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>>();
+
+        var declared = compilation.GetDeclaredApplicationObjectSymbols();
+
+        for (int i = 0; i < declared.Length; i++)
+        {
+            var symbol = declared[i];
+            var navKind = symbol.GetNavTypeKindSafe();
+
+            if (navKind == EnumProvider.NavTypeKind.Page)
+            {
+                ProcessPage(symbol, tablesWithPages, tableToReferencedFields);
+            }
+            else if (navKind == EnumProvider.NavTypeKind.PageExtension)
+            {
+                ProcessPageExtension(symbol, tablesWithPages, tableToReferencedFields);
+            }
+        }
+
+        return (tablesWithPages, tableToReferencedFields);
+    }
+
+    private static void ProcessPage(
+        IApplicationObjectTypeSymbol symbol,
+        HashSet<ITableTypeSymbol> tablesWithPages,
+        Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>> tableToReferencedFields)
+    {
+        if (symbol is not IPageTypeSymbol page)
+            return;
+
+        if (page.PageType == PageTypeKind.API)
+            return;
+
+        if (page.RelatedTable is not ITableTypeSymbol table)
+            return;
+
+        tablesWithPages.Add(table);
+
+        if (!tableToReferencedFields.TryGetValue(table, out var fieldSet))
+        {
+            fieldSet = new HashSet<IFieldSymbol>();
+            tableToReferencedFields[table] = fieldSet;
+        }
+
+        AddFieldControls(fieldSet, page.FlattenedControls);
+    }
+
+    private static void ProcessPageExtension(
+        IApplicationObjectTypeSymbol symbol,
+        HashSet<ITableTypeSymbol> tablesWithPages,
+        Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>> tableToReferencedFields)
+    {
+        if (symbol is not IApplicationObjectExtensionTypeSymbol ext || ext.Target is null)
+            return;
+
+        if (ext.Target.GetTypeSymbol() is not IPageTypeSymbol targetPage)
+            return;
+
+        if (targetPage.RelatedTable is not ITableTypeSymbol table)
+            return;
+
+        tablesWithPages.Add(table);
+
+        if (!tableToReferencedFields.TryGetValue(table, out var fieldSet))
+        {
+            fieldSet = new HashSet<IFieldSymbol>();
+            tableToReferencedFields[table] = fieldSet;
+        }
+
+        if (symbol is IPageExtensionTypeSymbol pageExt)
+            AddFieldControls(fieldSet, pageExt.AddedControlsFlattened);
+    }
+
     private static bool TryGetTableOrTargetTable(ISymbol symbol, out ITableTypeSymbol table, out bool isTableExtension)
     {
         table = null!;
         isTableExtension = false;
 
-        var navKind = symbol.GetContainingObjectTypeSymbol().GetNavTypeKindSafe();
-
-        if (navKind == EnumProvider.NavTypeKind.Record && symbol is ITableTypeSymbol t)
+        if (symbol is ITableTypeSymbol t)
         {
             table = t;
             return true;
         }
 
-        if (navKind == EnumProvider.NavTypeKind.TableExtension && symbol is IApplicationObjectExtensionTypeSymbol ext)
+        if (symbol is IApplicationObjectExtensionTypeSymbol ext)
         {
             isTableExtension = true;
 
@@ -108,7 +190,15 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
 
     private static List<IFieldSymbol> GetCandidateFields(ISymbol symbol)
     {
-        var fields = GetDeclaredTableFields(symbol);
+        ICollection<IFieldSymbol> fields;
+
+        if (symbol is ITableTypeSymbol table)
+            fields = table.Fields;
+        else if (symbol is ITableExtensionTypeSymbol tableExt)
+            fields = tableExt.AddedFields;
+        else
+            return new List<IFieldSymbol>(0);
+
         if (fields.Count == 0)
             return new List<IFieldSymbol>(0);
 
@@ -143,72 +233,6 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
         }
 
         return result;
-    }
-
-    private static ICollection<IFieldSymbol> GetDeclaredTableFields(ISymbol symbol)
-    {
-        var navKind = symbol.GetContainingObjectTypeSymbol().GetNavTypeKindSafe();
-
-        if (navKind == EnumProvider.NavTypeKind.Record && symbol is ITableTypeSymbol table)
-            return table.Fields;
-
-        if (navKind == EnumProvider.NavTypeKind.TableExtension && symbol is ITableExtensionTypeSymbol tableExt)
-            return tableExt.AddedFields;
-
-        return Array.Empty<IFieldSymbol>();
-    }
-
-    private static IReadOnlyList<IApplicationObjectTypeSymbol> GetRelatedPages(Compilation compilation, ITableTypeSymbol table)
-    {
-        // Materialize once, then filter. Avoid repeated enumeration of declared symbols.
-        var declared = compilation.GetDeclaredApplicationObjectSymbols().ToList();
-
-        var pages =
-            declared.Where(x => x.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Page)
-                    .Select(x => (IApplicationObjectTypeSymbol)x)
-                    .Where(x =>
-                    {
-                        var page = (IPageTypeSymbol)x.GetTypeSymbol();
-                        return page.PageType != PageTypeKind.API && page.RelatedTable == table;
-                    });
-
-        var pageExtensions =
-            declared.Where(x => x.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.PageExtension)
-                    .Select(x => (IApplicationObjectTypeSymbol)x)
-                    .Where(x =>
-                    {
-                        if (x is not IApplicationObjectExtensionTypeSymbol ext || ext.Target is null)
-                            return false;
-
-                        var targetPage = (IPageTypeSymbol)ext.Target.GetTypeSymbol();
-                        return targetPage.RelatedTable == table;
-                    });
-
-        return pages.Concat(pageExtensions).ToList();
-    }
-
-    private static HashSet<IFieldSymbol> GetReferencedPageFields(IEnumerable<IApplicationObjectTypeSymbol> relatedPages)
-    {
-        var set = new HashSet<IFieldSymbol>();
-
-        foreach (var pageLike in relatedPages)
-        {
-            var navKind = pageLike.GetNavTypeKindSafe();
-
-            if (navKind == EnumProvider.NavTypeKind.Page && pageLike is IPageTypeSymbol page)
-            {
-                AddFieldControls(set, page.FlattenedControls);
-                continue;
-            }
-
-            if (navKind == EnumProvider.NavTypeKind.PageExtension && pageLike is IPageExtensionTypeSymbol pageExt)
-            {
-                AddFieldControls(set, pageExt.AddedControlsFlattened);
-                continue;
-            }
-        }
-
-        return set;
     }
 
     private static void AddFieldControls(HashSet<IFieldSymbol> set, ImmutableArray<IControlSymbol> controls)
