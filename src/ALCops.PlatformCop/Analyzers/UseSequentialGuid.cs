@@ -123,7 +123,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                 else
                 {
                     // Variable assignment: v := CreateGuid()
-                    var targetSymbol = operation.Target?.GetSymbol();
+                    var targetSymbol = operation.Target?.GetSymbolSafe();
                     if (targetSymbol is not null && targetSymbol.Kind == EnumProvider.SymbolKind.LocalVariable)
                     {
                         var bodyOp = _context.SemanticModel.GetOperation(
@@ -331,7 +331,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         private bool IsTrackedSymbol(IOperation operation)
         {
             var op = UnwrapConversion(operation);
-            var symbol = op.GetSymbol();
+            var symbol = op.GetSymbolSafe();
             return symbol is not null && symbol.Equals(_tracked);
         }
     }
@@ -376,7 +376,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
         var firstArg = UnwrapConversion(validateCall.Arguments[0].Value);
 
-        if (firstArg.GetSymbol() is not IFieldSymbol fieldSymbol)
+        if (firstArg.GetSymbolSafe() is not IFieldSymbol fieldSymbol)
             return null;
 
         if (fieldSymbol.GetTypeSymbol().GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Guid)

@@ -157,7 +157,7 @@ Provides a QuickFix "ALCops: Use CreateSequentialGuid()" that replaces `CreateGu
 
 ## Test coverage
 
-### HasDiagnostic (9 cases)
+### HasDiagnostic (10 cases)
 
 | Test case | Scenario |
 |---|---|
@@ -170,6 +170,7 @@ Provides a QuickFix "ALCops: Use CreateSequentialGuid()" that replaces `CreateGu
 | QualifiedCreateGuid | `MyTable."Primary Key" := Guid.CreateGuid()` |
 | MultiLevelTracing | `ProcA(CreateGuid())` -> ProcB(guid) -> key field assignment |
 | ValidateSecondaryKeyField | `MyTable.Validate("Index Field", CreateGuid())` for secondary key |
+| DatabaseObjectReference | `CreateGuid()` flows to key field with `DATABASE::MyTable` in same method (BoundApplicationObjectAccess) |
 
 ### NoDiagnostic (5 cases)
 

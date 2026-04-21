@@ -30,6 +30,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("QualifiedCreateGuid")]
         [TestCase("MultiLevelTracing")]
         [TestCase("ValidateSecondaryKeyField")]
+        [TestCase("DatabaseObjectReference")]
         public async Task HasDiagnostic(string testCase)
         {
             // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/guid/guid-createsequentialguid-method
