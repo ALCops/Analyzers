@@ -52,6 +52,8 @@ namespace ALCops.LinterCop.Test
         [TestCase("SingleLetterVariable")]
         [TestCase("SingleLetterParameter")]
         [TestCase("UnderscorePrefix")]
+        [TestCase("XRecVariable")]
+        [TestCase("XRecParameter")]
         [TestCase("EnumValueBlankSpace")]
         [TestCase("ParameterPascalCase")]
         public async Task NoDiagnostic(string testCase)

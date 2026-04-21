@@ -51,6 +51,7 @@ Validates names of procedures, variables, parameters, return values, objects, fi
 | RegexExplainer | Mini parser for common constructs (char classes, anchors) | Translates simple regex to English when no description available |
 | Single-letter variable/parameter names | Exempt from uppercase-start requirement | Common idiom (`i`, `j`, `k` for loops, `t` for text). Aligned with pylint `good-names`, ESLint `id-length`, Checkstyle `allowOneCharVarInForLoop`. Default pattern changed from `^[A-Z]` to `^(?:[A-Za-z]$\|[A-Z])` for Variable and Parameter targets |
 | Underscore prefix for variables/parameters | Allow `_` followed by PascalCase | C# convention used in AL for variable disambiguation when the name collides with a parameter or type. PascalCase enforced after `_` (`_Text` passes, `_text` fails) to stay consistent with AL conventions. Pattern: `_[A-Z]` added to Variable and Parameter defaults |
+| xRec prefix for variables/parameters | Allow `x` followed by PascalCase | Idiomatic AL convention for "previous record state" (e.g., `xSalesLine`). The platform uses `Rec`/`xRec`; developers extend this pattern to custom variables. Pattern: `x[A-Z]` added to Variable and Parameter defaults |
 
 ## Architecture
 
@@ -129,8 +130,8 @@ Pattern-specific name transformations:
 | Target | AllowPattern | DisallowPattern |
 |---|---|---|
 | Procedure | `^[A-Z]` | (none) |
-| Variable | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z])` | `[%&!?]` |
-| Parameter | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z])` | (none) |
+| Variable | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z]\|x[A-Z])` | `[%&!?]` |
+| Parameter | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z]\|x[A-Z])` | (none) |
 | ReturnValue | `^[A-Z]` | (none) |
 | Object | `^[A-Z]` | (none) |
 | Field | `^[A-Za-z]` | `[%&!?]` |
@@ -199,6 +200,8 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 | SingleLetterVariable | Single-letter lowercase variable names (`i`, `t`, `x`) in procedure (exempt by default pattern) |
 | SingleLetterParameter | Single-letter lowercase parameter names (`i`, `t`) in procedure signature (exempt by default pattern) |
 | UnderscorePrefix | Variable names with underscore prefix followed by PascalCase (`_Text`, `_MyVariable`) |
+| XRecVariable | Local variable with xRec prefix (`xSalesLine: Record MyTable`) |
+| XRecParameter | Parameter with xRec prefix (`xSalesLine: Record MyTable`) |
 | ParameterPascalCase | Correctly named parameters |
 
 ## Phase 2 roadmap (not yet implemented)
