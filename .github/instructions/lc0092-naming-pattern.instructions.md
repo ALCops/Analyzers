@@ -187,6 +187,7 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 | InterfaceImplementingMethod | Interface implementation (skipped, can't rename) |
 | EventSubscriberPascalCase | Correctly named event subscriber |
 | EventSubscriberPlatformParams | Event subscriber with platform param `xRec` (skipped, params must match publisher) |
+| EventSubscriberUserParams | Event subscriber with user-defined lowercase param `myTable` matching publisher signature (skipped) |
 | ParameterPascalCase | Correctly named parameters |
 
 ## Phase 2 roadmap (not yet implemented)
