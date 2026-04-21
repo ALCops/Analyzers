@@ -104,6 +104,12 @@ Uses `RegisterCodeBlockAction` (not `RegisterOperationAction`) to analyze entire
 | `MyTable.Reset()` | Built-in instance method `Reset` on tracked variable | Reset all three boolean flags |
 | `MyTable.SetLoadFields()` | Built-in instance method `SetLoadFields` with 0 arguments | Reset `HasLoadFields` only |
 
+### Merge deduplication (prevents OOM on large codebases)
+
+Pre-fork reads are cloned into both branches during fork. Without deduplication, concatenating both branches at merge doubles the list size at each nesting level, causing exponential growth (2^K entries after K levels). With deeply nested if-statements and many tracked variables (common in large apps like the Base App), this caused `OutOfMemoryException` in `FlowFlags.Clone()`.
+
+Fix: deduplicate reads by `SourceSpan.Start` position (via `HashSet<int>`) at every merge point. List size is bounded by the number of unique read operations regardless of nesting depth.
+
 ### Key implementation detail: argument checking
 
 The walker checks ALL invocations (both built-in and user-defined) for tracked variables in arguments. This is necessary because built-in methods like `PAGE.Run(PageId, Record)` pass the record to a page that will access its fields. The `GetVariableNameFromArgument` method only matches direct variable identifiers (e.g., `Item` in `PAGE.Run(PAGE::"Item Card", Item)`), not field access expressions (e.g., `MyTable."No."` in `SetRange`), so this doesn't cause false positives on record method arguments.
