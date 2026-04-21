@@ -187,7 +187,7 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
         public override void VisitInvocationExpression(IInvocationExpression operation)
         {
             _cancellationToken.ThrowIfCancellationRequested();
-            var instanceSymbol = operation.Instance?.GetSymbol();
+            var instanceSymbol = operation.Instance?.GetSymbolSafe();
 
             if (instanceSymbol != null &&
                 _trackedVariables.TryGetValue(instanceSymbol.Name, out var state))
