@@ -150,7 +150,7 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
         public List<ReadInfo> UncoveredReadLocations { get; } = new();
         public bool IsRecordRef { get; set; }
         public List<string?> SetTableTargets { get; } = new();
-        // Method-level "ever" flags used only for RecordRef SetTable suppression check
+
         public bool EverHadLoadFields { get; set; }
         public bool EverHadWriteOp { get; set; }
         public bool EverPassedToFunction { get; set; }
@@ -396,9 +396,7 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
                 kvp.Value.HasWriteOp = a.HasWriteOp || b.HasWriteOp;
                 kvp.Value.PassedToFunction = a.PassedToFunction || b.PassedToFunction;
 
-                kvp.Value.UncoveredReads.Clear();
-                kvp.Value.UncoveredReads.AddRange(a.UncoveredReads);
-                kvp.Value.UncoveredReads.AddRange(b.UncoveredReads);
+                MergeUncoveredReads(kvp.Value, a.UncoveredReads, b.UncoveredReads);
             }
         }
 
@@ -414,9 +412,32 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
                 kvp.Value.PassedToFunction = branchStates.Any(bs => bs[kvp.Key].PassedToFunction);
 
                 kvp.Value.UncoveredReads.Clear();
+                var seen = new HashSet<int>();
                 foreach (var bs in branchStates)
-                    kvp.Value.UncoveredReads.AddRange(bs[kvp.Key].UncoveredReads);
+                    foreach (var read in bs[kvp.Key].UncoveredReads)
+                        if (seen.Add(read.Location.SourceSpan.Start))
+                            kvp.Value.UncoveredReads.Add(read);
             }
+        }
+
+        /// <summary>
+        /// Merges uncovered reads from two branches with deduplication by source position.
+        /// Pre-fork reads exist in both branches; without dedup, list size doubles at each
+        /// nesting level causing exponential growth and OOM on large codebases.
+        /// </summary>
+        private static void MergeUncoveredReads(FlowFlags target,
+            List<ReadInfo> readsA, List<ReadInfo> readsB)
+        {
+            target.UncoveredReads.Clear();
+
+            var seen = new HashSet<int>();
+            foreach (var read in readsA)
+                if (seen.Add(read.Location.SourceSpan.Start))
+                    target.UncoveredReads.Add(read);
+
+            foreach (var read in readsB)
+                if (seen.Add(read.Location.SourceSpan.Start))
+                    target.UncoveredReads.Add(read);
         }
 
         #endregion
