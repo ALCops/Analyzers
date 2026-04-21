@@ -301,8 +301,9 @@ public sealed class NamingPattern : DiagnosticAnalyzer
 
         if (isAllow)
         {
-            // ^[A-Z] - capitalize first character
-            if (patternString == @"^[A-Z]" && name.Length > 0 && char.IsLower(name[0]))
+            // ^[A-Z] or ^(?:[A-Za-z]$|[A-Z]) - capitalize first character
+            if ((patternString == @"^[A-Z]" || patternString == @"^(?:[A-Za-z]$|[A-Z])")
+                && name.Length > 1 && char.IsLower(name[0]))
                 return char.ToUpperInvariant(name[0]) + name.Substring(1);
 
             // ^[a-z] - lowercase first character
@@ -433,8 +434,8 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         private static readonly Dictionary<NamingTarget, (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc)> BuiltInDefaults = new()
         {
             [NamingTarget.Procedure] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
-            [NamingTarget.Variable] = (@"^[A-Z]", @"[%&!?]", "should start with an uppercase letter", "should not contain special characters (%, &, !, ?)"),
-            [NamingTarget.Parameter] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
+            [NamingTarget.Variable] = (@"^(?:[A-Za-z]$|[A-Z])", @"[%&!?]", "should start with an uppercase letter (single-letter names are exempt)", "should not contain special characters (%, &, !, ?)"),
+            [NamingTarget.Parameter] = (@"^(?:[A-Za-z]$|[A-Z])", null, "should start with an uppercase letter (single-letter names are exempt)", null),
             [NamingTarget.ReturnValue] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
             [NamingTarget.Object] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
             [NamingTarget.Field] = (@"^[A-Za-z]", @"[%&!?]", "should start with a letter", "should not contain special characters (%, &, !, ?)"),

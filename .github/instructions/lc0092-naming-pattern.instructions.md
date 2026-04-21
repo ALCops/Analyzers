@@ -47,8 +47,9 @@ Validates names of procedures, variables, parameters, return values, objects, fi
 | Message UX | Four-tier strategy: description → suggestion → regex explainer → raw regex | Progressive enhancement; most users see human-readable messages |
 | Built-in descriptions | Hardcoded per default pattern | Best UX for out-of-box experience |
 | AllowDescription/DisallowDescription | Optional user-provided description fields in settings | Users can provide custom descriptions for their custom patterns |
-| Auto-suggestion | Pattern-specific name transformation | `^[A-Z]` capitalizes first char, `[%&!?]` removes disallowed chars |
+| Auto-suggestion | Pattern-specific name transformation | `^[A-Z]` capitalizes first char, `^(?:[A-Za-z]$\|[A-Z])` capitalizes first char for multi-char names only, `[%&!?]` removes disallowed chars |
 | RegexExplainer | Mini parser for common constructs (char classes, anchors) | Translates simple regex to English when no description available |
+| Single-letter variable/parameter names | Exempt from uppercase-start requirement | Common idiom (`i`, `j`, `k` for loops, `t` for text). Aligned with pylint `good-names`, ESLint `id-length`, Checkstyle `allowOneCharVarInForLoop`. Default pattern changed from `^[A-Z]` to `^(?:[A-Za-z]$\|[A-Z])` for Variable and Parameter targets |
 
 ## Architecture
 
@@ -127,8 +128,8 @@ Pattern-specific name transformations:
 | Target | AllowPattern | DisallowPattern |
 |---|---|---|
 | Procedure | `^[A-Z]` | (none) |
-| Variable | `^[A-Z]` | `[%&!?]` |
-| Parameter | `^[A-Z]` | (none) |
+| Variable | `^(?:[A-Za-z]$\|[A-Z])` | `[%&!?]` |
+| Parameter | `^(?:[A-Za-z]$\|[A-Z])` | (none) |
 | ReturnValue | `^[A-Z]` | (none) |
 | Object | `^[A-Z]` | (none) |
 | Field | `^[A-Za-z]` | `[%&!?]` |
@@ -194,6 +195,8 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 | ApiPageControlCamelCase | API page control with camelCase name (skipped, AA0102 requires camelCase) |
 | ActionAcceleratorKey | Action/group with `&` keyboard accelerator prefix (e.g., `"&Line"`, stripped before pattern matching) |
 | EnumValueBlankSpace | Enum value with whitespace-only name `" "` (skipped, common "empty" value pattern) |
+| SingleLetterVariable | Single-letter lowercase variable names (`i`, `t`, `x`) in procedure (exempt by default pattern) |
+| SingleLetterParameter | Single-letter lowercase parameter names (`i`, `t`) in procedure signature (exempt by default pattern) |
 | ParameterPascalCase | Correctly named parameters |
 
 ## Phase 2 roadmap (not yet implemented)
