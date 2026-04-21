@@ -24,8 +24,8 @@ Detects table/table extension fields that are not placed on any page and do not 
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Architecture | CompilationStart with pre-computed lookups | Cross-object analysis (table-to-page) must be done once, not per-table. Original per-table `GetDeclaredApplicationObjectSymbols()` was O(T x S) on the Base App. |
-| Data structure | `HashSet<ITableTypeSymbol>` + `Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>>` | Two lookups: (1) does this table have any page, (2) which fields are on pages. Both read-only after construction, safe for concurrent SymbolAction callbacks. |
+| Architecture | CompilationStart with lightweight index + lazy field resolution | Cross-object analysis split into two levels: (1) cheap table-to-page index at CompilationStart, (2) per-table field resolution deferred to AnalyzeSymbol via `ConcurrentDictionary<ITableTypeSymbol, Lazy<HashSet<IFieldSymbol>>>`. Tables that exit early never trigger expensive FlattenedControls materialization. |
+| Data structure | `HashSet<ITableTypeSymbol>` + `Dictionary<..., List<IPageTypeSymbol>>` + `Dictionary<..., List<IPageExtensionTypeSymbol>>` + `ConcurrentDictionary<..., Lazy<HashSet<IFieldSymbol>>>` | Level 1: which tables have pages and which pages/extensions reference them (read-only after construction). Level 2: lazy per-table field cache, computed at most once per table on-demand. |
 | Page extensions | Resolve via `ext.Target.GetTypeSymbol()` to `IPageTypeSymbol` | Extension's `.Target` is the extended page object; its `RelatedTable` gives the source table. |
 | API pages | Excluded | API pages don't use AllowInCustomizations. |
 | Table extensions with no page | Check `BaseTableHasLookupOrDrillDown` | Table extensions should still flag if the base table has LookupPageId or DrillDownPageId (implicit page usage). |
@@ -42,29 +42,43 @@ Uses `RegisterCompilationStartAction` to build page lookups once per compilation
 
 ### Performance-critical design
 
-**Problem:** The original implementation called `compilation.GetDeclaredApplicationObjectSymbols()` per table (~1500 times on the Base App). Internally, `GetDeclaredApplicationObjectSymbols()` materializes a new `ImmutableArray` via LINQ each call: `CompiledModule.GetDeclaredObjectSymbols().OfType<IApplicationObjectTypeSymbol>().ToImmutableArray()`. This was O(T x S) where T=tables, S=all symbols, taking 8.6s on the Base App.
+**Problem:** The original implementation called `compilation.GetDeclaredApplicationObjectSymbols()` per table (~1500 times on the Base App), taking 8.6s. Phase 1 moved to a single call in CompilationStart but eagerly materialized `FlattenedControls` for all 2591 pages and iterated ~75k controls, costing 2.9s.
 
-**Solution:** Single `GetDeclaredApplicationObjectSymbols()` call in `BuildPageLookups()` builds two structures:
-1. `tablesWithPages`: `HashSet<ITableTypeSymbol>` of all tables that have at least one page
-2. `tableToReferencedFields`: `Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>>` mapping each table to fields referenced on any of its pages
+**Solution (two-level lazy architecture):**
 
-Both are closure-captured as read-only data by the SymbolAction callback, which does O(1) lookups.
+**Level 1 — `BuildTableToPageIndex()` (CompilationStart, sequential):**
+- Single `GetDeclaredApplicationObjectSymbols()` call
+- For each page: record `table → List<IPageTypeSymbol>` and add table to `tablesWithPages`
+- For each page extension: record `table → List<IPageExtensionTypeSymbol>`
+- Does NOT access `FlattenedControls` or `AddedControlsFlattened` (deferred)
+- Cost: ~500ms (just symbol iteration + `RelatedTable` resolution)
+
+**Level 2 — `ResolveFieldsOnPages()` (AnalyzeSymbol, concurrent, lazy):**
+- `ConcurrentDictionary<ITableTypeSymbol, Lazy<HashSet<IFieldSymbol>>>` caches per-table results
+- Factory: iterates `tableToPages[table]` → `FlattenedControls` + `tableToPageExtensions[table]` → `AddedControlsFlattened`
+- Computed at most once per table (thread-safe via `Lazy<T>` default mode)
+- Parallelized across AnalyzeSymbol threads (4+ cores → ~125ms wall-clock)
+- Tables that exit early (obsolete, no candidates, AllowInCustomizations set, etc.) never trigger computation
 
 ### Analysis flow
 
-1. **CompilationStart**: `BuildPageLookups()` iterates declared symbols once, processing pages and page extensions
+1. **CompilationStart**: `BuildTableToPageIndex()` builds lightweight index (no control iteration)
 2. **PerSymbol (Table/TableExtension)**:
    - Version gate check, obsolete check, AllowInCustomizations on object check
    - Resolve to `ITableTypeSymbol` via `TryGetTableOrTargetTable()`
    - Get candidate fields via `GetCandidateFields()`
    - Check if table has pages (HashSet lookup)
    - For table extensions without pages, check `BaseTableHasLookupOrDrillDown()`
+   - **Lazy resolve:** `fieldRefCache.GetOrAdd(table, Lazy<...>).Value` triggers field resolution only if needed
    - For each candidate field, check if it's referenced on any page (HashSet lookup)
    - Report diagnostic for unreferenced fields
 
 ### Concurrency safety
 
-`CompilationStart` runs once before any `SymbolAction` callbacks. The closure-captured `HashSet` and `Dictionary` are construction-complete and never modified after. `Dictionary` and `HashSet` are safe for concurrent reads.
+- `BuildTableToPageIndex` runs once before any `SymbolAction` callbacks. The `tableToPages` and `tableToPageExtensions` dictionaries are construction-complete and never modified after, safe for concurrent reads.
+- `ConcurrentDictionary.GetOrAdd(key, valueFactory)` with `Lazy<T>` ensures single computation per table key.
+- `Lazy<T>` with default `ExecutionAndPublication` mode ensures thread safety.
+- `FlattenedControls` and `AddedControlsFlattened` are SDK `Lazy<ImmutableArray>` properties, safe for concurrent access.
 
 ## Test coverage
 

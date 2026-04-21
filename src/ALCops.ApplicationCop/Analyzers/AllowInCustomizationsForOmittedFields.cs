@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
@@ -21,10 +22,14 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
 
     private static void OnCompilationStart(CompilationStartAnalysisContext compilationCtx)
     {
-        var (tablesWithPages, tableToReferencedFields) = BuildPageLookups(compilationCtx.Compilation);
+        var (tablesWithPages, tableToPages, tableToPageExtensions) =
+            BuildTableToPageIndex(compilationCtx.Compilation);
+
+        var fieldRefCache = new ConcurrentDictionary<ITableTypeSymbol, Lazy<HashSet<IFieldSymbol>>>();
 
         compilationCtx.RegisterSymbolAction(
-            symbolCtx => AnalyzeSymbol(symbolCtx, tablesWithPages, tableToReferencedFields),
+            symbolCtx => AnalyzeSymbol(
+                symbolCtx, tablesWithPages, tableToPages, tableToPageExtensions, fieldRefCache),
             EnumProvider.SymbolKind.Table,
             EnumProvider.SymbolKind.TableExtension);
     }
@@ -32,7 +37,9 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
     private static void AnalyzeSymbol(
         SymbolAnalysisContext ctx,
         HashSet<ITableTypeSymbol> tablesWithPages,
-        Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>> tableToReferencedFields)
+        Dictionary<ITableTypeSymbol, List<IPageTypeSymbol>> tableToPages,
+        Dictionary<ITableTypeSymbol, List<IPageExtensionTypeSymbol>> tableToPageExtensions,
+        ConcurrentDictionary<ITableTypeSymbol, Lazy<HashSet<IFieldSymbol>>> fieldRefCache)
     {
         if (!VersionChecker.IsSupported(ctx.Symbol, EnumProvider.Feature.AddPageControlInPageCustomization))
             return;
@@ -59,14 +66,17 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
                 return;
         }
 
-        tableToReferencedFields.TryGetValue(table, out var referencedOnPages);
+        var referencedOnPages = fieldRefCache.GetOrAdd(
+            table,
+            t => new Lazy<HashSet<IFieldSymbol>>(
+                () => ResolveFieldsOnPages(t, tableToPages, tableToPageExtensions))).Value;
 
         foreach (var field in candidateFields)
         {
             if (field.OriginalDefinition is not IFieldSymbol fieldKey)
                 continue;
 
-            if (referencedOnPages is not null && referencedOnPages.Contains(fieldKey))
+            if (referencedOnPages.Contains(fieldKey))
                 continue;
 
             var location =
@@ -84,11 +94,19 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
         }
     }
 
-    private static (HashSet<ITableTypeSymbol> tablesWithPages, Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>> tableToReferencedFields)
-        BuildPageLookups(Compilation compilation)
+    /// <summary>
+    /// Builds a lightweight index of which tables have pages and which pages/extensions reference each table.
+    /// Does NOT access FlattenedControls or iterate controls (deferred to lazy resolution).
+    /// </summary>
+    private static (
+        HashSet<ITableTypeSymbol> tablesWithPages,
+        Dictionary<ITableTypeSymbol, List<IPageTypeSymbol>> tableToPages,
+        Dictionary<ITableTypeSymbol, List<IPageExtensionTypeSymbol>> tableToPageExtensions)
+        BuildTableToPageIndex(Compilation compilation)
     {
         var tablesWithPages = new HashSet<ITableTypeSymbol>();
-        var tableToReferencedFields = new Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>>();
+        var tableToPages = new Dictionary<ITableTypeSymbol, List<IPageTypeSymbol>>();
+        var tableToPageExtensions = new Dictionary<ITableTypeSymbol, List<IPageExtensionTypeSymbol>>();
 
         var declared = compilation.GetDeclaredApplicationObjectSymbols();
 
@@ -99,21 +117,21 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
 
             if (navKind == EnumProvider.NavTypeKind.Page)
             {
-                ProcessPage(symbol, tablesWithPages, tableToReferencedFields);
+                IndexPage(symbol, tablesWithPages, tableToPages);
             }
             else if (navKind == EnumProvider.NavTypeKind.PageExtension)
             {
-                ProcessPageExtension(symbol, tablesWithPages, tableToReferencedFields);
+                IndexPageExtension(symbol, tablesWithPages, tableToPageExtensions);
             }
         }
 
-        return (tablesWithPages, tableToReferencedFields);
+        return (tablesWithPages, tableToPages, tableToPageExtensions);
     }
 
-    private static void ProcessPage(
+    private static void IndexPage(
         IApplicationObjectTypeSymbol symbol,
         HashSet<ITableTypeSymbol> tablesWithPages,
-        Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>> tableToReferencedFields)
+        Dictionary<ITableTypeSymbol, List<IPageTypeSymbol>> tableToPages)
     {
         if (symbol is not IPageTypeSymbol page)
             return;
@@ -126,19 +144,19 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
 
         tablesWithPages.Add(table);
 
-        if (!tableToReferencedFields.TryGetValue(table, out var fieldSet))
+        if (!tableToPages.TryGetValue(table, out var pages))
         {
-            fieldSet = new HashSet<IFieldSymbol>();
-            tableToReferencedFields[table] = fieldSet;
+            pages = new List<IPageTypeSymbol>();
+            tableToPages[table] = pages;
         }
 
-        AddFieldControls(fieldSet, page.FlattenedControls);
+        pages.Add(page);
     }
 
-    private static void ProcessPageExtension(
+    private static void IndexPageExtension(
         IApplicationObjectTypeSymbol symbol,
         HashSet<ITableTypeSymbol> tablesWithPages,
-        Dictionary<ITableTypeSymbol, HashSet<IFieldSymbol>> tableToReferencedFields)
+        Dictionary<ITableTypeSymbol, List<IPageExtensionTypeSymbol>> tableToPageExtensions)
     {
         if (symbol is not IApplicationObjectExtensionTypeSymbol ext || ext.Target is null)
             return;
@@ -151,14 +169,42 @@ public sealed class AllowInCustomizationsForOmittedFields : DiagnosticAnalyzer
 
         tablesWithPages.Add(table);
 
-        if (!tableToReferencedFields.TryGetValue(table, out var fieldSet))
+        if (symbol is not IPageExtensionTypeSymbol pageExt)
+            return;
+
+        if (!tableToPageExtensions.TryGetValue(table, out var extensions))
         {
-            fieldSet = new HashSet<IFieldSymbol>();
-            tableToReferencedFields[table] = fieldSet;
+            extensions = new List<IPageExtensionTypeSymbol>();
+            tableToPageExtensions[table] = extensions;
         }
 
-        if (symbol is IPageExtensionTypeSymbol pageExt)
-            AddFieldControls(fieldSet, pageExt.AddedControlsFlattened);
+        extensions.Add(pageExt);
+    }
+
+    /// <summary>
+    /// Resolves all field symbols referenced on pages/page extensions for a given table.
+    /// Called lazily per-table, at most once (cached via ConcurrentDictionary + Lazy).
+    /// </summary>
+    private static HashSet<IFieldSymbol> ResolveFieldsOnPages(
+        ITableTypeSymbol table,
+        Dictionary<ITableTypeSymbol, List<IPageTypeSymbol>> tableToPages,
+        Dictionary<ITableTypeSymbol, List<IPageExtensionTypeSymbol>> tableToPageExtensions)
+    {
+        var fieldSet = new HashSet<IFieldSymbol>();
+
+        if (tableToPages.TryGetValue(table, out var pages))
+        {
+            foreach (var page in pages)
+                AddFieldControls(fieldSet, page.FlattenedControls);
+        }
+
+        if (tableToPageExtensions.TryGetValue(table, out var extensions))
+        {
+            foreach (var ext in extensions)
+                AddFieldControls(fieldSet, ext.AddedControlsFlattened);
+        }
+
+        return fieldSet;
     }
 
     private static bool TryGetTableOrTargetTable(ISymbol symbol, out ITableTypeSymbol table, out bool isTableExtension)
