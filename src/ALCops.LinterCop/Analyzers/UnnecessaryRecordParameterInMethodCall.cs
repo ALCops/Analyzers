@@ -11,7 +11,8 @@ namespace ALCops.LinterCop.Analyzers;
 public sealed class UnnecessaryRecordParameterInMethodCall : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-        ImmutableArray.Create(DiagnosticDescriptors.UnnecessaryRecordParameterInMethodCall);
+        ImmutableArray.Create(
+            DiagnosticDescriptors.UnnecessaryRecordParameterInMethodCall);
 
     public override void Initialize(AnalysisContext context) =>
         context.RegisterOperationAction(
@@ -53,7 +54,7 @@ public sealed class UnnecessaryRecordParameterInMethodCall : DiagnosticAnalyzer
         if (invocation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod)
             return;
 
-        var instanceSymbol = invocation.Instance.GetSymbol();
+        var instanceSymbol = invocation.Instance.GetSymbolSafe();
         if (instanceSymbol is null)
             return;
 
@@ -115,15 +116,17 @@ public sealed class UnnecessaryRecordParameterInMethodCall : DiagnosticAnalyzer
     /// <summary>
     /// Resolves the symbol from an argument value, unwrapping through
     /// <c>IConversionExpression</c> when the SDK wraps the operand.
+    /// Uses <see cref="OperationSafeExtensions.GetSymbolSafe"/> to guard against
+    /// SDK bugs with <c>BoundApplicationObjectAccess</c>.
     /// </summary>
     private static ISymbol? ResolveArgumentSymbol(IArgument argument)
     {
-        var symbol = argument.Value.GetSymbol();
+        var symbol = argument.Value.GetSymbolSafe();
         if (symbol is not null)
             return symbol;
 
         if (argument.Value is IConversionExpression conversion)
-            return conversion.Operand.GetSymbol();
+            return conversion.Operand.GetSymbolSafe();
 
         return null;
     }

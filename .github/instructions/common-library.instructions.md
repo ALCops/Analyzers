@@ -36,6 +36,7 @@ Extension methods on SDK types. Each file extends one type or interface family.
 | `SymbolInterfaceExtensions.cs` | `ISymbol` | `GetContainingNamespaceQualifiedNameWithReflection()`, `GetPageTypeSymbol()`, `GetFlattenedControls()`, `GetFullyQualifiedObjectName(quoteIfNeeded)`, `IsObsolete()` |
 | `SyntaxNodeExtensions.cs` | `LabelPropertyValueSyntax`, `LabelSyntax`, `SyntaxNode`, `CommaSeparatedIdentifierEqualsLiteralListSyntax` | `GetIntegerPropertyValue(property)`, `GetBooleanPropertyValue(property)` (overloaded for each syntax type) |
 | `TypeSymbolInterfaceExtensions.cs` | `ITypeSymbol` | `GetTypeLength(ref isError)` |
+| `OperationExtensions.cs` | `IOperation` | `GetSymbolSafe()` - Safe replacement for SDK `GetSymbol()` that handles `BoundApplicationObjectAccess` (`DATABASE::X`, `CODEUNIT::X`) via `IApplicationObjectAccess` interface check, and guards against `BoundObjectAccess` via `is not IFieldAccess`. No try/catch. See `analyzer-development.instructions.md` "SDK GetSymbol() Bug". |
 | `IdentifierProperty.cs` | N/A (enum) | `Comment`, `Locked`, `MaxLength` |
 
 ### Helpers/

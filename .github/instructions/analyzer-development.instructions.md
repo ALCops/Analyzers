@@ -414,25 +414,25 @@ This avoids redundant `GetSymbolInfo` calls for identifiers that reference the s
 
 ## Operation-Level Symbol Resolution
 
-When working inside `RegisterOperationAction`, the bound operation tree already has symbols resolved. Prefer `IOperation.GetSymbol()` over `SemanticModel.GetSymbolInfo()` in this context.
+When working inside `RegisterOperationAction`, the bound operation tree already has symbols resolved. Prefer `IOperation.GetSymbolSafe()` over `SemanticModel.GetSymbolInfo()` in this context.
 
-### `IOperation.GetSymbol()` vs `SemanticModel.GetSymbolInfo()`
+### `IOperation.GetSymbolSafe()` vs `SemanticModel.GetSymbolInfo()`
 
 | Method | Context | Cost | Use When |
 |---|---|---|---|
-| `IOperation.GetSymbol()` | Operation analysis | O(1) property accessor on the bound tree | You have an `IOperation` (invocation instance, argument value, field access) |
+| `IOperation.GetSymbolSafe()` | Operation analysis | O(1) with type guard | You have an `IOperation` (invocation instance, argument value, field access) |
 | `SemanticModel.GetSymbolInfo(node)` | Syntax analysis | Performs semantic resolution | You have a `SyntaxNode` and no operation tree |
 
-`IOperation.GetSymbol()` is a property accessor that reads from the already-resolved bound tree, not a semantic resolution call. There is no performance benefit to pre-filtering with text checks before calling it.
+**IMPORTANT: Always use `GetSymbolSafe()` instead of `GetSymbol()`.** The SDK's `GetSymbol()` crashes with `InvalidCastException` on `BoundApplicationObjectAccess` (`DATABASE::X`, `CODEUNIT::X`) and `BoundObjectAccess` because they report `Kind = FieldAccess` but don't implement `IFieldAccess`. See "SDK GetSymbol() Bug" section below.
 
 ```csharp
 // In an OperationAnalysisContext callback:
 
 // Resolve the instance of a method invocation
-var instanceSymbol = invocation.Instance.GetSymbol();
+var instanceSymbol = invocation.Instance.GetSymbolSafe();
 
 // Resolve an argument's value
-var argumentSymbol = argument.Value.GetSymbol();
+var argumentSymbol = argument.Value.GetSymbolSafe();
 
 // Compare two symbols by identity (same variable, same declaration)
 if (instanceSymbol is not null && instanceSymbol.Equals(argumentSymbol))
@@ -441,23 +441,23 @@ if (instanceSymbol is not null && instanceSymbol.Equals(argumentSymbol))
 
 ### Unwrapping `IConversionExpression`
 
-The SDK frequently wraps argument values in `IConversionExpression` for implicit type conversions (e.g., passing a `Record "Sales Header"` where the parameter type is `Record "Sales Header"`). When this happens, `argument.Value.GetSymbol()` returns null because the conversion itself has no symbol. Unwrap through the conversion to get the actual operand's symbol:
+The SDK frequently wraps argument values in `IConversionExpression` for implicit type conversions (e.g., passing a `Record "Sales Header"` where the parameter type is `Record "Sales Header"`). When this happens, `argument.Value.GetSymbolSafe()` returns null because the conversion itself has no symbol. Unwrap through the conversion to get the actual operand's symbol:
 
 ```csharp
 private static ISymbol? ResolveArgumentSymbol(IArgument argument)
 {
-    var symbol = argument.Value.GetSymbol();
+    var symbol = argument.Value.GetSymbolSafe();
     if (symbol is not null)
         return symbol;
 
     if (argument.Value is IConversionExpression conversion)
-        return conversion.Operand.GetSymbol();
+        return conversion.Operand.GetSymbolSafe();
 
     return null;
 }
 ```
 
-This pattern appears across the codebase (e.g., `TransferFieldsSchemaCompatibility`, `PossibleOverflowAssigning`, `UsePartialRecordsOnRead`, `UnnecessaryRecordParameterInMethodCall`). Always try unwrapping when `GetSymbol()` returns null on an argument value.
+This pattern appears across the codebase (e.g., `TransferFieldsSchemaCompatibility`, `PossibleOverflowAssigning`, `UsePartialRecordsOnRead`, `UnnecessaryRecordParameterInMethodCall`). Always try unwrapping when `GetSymbolSafe()` returns null on an argument value.
 
 ## Dynamic SDK Discovery via PropertyInfoLookup
 
@@ -843,9 +843,54 @@ Build the solution and run the tests to confirm the analyzer works.
 
 - **Always use `EnumProvider`** for SDK enum values. Direct references break across BC versions.
 - **Always check `IsObsolete()` first** in every analysis method. Reporting on obsolete code creates noise.
-- **Never compare raw syntax text to identify symbols.** Do not use `syntax.ToString()`, `node.Identifier.ValueText`, or similar text-based checks to determine what a variable, method, or expression refers to. These are fragile (case-sensitive, whitespace-dependent, miss implicit conversions) and produce incorrect results when the source text doesn't match the canonical symbol name. Instead, resolve the symbol via `IOperation.GetSymbol()`, `SemanticModel.GetSymbolInfo()`, or `SemanticModel.GetDeclaredSymbol()`, then compare using symbol identity (`symbol.Equals(other)`) or symbol properties (`symbol.Kind`, `symbol.Name`). Checking `ISymbol.Name` after resolution is acceptable because it's the compiler-resolved canonical form, not raw source text.
+- **Never compare raw syntax text to identify symbols.** Do not use `syntax.ToString()`, `node.Identifier.ValueText`, or similar text-based checks to determine what a variable, method, or expression refers to. These are fragile (case-sensitive, whitespace-dependent, miss implicit conversions) and produce incorrect results when the source text doesn't match the canonical symbol name. Instead, resolve the symbol via `IOperation.GetSymbolSafe()`, `SemanticModel.GetSymbolInfo()`, or `SemanticModel.GetDeclaredSymbol()`, then compare using symbol identity (`symbol.Equals(other)`) or symbol properties (`symbol.Kind`, `symbol.Name`). Checking `ISymbol.Name` after resolution is acceptable because it's the compiler-resolved canonical form, not raw source text.
 - **Use `CancellationToken`** via `ctx.CancellationToken.ThrowIfCancellationRequested()` in loops over large collections (e.g., iterating all fields in a table).
 - **Mark analyzer classes `sealed`** unless there is a specific reason for inheritance.
 - **One analyzer class per rule or tightly related rule group.** The `AnalyzeCountMethod` analyzer handles both `LC0081` (IsEmpty) and `LC0082` (FindWithNext) because they share the same analysis logic.
 - **Use `ImmutableArray.Create()`** for `SupportedDiagnostics`, listing all descriptors the analyzer may report.
 - **Location matters.** Report diagnostics at the most specific location: the offending property, syntax node, or symbol, not the entire object.
+
+## SDK GetSymbol() Bug
+
+The BC SDK's `OperationExtensions.GetSymbol()` has a known bug: it switches on `OperationKind.FieldAccess` and casts to `IFieldAccess`, but two internal bound types use that kind without implementing `IFieldAccess`:
+
+| SDK Type | Implements | Triggered by | Returns |
+|---|---|---|---|
+| `BoundApplicationObjectAccess` | `IApplicationObjectAccess` (public) | `DATABASE::X`, `CODEUNIT::X`, `TABLE::X`, `XMLPORT::X`, `QUERY::X` | Integer (the object ID) |
+| `BoundObjectAccess` | `IObjectAccess` (internal) | Object type references | Varies |
+
+Both set `ExpressionKind => OperationKind.FieldAccess`, causing `GetSymbol()` to attempt `((IFieldAccess)operation).FieldSymbol` which throws `InvalidCastException`.
+
+### Solution: Always use `GetSymbolSafe()` instead of `GetSymbol()`
+
+`OperationSafeExtensions.GetSymbolSafe()` in `ALCops.Common/Extensions/OperationExtensions.cs` handles the bug with zero overhead:
+
+```csharp
+public static ISymbol? GetSymbolSafe(this IOperation operation)
+{
+    // BoundApplicationObjectAccess: DATABASE::X, CODEUNIT::X, etc.
+    if (operation is IApplicationObjectAccess appObjAccess)
+        return appObjAccess.ApplicationObjectTypeSymbol;
+
+    // Guard BoundObjectAccess and future mismatches
+    if (operation.Kind == EnumProvider.OperationKind.FieldAccess && operation is not IFieldAccess)
+        return null;
+
+    return operation.GetSymbol();
+}
+```
+
+- `IApplicationObjectAccess` is a public SDK interface, so the type check works directly
+- `IObjectAccess` is internal, so the `is not IFieldAccess` guard catches it generically
+- No try/catch, no exception handling overhead on the happy path
+- 25+ `GetSymbol()` call sites across all cops should migrate to `GetSymbolSafe()`
+
+### How Microsoft's own analyzers handle this
+
+CodeCop Rule 243 demonstrates the correct pattern (from decompiled source):
+```csharp
+ICodeunitTypeSymbol obj = (SemanticFacts.GetBoundExpressionArgument(invocationExpression, 0)
+    as IApplicationObjectAccess)?.ApplicationObjectTypeSymbol as ICodeunitTypeSymbol;
+```
+
+Microsoft casts to `IApplicationObjectAccess` explicitly instead of relying on `GetSymbol()`.

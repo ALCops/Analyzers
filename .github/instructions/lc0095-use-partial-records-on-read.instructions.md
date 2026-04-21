@@ -68,9 +68,11 @@ The walker checks ALL invocations (both built-in and user-defined) for tracked v
 
 ### BoundObjectAccess InvalidCastException
 
-The SDK's `OperationExtensions.GetSymbol()` throws `InvalidCastException` when the operation instance is a `BoundObjectAccess`. This type reports `Kind = FieldAccess` but doesn't implement `IFieldAccess`, so the SDK's internal cast fails. The analyzer uses a `TryGetSymbol()` wrapper that catches `InvalidCastException` and returns null.
+The SDK's `OperationExtensions.GetSymbol()` throws `InvalidCastException` when the operation instance is a `BoundObjectAccess` (or `BoundApplicationObjectAccess`). These internal SDK types report `Kind = FieldAccess` but don't implement `IFieldAccess`, so the SDK's internal cast fails.
 
-This is an SDK bug. If a future SDK version fixes it, the try-catch becomes a no-op (harmless to keep).
+The analyzer should use `GetSymbolSafe()` from `ALCops.Common.Extensions.OperationSafeExtensions` on all `GetSymbol()` call sites. This method handles the bug without exception handling: it checks `is IApplicationObjectAccess` (public SDK interface) first, then guards any remaining `FieldAccess`-kind operations that don't implement `IFieldAccess` by returning null. See the "SDK GetSymbol() Bug" section in `analyzer-development.instructions.md`.
+
+This is an SDK bug. If a future SDK version fixes it, the catch becomes a no-op (harmless to keep).
 
 ## Method classification
 

@@ -80,16 +80,22 @@ Uses `RegisterOperationAction` on `OperationKind.InvocationExpression` for singl
 
 ### Performance optimizations
 
-- **Symbol-based checks only**: Uses `IOperation.GetSymbol()` (a property accessor on the bound tree, O(1)) instead of text-based `syntax.ToString()` comparisons
+- **Symbol-based checks only**: Uses `IOperation.GetSymbolSafe()` (type-guarded O(1) accessor on the bound tree) instead of text-based `syntax.ToString()` comparisons
 - **Early exits**: Non-record invocations, empty arguments, events, and built-in methods all exit before any symbol resolution
-- **No SemanticModel retrieval**: Uses `IOperation.GetSymbol()` and `IArgument.Value.GetSymbol()` instead of `SemanticModel.GetSymbolInfo()`
+- **No SemanticModel retrieval**: Uses `IOperation.GetSymbolSafe()` and `IArgument.Value.GetSymbolSafe()` instead of `SemanticModel.GetSymbolInfo()`
 - **Conversion unwrapping**: `ResolveArgumentSymbol` handles `IConversionExpression` wrapping in a single utility method
 
 ## Known issues and workarounds
 
+### BoundApplicationObjectAccess InvalidCastException
+
+The SDK's `OperationExtensions.GetSymbol()` throws `InvalidCastException` when the operation is a `BoundApplicationObjectAccess` (or `BoundObjectAccess`). These internal SDK types report `Kind = FieldAccess` but don't implement `IFieldAccess`, causing the SDK's internal cast to fail.
+
+The analyzer uses `GetSymbolSafe()` (from `ALCops.Common.Extensions.OperationSafeExtensions`) on all `GetSymbol()` call sites. This method handles the bug without exception handling: it checks `is IApplicationObjectAccess` first (returning the `ApplicationObjectTypeSymbol`), then guards any remaining `FieldAccess`-kind operations that don't implement `IFieldAccess` by returning null. The `DatabaseObjectReference` NoDiagnostic test case covers this pattern (`DATABASE::MyTable` as a method argument).
+
 ### IConversionExpression wrapping
 
-Arguments may be wrapped in `IConversionExpression` by the SDK. When `argument.Value.GetSymbol()` returns null, the analyzer unwraps through the conversion and calls `GetSymbol()` on the operand.
+Arguments may be wrapped in `IConversionExpression` by the SDK. When `argument.Value.GetSymbolSafe()` returns null, the analyzer unwraps through the conversion and calls `GetSymbolSafe()` on the operand.
 
 ## Differences from original BC.LinterCop LC0094
 
@@ -115,7 +121,7 @@ Arguments may be wrapped in `IConversionExpression` by the SDK. When `argument.V
 | InternalPageExtensionMethodCall | `MyProcedure(Rec)` inside a page extension (local method) |
 | MultipleArguments | `MyRecord.MyProcedure(OtherParam, MyRecord)` flags matching arg |
 
-### NoDiagnostic (6 cases)
+### NoDiagnostic (7 cases)
 
 | Test case | Suppression reason |
 |---|---|
@@ -125,6 +131,7 @@ Arguments may be wrapped in `IConversionExpression` by the SDK. When `argument.V
 | PageRunModal | `Page.RunModal(Page::MyPage, MyTable)` built-in, not on the record |
 | FieldAccessExpression | `MyTable.MyProcedure(MyTable."Name")` field value, not the record |
 | PublicPageMethodWithRec | `CalculateInBackground(Rec)` on public page method (intentional API) |
+| DatabaseObjectReference | `MyTable.MyProcedure(DATABASE::MyTable, MyTable)` application object access (SDK bug trigger) |
 
 ## Phase 2 roadmap (not yet implemented)
 
