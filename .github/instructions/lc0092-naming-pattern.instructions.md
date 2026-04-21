@@ -38,6 +38,7 @@ Validates names of procedures, variables, parameters, return values, objects, fi
 | Skip interface implementations | Yes | Name is dictated by the interface |
 | Skip event subscriber params | Yes | Subscriber parameters must match publisher signature (AL0828); platform trigger params (`xRec`, `BelowxRec`, `RunTrigger`, etc.) can't be renamed |
 | Skip API object controls | Yes | API page/query controls require camelCase per AA0102; the default PascalCase pattern would always conflict |
+| Skip whitespace-only names | Yes | `value(0; " ")` is a common "empty" enum value pattern; not a naming issue |
 | Skip obsolete | Yes | Standard ALCops convention |
 | netstandard2.1 | Full support | No net8.0-only APIs used |
 | Regex safety | 2-second timeout, catch ArgumentException and RegexMatchTimeoutException | Protects against ReDoS |
@@ -190,6 +191,7 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 | EventSubscriberPlatformParams | Event subscriber with platform param `xRec` (skipped, params must match publisher) |
 | EventSubscriberUserParams | Event subscriber with user-defined lowercase param `myTable` matching publisher signature (skipped) |
 | ApiPageControlCamelCase | API page control with camelCase name (skipped, AA0102 requires camelCase) |
+| EnumValueBlankSpace | Enum value with whitespace-only name `" "` (skipped, common "empty" value pattern) |
 | ParameterPascalCase | Correctly named parameters |
 
 ## Phase 2 roadmap (not yet implemented)

@@ -190,7 +190,7 @@ public sealed class NamingPattern : DiagnosticAnalyzer
     private static void CheckName(SymbolAnalysisContext ctx, string name, NamingTarget target,
         NamingPatternConfig config, string kindDisplayName)
     {
-        if (string.IsNullOrEmpty(name))
+        if (string.IsNullOrWhiteSpace(name))
             return;
 
         var resolved = config.GetPatterns(target);
