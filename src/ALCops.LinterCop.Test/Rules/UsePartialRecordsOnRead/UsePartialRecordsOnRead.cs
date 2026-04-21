@@ -28,6 +28,15 @@ namespace ALCops.LinterCop.Test
         [TestCase("LocalRecordFind")]
         [TestCase("LocalRecordMultipleReads")]
         [TestCase("LocalRecordRefFindFirst")]
+        [TestCase("SetLoadFieldsAfterGet")]
+        [TestCase("ClearBetweenSetLoadFieldsAndGet")]
+        [TestCase("ResetBetweenSetLoadFieldsAndGet")]
+        [TestCase("SetLoadFieldsNoArgsBetween")]
+        [TestCase("CaseBranchWithoutSetLoadFields")]
+        [TestCase("IfBranchWithoutSetLoadFields")]
+        [TestCase("ClearResetsWriteOp")]
+        [TestCase("ClearResetsPassedToFunction")]
+        [TestCase("LoopNoSetLoadFields")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -60,6 +69,8 @@ namespace ALCops.LinterCop.Test
         [TestCase("RecordRefSetTableWithModify")]
         [TestCase("RecordRefSetTablePassedToFunction")]
         [TestCase("DatabaseObjectReference")]
+        [TestCase("IfBothBranchesSetLoadFields")]
+        [TestCase("LoopSetLoadFieldsBefore")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

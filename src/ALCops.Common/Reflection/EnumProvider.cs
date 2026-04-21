@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using NavCodeAnalysis = Microsoft.Dynamics.Nav.CodeAnalysis;
+using NavCodeAnalysisSemantics = Microsoft.Dynamics.Nav.CodeAnalysis.Semantics;
 
 namespace ALCops.Common.Reflection;
 
@@ -287,6 +288,19 @@ public static class EnumProvider
         public static NavCodeAnalysis.FieldClassKind FlowField => _flowField.Value;
         public static NavCodeAnalysis.FieldClassKind FlowFilter => _flowFilter.Value;
         public static NavCodeAnalysis.FieldClassKind Normal => _normal.Value;
+    }
+    /// <summary>
+    /// LoopKind enum values (from Microsoft.Dynamics.Nav.CodeAnalysis.Semantics)
+    /// </summary>
+    public static class LoopKind
+    {
+        private static readonly Lazy<NavCodeAnalysisSemantics.LoopKind> _while =
+            new(() => ParseEnum<NavCodeAnalysisSemantics.LoopKind>(nameof(NavCodeAnalysisSemantics.LoopKind.While)));
+        private static readonly Lazy<NavCodeAnalysisSemantics.LoopKind> _repeat =
+            new(() => ParseEnum<NavCodeAnalysisSemantics.LoopKind>(nameof(NavCodeAnalysisSemantics.LoopKind.Repeat)));
+
+        public static NavCodeAnalysisSemantics.LoopKind While => _while.Value;
+        public static NavCodeAnalysisSemantics.LoopKind Repeat => _repeat.Value;
     }
     /// <summary>
     /// MethodKind enum values

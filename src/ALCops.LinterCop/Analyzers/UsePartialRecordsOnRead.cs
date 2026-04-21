@@ -3,6 +3,7 @@ using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Semantics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 
@@ -62,21 +63,19 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
 
         var walker = new SetLoadFieldsWalker(trackedVariables, context.CancellationToken);
         walker.Visit(operation);
+        walker.FinalizeResults();
 
         foreach (var kvp in trackedVariables)
         {
             var state = kvp.Value;
 
-            if (state.ReadLocations.Count == 0 ||
-                state.HasLoadFieldsCall ||
-                state.HasWriteOp ||
-                state.PassedToFunction)
+            if (state.UncoveredReadLocations.Count == 0)
                 continue;
 
             if (state.IsRecordRef && ShouldSuppressViaSetTable(state, trackedVariables))
                 continue;
 
-            foreach (var readInfo in state.ReadLocations)
+            foreach (var readInfo in state.UncoveredReadLocations)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.UsePartialRecordsOnRead,
@@ -105,7 +104,7 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
     /// <summary>
     /// When a RecordRef calls SetTable(TargetRecord), the RecordRef's diagnostic is suppressed if:
     /// - Any target is unresolvable (null) or not a tracked local variable (conservative)
-    /// - Any tracked target has a suppression condition (write op, passed to function, has load fields call)
+    /// - Any tracked target ever had a suppression condition (write op, passed to function, load fields call)
     /// </summary>
     private static bool ShouldSuppressViaSetTable(VariableState state,
         Dictionary<string, VariableState> trackedVariables)
@@ -118,7 +117,7 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
             if (targetName is null || !trackedVariables.TryGetValue(targetName, out var targetState))
                 return true;
 
-            if (targetState.HasWriteOp || targetState.PassedToFunction || targetState.HasLoadFieldsCall)
+            if (targetState.EverHadWriteOp || targetState.EverPassedToFunction || targetState.EverHadLoadFields)
                 return true;
         }
 
@@ -148,12 +147,46 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
 
     private sealed class VariableState
     {
-        public List<ReadInfo> ReadLocations { get; } = new();
-        public bool HasLoadFieldsCall { get; set; }
-        public bool HasWriteOp { get; set; }
-        public bool PassedToFunction { get; set; }
+        public List<ReadInfo> UncoveredReadLocations { get; } = new();
         public bool IsRecordRef { get; set; }
         public List<string?> SetTableTargets { get; } = new();
+        // Method-level "ever" flags used only for RecordRef SetTable suppression check
+        public bool EverHadLoadFields { get; set; }
+        public bool EverHadWriteOp { get; set; }
+        public bool EverPassedToFunction { get; set; }
+    }
+
+    /// <summary>
+    /// Per-variable flow state tracked during the walk. Forked at branch points, merged at join points.
+    /// UncoveredReads accumulates reads not covered by SetLoadFields. Write/pass operations
+    /// retroactively clear this list (a write after a read means SetLoadFields could break the write).
+    /// At branch merge, uncovered reads from all branches are unioned.
+    /// </summary>
+    private sealed class FlowFlags
+    {
+        public bool HasLoadFields { get; set; }
+        public bool HasWriteOp { get; set; }
+        public bool PassedToFunction { get; set; }
+        public List<ReadInfo> UncoveredReads { get; private set; } = new();
+
+        public FlowFlags Clone() => new()
+        {
+            HasLoadFields = HasLoadFields,
+            HasWriteOp = HasWriteOp,
+            PassedToFunction = PassedToFunction,
+            UncoveredReads = new List<ReadInfo>(UncoveredReads)
+        };
+
+        /// <summary>
+        /// Resets boolean flow flags (used by Clear/Reset operations).
+        /// Does NOT clear UncoveredReads: reads before Clear are still genuinely uncovered.
+        /// </summary>
+        public void ResetFlags()
+        {
+            HasLoadFields = false;
+            HasWriteOp = false;
+            PassedToFunction = false;
+        }
     }
 
 #if NETSTANDARD2_1
@@ -175,6 +208,7 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
     private sealed class SetLoadFieldsWalker : OperationWalker
     {
         private readonly Dictionary<string, VariableState> _trackedVariables;
+        private readonly Dictionary<string, FlowFlags> _flowState;
         private readonly CancellationToken _cancellationToken;
 
         public SetLoadFieldsWalker(Dictionary<string, VariableState> trackedVariables,
@@ -182,6 +216,30 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
         {
             _trackedVariables = trackedVariables;
             _cancellationToken = cancellationToken;
+            _flowState = new Dictionary<string, FlowFlags>(StringComparer.OrdinalIgnoreCase);
+            foreach (var key in trackedVariables.Keys)
+                _flowState[key] = new FlowFlags();
+        }
+
+        /// <summary>
+        /// Copies final uncovered reads from flow state into VariableState for reporting.
+        /// Deduplicates by source span start position (reads before a branch fork appear
+        /// in both branch copies and get unioned at merge).
+        /// </summary>
+        public void FinalizeResults()
+        {
+            foreach (var kvp in _flowState)
+            {
+                if (!_trackedVariables.TryGetValue(kvp.Key, out var state))
+                    continue;
+
+                var seen = new HashSet<int>();
+                foreach (var read in kvp.Value.UncoveredReads)
+                {
+                    if (seen.Add(read.Location.SourceSpan.Start))
+                        state.UncoveredReadLocations.Add(read);
+                }
+            }
         }
 
         public override void VisitInvocationExpression(IInvocationExpression operation)
@@ -190,9 +248,10 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
             var instanceSymbol = operation.Instance?.GetSymbolSafe();
 
             if (instanceSymbol != null &&
-                _trackedVariables.TryGetValue(instanceSymbol.Name, out var state))
+                _trackedVariables.TryGetValue(instanceSymbol.Name, out var state) &&
+                _flowState.TryGetValue(instanceSymbol.Name, out var flowFlags))
             {
-                ClassifyInstanceMethodCall(operation, state);
+                ClassifyInstanceMethodCall(operation, state, flowFlags);
             }
 
             CheckArgumentsForTrackedVariables(operation);
@@ -200,18 +259,212 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
             base.VisitInvocationExpression(operation);
         }
 
-        private static void ClassifyInstanceMethodCall(IInvocationExpression operation, VariableState state)
+        #region Control flow overrides
+
+        public override void VisitIfStatement(IIfStatement operation)
+        {
+            Visit(operation.Condition);
+
+            var preBranchState = SaveFlowState();
+
+            Visit(operation.IfTrueStatement);
+            var trueBranchState = SaveFlowState();
+
+            RestoreFlowState(preBranchState);
+            Visit(operation.IfFalseStatement);
+            var falseBranchState = SaveFlowState();
+
+            MergeFlowStates(trueBranchState, falseBranchState);
+        }
+
+        public override void VisitCaseStatement(ICaseStatement operation)
+        {
+            Visit(operation.Value);
+
+            var preCaseState = SaveFlowState();
+            var branchStates = new List<Dictionary<string, FlowFlags>>();
+
+            foreach (var caseLine in operation.CaseLines)
+            {
+                RestoreFlowState(preCaseState);
+                Visit(caseLine);
+                branchStates.Add(SaveFlowState());
+            }
+
+            if (operation.ElseStatement != null)
+            {
+                RestoreFlowState(preCaseState);
+                Visit(operation.ElseStatement);
+                branchStates.Add(SaveFlowState());
+            }
+            else
+            {
+                // No else clause: implicit empty branch with pre-case state
+                branchStates.Add(CloneState(preCaseState));
+            }
+
+            MergeFlowStates(branchStates);
+        }
+
+        public override void VisitWhileRepeatLoopStatement(IWhileRepeatLoopStatement operation)
+        {
+            if (operation.LoopKind == EnumProvider.LoopKind.Repeat)
+            {
+                // repeat-until: body always executes at least once
+                Visit(operation.Body);
+                Visit(operation.Condition);
+            }
+            else
+            {
+                // while-do: body might not execute
+                Visit(operation.Condition);
+
+                var preLoopState = SaveFlowState();
+                Visit(operation.Body);
+                var postBodyState = SaveFlowState();
+
+                MergeFlowStates(preLoopState, postBodyState);
+            }
+        }
+
+        public override void VisitForLoopStatement(IForLoopStatement operation)
+        {
+            Visit(operation.InitialValue);
+            Visit(operation.EndValue);
+
+            var preLoopState = SaveFlowState();
+            Visit(operation.Body);
+            var postBodyState = SaveFlowState();
+
+            MergeFlowStates(preLoopState, postBodyState);
+        }
+
+        public override void VisitForEachLoopStatement(IForEachLoopStatement operation)
+        {
+            Visit(operation.Expression);
+
+            var preLoopState = SaveFlowState();
+            Visit(operation.Body);
+            var postBodyState = SaveFlowState();
+
+            MergeFlowStates(preLoopState, postBodyState);
+        }
+
+        #endregion
+
+        #region Flow state management
+
+        private Dictionary<string, FlowFlags> SaveFlowState()
+        {
+            var saved = new Dictionary<string, FlowFlags>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in _flowState)
+                saved[kvp.Key] = kvp.Value.Clone();
+            return saved;
+        }
+
+        private void RestoreFlowState(Dictionary<string, FlowFlags> saved)
+        {
+            foreach (var kvp in saved)
+            {
+                if (_flowState.TryGetValue(kvp.Key, out var current))
+                {
+                    current.HasLoadFields = kvp.Value.HasLoadFields;
+                    current.HasWriteOp = kvp.Value.HasWriteOp;
+                    current.PassedToFunction = kvp.Value.PassedToFunction;
+                    current.UncoveredReads.Clear();
+                    current.UncoveredReads.AddRange(kvp.Value.UncoveredReads);
+                }
+            }
+        }
+
+        private static Dictionary<string, FlowFlags> CloneState(Dictionary<string, FlowFlags> source)
+        {
+            var clone = new Dictionary<string, FlowFlags>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in source)
+                clone[kvp.Key] = kvp.Value.Clone();
+            return clone;
+        }
+
+        private void MergeFlowStates(Dictionary<string, FlowFlags> stateA, Dictionary<string, FlowFlags> stateB)
+        {
+            foreach (var kvp in _flowState)
+            {
+                var a = stateA[kvp.Key];
+                var b = stateB[kvp.Key];
+
+                kvp.Value.HasLoadFields = a.HasLoadFields && b.HasLoadFields;
+                kvp.Value.HasWriteOp = a.HasWriteOp || b.HasWriteOp;
+                kvp.Value.PassedToFunction = a.PassedToFunction || b.PassedToFunction;
+
+                kvp.Value.UncoveredReads.Clear();
+                kvp.Value.UncoveredReads.AddRange(a.UncoveredReads);
+                kvp.Value.UncoveredReads.AddRange(b.UncoveredReads);
+            }
+        }
+
+        private void MergeFlowStates(List<Dictionary<string, FlowFlags>> branchStates)
+        {
+            if (branchStates.Count == 0)
+                return;
+
+            foreach (var kvp in _flowState)
+            {
+                kvp.Value.HasLoadFields = branchStates.All(bs => bs[kvp.Key].HasLoadFields);
+                kvp.Value.HasWriteOp = branchStates.Any(bs => bs[kvp.Key].HasWriteOp);
+                kvp.Value.PassedToFunction = branchStates.Any(bs => bs[kvp.Key].PassedToFunction);
+
+                kvp.Value.UncoveredReads.Clear();
+                foreach (var bs in branchStates)
+                    kvp.Value.UncoveredReads.AddRange(bs[kvp.Key].UncoveredReads);
+            }
+        }
+
+        #endregion
+
+        #region Method classification
+
+        private static void ClassifyInstanceMethodCall(IInvocationExpression operation,
+            VariableState state, FlowFlags flowFlags)
         {
             var methodName = operation.TargetMethod.Name;
 
             if (operation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod)
             {
                 if (ReadMethods.Contains(methodName))
-                    state.ReadLocations.Add(new ReadInfo(operation.Syntax.GetLocation(), methodName));
+                {
+                    // Check ALL flow flags: hasLoadFields (SetLoadFields before read),
+                    // hasWriteOp (write before read means SetLoadFields could break the write),
+                    // passedToFunction (callee might need all fields).
+                    // Write/pass AFTER read is handled by retroactive clearing of UncoveredReads.
+                    if (!flowFlags.HasLoadFields && !flowFlags.HasWriteOp && !flowFlags.PassedToFunction)
+                        flowFlags.UncoveredReads.Add(new ReadInfo(operation.Syntax.GetLocation(), methodName));
+                }
                 else if (LoadFieldsMethods.Contains(methodName))
-                    state.HasLoadFieldsCall = true;
+                {
+                    if (string.Equals(methodName, "SetLoadFields", StringComparison.OrdinalIgnoreCase)
+                        && operation.Arguments.IsEmpty)
+                    {
+                        // SetLoadFields() with no arguments resets partial records to "load all"
+                        flowFlags.HasLoadFields = false;
+                    }
+                    else
+                    {
+                        flowFlags.HasLoadFields = true;
+                        state.EverHadLoadFields = true;
+                    }
+                }
                 else if (WriteMethods.Contains(methodName))
-                    state.HasWriteOp = true;
+                {
+                    // Retroactively suppress uncovered reads: a write after a read means
+                    // adding SetLoadFields before the read could break the write operation
+                    flowFlags.UncoveredReads.Clear();
+                    flowFlags.HasWriteOp = true;
+                    state.EverHadWriteOp = true;
+                }
+                else if (string.Equals(methodName, "Reset", StringComparison.OrdinalIgnoreCase))
+                {
+                    flowFlags.ResetFlags();
+                }
                 else if (state.IsRecordRef
                     && string.Equals(methodName, "SetTable", StringComparison.OrdinalIgnoreCase)
                     && operation.Arguments.Length == 1)
@@ -219,20 +472,44 @@ public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
             }
             else
             {
-                // Non-built-in method called on the record variable (table-defined method)
-                state.PassedToFunction = true;
+                // Non-built-in method called on the record variable (table-defined method):
+                // retroactively suppress uncovered reads (callee might access any field)
+                flowFlags.UncoveredReads.Clear();
+                flowFlags.PassedToFunction = true;
+                state.EverPassedToFunction = true;
             }
         }
 
         private void CheckArgumentsForTrackedVariables(IInvocationExpression operation)
         {
+            // Clear(variable) resets flow state instead of marking passedToFunction
+            if (operation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod
+                && string.Equals(operation.TargetMethod.Name, "Clear", StringComparison.OrdinalIgnoreCase)
+                && operation.Arguments.Length >= 1)
+            {
+                var clearVarName = GetVariableNameFromArgument(operation.Arguments[0]);
+                if (clearVarName != null && _flowState.TryGetValue(clearVarName, out var clearFlags))
+                {
+                    clearFlags.ResetFlags();
+                    return;
+                }
+            }
+
             for (int i = 0; i < operation.Arguments.Length; i++)
             {
                 var varName = GetVariableNameFromArgument(operation.Arguments[i]);
-                if (varName != null && _trackedVariables.TryGetValue(varName, out var state))
-                    state.PassedToFunction = true;
+                if (varName != null && _flowState.TryGetValue(varName, out var flags))
+                {
+                    // Retroactively suppress uncovered reads: callee might access any field
+                    flags.UncoveredReads.Clear();
+                    flags.PassedToFunction = true;
+                    if (_trackedVariables.TryGetValue(varName, out var state))
+                        state.EverPassedToFunction = true;
+                }
             }
         }
+
+        #endregion
 
         private static string? GetVariableNameFromArgument(IArgument argument)
         {
