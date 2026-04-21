@@ -140,6 +140,21 @@ GitVersion with `GitHubFlow/v1` workflow:
 - `main` branch: `alpha` label, `Patch` increment, tracks release branches
 - `release` branch: prevents increment when current commit is tagged (uses tag value)
 
+## Branching policy
+
+**Never commit directly to `main`.** The `main` branch is protected. All changes must go through a pull request:
+
+1. Create a feature branch from `main` (e.g., `fix/lc0086-case-sensitive-matching`, `feat/pc0030-new-rule`)
+2. Commit your changes to the feature branch
+3. Push the branch and create a pull request via `gh pr create`
+4. The PR triggers CI (build, test) via `pull-request.yml`
+5. After review and CI pass, the PR is merged into `main`
+
+Branch naming conventions:
+- `fix/<description>` for bug fixes
+- `feat/<description>` for new features
+- `docs/<description>` for documentation-only changes
+
 ## CI/CD
 
 GitHub Actions workflows in `.github/workflows/`:
