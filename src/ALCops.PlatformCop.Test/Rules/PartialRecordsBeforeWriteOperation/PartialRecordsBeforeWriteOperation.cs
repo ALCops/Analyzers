@@ -22,7 +22,6 @@ namespace ALCops.PlatformCop.Test
 
         [Test]
         [TestCase("SetLoadFieldsThenModify")]
-        [TestCase("SetLoadFieldsThenInsert")]
         [TestCase("SetLoadFieldsThenDelete")]
         [TestCase("SetLoadFieldsThenRename")]
         [TestCase("SetLoadFieldsThenTransferFields")]
@@ -47,6 +46,9 @@ namespace ALCops.PlatformCop.Test
         [TestCase("Init")]
         [TestCase("TemporaryTable")]
         [TestCase("ClearBetweenSetLoadFieldsAndModify")]
+        [TestCase("WriteThenSetLoadFields")]
+        [TestCase("WriteAfterSetLoadFieldsBeforePartialRead")]
+        [TestCase("SetLoadFieldsThenInsert")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

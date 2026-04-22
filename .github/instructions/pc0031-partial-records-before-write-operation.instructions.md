@@ -36,7 +36,8 @@ Detects `SetLoadFields`/`AddLoadFields`/`SetBaseLoadFields` calls on record vari
 | Excluded operations | ModifyAll, DeleteAll, Init | Set-based (no per-record JIT) or initialization-only |
 | Report location | At the SetLoadFields/AddLoadFields/SetBaseLoadFields call | Where the developer needs to make the change |
 | Load fields methods | SetLoadFields, AddLoadFields, SetBaseLoadFields | All three put record in partial mode |
-| Branch sensitivity | Flag if SetLoadFields on ANY path + write on ANY path | Union semantics; JIT load problem exists even on conditional paths |
+| Branch sensitivity | Flag if SetLoadFields on ANY path + write on ANY path after a partial read | Union semantics; JIT load problem exists even on conditional paths |
+| Write tracking | Flow-sensitive: only after partial read (read with HasLoadFields=true) | Writes before SetLoadFields or between SetLoadFields and the next read use the full record buffer and don't trigger JIT loads |
 | CodeFix | Remove SetLoadFields statement | Simple, safe fix; without partial records, writes work normally |
 | Variable scope | Local variables only (Phase 1) | Same as PC0030 |
 | Category | Performance | SQL roundtrip overhead and JIT load performance impact |
@@ -50,8 +51,19 @@ PC0031 is implemented in the same `PartialRecordOperations` DiagnosticAnalyzer c
 ### PC0031-specific tracking
 
 - `LoadFieldsLocations`: flow-sensitive list of `LoadFieldsInfo` (Location + method name) on `FlowFlags`, recording where SetLoadFields/AddLoadFields/SetBaseLoadFields calls occur
-- `WriteMethodNames`: method-level `HashSet<string>` on `VariableState`, recording which write methods are called on the variable
+- `HasPartialRead`: flow-sensitive boolean on `FlowFlags`, set to true when a read method (Get/Find/FindFirst/FindLast/FindSet) occurs while `HasLoadFields` is true. This means the record buffer is now partial.
+- `WriteMethodNamesAfterPartialRead`: flow-sensitive `HashSet<string>?` on `FlowFlags`, recording write methods called while `HasPartialRead` is true. Only these writes are actual JIT-load triggers.
+- `WriteMethodNames`: method-level `HashSet<string>` on `VariableState`, populated by `FinalizeResults()` from `WriteMethodNamesAfterPartialRead`
 - `JitLoadWriteMethods`: static HashSet with the subset of write methods that trigger JIT loads
+
+### Why writes are only tracked after partial reads
+
+`SetLoadFields` only affects the NEXT read operation. It sets a flag on the record variable that tells the runtime to load fewer fields on the next Get/Find. The current record buffer remains unchanged until a read occurs. This means:
+
+- `Get(); Delete(); SetLoadFields(); Get();` — Delete uses the full buffer from the first Get, no JIT
+- `Get(); SetLoadFields(); Delete(); Get();` — Delete still uses the full buffer from the first Get, no JIT
+- `SetLoadFields(); Init(); Insert();` — Init creates a fresh in-memory record, Insert writes it, no prior partial data
+- `SetLoadFields(); Get(); Modify();` — Get loads partial data, Modify needs all fields → JIT load → REAL problem
 
 ### Reporting logic
 
@@ -63,7 +75,9 @@ After the walker completes, for each variable:
 ### Flow sensitivity
 
 - `LoadFieldsLocations` uses union merge (same as UncoveredReads) with dedup by source position
-- `Clear(var)` and `Reset()` clear `LoadFieldsLocations` (same as other flow flags)
+- `HasPartialRead` uses OR merge (if any branch has a partial read, conservative)
+- `WriteMethodNamesAfterPartialRead` uses union merge (write on any branch is tracked)
+- `Clear(var)` and `Reset()` clear all flow state including `HasPartialRead` and `WriteMethodNamesAfterPartialRead`
 - `SetLoadFields()` with no args resets `HasLoadFields` but does NOT add to `LoadFieldsLocations`
 
 ## CodeFix: PartialRecordsBeforeWriteOperationCodeFixProvider
@@ -92,12 +106,11 @@ Provides a QuickFix "ALCops: Remove SetLoadFields" that removes the entire `Expr
 
 ## Test coverage
 
-### HasDiagnostic (10 cases)
+### HasDiagnostic (9 cases)
 
 | Test case | Scenario |
 |---|---|
 | SetLoadFieldsThenModify | `SetLoadFields + Get + Modify` |
-| SetLoadFieldsThenInsert | `SetLoadFields + Init + Insert` |
 | SetLoadFieldsThenDelete | `SetLoadFields + Get + Delete` |
 | SetLoadFieldsThenRename | `SetLoadFields + Get + Rename` |
 | SetLoadFieldsThenTransferFields | `SetLoadFields + Get + TransferFields` |
@@ -107,7 +120,7 @@ Provides a QuickFix "ALCops: Remove SetLoadFields" that removes the entire `Expr
 | BranchWithWrite | `SetLoadFields + Get + conditional Modify` |
 | QualifiedSetLoadFields | `SetLoadFields + FindFirst + Modify` |
 
-### NoDiagnostic (7 cases)
+### NoDiagnostic (10 cases)
 
 | Test case | Suppression reason |
 |---|---|
@@ -118,6 +131,9 @@ Provides a QuickFix "ALCops: Remove SetLoadFields" that removes the entire `Expr
 | Init | Init excluded from trigger set |
 | TemporaryTable | Temporary table (no SQL backing) |
 | ClearBetweenSetLoadFieldsAndModify | Clear resets partial records state |
+| WriteThenSetLoadFields | Write (Delete) before SetLoadFields; uses full buffer, no JIT |
+| WriteAfterSetLoadFieldsBeforePartialRead | Write (Delete) after SetLoadFields but before partial read; uses full buffer from prior Get |
+| SetLoadFieldsThenInsert | `SetLoadFields + Init + Insert` with no read; Init creates fresh record, no partial data |
 
 ### HasFix (3 cases)
 

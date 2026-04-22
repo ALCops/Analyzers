@@ -207,16 +207,22 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         public bool HasLoadFields { get; set; }
         public bool HasWriteOp { get; set; }
         public bool PassedToFunction { get; set; }
+        public bool HasPartialRead { get; set; }
         public List<ReadInfo> UncoveredReads { get; private set; } = new();
         public List<LoadFieldsInfo> LoadFieldsLocations { get; private set; } = new();
+        public HashSet<string>? WriteMethodNamesAfterPartialRead { get; set; }
 
         public FlowFlags Clone() => new()
         {
             HasLoadFields = HasLoadFields,
             HasWriteOp = HasWriteOp,
             PassedToFunction = PassedToFunction,
+            HasPartialRead = HasPartialRead,
             UncoveredReads = new List<ReadInfo>(UncoveredReads),
-            LoadFieldsLocations = new List<LoadFieldsInfo>(LoadFieldsLocations)
+            LoadFieldsLocations = new List<LoadFieldsInfo>(LoadFieldsLocations),
+            WriteMethodNamesAfterPartialRead = WriteMethodNamesAfterPartialRead is not null
+                ? new HashSet<string>(WriteMethodNamesAfterPartialRead, StringComparer.OrdinalIgnoreCase)
+                : null
         };
 
         /// <summary>
@@ -228,7 +234,15 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             HasLoadFields = false;
             HasWriteOp = false;
             PassedToFunction = false;
+            HasPartialRead = false;
             LoadFieldsLocations.Clear();
+            WriteMethodNamesAfterPartialRead = null;
+        }
+
+        public void AddWriteAfterPartialRead(string methodName)
+        {
+            WriteMethodNamesAfterPartialRead ??= new(StringComparer.OrdinalIgnoreCase);
+            WriteMethodNamesAfterPartialRead.Add(methodName);
         }
     }
 
@@ -302,6 +316,9 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                     if (seenLF.Add(info.Location.SourceSpan.Start))
                         state.LoadFieldsLocations.Add(info);
                 }
+
+                if (kvp.Value.WriteMethodNamesAfterPartialRead is not null)
+                    state.WriteMethodNames.UnionWith(kvp.Value.WriteMethodNamesAfterPartialRead);
             }
         }
 
@@ -458,9 +475,11 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                 kvp.Value.HasLoadFields = a.HasLoadFields && b.HasLoadFields;
                 kvp.Value.HasWriteOp = a.HasWriteOp || b.HasWriteOp;
                 kvp.Value.PassedToFunction = a.PassedToFunction || b.PassedToFunction;
+                kvp.Value.HasPartialRead = a.HasPartialRead || b.HasPartialRead;
 
                 MergeUncoveredReads(kvp.Value, a.UncoveredReads, b.UncoveredReads);
                 MergeLoadFieldsLocations(kvp.Value, a.LoadFieldsLocations, b.LoadFieldsLocations);
+                MergeWriteMethodNames(kvp.Value, a.WriteMethodNamesAfterPartialRead, b.WriteMethodNamesAfterPartialRead);
             }
         }
 
@@ -474,6 +493,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                 kvp.Value.HasLoadFields = branchStates.All(bs => bs[kvp.Key].HasLoadFields);
                 kvp.Value.HasWriteOp = branchStates.Any(bs => bs[kvp.Key].HasWriteOp);
                 kvp.Value.PassedToFunction = branchStates.Any(bs => bs[kvp.Key].PassedToFunction);
+                kvp.Value.HasPartialRead = branchStates.Any(bs => bs[kvp.Key].HasPartialRead);
 
                 kvp.Value.UncoveredReads.Clear();
                 var seenReads = new HashSet<int>();
@@ -488,6 +508,9 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                     foreach (var info in bs[kvp.Key].LoadFieldsLocations)
                         if (seenLF.Add(info.Location.SourceSpan.Start))
                             kvp.Value.LoadFieldsLocations.Add(info);
+
+                MergeWriteMethodNames(kvp.Value,
+                    branchStates.Select(bs => bs[kvp.Key].WriteMethodNamesAfterPartialRead).ToArray());
             }
         }
 
@@ -526,6 +549,33 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                     target.LoadFieldsLocations.Add(info);
         }
 
+        private static void MergeWriteMethodNames(FlowFlags target,
+            HashSet<string>? setA, HashSet<string>? setB)
+        {
+            if (setA is null && setB is null)
+            {
+                target.WriteMethodNamesAfterPartialRead = null;
+                return;
+            }
+
+            var merged = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (setA is not null) merged.UnionWith(setA);
+            if (setB is not null) merged.UnionWith(setB);
+            target.WriteMethodNamesAfterPartialRead = merged.Count > 0 ? merged : null;
+        }
+
+        private static void MergeWriteMethodNames(FlowFlags target, params HashSet<string>?[] sets)
+        {
+            HashSet<string>? merged = null;
+            foreach (var set in sets)
+            {
+                if (set is null) continue;
+                merged ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                merged.UnionWith(set);
+            }
+            target.WriteMethodNamesAfterPartialRead = merged;
+        }
+
         #endregion
 
         #region Method classification
@@ -539,6 +589,10 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             {
                 if (ReadMethods.Contains(methodName))
                 {
+                    // PC0031: a read while HasLoadFields means the record buffer is now partial
+                    if (flowFlags.HasLoadFields)
+                        flowFlags.HasPartialRead = true;
+
                     // Check ALL flow flags: hasLoadFields (SetLoadFields before read),
                     // hasWriteOp (write before read means SetLoadFields could break the write),
                     // passedToFunction (callee might need all fields).
@@ -569,7 +623,12 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                     flowFlags.UncoveredReads.Clear();
                     flowFlags.HasWriteOp = true;
                     state.EverHadWriteOp = true;
-                    state.WriteMethodNames.Add(methodName);
+
+                    // PC0031: only record writes for JIT-load detection when a partial read
+                    // has occurred on this flow path. Writes before SetLoadFields or between
+                    // SetLoadFields and the next read use the full record buffer and don't JIT.
+                    if (flowFlags.HasPartialRead && JitLoadWriteMethods.Contains(methodName))
+                        flowFlags.AddWriteAfterPartialRead(methodName);
                 }
                 else if (string.Equals(methodName, "Reset", StringComparison.OrdinalIgnoreCase))
                 {
