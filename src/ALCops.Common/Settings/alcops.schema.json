@@ -1,0 +1,98 @@
+{
+  "$id": "https://raw.githubusercontent.com/ALCops/Analyzers/main/src/ALCops.Common/Settings/alcops.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ALCops Settings",
+  "description": "Schema for the alcops.json configuration file used by ALCops code analyzers for AL (Microsoft Dynamics 365 Business Central).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the ALCops settings JSON schema. Adding this property enables IntelliSense in editors that support JSON Schema without the ALCops VS Code extension."
+    },
+    "CognitiveComplexityThreshold": {
+      "type": "integer",
+      "default": 15,
+      "minimum": 0,
+      "description": "The threshold for the Cognitive Complexity check. Cognitive Complexity measures how difficult code is to understand by counting nested control flow structures and logical operator sequences. Used by LC0090. Default: 15"
+    },
+    "CyclomaticComplexityThreshold": {
+      "type": "integer",
+      "default": 8,
+      "minimum": 0,
+      "description": "The threshold for the Cyclomatic Complexity check. Cyclomatic Complexity counts the number of independent code paths (decisions) through a method. Used by LC0010. Default: 8"
+    },
+    "MaintainabilityIndexThreshold": {
+      "type": "integer",
+      "default": 20,
+      "minimum": 0,
+      "maximum": 100,
+      "description": "The threshold (0-100) for the Maintainability Index check. A higher value indicates more maintainable code. Methods scoring at or below this threshold trigger a warning. Used by LC0008. Default: 20"
+    },
+    "LanguagesToTranslate": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$",
+        "examples": ["da-DK", "de-DE", "fr-FR", "nl-NL", "es-ES"]
+      },
+      "uniqueItems": true,
+      "description": "List of language codes that translatable text must be translated into. When set, only XLIFF files matching these languages are checked. When omitted, languages are discovered from available XLIFF files. Used by LC0091."
+    },
+    "NamingPatterns": {
+      "type": "object",
+      "description": "Custom naming convention patterns per target kind. Keys are naming target names (case-insensitive). Each target can define AllowPattern (regex that names must match) and DisallowPattern (regex that names must not match). Sub-targets LocalProcedure, GlobalProcedure, EventSubscriber, and EventDeclaration inherit from Procedure if not explicitly overridden. Used by LC0092.",
+      "propertyNames": {
+        "enum": [
+          "Procedure",
+          "LocalProcedure",
+          "GlobalProcedure",
+          "EventSubscriber",
+          "EventDeclaration",
+          "Variable",
+          "Parameter",
+          "ReturnValue",
+          "Object",
+          "Field",
+          "Action",
+          "EnumValue",
+          "Control"
+        ]
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/NamingPattern"
+      }
+    },
+    "UseSequentialGuidScope": {
+      "type": "string",
+      "enum": ["AllGuidFields"],
+      "description": "Controls the scope of the sequential GUID check. When set to 'AllGuidFields', all CreateGuid() calls are flagged, not just those in primary key fields. Used by PC0029."
+    }
+  },
+  "$defs": {
+    "NamingPattern": {
+      "type": "object",
+      "description": "Naming pattern configuration for a specific target kind.",
+      "additionalProperties": false,
+      "properties": {
+        "AllowPattern": {
+          "type": "string",
+          "description": "A regular expression that the name must match. If the name does not match, a warning is reported. Example: \"^[A-Z]\" requires names to start with an uppercase letter."
+        },
+        "DisallowPattern": {
+          "type": "string",
+          "description": "A regular expression that the name must not match. If the name matches, a warning is reported. Example: \"[%&!?]\" disallows special characters."
+        },
+        "AllowDescription": {
+          "type": "string",
+          "description": "A human-readable description shown in the diagnostic message when AllowPattern is violated. Example: \"should start with an uppercase letter\""
+        },
+        "DisallowDescription": {
+          "type": "string",
+          "description": "A human-readable description shown in the diagnostic message when DisallowPattern is violated. Example: \"should not contain special characters\""
+        }
+      }
+    }
+  }
+}
