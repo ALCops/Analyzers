@@ -128,7 +128,15 @@ git push origin v0.7.0
 
 The tag push automatically triggers CI/CD, which builds, tests, publishes to NuGet, creates a GitHub Release with changelog, and deletes the beta tags (e.g., `v0.7.0-beta.1`, `v0.7.0-beta.2`) from the repo.
 
-### 5. Merge back to main
+### 5. Clean up local beta tags
+
+```bash
+git tag -d $(git tag -l "v0.7.0-beta.*")
+```
+
+The CI deletes beta tags from the remote, but local clones still have them. Delete them locally to prevent accidental re-push via `git push --tags`. The workflow also has trigger-level and job-level guards that reject prerelease tag pushes, but cleaning up locally is good hygiene.
+
+### 6. Merge back to main
 
 ```bash
 git checkout main
@@ -137,6 +145,16 @@ git push
 ```
 
 The pull-request workflow skips CI for release-to-main merges (housekeeping, not feature work).
+
+### Tag hygiene
+
+After a stable release, sync your local tags with the remote:
+
+```bash
+git fetch --prune --prune-tags
+```
+
+This removes any local tags that no longer exist on the remote (including deleted beta tags). Recommended after every stable release, or periodically.
 
 ## Cleanup job
 
@@ -173,11 +191,20 @@ With patch-increment pre-releases, `1.0.1-beta > 1.0.0` (stable), meaning a beta
 The release job runs when:
 - `refs/heads/main` -> publish alpha packages
 - `refs/heads/release/*` + workflow_dispatch -> publish beta packages
-- `refs/tags/v*` -> publish stable packages + create GitHub Release with changelog
+- `refs/tags/v*` (stable only, no `-` in tag) -> publish stable packages + create GitHub Release with changelog
 
 Push to a release branch without workflow_dispatch runs build-and-test only (no publish). This gives CI feedback on commits without publishing every change.
 
 GitHub Releases are only created for stable versions (tag pushes). Alpha and beta versions are NuGet-only.
+
+### Prerelease tag push protection
+
+The workflow has two layers of protection against accidental prerelease tag pushes (e.g., from `git push --tags` re-pushing deleted beta tags):
+
+1. **Trigger filter**: `on.push.tags` uses `"!v*-*"` to exclude any tag with a hyphen (all SemVer prerelease tags). The workflow doesn't start at all.
+2. **Job condition**: The release job's `if` adds `!contains(github.ref, '-')` to the tag branch, as defense-in-depth.
+
+Beta tags are created inside the workflow using `GITHUB_TOKEN`, which doesn't trigger new runs, so the beta flow is unaffected.
 
 ## What external contributors should expect
 
