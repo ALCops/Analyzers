@@ -27,7 +27,7 @@ If none of these apply, explicitly note "No instruction file changes needed" in 
 
 | Type | Pattern | Example |
 |---|---|---|
-| Rule-specific | `{id}-{rule-name}.instructions.md` | `lc0095-use-partial-records-on-read.instructions.md` |
+| Rule-specific | `{id}-{rule-name}.instructions.md` | `pc0030-use-partial-records-on-read.instructions.md` |
 | Area-specific | `{area-name}.instructions.md` | `common-library.instructions.md` |
 | Development guide | `{topic}-development.instructions.md` | `analyzer-development.instructions.md` |
 | Process/CI | `{topic}.instructions.md` | `cicd.instructions.md` |
@@ -84,7 +84,7 @@ These cover conventions for a category of files. Include:
 | `common-library.instructions.md` | `'src/ALCops.Common/**'` | Shared library guidelines |
 | `cicd.instructions.md` | `'.github/**'` | CI/CD workflows and scripts |
 | `release-strategy.instructions.md` | `'.github/**'` | Release channels, versioning, GitVersion config, cleanup |
-| `lc0095-use-partial-records-on-read.instructions.md` | `'src/ALCops.LinterCop/**/UsePartialRecordsOnRead*'` | LC0095 rule details |
+| `pc0030-use-partial-records-on-read.instructions.md` | `'src/ALCops.PlatformCop/**/UsePartialRecordsOnRead*'` | PC0030 rule details |
 | `lc0096-unnecessary-record-parameter.instructions.md` | `'src/ALCops.LinterCop/**/UnnecessaryRecordParameterInMethodCall*'` | LC0096 rule details |
 | `lc0086-page-style-string-literal.instructions.md` | `'src/ALCops.LinterCop/**/PageStyleStringLiteral*'` | LC0086 rule details |
 | `lc0092-naming-pattern.instructions.md` | `'src/ALCops.LinterCop/**/NamingPattern*'` | LC0092 rule details |

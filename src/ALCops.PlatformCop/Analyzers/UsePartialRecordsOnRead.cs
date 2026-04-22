@@ -7,7 +7,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Semantics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 
-namespace ALCops.LinterCop.Analyzers;
+namespace ALCops.PlatformCop.Analyzers;
 
 [DiagnosticAnalyzer]
 public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer

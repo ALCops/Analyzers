@@ -44,7 +44,7 @@ Detects string literals that match `PageStyle` enum value names (e.g., `'Unfavor
 | StyleExpr direct | Skip `StyleExpr = 'Standard'` | Already using the string in the correct property; the fix is to change the property value type, not the location |
 | Table field writes | Skip `MyRecord.MyField := 'Standard'` | Writing data to a record field, not styling |
 | Data-access args | Skip arguments to Record/RecordRef/FieldRef/Query methods | Data operations, not styling |
-| Flow analysis (Option C) | Rejected | Tracing `StyleExpr = myVar` -> `myVar := 'Standard'` across triggers/methods has LC0095-level complexity. BC.LinterCop also doesn't do this. |
+| Flow analysis (Option C) | Rejected | Tracing `StyleExpr = myVar` -> `myVar := 'Standard'` across triggers/methods has PC0030-level complexity. BC.LinterCop also doesn't do this. |
 
 ## Architecture
 
@@ -145,6 +145,6 @@ The shared `EnumProvider.StyleKind.CanonicalNames` uses `StringComparer.OrdinalI
 
 ## Phase 2 roadmap (not yet implemented)
 
-- **StyleExpr flow analysis**: Trace from `StyleExpr = myVar` to assignments like `myVar := 'Standard'` in triggers/methods. Complex, LC0095-level effort.
+- **StyleExpr flow analysis**: Trace from `StyleExpr = myVar` to assignments like `myVar := 'Standard'` in triggers/methods. Complex, PC0030-level effort.
 - **CodeFix**: Replace string literal with `Format(PageStyle::Value)` expression.
 - **Cross-object tracing**: Detect style values returned from helper codeunits.

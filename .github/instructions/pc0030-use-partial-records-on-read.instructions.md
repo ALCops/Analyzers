@@ -1,8 +1,8 @@
 ---
-applyTo: 'src/ALCops.LinterCop/**/UsePartialRecordsOnRead*'
+applyTo: 'src/ALCops.PlatformCop/**/UsePartialRecordsOnRead*'
 ---
 
-# LC0095: UsePartialRecordsOnRead
+# PC0030: UsePartialRecordsOnRead
 
 ## Purpose
 
@@ -18,7 +18,7 @@ Recommends using `SetLoadFields` (or `AddLoadFields`/`SetBaseLoadFields`) before
 
 | Property | Value |
 |---|---|
-| ID | `LC0095` |
+| ID | `PC0030` |
 | Category | Performance |
 | Severity | Info |
 | Enabled by default | true |
@@ -162,10 +162,10 @@ This is an SDK bug. If a future SDK version fixes it, the type checks become har
 
 ## Relationship to AA0242
 
-AA0242 (CodeCop's `Rule0242PartialRecordsDetectJitLoads`) is the **complement** to LC0095:
+AA0242 (CodeCop's `Rule0242PartialRecordsDetectJitLoads`) is the **complement** to PC0030:
 
 - **AA0242**: Fires when `SetLoadFields` IS present but accessed fields are missing from it (detects JIT loads)
-- **LC0095**: Fires when `SetLoadFields` is entirely absent (recommends adding it)
+- **PC0030**: Fires when `SetLoadFields` is entirely absent (recommends adding it)
 
 ## Phase 2 roadmap (not yet implemented)
 

@@ -9,7 +9,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
 
-namespace ALCops.LinterCop.CodeFixes;
+namespace ALCops.PlatformCop.CodeFixes;
 
 [CodeFixProvider(nameof(UsePartialRecordsOnReadCodeFixProvider))]
 public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
@@ -74,7 +74,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         SyntaxNode node, Document document, bool generateFixAll)
     {
         return new UsePartialRecordsOnReadCodeAction(
-            LinterCopAnalyzers.UsePartialRecordsOnReadCodeAction,
+            PlatformCopAnalyzers.UsePartialRecordsOnReadCodeAction,
             ct => InsertSetLoadFields(document, node, ct),
             nameof(UsePartialRecordsOnReadCodeFixProvider),
             generateFixAll);

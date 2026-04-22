@@ -31,7 +31,7 @@ Detects redundant record parameters passed to methods where the same record vari
 | Decision | Choice | Rationale |
 |---|---|---|
 | Cop | LinterCop (LC0096) | Code quality/readability rule, not runtime safety or app conventions |
-| ID | LC0096 | LC0094 is taken by AllowInCustomizationsRedundancy; LC0095 is highest existing |
+| ID | LC0096 | LC0094 is taken by AllowInCustomizationsRedundancy; PC0030 is highest existing |
 | Scope | Tables, Pages, Table Extensions, Page Extensions | All objects with implicit `Rec`. Pages: local methods only |
 | Severity | Warning | Actionable code smell, not a runtime error |
 | CodeFix | None (v1) | Removing the arg breaks compilation without also changing the callee signature |

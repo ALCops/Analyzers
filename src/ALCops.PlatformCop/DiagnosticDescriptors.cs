@@ -275,6 +275,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.TransferFieldsTypeMismatchDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TransferFieldsTypeMismatch));
 
+    public static readonly DiagnosticDescriptor UsePartialRecordsOnRead = new(
+        id: DiagnosticIds.UsePartialRecordsOnRead,
+        title: PlatformCopAnalyzers.UsePartialRecordsOnReadTitle,
+        messageFormat: PlatformCopAnalyzers.UsePartialRecordsOnReadMessageFormat,
+        category: Category.Performance,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.UsePartialRecordsOnReadDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UsePartialRecordsOnRead));
+
     public static readonly DiagnosticDescriptor UseSequentialGuid = new(
         id: DiagnosticIds.UseSequentialGuid,
         title: PlatformCopAnalyzers.UseSequentialGuidTitle,

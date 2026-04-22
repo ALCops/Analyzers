@@ -411,4 +411,16 @@
   <data name="UseSequentialGuidCodeAction" xml:space="preserve">
     <value>ALCops: Replace with CreateSequentialGuid()</value>
   </data>
+  <data name="UsePartialRecordsOnReadTitle" xml:space="preserve">
+    <value>Use partial records on read operation</value>
+  </data>
+  <data name="UsePartialRecordsOnReadMessageFormat" xml:space="preserve">
+    <value>Use SetLoadFields before '{0}.{1}()' to improve performance by loading only the fields that are needed.</value>
+  </data>
+  <data name="UsePartialRecordsOnReadDescription" xml:space="preserve">
+    <value>When reading records from the database using Get, Find, FindFirst, FindLast, or FindSet, use SetLoadFields to specify which fields to load. This avoids loading all normal fields (including those from table extensions), reducing SQL joins and data transfer. For performance reasons, it is not recommended to use partial records on a record that will do inserts, deletes, renames, field transfers, or copies to temporary records.</value>
+  </data>
+  <data name="UsePartialRecordsOnReadCodeAction" xml:space="preserve">
+    <value>ALCops: Add SetLoadFields</value>
+  </data>
 </root>

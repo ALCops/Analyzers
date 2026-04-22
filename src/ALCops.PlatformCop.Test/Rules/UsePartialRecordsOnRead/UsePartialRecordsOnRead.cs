@@ -1,7 +1,7 @@
-using ALCops.LinterCop.CodeFixes;
+using ALCops.PlatformCop.CodeFixes;
 using RoslynTestKit;
 
-namespace ALCops.LinterCop.Test
+namespace ALCops.PlatformCop.Test
 {
     public class UsePartialRecordsOnRead : NavCodeAnalysisBase
     {

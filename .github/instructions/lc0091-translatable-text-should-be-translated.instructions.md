@@ -100,7 +100,7 @@ When a translation ID is not found in the index at all, ALL available languages 
 
 This is NOT an SDK bug; it's a consequence of running analyzers in a test environment with minimal dependencies. The `CompilationWithAnalyzers` pipeline silently swallows exceptions from analyzer callbacks, making this extremely hard to diagnose without explicit try-catch.
 
-### BoundObjectAccess (shared with LC0095)
+### BoundObjectAccess (shared with PC0030)
 
 The SDK's `OperationExtensions.GetSymbol()` can throw `InvalidCastException` for `BoundObjectAccess` instances. This analyzer doesn't use operation-level analysis, so it's not affected.
 
