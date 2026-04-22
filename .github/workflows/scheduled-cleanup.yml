@@ -44,12 +44,43 @@ jobs:
             exit 0
           fi
 
-          echo "Fetching all versions from NuGet.org flat container..."
-          ALL_VERSIONS=$(curl -sf "https://api.nuget.org/v3-flatcontainer/${PACKAGE_NAME_LOWER}/index.json" \
-            | jq -r '.versions[]') || { echo "::warning::Failed to fetch versions"; exit 0; }
+          echo "Fetching version metadata from NuGet.org registration API..."
+          REGISTRATION_JSON=$(curl -sf --compressed \
+            "https://api.nuget.org/v3/registration5-gz-semver2/${PACKAGE_NAME_LOWER}/index.json") \
+            || { echo "::warning::Failed to fetch registration index"; exit 0; }
+
+          # Extract listed versions from registration pages.
+          # Pages may have inlined items or require fetching by URL (@id).
+          ALL_VERSIONS=$(echo "$REGISTRATION_JSON" | jq -r '
+            [.items[] |
+              if .items then
+                .items[]
+              else
+                empty
+              end
+            | select(.catalogEntry.listed == true)
+            | .catalogEntry.version
+            ] | .[]') || { echo "::warning::Failed to parse registration data"; exit 0; }
+
+          # Handle non-inlined pages: fetch each page URL if items were not inlined
+          PAGE_URLS=$(echo "$REGISTRATION_JSON" | jq -r '
+            [.items[] | select(.items == null) | .["@id"]] | .[]' 2>/dev/null)
+          if [ -n "$PAGE_URLS" ]; then
+            while IFS= read -r page_url; do
+              PAGE_VERSIONS=$(curl -sf --compressed "$page_url" | jq -r '
+                [.items[] | select(.catalogEntry.listed == true) | .catalogEntry.version] | .[]' 2>/dev/null)
+              if [ -n "$PAGE_VERSIONS" ]; then
+                ALL_VERSIONS=$(printf '%s\n%s' "$ALL_VERSIONS" "$PAGE_VERSIONS")
+              fi
+            done <<< "$PAGE_URLS"
+          fi
+
+          TOTAL_COUNT=$(echo "$REGISTRATION_JSON" | jq '[.items[].items // [] | length] | add // 0')
+          LISTED_COUNT=$(echo "$ALL_VERSIONS" | grep -c . || true)
+          echo "Found ${LISTED_COUNT} listed versions out of ${TOTAL_COUNT} total on NuGet.org"
 
           if [ -z "$ALL_VERSIONS" ]; then
-            echo "No versions found"
+            echo "No listed versions found"
             exit 0
           fi
 
