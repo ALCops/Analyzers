@@ -423,4 +423,16 @@
   <data name="UsePartialRecordsOnReadCodeAction" xml:space="preserve">
     <value>ALCops: Add SetLoadFields</value>
   </data>
+  <data name="PartialRecordsBeforeWriteOperationTitle" xml:space="preserve">
+    <value>Do not use partial records before write operations</value>
+  </data>
+  <data name="PartialRecordsBeforeWriteOperationMessageFormat" xml:space="preserve">
+    <value>Do not use '{0}' before write operations ({1}) on '{2}'. Partial records cause a JIT load on write, resulting in an extra SQL roundtrip and possible runtime errors.</value>
+  </data>
+  <data name="PartialRecordsBeforeWriteOperationDescription" xml:space="preserve">
+    <value>When SetLoadFields, AddLoadFields, or SetBaseLoadFields is used on a record that subsequently performs Insert, Modify, Delete, Rename, TransferFields, or Copy, the platform must JIT-load all remaining fields before the write. This causes an extra SQL roundtrip (making the code slower than not using partial records) and can trigger 'Inconsistent read of field(s)' or 'JIT loading of field(s) failed' runtime errors under concurrent access.</value>
+  </data>
+  <data name="PartialRecordsBeforeWriteOperationCodeAction" xml:space="preserve">
+    <value>ALCops: Remove SetLoadFields</value>
+  </data>
 </root>
