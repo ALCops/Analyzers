@@ -1,0 +1,227 @@
+name: Cleanup Pre-release Packages
+
+# Unlist old pre-release versions from NuGet.org and delete from GitHub Packages.
+# Runs weekly and can be triggered manually after a stable release.
+#
+# Logic:
+#   1. Superseded pre-releases (base version <= latest stable): unlist/delete ALL
+#   2. Current pre-releases (base version > latest stable): keep last 3, unlist/delete the rest
+#
+# NuGet.org: unlists packages (still downloadable by exact version pin)
+# GitHub Packages: permanently deletes old versions
+
+on:
+  schedule:
+    - cron: "0 6 * * 0" # Every Sunday at 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  packages: write
+
+env:
+  PACKAGE_NAME: ALCops.Analyzers
+  PACKAGE_NAME_LOWER: alcops.analyzers
+  KEEP_LAST_N: 3
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    name: Cleanup old pre-releases
+    steps:
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Cleanup NuGet.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${NUGET_API_KEY:-}" ]; then
+            echo "::warning::NUGET_API_KEY not configured, skipping NuGet.org cleanup"
+            exit 0
+          fi
+
+          echo "Fetching all versions from NuGet.org flat container..."
+          ALL_VERSIONS=$(curl -sf "https://api.nuget.org/v3-flatcontainer/${PACKAGE_NAME_LOWER}/index.json" \
+            | jq -r '.versions[]') || { echo "::warning::Failed to fetch versions"; exit 0; }
+
+          if [ -z "$ALL_VERSIONS" ]; then
+            echo "No versions found"
+            exit 0
+          fi
+
+          # Separate stable and pre-release
+          STABLE=()
+          PRERELEASE=()
+          while IFS= read -r v; do
+            if [[ "$v" == *-* ]]; then
+              PRERELEASE+=("$v")
+            else
+              STABLE+=("$v")
+            fi
+          done <<< "$ALL_VERSIONS"
+
+          echo "Found ${#STABLE[@]} stable and ${#PRERELEASE[@]} pre-release versions"
+
+          if [ ${#PRERELEASE[@]} -eq 0 ]; then
+            echo "No pre-release versions to clean up"
+            exit 0
+          fi
+
+          # Find latest stable
+          LATEST_STABLE=""
+          if [ ${#STABLE[@]} -gt 0 ]; then
+            LATEST_STABLE=$(printf '%s\n' "${STABLE[@]}" | sort -V | tail -n1)
+            echo "Latest stable: $LATEST_STABLE"
+          else
+            echo "No stable versions found, will only trim current alphas"
+          fi
+
+          # Categorize pre-releases into superseded vs current
+          SUPERSEDED=()
+          CURRENT=()
+          for v in "${PRERELEASE[@]}"; do
+            base="${v%%-*}"
+            if [ -n "$LATEST_STABLE" ]; then
+              higher=$(printf '%s\n%s' "$base" "$LATEST_STABLE" | sort -V | tail -n1)
+              if [ "$higher" = "$LATEST_STABLE" ] || [ "$base" = "$LATEST_STABLE" ]; then
+                SUPERSEDED+=("$v")
+              else
+                CURRENT+=("$v")
+              fi
+            else
+              CURRENT+=("$v")
+            fi
+          done
+
+          echo "Superseded pre-releases: ${#SUPERSEDED[@]}"
+          echo "Current pre-releases: ${#CURRENT[@]}"
+
+          # Build unlist list
+          TO_UNLIST=()
+
+          # All superseded pre-releases
+          for v in "${SUPERSEDED[@]}"; do
+            TO_UNLIST+=("$v")
+          done
+
+          # Current pre-releases: keep last N (by SemVer sort)
+          if [ ${#CURRENT[@]} -gt "$KEEP_LAST_N" ]; then
+            mapfile -t SORTED_CURRENT < <(printf '%s\n' "${CURRENT[@]}" | sort -V)
+            REMOVE_COUNT=$(( ${#SORTED_CURRENT[@]} - KEEP_LAST_N ))
+            for ((i=0; i<REMOVE_COUNT; i++)); do
+              TO_UNLIST+=("${SORTED_CURRENT[$i]}")
+            done
+          fi
+
+          echo ""
+          echo "=== NuGet.org: unlisting ${#TO_UNLIST[@]} versions ==="
+          for v in "${TO_UNLIST[@]}"; do
+            echo "  Unlisting: $v"
+            dotnet nuget delete "$PACKAGE_NAME" "$v" \
+              --source https://api.nuget.org/v3/index.json \
+              --api-key "$NUGET_API_KEY" \
+              --non-interactive 2>&1 || echo "  (already unlisted or failed)"
+            sleep 1
+          done
+          echo "NuGet.org cleanup complete"
+
+      - name: Cleanup GitHub Packages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          OWNER="${{ github.repository_owner }}"
+
+          echo "Fetching GitHub Packages versions..."
+          GH_VERSIONS=$(gh api "/orgs/${OWNER}/packages/nuget/${PACKAGE_NAME}/versions" \
+            --paginate --jq '.[] | "\(.id)|\(.name)"' 2>/dev/null) \
+            || GH_VERSIONS=$(gh api "/users/${OWNER}/packages/nuget/${PACKAGE_NAME}/versions" \
+              --paginate --jq '.[] | "\(.id)|\(.name)"' 2>/dev/null) \
+            || { echo "::warning::Failed to list GitHub Packages versions"; exit 0; }
+
+          if [ -z "$GH_VERSIONS" ]; then
+            echo "No GitHub Packages versions found"
+            exit 0
+          fi
+
+          # Build lookup: version -> id
+          declare -A VERSION_IDS
+          while IFS='|' read -r id name; do
+            VERSION_IDS["$name"]="$id"
+          done <<< "$GH_VERSIONS"
+
+          echo "Found ${#VERSION_IDS[@]} versions on GitHub Packages"
+
+          # Separate stable and pre-release
+          STABLE=()
+          PRERELEASE=()
+          for v in "${!VERSION_IDS[@]}"; do
+            if [[ "$v" == *-* ]]; then
+              PRERELEASE+=("$v")
+            else
+              STABLE+=("$v")
+            fi
+          done
+
+          # Find latest stable
+          LATEST_STABLE=""
+          if [ ${#STABLE[@]} -gt 0 ]; then
+            LATEST_STABLE=$(printf '%s\n' "${STABLE[@]}" | sort -V | tail -n1)
+          fi
+
+          # Categorize
+          SUPERSEDED=()
+          CURRENT=()
+          for v in "${PRERELEASE[@]}"; do
+            base="${v%%-*}"
+            if [ -n "$LATEST_STABLE" ]; then
+              higher=$(printf '%s\n%s' "$base" "$LATEST_STABLE" | sort -V | tail -n1)
+              if [ "$higher" = "$LATEST_STABLE" ] || [ "$base" = "$LATEST_STABLE" ]; then
+                SUPERSEDED+=("$v")
+              else
+                CURRENT+=("$v")
+              fi
+            else
+              CURRENT+=("$v")
+            fi
+          done
+
+          # Build delete list
+          TO_DELETE=()
+          for v in "${SUPERSEDED[@]}"; do
+            TO_DELETE+=("$v")
+          done
+
+          if [ ${#CURRENT[@]} -gt "$KEEP_LAST_N" ]; then
+            mapfile -t SORTED_CURRENT < <(printf '%s\n' "${CURRENT[@]}" | sort -V)
+            REMOVE_COUNT=$(( ${#SORTED_CURRENT[@]} - KEEP_LAST_N ))
+            for ((i=0; i<REMOVE_COUNT; i++)); do
+              TO_DELETE+=("${SORTED_CURRENT[$i]}")
+            done
+          fi
+
+          echo ""
+          echo "=== GitHub Packages: deleting ${#TO_DELETE[@]} versions ==="
+
+          # Determine API path (org vs user)
+          API_BASE="/orgs/${OWNER}/packages/nuget/${PACKAGE_NAME}/versions"
+          gh api "$API_BASE" --silent 2>/dev/null \
+            || API_BASE="/users/${OWNER}/packages/nuget/${PACKAGE_NAME}/versions"
+
+          for v in "${TO_DELETE[@]}"; do
+            VID="${VERSION_IDS[$v]:-}"
+            if [ -z "$VID" ]; then
+              echo "  Skipping $v (version ID not found)"
+              continue
+            fi
+            echo "  Deleting: $v (id: $VID)"
+            gh api -X DELETE "${API_BASE%/versions}/${VID}" 2>&1 \
+              || echo "  (already deleted or failed)"
+            sleep 1
+          done
+          echo "GitHub Packages cleanup complete"

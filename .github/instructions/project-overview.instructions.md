@@ -136,9 +136,15 @@ The settings provider uses `Newtonsoft.Json` on `netstandard2.1` and `System.Tex
 
 ## Versioning
 
-GitVersion with `GitHubFlow/v1` workflow:
-- `main` branch: `alpha` label, `Patch` increment, tracks release branches
-- `release` branch: prevents increment when current commit is tagged (uses tag value)
+Three-channel release strategy using GitVersion with `GitHubFlow/v1` workflow:
+- **Alpha** (`main` branch): Auto-published on every push. Version: `X.Y.0-alpha.N` (Minor increment).
+- **Beta** (`release/vX.Y.Z` branch): Manual publish via workflow_dispatch. Version: `X.Y.0-beta.N` (ContinuousDelivery mode).
+- **Stable** (tag `vX.Y.Z`): Auto-published on tag push. Version from tag.
+
+`tracks-release-branches: true` on main means creating `release/v0.7.0` auto-bumps main to `0.8.0-alpha.1`.
+Override increment per commit with `+semver: major/minor/patch`.
+
+See `release-strategy.instructions.md` for full details.
 
 ## Branching policy
 
@@ -154,14 +160,16 @@ Branch naming conventions:
 - `fix/<description>` for bug fixes
 - `feat/<description>` for new features
 - `docs/<description>` for documentation-only changes
+- `release/vX.Y.Z` for release stabilization branches
 
 ## CI/CD
 
 GitHub Actions workflows in `.github/workflows/`:
 - `build-test.yml` : Reusable workflow for build and test
 - `pull-request.yml` : Runs on PRs
-- `build-and-release.yml` : Build and release pipeline
-- `scheduled-build.yml` : Scheduled builds
+- `build-and-release.yml` : Build, test, pack, and publish (alpha/beta/stable channels)
+- `scheduled-build.yml` : Daily cache keepalive builds
+- `scheduled-cleanup.yml` : Weekly cleanup of old pre-release packages from NuGet.org and GitHub Packages
 
 ## Building locally
 

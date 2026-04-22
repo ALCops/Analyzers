@@ -83,6 +83,7 @@ These cover conventions for a category of files. Include:
 | `testing.instructions.md` | `'src/*.Test/**'` | Test conventions and patterns |
 | `common-library.instructions.md` | `'src/ALCops.Common/**'` | Shared library guidelines |
 | `cicd.instructions.md` | `'.github/**'` | CI/CD workflows and scripts |
+| `release-strategy.instructions.md` | `'.github/**'` | Release channels, versioning, GitVersion config, cleanup |
 | `lc0095-use-partial-records-on-read.instructions.md` | `'src/ALCops.LinterCop/**/UsePartialRecordsOnRead*'` | LC0095 rule details |
 | `lc0096-unnecessary-record-parameter.instructions.md` | `'src/ALCops.LinterCop/**/UnnecessaryRecordParameterInMethodCall*'` | LC0096 rule details |
 | `lc0086-page-style-string-literal.instructions.md` | `'src/ALCops.LinterCop/**/PageStyleStringLiteral*'` | LC0086 rule details |

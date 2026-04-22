@@ -1,5 +1,10 @@
 name: CI/CD
 
+# Release channels:
+#   Alpha  - auto on every push to main            (1.0.0-alpha.1, 1.0.0-alpha.2, ...)
+#   Beta   - manual workflow_dispatch on release/* (1.0.0-beta.1, 1.0.0-beta.2, ...)
+#   Stable - auto on tag push v*                   (1.0.0)
+
 on:
   push:
     branches:
@@ -22,6 +27,7 @@ on:
       - "!**/*.md"
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -43,7 +49,13 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     name: Release
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: false
+    if: >-
+      github.ref == 'refs/heads/main'
+      || (github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/release/'))
+      || startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - uses: actions/checkout@v6
@@ -69,7 +81,7 @@ jobs:
           version-number: ${{ needs.build-and-test.outputs.tfm-net80-version-lowest }}
           target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net8.0
 
-      # Git Version
+      # GitVersion
       - name: GitVersion - Setup
         uses: gittools/actions/gitversion/setup@v4.5.0
         with:
@@ -79,7 +91,26 @@ jobs:
         id: gitversion
         uses: gittools/actions/gitversion/execute@v4.5.0
 
-      # Pack and publish
+      - name: Display version
+        run: echo "SemVer:${{ steps.gitversion.outputs.SemVer }}"
+
+      # Tag beta releases for sequential numbering (beta.1, beta.2, ...)
+      # ManualDeployment mode increments .N based on tags, not commits.
+      - name: Tag beta release
+        if: >-
+          github.event_name == 'workflow_dispatch'
+          && startsWith(github.ref, 'refs/heads/release/')
+        run: |
+          TAG="v${{ steps.gitversion.outputs.SemVer }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists (re-run), skipping"
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+            echo "Created tag $TAG"
+          fi
+
+      # Pack
       - name: Pack
         run: >
           dotnet pack ./src/ALCops.Analyzers/ALCops.Analyzers.csproj
@@ -95,26 +126,27 @@ jobs:
           /p:FileVersion=${{ steps.gitversion.outputs.AssemblySemFileVer }}
           /p:InformationalVersion="${{ steps.gitversion.outputs.InformationalVersion }}"
 
+      # GitHub Release (stable only, triggered by tag push)
       - name: Build Changelog
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v6
         if: startsWith(github.ref, 'refs/tags/v')
+        uses: mikepenz/release-changelog-builder-action@v6
         with:
-          ignorePreReleases: ${{ steps.gitversion.outputs.PreReleaseTag == '' }}
+          ignorePreReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.gitversion.outputs.SemVer }}
           name: v${{ steps.gitversion.outputs.SemVer }}
           body: ${{ steps.build_changelog.outputs.changelog }}
-          prerelease: ${{ steps.gitversion.outputs.PreReleaseTag != '' }}
           files: |
             ./artifacts/*.nupkg
 
+      # Publish packages (all channels)
       - name: Publish to GitHub Packages
         run: >
           dotnet nuget push "./artifacts/*.nupkg"
@@ -134,3 +166,13 @@ jobs:
             --api-key "$NUGET_API_KEY" \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
+
+      # Clean up beta tags after stable release
+      - name: Delete beta tags
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          VERSION="${{ steps.gitversion.outputs.MajorMinorPatch }}"
+          echo "Cleaning up beta tags for v${VERSION}"
+          for TAG in $(git tag -l "v${VERSION}-beta.*"); do
+            git push origin --delete "$TAG" && echo "Deleted $TAG" || echo "Failed to delete $TAG"
+          done
