@@ -45,7 +45,7 @@ Detects `SetLoadFields`/`AddLoadFields`/`SetBaseLoadFields` calls on record vari
 
 ### Shared analyzer class
 
-PC0031 is implemented in the same `UsePartialRecordsOnRead` DiagnosticAnalyzer class as PC0030. Both rules share the `SetLoadFieldsWalker` inner class which performs a single walk per method body. The two rules are mutually exclusive on the same variable: when writes exist, PC0030 is suppressed and PC0031 may fire; when no writes exist, PC0031 can't fire.
+PC0031 is implemented in the same `PartialRecordOperations` DiagnosticAnalyzer class as PC0030. Both rules share the `SetLoadFieldsWalker` inner class which performs a single walk per method body. The two rules are mutually exclusive on the same variable: when writes exist, PC0030 is suppressed and PC0031 may fire; when no writes exist, PC0031 can't fire.
 
 ### PC0031-specific tracking
 

@@ -457,7 +457,7 @@ private static ISymbol? ResolveArgumentSymbol(IArgument argument)
 }
 ```
 
-This pattern appears across the codebase (e.g., `TransferFieldsSchemaCompatibility`, `PossibleOverflowAssigning`, `UsePartialRecordsOnRead`, `UnnecessaryRecordParameterInMethodCall`). Always try unwrapping when `GetSymbolSafe()` returns null on an argument value.
+This pattern appears across the codebase (e.g., `TransferFieldsSchemaCompatibility`, `PossibleOverflowAssigning`, `PartialRecordOperations`, `UnnecessaryRecordParameterInMethodCall`). Always try unwrapping when `GetSymbolSafe()` returns null on an argument value.
 
 ## Dynamic SDK Discovery via PropertyInfoLookup
 

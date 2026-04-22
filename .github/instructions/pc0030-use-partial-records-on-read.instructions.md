@@ -1,5 +1,5 @@
 ---
-applyTo: 'src/ALCops.PlatformCop/**/UsePartialRecordsOnRead*'
+applyTo: 'src/ALCops.PlatformCop/**/{UsePartialRecordsOnRead,PartialRecordOperations}*'
 ---
 
 # PC0030: UsePartialRecordsOnRead

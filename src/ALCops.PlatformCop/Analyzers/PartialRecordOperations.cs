@@ -10,7 +10,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 namespace ALCops.PlatformCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public sealed class UsePartialRecordsOnRead : DiagnosticAnalyzer
+public sealed class PartialRecordOperations : DiagnosticAnalyzer
 {
     private static readonly HashSet<string> ReadMethods = new(StringComparer.OrdinalIgnoreCase)
     {

@@ -6,13 +6,13 @@ namespace ALCops.PlatformCop.Test
     public class UsePartialRecordsOnRead : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
-        private static readonly Analyzers.UsePartialRecordsOnRead _analyzer = new();
+        private static readonly Analyzers.PartialRecordOperations _analyzer = new();
         private string _testCasePath;
 
         [SetUp]
         public void Setup()
         {
-            _fixture = RoslynFixtureFactory.Create<Analyzers.UsePartialRecordsOnRead>();
+            _fixture = RoslynFixtureFactory.Create<Analyzers.PartialRecordOperations>();
 
             _testCasePath = Path.Combine(
                 Directory.GetParent(
