@@ -220,7 +220,7 @@ jobs:
               continue
             fi
             echo "  Deleting: $v (id: $VID)"
-            gh api -X DELETE "${API_BASE%/versions}/${VID}" 2>&1 \
+            gh api -X DELETE "${API_BASE}/${VID}" 2>&1 \
               || echo "  (already deleted or failed)"
             sleep 1
           done
