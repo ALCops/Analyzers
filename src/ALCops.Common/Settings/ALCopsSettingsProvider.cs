@@ -108,7 +108,15 @@ public static class ALCopsSettingsProvider
             return null;
 
         var settingsFilePath = Path.Combine(directoryPath, SettingsFileName);
-        return File.Exists(settingsFilePath) ? settingsFilePath : null;
+        if (File.Exists(settingsFilePath))
+            return settingsFilePath;
+
+        if (!Directory.Exists(directoryPath))
+            return null;
+
+        return Directory.EnumerateFiles(directoryPath)
+            .FirstOrDefault(f => string.Equals(
+                Path.GetFileName(f), SettingsFileName, StringComparison.OrdinalIgnoreCase));
     }
 
 }
