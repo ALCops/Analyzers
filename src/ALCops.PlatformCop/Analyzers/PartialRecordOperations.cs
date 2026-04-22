@@ -607,6 +607,9 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                     {
                         // SetLoadFields() with no arguments resets partial records to "load all"
                         flowFlags.HasLoadFields = false;
+                        flowFlags.HasPartialRead = false;
+                        flowFlags.LoadFieldsLocations.Clear();
+                        flowFlags.WriteMethodNamesAfterPartialRead = null;
                     }
                     else
                     {

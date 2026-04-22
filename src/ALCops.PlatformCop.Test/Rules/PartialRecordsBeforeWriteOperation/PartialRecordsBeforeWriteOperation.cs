@@ -48,6 +48,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ClearBetweenSetLoadFieldsAndModify")]
         [TestCase("WriteThenSetLoadFields")]
         [TestCase("WriteAfterSetLoadFieldsBeforePartialRead")]
+        [TestCase("SetLoadFieldsNoArgsResetsPartialRead")]
         [TestCase("SetLoadFieldsThenInsert")]
         public async Task NoDiagnostic(string testCase)
         {

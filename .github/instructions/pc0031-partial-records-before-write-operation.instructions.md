@@ -38,6 +38,7 @@ Detects `SetLoadFields`/`AddLoadFields`/`SetBaseLoadFields` calls on record vari
 | Load fields methods | SetLoadFields, AddLoadFields, SetBaseLoadFields | All three put record in partial mode |
 | Branch sensitivity | Flag if SetLoadFields on ANY path + write on ANY path after a partial read | Union semantics; JIT load problem exists even on conditional paths |
 | Write tracking | Flow-sensitive: only after partial read (read with HasLoadFields=true) | Writes before SetLoadFields or between SetLoadFields and the next read use the full record buffer and don't trigger JIT loads |
+| SetLoadFields() no-args | Fully resets PC0031 state (HasPartialRead, LoadFieldsLocations, WriteMethodNamesAfterPartialRead) | No-args cancels partial records entirely; next read loads all fields, so prior SetLoadFields locations are irrelevant |
 | CodeFix | Remove SetLoadFields statement | Simple, safe fix; without partial records, writes work normally |
 | Variable scope | Local variables only (Phase 1) | Same as PC0030 |
 | Category | Performance | SQL roundtrip overhead and JIT load performance impact |
@@ -78,7 +79,7 @@ After the walker completes, for each variable:
 - `HasPartialRead` uses OR merge (if any branch has a partial read, conservative)
 - `WriteMethodNamesAfterPartialRead` uses union merge (write on any branch is tracked)
 - `Clear(var)` and `Reset()` clear all flow state including `HasPartialRead` and `WriteMethodNamesAfterPartialRead`
-- `SetLoadFields()` with no args resets `HasLoadFields` but does NOT add to `LoadFieldsLocations`
+- `SetLoadFields()` with no args resets `HasLoadFields`, `HasPartialRead`, clears `LoadFieldsLocations` and `WriteMethodNamesAfterPartialRead`. This fully cancels partial records mode: the next read loads all fields, so prior SetLoadFields locations and writes-after-partial-read are moot.
 
 ## CodeFix: PartialRecordsBeforeWriteOperationCodeFixProvider
 
@@ -120,7 +121,7 @@ Provides a QuickFix "ALCops: Remove SetLoadFields" that removes the entire `Expr
 | BranchWithWrite | `SetLoadFields + Get + conditional Modify` |
 | QualifiedSetLoadFields | `SetLoadFields + FindFirst + Modify` |
 
-### NoDiagnostic (10 cases)
+### NoDiagnostic (11 cases)
 
 | Test case | Suppression reason |
 |---|---|
@@ -133,6 +134,7 @@ Provides a QuickFix "ALCops: Remove SetLoadFields" that removes the entire `Expr
 | ClearBetweenSetLoadFieldsAndModify | Clear resets partial records state |
 | WriteThenSetLoadFields | Write (Delete) before SetLoadFields; uses full buffer, no JIT |
 | WriteAfterSetLoadFieldsBeforePartialRead | Write (Delete) after SetLoadFields but before partial read; uses full buffer from prior Get |
+| SetLoadFieldsNoArgsResetsPartialRead | SetLoadFields("PK") + Get + SetLoadFields() no-args + Get + Delete; no-args cancels partial records entirely |
 | SetLoadFieldsThenInsert | `SetLoadFields + Init + Insert` with no read; Init creates fresh record, no partial data |
 
 ### HasFix (3 cases)
