@@ -1,4 +1,5 @@
-// "Balance (LCY)" and "Balance_LCY" both become "Balance_LCY"
+// "Balance (LCY)" becomes "Balance_LCY" (space, parens → _, consecutive _ deduped, trailing _ trimmed)
+// "Balance_LCY" stays "Balance_LCY" — both collide
 page 50100 MyPage
 {
     PageType = Document;

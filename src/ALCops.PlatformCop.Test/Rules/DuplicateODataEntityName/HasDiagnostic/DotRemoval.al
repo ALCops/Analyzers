@@ -1,4 +1,4 @@
-// "PTE No." and "PTE No" both become "PTE_No" after dot removal
+// "PTE No." and "PTE No" both become "PTE_No" after OData transformation (dot and space become _, trailing _ trimmed)
 page 50100 MyPage
 {
     PageType = List;

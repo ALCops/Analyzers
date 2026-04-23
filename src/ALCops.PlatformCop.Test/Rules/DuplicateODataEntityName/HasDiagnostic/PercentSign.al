@@ -1,4 +1,4 @@
-// "Tax%" becomes "TaxPercent" after percent transformation, colliding with "TaxPercent"
+// "Tax%" becomes "TaxPercent" after OData transformation, colliding with "TaxPercent"
 page 50100 MyPage
 {
     PageType = List;

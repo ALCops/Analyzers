@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
-using System.Text;
 using ALCops.Common.Extensions;
+using ALCops.Common.Helpers;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -47,6 +47,9 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
 
     private void AnalyzeSymbol(SymbolAnalysisContext ctx)
     {
+        if (!ODataNameHelper.IsAvailable)
+            return;
+
         if (ctx.IsObsolete())
             return;
 
@@ -127,7 +130,10 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
                 if (control.ControlKind != EnumProvider.ControlKind.Field)
                     continue;
 
-                var odataName = ToODataEntityName(control.Name);
+                var odataName = ODataNameHelper.MangleIntoValidXmlIdentifier(control.Name);
+                if (odataName is null)
+                    continue;
+
                 // Use null Control so sibling controls are not reportable
                 entries.Add(new ODataNameEntry(odataName, control.Name, control.GetLocation(), null));
             }
@@ -161,7 +167,10 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
             if (control.ControlKind != EnumProvider.ControlKind.Field)
                 continue;
 
-            var odataName = ToODataEntityName(control.Name);
+            var odataName = ODataNameHelper.MangleIntoValidXmlIdentifier(control.Name);
+            if (odataName is null)
+                continue;
+
             entries.Add(new ODataNameEntry(odataName, control.Name, control.GetLocation(), control));
         }
         return entries;
@@ -175,7 +184,10 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
 
         foreach (var field in table.PrimaryKey.Fields)
         {
-            var odataName = ToODataEntityName(field.Name);
+            var odataName = ODataNameHelper.MangleIntoValidXmlIdentifier(field.Name);
+            if (odataName is null)
+                continue;
+
             entries.Add(new ODataNameEntry(odataName, field.Name, field.GetLocation(), null));
         }
         return entries;
@@ -206,42 +218,6 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
         }
     }
 
-    /// <summary>
-    /// Transforms a control/field name to its OData EntityName representation
-    /// following the EDMX specification for Business Central.
-    /// </summary>
-    internal static string ToODataEntityName(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return name;
-
-        var sb = new StringBuilder(name.Length);
-        foreach (var c in name)
-        {
-            switch (c)
-            {
-                case ' ':
-                case '/':
-                    sb.Append('_');
-                    break;
-                case '.':
-                case '(':
-                case ')':
-                    // Removed
-                    break;
-                case '\'':
-                    sb.Append("_x0027_");
-                    break;
-                case '%':
-                    sb.Append("Percent");
-                    break;
-                default:
-                    sb.Append(c);
-                    break;
-            }
-        }
-        return sb.ToString();
-    }
 
 #if NETSTANDARD2_1
     private readonly struct ODataNameEntry

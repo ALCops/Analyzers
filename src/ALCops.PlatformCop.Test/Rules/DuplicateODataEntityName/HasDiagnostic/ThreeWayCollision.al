@@ -1,4 +1,4 @@
-// "A.mt", "Am.t", and "Amt." all become "Amt" after dot removal
+// "A B", "A.B", and "A-B" all become "A_B" after OData transformation (space, dot, hyphen → _)
 page 50100 MyPage
 {
     PageType = Card;
@@ -10,9 +10,9 @@ page 50100 MyPage
         {
             group(General)
             {
-                [|field("A.mt"; Rec.MyField) { }|]
-                [|field("Am.t"; Rec.MyField2) { }|]
-                [|field("Amt."; Rec.MyField3) { }|]
+                [|field("A B"; Rec.MyField) { }|]
+                [|field("A.B"; Rec.MyField2) { }|]
+                [|field("A-B"; Rec.MyField3) { }|]
             }
         }
     }

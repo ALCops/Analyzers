@@ -46,6 +46,7 @@ Higher-level utilities that wrap SDK functionality.
 |------|---------|
 | `AppSourceCopConfigurationProvider.cs` | Adapter wrapping `Microsoft.Dynamics.Nav.Analyzers.Common.AppSourceCopConfiguration`. Exposes `MandatoryAffixes`, `MandatorySuffix`, `MandatoryPrefix`. Uses init-only setters on net8.0, regular setters on netstandard2.1. |
 | `ManifestHelper.cs` | `GetManifest(Compilation)` returning `NavAppManifest?`. On net8.0 delegates directly; on netstandard2.1 uses reflection to create a typed delegate, trying two different type paths for AL version compatibility. **Throws `FileNotFoundException` in test contexts** because `Microsoft.Dynamics.Nav.Analyzers.Common` assembly isn't available. Analyzers must catch this and treat as null manifest. |
+| `ODataNameHelper.cs` | `MangleIntoValidXmlIdentifier(string name)` returning `string?`. Accesses `NameTransformations.MangleIntoValidXmlIdentifier` in `Microsoft.Dynamics.Nav.AL.Common` via `Type.GetType()` + `GetMethod()` + `CreateDelegate()`. Returns null if the SDK method is unavailable (older SDK versions). Callers should check `IsAvailable` property to exit early. Used by PC0033 (DuplicateODataEntityName). |
 
 ### Reflection/
 Runtime access to internal/version-dependent SDK types. This is the most sensitive area of Common.

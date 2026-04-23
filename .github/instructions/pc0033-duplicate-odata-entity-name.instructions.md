@@ -24,6 +24,7 @@ Detects page controls that produce duplicate OData EntityNames after the EDMX na
 | MessageFormat | `Control '{0}' has a duplicate OData EntityName '{1}'. This will cause a runtime error when using 'Edit in Excel'.` |
 | Version gate | None |
 | netstandard2.1 | Full support (no net8.0-only APIs used) |
+| OData transformation | Via SDK's `MangleIntoValidXmlIdentifier` accessed through reflection (`ODataNameHelper` in ALCops.Common) |
 
 ## Design decisions
 
@@ -45,20 +46,35 @@ Detects page controls that produce duplicate OData EntityNames after the EDMX na
 | Extension target matching | `SameApplicationObject()` via `OriginalDefinition` + ID comparison | Handles cross-module symbols where reference equality fails |
 | CodeFix | None for v1 | Auto-renaming controls is complex and could break existing integrations |
 | Skip obsolete | Yes | Standard ALCops convention |
-| OData transformation location | Static method in analyzer class | Only used by this rule; move to Common if reuse emerges |
+| OData transformation location | `ODataNameHelper` in `ALCops.Common/Helpers/` via reflection to SDK's `MangleIntoValidXmlIdentifier` | Authoritative SDK method eliminates maintenance burden; graceful fallback if SDK method unavailable (older versions) |
+| SDK method unavailable | Analyzer exits early (no diagnostics) | Older SDKs without `MangleIntoValidXmlIdentifier` silently skip; no errors |
 
 ## OData/EDMX Name Transformation
 
-The EDMX specification defines how AL control names are transformed to OData property names:
+The OData property name transformation is performed by the SDK's `NameTransformations.MangleIntoValidXmlIdentifier()` method in `Microsoft.Dynamics.Nav.AL.Common`. The analyzer accesses this method via reflection through `ODataNameHelper` in `ALCops.Common/Helpers/`.
+
+### Transformation rules (from SDK)
 
 | Character | Transformation | Example |
 |---|---|---|
 | Space (` `) | `_` (underscore) | `"PTE No"` → `PTE_No` |
-| Dot (`.`) | Removed | `"No."` → `No` |
-| Parentheses `()` | Removed | `"Balance (LCY)"` → `Balance_LCY` |
+| Dot (`.`) | `_` (underscore) | `"No."` → `No_` → `No` (trailing trim) |
+| Parentheses `()` | `_` (underscore) | `"Balance (LCY)"` → `Balance__LCY_` → `Balance_LCY` (dedup + trim) |
 | Slash (`/`) | `_` (underscore) | `"Country/Region"` → `Country_Region` |
-| Apostrophe (`'`) | `_x0027_` | `"O'Brien"` → `O_x0027_Brien` |
+| Hyphen (`-`) | `_` (underscore) | `"Line-No"` → `Line_No` |
+| Colon (`:`) | `_` (underscore) | `"Type:Code"` → `Type_Code` |
+| At (`@`) | `_` (underscore) | `"Email@Work"` → `Email_Work` |
+| Backslash (`\`) | `_` (underscore) | `"Path\Name"` → `Path_Name` |
+| Double quote (`"`) | `_` (underscore) | Quotes in name → underscore |
 | Percent (`%`) | `Percent` | `"Tax%"` → `TaxPercent` |
+| Consecutive `_` | Deduplicated | `"A__B"` → `A_B` |
+| Trailing `_` | Trimmed | `"Name_"` → `Name` |
+| "Subform" suffix | Replaced with "Line" | `"SalesSubform"` → `"SalesLine"` |
+| Other special chars | Via `XmlConvert.EncodeName` | `"O'Brien"` → `O_x0027_Brien` |
+
+### Why we use SDK reflection (not custom implementation)
+
+The transformation has many edge cases (consecutive underscore deduplication, trailing trim, Subform replacement, XmlConvert encoding). Maintaining a custom reimplementation is fragile and error-prone. The SDK's method is the authoritative source that matches what the BC platform actually does at runtime.
 
 ### SDK MetadataName vs OData (critical difference)
 
@@ -78,12 +94,13 @@ Uses `RegisterSymbolAction` on `Page` and `PageExtension` symbol kinds. Page ext
 ### Analysis flow
 
 **For Pages (`IPageBaseTypeSymbol`):**
-1. Skip obsolete symbols
-2. Check `PageType` against `RelevantPageTypes` set
-3. Collect field controls from `FlattenedControls` (filter to `ControlKind.Field`)
-4. Collect PK fields from `RelatedTable.PrimaryKey.Fields`
-5. Transform all names via `ToODataEntityName()`
-6. Group by OData name (case-insensitive), report all members of groups with count > 1
+1. Skip if `ODataNameHelper.IsAvailable` is false (SDK method unavailable)
+2. Skip obsolete symbols
+3. Check `PageType` against `RelevantPageTypes` set
+4. Collect field controls from `FlattenedControls` (filter to `ControlKind.Field`)
+5. Collect PK fields from `RelatedTable.PrimaryKey.Fields`
+6. Transform all names via `ODataNameHelper.MangleIntoValidXmlIdentifier()`
+7. Group by OData name (case-insensitive), report all members of groups with count > 1
 
 **For PageExtensions (`IPageExtensionBaseTypeSymbol`):**
 1. Skip obsolete symbols
@@ -127,13 +144,16 @@ The SDK's MetadataName transformation maps spaces to underscores, same as OData.
 
 ### OData name collisions not caught by compiler
 
-Our unique value is in catching collisions caused by:
-- Dot removal (`.` → removed)
-- Parenthesis removal (`()` → removed)
-- Slash to underscore (`/` → `_`)
-- Percent expansion (`%` → `Percent`)
+Our unique value is in catching collisions caused by the OData/EDMX transformation (SDK's `MangleIntoValidXmlIdentifier`), which differs from the compiler's MetadataName mangling (`MangleUnquotedIdentifierName`):
+- Dot, hyphen, colon, at, backslash, parentheses → `_` (with consecutive dedup + trailing trim)
+- Percent → `Percent`
+- Subform → Line
 
-These transformations differ from the SDK's MetadataName mangling, so the compiler's AL0757/AL0758 checks miss them.
+These transformations differ from the MetadataName mangling (where `.` → `a46`, `(` → `a40`), so the compiler's AL0757/AL0758 checks miss them.
+
+### SDK method unavailability
+
+If the SDK's `MangleIntoValidXmlIdentifier` method is not found (older BC SDK versions that don't have `Microsoft.Dynamics.Nav.AL.Common.NameTransformations`), the analyzer silently produces no diagnostics. This is by design: the `ODataNameHelper.IsAvailable` check at the top of `AnalyzeSymbol` returns early.
 
 ## Test coverage
 
@@ -147,7 +167,7 @@ These transformations differ from the SDK's MetadataName mangling, so the compil
 | SlashToUnderscore | `"Country/Region"` and `Country_Region` both become `Country_Region` |
 | PageExtensionCollision | Extension control `"Item No"` collides with base page `"Item No."` |
 | PrimaryKeyCollision | Control `Primary_Key` collides with PK field `"Primary Key"` |
-| ThreeWayCollision | Three controls with dots in different positions all producing `Amt` |
+| ThreeWayCollision | Three controls with different special chars (`"A B"`, `"A.B"`, `"A-B"`) all producing `A_B` |
 | MultiplePageExtensionCollision | Two page extensions each adding a control that collides (`"PTE No"` and `"PTE No."` both → `PTE_No`) |
 
 ### NoDiagnostic (5 cases)
