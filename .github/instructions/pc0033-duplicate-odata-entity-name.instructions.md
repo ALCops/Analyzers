@@ -40,7 +40,9 @@ Detects page controls that produce duplicate OData EntityNames after the EDMX na
 | Query objects | Not checked | Query objects restrict special characters already |
 | OData name comparison | Case-insensitive | OData property names are case-insensitive per OData spec |
 | Control filtering | `ControlKind.Field` only | Only Field controls produce OData properties; Group/Area/Part are structural |
-| Registration | `RegisterSymbolAction` on Page + PageExtension | Single-pass per symbol, no compilation-wide analysis needed |
+| Registration | `RegisterSymbolAction` on Page + PageExtension | Single-pass per symbol; sibling extension lookup via `ConditionalWeakTable` cache |
+| Sibling extension detection | `ConditionalWeakTable<Compilation, Lazy<ImmutableArray<IPageExtensionBaseTypeSymbol>>>` | Lazily caches all page extensions per compilation; same pattern as `TransferFieldsSchemaCompatibility` for table extensions |
+| Extension target matching | `SameApplicationObject()` via `OriginalDefinition` + ID comparison | Handles cross-module symbols where reference equality fails |
 | CodeFix | None for v1 | Auto-renaming controls is complex and could break existing integrations |
 | Skip obsolete | Yes | Standard ALCops convention |
 | OData transformation location | Static method in analyzer class | Only used by this rule; move to Common if reuse emerges |
@@ -71,7 +73,7 @@ So `"PTE No."` has MetadataName `PTE_Noa46` (unique from `"PTE No"` = `PTE_No`),
 
 ### Registration strategy
 
-Uses `RegisterSymbolAction` on `Page` and `PageExtension` symbol kinds.
+Uses `RegisterSymbolAction` on `Page` and `PageExtension` symbol kinds. Page extension analysis uses a `ConditionalWeakTable`-based cache to lazily gather all page extensions per compilation, enabling sibling extension collision detection.
 
 ### Analysis flow
 
@@ -89,8 +91,16 @@ Uses `RegisterSymbolAction` on `Page` and `PageExtension` symbol kinds.
 3. Collect extension's own controls from `AddedControlsFlattened`
 4. Collect base page controls from `FlattenedControls`
 5. Collect PK fields from target page's `RelatedTable`
-6. Combined duplicate check across all entries
-7. Only report diagnostics on extension-added controls (filter via `extensionControlSet`)
+6. Collect controls from sibling page extensions (other extensions targeting the same base page) via `ConditionalWeakTable` cache
+7. Combined duplicate check across all entries
+8. Only report diagnostics on extension-added controls (filter via `extensionControlSet`)
+
+### Sibling extension detection
+
+Uses the `ConditionalWeakTable<Compilation, PageExtensionsCacheEntry>` pattern (same as `TransferFieldsSchemaCompatibility` for table extensions):
+1. `GetCachedPageExtensions(compilation)` lazily loads all `IPageExtensionBaseTypeSymbol` via `GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection`
+2. Filters to siblings targeting the same base page using `SameApplicationObject()` (ID + Kind comparison via `OriginalDefinition`)
+3. Sibling controls are added with `Control = null` so they are not reportable (only the current extension's controls are reported)
 
 ### Key SDK interfaces
 
@@ -127,7 +137,7 @@ These transformations differ from the SDK's MetadataName mangling, so the compil
 
 ## Test coverage
 
-### HasDiagnostic (7 cases)
+### HasDiagnostic (8 cases)
 
 | Test case | Scenario |
 |---|---|
@@ -138,6 +148,7 @@ These transformations differ from the SDK's MetadataName mangling, so the compil
 | PageExtensionCollision | Extension control `"Item No"` collides with base page `"Item No."` |
 | PrimaryKeyCollision | Control `Primary_Key` collides with PK field `"Primary Key"` |
 | ThreeWayCollision | Three controls with dots in different positions all producing `Amt` |
+| MultiplePageExtensionCollision | Two page extensions each adding a control that collides (`"PTE No"` and `"PTE No."` both → `PTE_No`) |
 
 ### NoDiagnostic (5 cases)
 
@@ -154,5 +165,4 @@ These transformations differ from the SDK's MetadataName mangling, so the compil
 - **AllowInCustomizations**: Check table fields with `AllowInCustomizations = Always` for potential collisions with page controls
 - **CodeFix**: Suggest renaming controls to avoid collision
 - **Query objects**: Evaluate if needed despite restricted characters
-- **Cross-extension collision**: Detect when two page extensions for the same base page collide with each other
 - **Apostrophe test case**: Add test for `'` → `_x0027_` transformation

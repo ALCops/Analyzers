@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using System.Text;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
@@ -20,6 +21,20 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
         EnumProvider.PageTypeKind.ListPlus,
         EnumProvider.PageTypeKind.Worksheet
     ];
+
+    private static ImmutableArray<IPageExtensionBaseTypeSymbol> GetCachedPageExtensions(Compilation compilation)
+        => PageExtensionsCache.GetValue(compilation, static c => new PageExtensionsCacheEntry(c)).Value.Value;
+    private static readonly ConditionalWeakTable<Compilation, PageExtensionsCacheEntry> PageExtensionsCache = new();
+    private sealed class PageExtensionsCacheEntry(Compilation compilation)
+    {
+        public Lazy<ImmutableArray<IPageExtensionBaseTypeSymbol>> Value { get; } =
+            new Lazy<ImmutableArray<IPageExtensionBaseTypeSymbol>>(
+                () => compilation
+                    .GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection(EnumProvider.SymbolKind.PageExtension)
+                    .OfType<IPageExtensionBaseTypeSymbol>()
+                    .ToImmutableArray(),
+                LazyThreadSafetyMode.ExecutionAndPublication);
+    }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.DuplicateODataEntityName);
@@ -74,16 +89,68 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
         var baseControls = CollectFieldControlEntries(targetPage.FlattenedControls);
         var pkEntries = CollectPrimaryKeyEntries(targetPage.RelatedTable);
 
-        var allEntries = new List<ODataNameEntry>(extensionControls.Count + baseControls.Count + pkEntries.Count);
+        // Collect controls from sibling page extensions targeting the same base page
+        var siblingControls = CollectSiblingExtensionControls(ctx, pageExtension, targetPage);
+
+        var allEntries = new List<ODataNameEntry>(
+            extensionControls.Count + baseControls.Count + pkEntries.Count + siblingControls.Count);
         allEntries.AddRange(extensionControls);
         allEntries.AddRange(baseControls);
         allEntries.AddRange(pkEntries);
+        allEntries.AddRange(siblingControls);
 
         // Only report diagnostics on the extension's own controls
         var extensionControlSet = new HashSet<IControlSymbol>(
             extensionControls.Where(e => e.Control is not null).Select(e => e.Control!));
 
         ReportDuplicates(ctx, allEntries, reportableFilter: entry => entry.Control is not null && extensionControlSet.Contains(entry.Control));
+    }
+
+    private static List<ODataNameEntry> CollectSiblingExtensionControls(
+        SymbolAnalysisContext ctx,
+        IPageExtensionBaseTypeSymbol currentExtension,
+        IPageBaseTypeSymbol targetPage)
+    {
+        var allPageExtensions = GetCachedPageExtensions(ctx.Compilation);
+        var entries = new List<ODataNameEntry>();
+
+        foreach (var ext in allPageExtensions)
+        {
+            if (ReferenceEquals(ext, currentExtension))
+                continue;
+
+            if (!SameApplicationObject(ext.Target?.OriginalDefinition, targetPage))
+                continue;
+
+            foreach (var control in ext.AddedControlsFlattened)
+            {
+                if (control.ControlKind != EnumProvider.ControlKind.Field)
+                    continue;
+
+                var odataName = ToODataEntityName(control.Name);
+                // Use null Control so sibling controls are not reportable
+                entries.Add(new ODataNameEntry(odataName, control.Name, control.GetLocation(), null));
+            }
+        }
+
+        return entries;
+    }
+
+    private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
+    {
+        if (source is null || target is null)
+            return false;
+
+        source = source.OriginalDefinition;
+        target = target.OriginalDefinition;
+
+        if (ReferenceEquals(source, target))
+            return true;
+
+        if (source is ISymbolWithId lId && target is ISymbolWithId rId)
+            return lId.Id == rId.Id && source.Kind == target.Kind;
+
+        return source.Equals(target);
     }
 
     private static List<ODataNameEntry> CollectFieldControlEntries(ImmutableArray<IControlSymbol> controls)

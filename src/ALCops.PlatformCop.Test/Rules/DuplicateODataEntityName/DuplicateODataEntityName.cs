@@ -26,6 +26,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("PageExtensionCollision")]
         [TestCase("PrimaryKeyCollision")]
         [TestCase("ThreeWayCollision")]
+        [TestCase("MultiplePageExtensionCollision")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))

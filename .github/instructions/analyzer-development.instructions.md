@@ -839,6 +839,73 @@ Write the test class following the pattern above, using `RoslynFixtureFactory.Cr
 
 Build the solution and run the tests to confirm the analyzer works.
 
+## Gathering All Extensions of a Kind (ConditionalWeakTable Cache Pattern)
+
+When an analyzer needs to find all extension objects (page extensions, table extensions) targeting a specific base object, use a `ConditionalWeakTable<Compilation, CacheEntry>` to lazily cache the full set once per compilation. This avoids repeated expensive `GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection()` calls.
+
+### Pattern
+
+```csharp
+// Cache all extensions per Compilation (lazy, thread-safe, GC-friendly)
+private static ImmutableArray<IPageExtensionBaseTypeSymbol> GetCachedPageExtensions(Compilation compilation)
+    => PageExtensionsCache.GetValue(compilation, static c => new PageExtensionsCacheEntry(c)).Value.Value;
+private static readonly ConditionalWeakTable<Compilation, PageExtensionsCacheEntry> PageExtensionsCache = new();
+private sealed class PageExtensionsCacheEntry(Compilation compilation)
+{
+    public Lazy<ImmutableArray<IPageExtensionBaseTypeSymbol>> Value { get; } =
+        new Lazy<ImmutableArray<IPageExtensionBaseTypeSymbol>>(
+            () => compilation
+                .GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection(EnumProvider.SymbolKind.PageExtension)
+                .OfType<IPageExtensionBaseTypeSymbol>()
+                .ToImmutableArray(),
+            LazyThreadSafetyMode.ExecutionAndPublication);
+}
+```
+
+### Matching extensions to base objects
+
+Use `SameApplicationObject()` to compare extension targets with the base object. This handles cross-module symbols where reference equality fails:
+
+```csharp
+private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
+{
+    if (source is null || target is null)
+        return false;
+
+    source = source.OriginalDefinition;
+    target = target.OriginalDefinition;
+
+    if (ReferenceEquals(source, target))
+        return true;
+
+    if (source is ISymbolWithId lId && target is ISymbolWithId rId)
+        return lId.Id == rId.Id && source.Kind == target.Kind;
+
+    return source.Equals(target);
+}
+```
+
+### When to use
+
+- Analyzing page extensions that need controls from sibling extensions targeting the same page (e.g., `DuplicateODataEntityName` for OData name collision)
+- Analyzing table extensions that need fields from sibling extensions targeting the same table (e.g., `TransferFieldsSchemaCompatibility` for field schema comparison)
+- Any cross-object analysis where you need to enumerate all extensions of a given `SymbolKind`
+
+### Key points
+
+- `ConditionalWeakTable` uses the `Compilation` as key, so the cache is GC'd when the compilation is released
+- The inner `Lazy<T>` with `ExecutionAndPublication` ensures single computation per compilation, even under concurrent `RegisterSymbolAction` callbacks
+- `GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection` retrieves symbols from all referenced modules, not just the current one
+- Always use `OriginalDefinition` when comparing symbols from different contexts (extension target vs base object)
+- Requires `using System.Runtime.CompilerServices;` for `ConditionalWeakTable`
+
+### Existing implementations
+
+| File | Extension kind | Purpose |
+|---|---|---|
+| `TransferFieldsSchemaCompatibility.cs` | `TableExtension` | Gathers table extension fields for schema comparison |
+| `DuplicateODataEntityName.cs` | `PageExtension` | Gathers sibling page extension controls for OData name collision detection |
+
 ## Common Pitfalls
 
 - **Always use `EnumProvider`** for SDK enum values. Direct references break across BC versions.
