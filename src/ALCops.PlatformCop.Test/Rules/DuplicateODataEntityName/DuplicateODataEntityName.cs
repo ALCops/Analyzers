@@ -30,7 +30,7 @@ namespace ALCops.PlatformCop.Test
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["MultiplePageExtensionCollision", "PageExtensionCollision", "PageExtensionUniqueNames"],
+                ["PageExtensionCollision", "MultiplePageExtensionCollision"],
                 testCase,
                 "13.0",
                 "No support for pageextensions when target itself is already declared in the same module");
@@ -49,6 +49,12 @@ namespace ALCops.PlatformCop.Test
         [TestCase("PageExtensionUniqueNames")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["PageExtensionUniqueNames"],
+                testCase,
+                "13.0",
+                "No support for pageextensions when target itself is already declared in the same module");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
