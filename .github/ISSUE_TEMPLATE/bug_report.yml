@@ -1,0 +1,81 @@
+name: Bug Report
+description: Report a bug, false positive, false negative, or crash in an ALCops analyzer
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug!
+
+        Before you create a new issue, please:
+        🔎 **Search [existing issues](https://github.com/ALCops/Analyzers/issues)** to avoid duplicates.
+        ✅ **Try reproducing on the [latest version](https://www.nuget.org/packages/ALCops.Analyzers)** of ALCops Analyzers.
+        💡 **Want to suggest a new rule?** Please open a [Discussion](https://github.com/ALCops/Analyzers/discussions) instead.
+
+  - type: dropdown
+    id: cop
+    attributes:
+      label: Analyzer
+      description: Which analyzer (cop) is this about?
+      options:
+        - ApplicationCop
+        - DocumentationCop
+        - FormattingCop
+        - LinterCop
+        - PlatformCop
+        - TestAutomationCop
+        - General
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue type
+      description: What kind of issue are you reporting?
+      options:
+        - False positive (diagnostic fires when it shouldn't)
+        - False negative (diagnostic doesn't fire when it should)
+        - Crash / exception
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: rule-id
+    attributes:
+      label: Rule ID
+      description: The diagnostic rule ID, if applicable.
+      placeholder: e.g., LC0086
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of the issue.
+      placeholder: Describe the issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: al-code
+    attributes:
+      label: AL code to reproduce
+      description: A minimal AL code snippet that reproduces the issue.
+      value: |
+        ```al
+
+        ```
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Any additional information that might help, such as screenshots, stack traces, or logs.
+      placeholder: Additional context
+    validations:
+      required: false

@@ -18,7 +18,7 @@ A collection of custom code analyzers for the AL programming language of Microso
 | [FormattingCop](https://alcops.dev/docs/analyzers/formattingcop/) | Covers stylistic and syntactic consistency rules. Ensures clean, uniform, readable code without influencing behavior or semantics. |
 | [LinterCop](https://alcops.dev/docs/analyzers/lintercop/) | Identifies non-breaking code smells and suggests better implementation patterns. Focuses on maintainability, clarity, and recommended practices where multiple valid options exist. |
 | [PlatformCop](https://alcops.dev/docs/analyzers/platformcop/) | Validates AL language and runtime semantic correctness, preventing patterns that always fail or behave unpredictably. These rules apply universally, independent of the Business Central domain model. |
-| [TestCop](https://alcops.dev/docs/analyzers/testcop/) | Ensures correctness and structure of test codeunits and related test procedures. Applies exclusively to test logic, not production code. |
+| [TestAutomationCop](https://alcops.dev/docs/analyzers/testcop/) | Ensures correctness and structure of test codeunits and related test procedures. Applies exclusively to test logic, not production code. |
 
 Browse the complete rules reference at [alcops.dev/docs/analyzers](https://alcops.dev/docs/analyzers/).
 
