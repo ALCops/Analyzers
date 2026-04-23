@@ -305,6 +305,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.UseSequentialGuidDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UseSequentialGuid));
 
+    public static readonly DiagnosticDescriptor ReportLayoutPropertyLength = new(
+        id: DiagnosticIds.ReportLayoutPropertyLength,
+        title: PlatformCopAnalyzers.ReportLayoutPropertyLengthTitle,
+        messageFormat: PlatformCopAnalyzers.ReportLayoutPropertyLengthMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.ReportLayoutPropertyLengthDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ReportLayoutPropertyLength));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLower());

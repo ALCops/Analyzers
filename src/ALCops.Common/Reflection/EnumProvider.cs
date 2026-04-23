@@ -616,6 +616,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.SingleInstance)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _sourceTable =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.SourceTable)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _summary =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Summary)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _sourceTableTemporary =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.SourceTableTemporary)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _subtype =
@@ -657,6 +659,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind SingleInstance => _singleInstance.Value;
         public static NavCodeAnalysis.PropertyKind SourceTable => _sourceTable.Value;
         public static NavCodeAnalysis.PropertyKind SourceTableTemporary => _sourceTableTemporary.Value;
+        public static NavCodeAnalysis.PropertyKind Summary => _summary.Value;
         public static NavCodeAnalysis.PropertyKind Subtype => _subtype.Value;
         public static NavCodeAnalysis.PropertyKind TableRelation => _tableRelation.Value;
         public static NavCodeAnalysis.PropertyKind ToolTip => _toolTip.Value;

@@ -435,4 +435,13 @@
   <data name="PartialRecordsBeforeWriteOperationCodeAction" xml:space="preserve">
     <value>ALCops: Remove SetLoadFields</value>
   </data>
+  <data name="ReportLayoutPropertyLengthTitle" xml:space="preserve">
+    <value>Report layout property exceeds maximum length</value>
+  </data>
+  <data name="ReportLayoutPropertyLengthMessageFormat" xml:space="preserve">
+    <value>Report layout {0} is {1} characters long, but the maximum is 250. Business Central will fail at runtime when selecting this layout.</value>
+  </data>
+  <data name="ReportLayoutPropertyLengthDescription" xml:space="preserve">
+    <value>The Caption and Summary properties on report layout blocks are stored in database fields limited to 250 characters. Values exceeding this limit compile without error but cause a runtime crash ("The length of the string is N, but it must be less than or equal to 250 characters") when a user opens the Report Layout Selection page in Business Central.</value>
+  </data>
 </root>

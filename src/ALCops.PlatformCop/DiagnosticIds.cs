@@ -32,4 +32,5 @@ public static class DiagnosticIds
     public static readonly string UseSequentialGuid = "PC0029";
     public static readonly string UsePartialRecordsOnRead = "PC0030";
     public static readonly string PartialRecordsBeforeWriteOperation = "PC0031";
+    public static readonly string ReportLayoutPropertyLength = "PC0032";
 }
