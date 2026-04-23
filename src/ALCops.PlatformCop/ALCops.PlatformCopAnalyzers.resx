@@ -444,4 +444,13 @@
   <data name="ReportLayoutPropertyLengthDescription" xml:space="preserve">
     <value>The Caption and Summary properties on report layout blocks are stored in database fields limited to 250 characters. Values exceeding this limit compile without error but cause a runtime crash ("The length of the string is N, but it must be less than or equal to 250 characters") when a user opens the Report Layout Selection page in Business Central.</value>
   </data>
+  <data name="DuplicateODataEntityNameTitle" xml:space="preserve">
+    <value>Duplicate OData EntityName on page controls</value>
+  </data>
+  <data name="DuplicateODataEntityNameMessageFormat" xml:space="preserve">
+    <value>Control '{0}' has a duplicate OData EntityName '{1}'. This will cause a runtime error when using 'Edit in Excel'.</value>
+  </data>
+  <data name="DuplicateODataEntityNameDescription" xml:space="preserve">
+    <value>Page controls are exposed as OData properties with transformed names (dots removed, spaces replaced by underscores, parentheses removed, slashes replaced by underscores, apostrophes replaced by _x0027_, percent signs replaced by Percent). When two or more controls produce the same OData EntityName after transformation, 'Edit in Excel' and other OData integrations fail at runtime. Primary key fields are automatically included in the OData metadata even if not on the page, so control names must also be unique relative to primary key field names.</value>
+  </data>
 </root>

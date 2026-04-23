@@ -119,7 +119,7 @@ Each diagnostic has a help URI pointing to `https://alcops.dev/docs/analyzers/{c
 - `{copslug}` is the lowercase cop name (e.g. `lintercop`, `applicationcop`, `platformcop`)
 - `{id}` is the lowercase diagnostic ID (e.g. `lc0003`, `ac0001`)
 
-The documentation site source lives at `/Users/arthur/repo/ALCops/alcops.dev/` (Hugo-based, separate from this repo).
+The documentation site source is a sibling repo (`../alcops.dev` relative to the Analyzers repo root, or `https://github.com/ALCops/alcops.dev`). It is a Hugo-based site. Every new diagnostic rule must have a corresponding documentation page at `content/docs/analyzers/{copslug}/{ID}.md`.
 
 ## Settings system
 

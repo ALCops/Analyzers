@@ -1,0 +1,198 @@
+using System.Collections.Immutable;
+using System.Text;
+using ALCops.Common.Extensions;
+using ALCops.Common.Reflection;
+using Microsoft.Dynamics.Nav.CodeAnalysis;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
+
+namespace ALCops.PlatformCop.Analyzers;
+
+[DiagnosticAnalyzer]
+public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
+{
+    private static readonly HashSet<PageTypeKind> RelevantPageTypes =
+    [
+        EnumProvider.PageTypeKind.Card,
+        EnumProvider.PageTypeKind.Document,
+        EnumProvider.PageTypeKind.List,
+        EnumProvider.PageTypeKind.ListPart,
+        EnumProvider.PageTypeKind.ListPlus,
+        EnumProvider.PageTypeKind.Worksheet
+    ];
+
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
+        ImmutableArray.Create(DiagnosticDescriptors.DuplicateODataEntityName);
+
+    public override void Initialize(AnalysisContext context) =>
+        context.RegisterSymbolAction(
+            AnalyzeSymbol,
+            EnumProvider.SymbolKind.Page,
+            EnumProvider.SymbolKind.PageExtension);
+
+    private void AnalyzeSymbol(SymbolAnalysisContext ctx)
+    {
+        if (ctx.IsObsolete())
+            return;
+
+        switch (ctx.Symbol)
+        {
+            case IPageBaseTypeSymbol page:
+                AnalyzePage(ctx, page);
+                break;
+            case IPageExtensionBaseTypeSymbol pageExtension:
+                AnalyzePageExtension(ctx, pageExtension);
+                break;
+        }
+    }
+
+    private static void AnalyzePage(SymbolAnalysisContext ctx, IPageBaseTypeSymbol page)
+    {
+        if (!RelevantPageTypes.Contains(page.PageType))
+            return;
+
+        var controlEntries = CollectFieldControlEntries(page.FlattenedControls);
+        var pkEntries = CollectPrimaryKeyEntries(page.RelatedTable);
+
+        var allEntries = new List<ODataNameEntry>(controlEntries.Count + pkEntries.Count);
+        allEntries.AddRange(controlEntries);
+        allEntries.AddRange(pkEntries);
+
+        ReportDuplicates(ctx, allEntries, reportableFilter: null);
+    }
+
+    private static void AnalyzePageExtension(SymbolAnalysisContext ctx, IPageExtensionBaseTypeSymbol pageExtension)
+    {
+        var targetPage = pageExtension.Target?.OriginalDefinition as IPageBaseTypeSymbol;
+        if (targetPage is null || !RelevantPageTypes.Contains(targetPage.PageType))
+            return;
+
+        var extensionControls = CollectFieldControlEntries(pageExtension.AddedControlsFlattened);
+        if (extensionControls.Count == 0)
+            return;
+
+        var baseControls = CollectFieldControlEntries(targetPage.FlattenedControls);
+        var pkEntries = CollectPrimaryKeyEntries(targetPage.RelatedTable);
+
+        var allEntries = new List<ODataNameEntry>(extensionControls.Count + baseControls.Count + pkEntries.Count);
+        allEntries.AddRange(extensionControls);
+        allEntries.AddRange(baseControls);
+        allEntries.AddRange(pkEntries);
+
+        // Only report diagnostics on the extension's own controls
+        var extensionControlSet = new HashSet<IControlSymbol>(
+            extensionControls.Where(e => e.Control is not null).Select(e => e.Control!));
+
+        ReportDuplicates(ctx, allEntries, reportableFilter: entry => entry.Control is not null && extensionControlSet.Contains(entry.Control));
+    }
+
+    private static List<ODataNameEntry> CollectFieldControlEntries(ImmutableArray<IControlSymbol> controls)
+    {
+        var entries = new List<ODataNameEntry>();
+        foreach (var control in controls)
+        {
+            if (control.ControlKind != EnumProvider.ControlKind.Field)
+                continue;
+
+            var odataName = ToODataEntityName(control.Name);
+            entries.Add(new ODataNameEntry(odataName, control.Name, control.GetLocation(), control));
+        }
+        return entries;
+    }
+
+    private static List<ODataNameEntry> CollectPrimaryKeyEntries(ITableTypeSymbol? table)
+    {
+        var entries = new List<ODataNameEntry>();
+        if (table?.PrimaryKey is null)
+            return entries;
+
+        foreach (var field in table.PrimaryKey.Fields)
+        {
+            var odataName = ToODataEntityName(field.Name);
+            entries.Add(new ODataNameEntry(odataName, field.Name, field.GetLocation(), null));
+        }
+        return entries;
+    }
+
+    private static void ReportDuplicates(
+        SymbolAnalysisContext ctx,
+        List<ODataNameEntry> entries,
+        Func<ODataNameEntry, bool>? reportableFilter)
+    {
+        var groups = entries
+            .GroupBy(e => e.ODataName, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g.Count() > 1);
+
+        foreach (var group in groups)
+        {
+            foreach (var entry in group)
+            {
+                if (reportableFilter is not null && !reportableFilter(entry))
+                    continue;
+
+                ctx.ReportDiagnostic(Diagnostic.Create(
+                    DiagnosticDescriptors.DuplicateODataEntityName,
+                    entry.Location,
+                    entry.OriginalName,
+                    group.Key));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Transforms a control/field name to its OData EntityName representation
+    /// following the EDMX specification for Business Central.
+    /// </summary>
+    internal static string ToODataEntityName(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return name;
+
+        var sb = new StringBuilder(name.Length);
+        foreach (var c in name)
+        {
+            switch (c)
+            {
+                case ' ':
+                case '/':
+                    sb.Append('_');
+                    break;
+                case '.':
+                case '(':
+                case ')':
+                    // Removed
+                    break;
+                case '\'':
+                    sb.Append("_x0027_");
+                    break;
+                case '%':
+                    sb.Append("Percent");
+                    break;
+                default:
+                    sb.Append(c);
+                    break;
+            }
+        }
+        return sb.ToString();
+    }
+
+#if NETSTANDARD2_1
+    private readonly struct ODataNameEntry
+    {
+        public string ODataName { get; }
+        public string OriginalName { get; }
+        public Location Location { get; }
+        public IControlSymbol? Control { get; }
+
+        public ODataNameEntry(string odataName, string originalName, Location location, IControlSymbol? control)
+        {
+            ODataName = odataName;
+            OriginalName = originalName;
+            Location = location;
+            Control = control;
+        }
+    }
+#else
+    private readonly record struct ODataNameEntry(string ODataName, string OriginalName, Location Location, IControlSymbol? Control);
+#endif
+}

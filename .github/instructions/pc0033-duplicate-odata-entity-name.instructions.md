@@ -1,0 +1,158 @@
+---
+applyTo: 'src/ALCops.PlatformCop/**/DuplicateODataEntityName*'
+---
+
+# PC0033: DuplicateODataEntityName
+
+## Purpose
+
+Detects page controls that produce duplicate OData EntityNames after the EDMX name transformation. For example, `"PTE No."` and `"PTE No"` both transform to `PTE_No`, causing a runtime error when users use "Edit in Excel" or any OData integration. The AL compiler has similar checks (AL0757/AL0758/AL0678) but they use a different name mangling (`MangleUnquotedIdentifierName()` which maps `.` → `a46`), NOT the OData/EDMX transformation, so those checks don't catch OData-specific collisions.
+
+**References:**
+- [GitHub Discussion #119](https://github.com/ALCops/Analyzers/discussions/119)
+- [MS Docs: EDMX Metadata](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/webservices/return-obtain-service-metadata-edmx-document)
+- [MS Docs: Edit in Excel](https://learn.microsoft.com/en-us/dynamics365/business-central/across-work-with-excel)
+
+## Diagnostic properties
+
+| Property | Value |
+|---|---|
+| ID | `PC0033` |
+| Category | Design |
+| Severity | Warning |
+| Enabled by default | true |
+| MessageFormat | `Control '{0}' has a duplicate OData EntityName '{1}'. This will cause a runtime error when using 'Edit in Excel'.` |
+| Version gate | None |
+| netstandard2.1 | Full support (no net8.0-only APIs used) |
+
+## Design decisions
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Cop | PlatformCop (PC0033) | Platform runtime behavior (OData/EDMX transformation, Edit in Excel) |
+| Severity | Warning | Causes runtime errors in OData integrations and Edit in Excel |
+| Page types checked | Card, Document, List, ListPart, ListPlus, Worksheet | These page types support Edit in Excel / OData |
+| Page types excluded | API, RoleCenter, ConfirmationDialog, NavigatePage, etc. | API pages have separate naming rules (AL0528); others don't expose OData |
+| Object types | Page + PageExtension | PageExtensions add fields that participate in OData |
+| PageExtension reporting | Only on extension-added controls | Developer can only fix their own code, not the base page |
+| Primary keys | Included in uniqueness check | EDMX docs: PK fields are auto-added as OData properties |
+| AllowInCustomizations | Skipped for v1 | Added complexity; deferred to Phase 2 |
+| Query objects | Not checked | Query objects restrict special characters already |
+| OData name comparison | Case-insensitive | OData property names are case-insensitive per OData spec |
+| Control filtering | `ControlKind.Field` only | Only Field controls produce OData properties; Group/Area/Part are structural |
+| Registration | `RegisterSymbolAction` on Page + PageExtension | Single-pass per symbol, no compilation-wide analysis needed |
+| CodeFix | None for v1 | Auto-renaming controls is complex and could break existing integrations |
+| Skip obsolete | Yes | Standard ALCops convention |
+| OData transformation location | Static method in analyzer class | Only used by this rule; move to Common if reuse emerges |
+
+## OData/EDMX Name Transformation
+
+The EDMX specification defines how AL control names are transformed to OData property names:
+
+| Character | Transformation | Example |
+|---|---|---|
+| Space (` `) | `_` (underscore) | `"PTE No"` → `PTE_No` |
+| Dot (`.`) | Removed | `"No."` → `No` |
+| Parentheses `()` | Removed | `"Balance (LCY)"` → `Balance_LCY` |
+| Slash (`/`) | `_` (underscore) | `"Country/Region"` → `Country_Region` |
+| Apostrophe (`'`) | `_x0027_` | `"O'Brien"` → `O_x0027_Brien` |
+| Percent (`%`) | `Percent` | `"Tax%"` → `TaxPercent` |
+
+### SDK MetadataName vs OData (critical difference)
+
+The SDK's `MangleUnquotedIdentifierName()` (used by AL0757/AL0758) maps characters differently:
+- `.` → `a46` (not removed)
+- `(` → `a40` (not removed)
+- `/` → `a47` (not `_`)
+
+So `"PTE No."` has MetadataName `PTE_Noa46` (unique from `"PTE No"` = `PTE_No`), but OData name `PTE_No` (duplicate). This is why the compiler's checks don't catch OData-specific collisions.
+
+## Architecture
+
+### Registration strategy
+
+Uses `RegisterSymbolAction` on `Page` and `PageExtension` symbol kinds.
+
+### Analysis flow
+
+**For Pages (`IPageBaseTypeSymbol`):**
+1. Skip obsolete symbols
+2. Check `PageType` against `RelevantPageTypes` set
+3. Collect field controls from `FlattenedControls` (filter to `ControlKind.Field`)
+4. Collect PK fields from `RelatedTable.PrimaryKey.Fields`
+5. Transform all names via `ToODataEntityName()`
+6. Group by OData name (case-insensitive), report all members of groups with count > 1
+
+**For PageExtensions (`IPageExtensionBaseTypeSymbol`):**
+1. Skip obsolete symbols
+2. Resolve target page via `Target.OriginalDefinition`, check `PageType`
+3. Collect extension's own controls from `AddedControlsFlattened`
+4. Collect base page controls from `FlattenedControls`
+5. Collect PK fields from target page's `RelatedTable`
+6. Combined duplicate check across all entries
+7. Only report diagnostics on extension-added controls (filter via `extensionControlSet`)
+
+### Key SDK interfaces
+
+- `IPageBaseTypeSymbol`: `PageType`, `RelatedTable`, `FlattenedControls`
+- `IPageExtensionBaseTypeSymbol`: `AddedControlsFlattened`, `Target`
+- `IControlSymbol`: `ControlKind`, `Name`, `GetLocation()`
+- `ITableTypeSymbol`: `PrimaryKey` → `IKeySymbol` → `Fields`
+
+### Data structure
+
+```
+ODataNameEntry (record struct, #if guarded):
+  - ODataName: string (transformed name)
+  - OriginalName: string (source name)
+  - Location: Location (for diagnostic reporting)
+  - Control: IControlSymbol? (null for PK entries)
+```
+
+## Known issues and workarounds
+
+### Space→underscore collisions already caught by AL0757
+
+The SDK's MetadataName transformation maps spaces to underscores, same as OData. So `"PTE No"` and `PTE_No` both have MetadataName `PTE_No`, triggering AL0757. Our rule would also flag these, but the compiler catches them first. This is not a problem (redundant warnings are acceptable), but test fixtures must avoid this pattern to prevent compilation errors.
+
+### OData name collisions not caught by compiler
+
+Our unique value is in catching collisions caused by:
+- Dot removal (`.` → removed)
+- Parenthesis removal (`()` → removed)
+- Slash to underscore (`/` → `_`)
+- Percent expansion (`%` → `Percent`)
+
+These transformations differ from the SDK's MetadataName mangling, so the compiler's AL0757/AL0758 checks miss them.
+
+## Test coverage
+
+### HasDiagnostic (7 cases)
+
+| Test case | Scenario |
+|---|---|
+| DotRemoval | `"PTE No."` and `"PTE No"` both become `PTE_No` |
+| PercentSign | `"Tax%"` and `TaxPercent` both become `TaxPercent` |
+| ParenthesisRemoval | `"Balance (LCY)"` and `Balance_LCY` both become `Balance_LCY` |
+| SlashToUnderscore | `"Country/Region"` and `Country_Region` both become `Country_Region` |
+| PageExtensionCollision | Extension control `"Item No"` collides with base page `"Item No."` |
+| PrimaryKeyCollision | Control `Primary_Key` collides with PK field `"Primary Key"` |
+| ThreeWayCollision | Three controls with dots in different positions all producing `Amt` |
+
+### NoDiagnostic (5 cases)
+
+| Test case | Suppression reason |
+|---|---|
+| UniqueNames | All controls have distinct OData names |
+| ApiPage | API page type (excluded from check) |
+| RoleCenterPage | RoleCenter page type (excluded) |
+| ObsoletePage | Page with `ObsoleteState = Pending` (skipped) |
+| PageExtensionUniqueNames | Extension controls have unique names relative to base |
+
+## Phase 2 roadmap (not yet implemented)
+
+- **AllowInCustomizations**: Check table fields with `AllowInCustomizations = Always` for potential collisions with page controls
+- **CodeFix**: Suggest renaming controls to avoid collision
+- **Query objects**: Evaluate if needed despite restricted characters
+- **Cross-extension collision**: Detect when two page extensions for the same base page collide with each other
+- **Apostrophe test case**: Add test for `'` → `_x0027_` transformation

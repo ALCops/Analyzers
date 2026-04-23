@@ -533,11 +533,26 @@ public static class EnumProvider
     {
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _api =
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.API)));
+        private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _card =
+            new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.Card)));
+        private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _document =
+            new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.Document)));
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _list =
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.List)));
+        private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _listPart =
+            new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.ListPart)));
+        private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _listPlus =
+            new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.ListPlus)));
+        private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _worksheet =
+            new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.Worksheet)));
 
         public static NavCodeAnalysis.PageTypeKind API => _api.Value;
+        public static NavCodeAnalysis.PageTypeKind Card => _card.Value;
+        public static NavCodeAnalysis.PageTypeKind Document => _document.Value;
         public static NavCodeAnalysis.PageTypeKind List => _list.Value;
+        public static NavCodeAnalysis.PageTypeKind ListPart => _listPart.Value;
+        public static NavCodeAnalysis.PageTypeKind ListPlus => _listPlus.Value;
+        public static NavCodeAnalysis.PageTypeKind Worksheet => _worksheet.Value;
     }
 
     /// <summary>
