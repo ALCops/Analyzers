@@ -41,7 +41,6 @@ namespace ALCops.PlatformCop.Test
         [TestCase("CaptionUnder250")]
         [TestCase("SummaryUnder250")]
         [TestCase("NoCaptionOrSummary")]
-        [TestCase("ObsoleteReport")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

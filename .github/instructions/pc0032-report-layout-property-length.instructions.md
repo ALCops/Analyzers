@@ -75,4 +75,3 @@ Follows the same approach as `EmptyCaptionLocked` (AC0033), which registers on `
 | CaptionUnder250 | Short Caption (16 characters) |
 | SummaryUnder250 | Short Summary (39 characters) |
 | NoCaptionOrSummary | Layout block without Caption or Summary properties |
-| ObsoleteReport | Obsolete report (skipped per convention) |
