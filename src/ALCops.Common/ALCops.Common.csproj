@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
-        <TargetFrameworks Condition="'$(ContinuousIntegrationBuild)' != 'true'">net8.0</TargetFrameworks>
+        <TargetFrameworks Condition="'$(ContinuousIntegrationBuild)' != 'true'">net10.0</TargetFrameworks>
         <TargetFrameworks Condition="'$(ContinuousIntegrationBuild)' == 'true'">netstandard2.1;net8.0;net10.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>

@@ -15,7 +15,7 @@
         <ProjectReference Include="../ALCops.PlatformCop/ALCops.PlatformCop.csproj" PrivateAssets="all" />
         <ProjectReference Include="../ALCops.TestAutomationCop/ALCops.TestAutomationCop.csproj" PrivateAssets="all" />
     </ItemGroup>
-        <ItemGroup>
+    <ItemGroup>
         <None Include="$(OutputPath)netstandard2.1/ALCops.ApplicationCop.dll" Pack="true" PackagePath="lib/netstandard2.1" Visible="false" />
         <None Include="$(OutputPath)net8.0/ALCops.ApplicationCop.dll" Pack="true" PackagePath="lib/net8.0" Visible="false" />
         <None Include="$(OutputPath)net10.0/ALCops.ApplicationCop.dll" Pack="true" PackagePath="lib/net10.0" Visible="false" />
