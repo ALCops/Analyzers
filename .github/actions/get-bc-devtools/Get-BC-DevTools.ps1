@@ -112,9 +112,9 @@ function Get-AssemblyInfo {
         $assemblyVersion = $assembly.GetName().Version.ToString()
         
         # Try to get TargetFrameworkAttribute via custom attributes.
-        # This can fail when the assembly targets a newer .NET version than the host runtime
-        # (e.g. .NET 10 assembly inspected from .NET 8) because GetCustomAttributesData()
-        # attempts to resolve System.Runtime which doesn't exist on the older runtime.
+        # Note: The Setup job installs the latest .NET LTS SDK to ensure GetCustomAttributesData()
+        # can resolve System.Runtime for current BC DevTools assemblies. The inner try/catch
+        # provides defense-in-depth for any future .NET version mismatch.
         $targetFramework = "unknown"
         try {
             $customAttributes = $assembly.GetCustomAttributesData()

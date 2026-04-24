@@ -40,6 +40,11 @@ jobs:
           key: tfm-json-${{ github.run_id }}
           restore-keys: tfm-json-
 
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
       - name: Get BC DevTools
         id: get-bc-devtools
         uses: ./.github/actions/get-bc-devtools

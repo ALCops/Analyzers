@@ -41,17 +41,24 @@ For each new BC DevTools version, the script downloads `Microsoft.Dynamics.Nav.A
 
 | Decision | Choice | Rationale |
 |---|---|---|
+| .NET SDK in Setup job | Install latest LTS (currently 10.0.x) via `actions/setup-dotnet` | Required for `GetCustomAttributesData()` to resolve `System.Runtime` for current BC DevTools assemblies. Must be updated when a new .NET major version appears in BC DevTools (e.g. .NET 11 expected ~November 2026). |
 | Assembly inspection method | `System.Reflection.Assembly.Load($bytes)` with fallback | Direct metadata reading. `ReflectionOnlyLoad` tried first but unavailable on .NET Core |
-| Cross-runtime TFM detection | `GetReferencedAssemblies()` fallback | When `GetCustomAttributesData()` fails (e.g. .NET 10 assembly on .NET 8 runtime), referenced assembly versions provide reliable TFM inference |
+| Cross-runtime TFM detection | `GetReferencedAssemblies()` fallback | Defense-in-depth: when `GetCustomAttributesData()` fails (e.g. new .NET version not yet installed), referenced assembly versions provide reliable TFM inference |
 | TFM derivation from `System.Runtime` | Dynamic `net{major}.0` from version | Future-proof: automatically handles net8.0, net9.0, net10.0, etc. without code changes |
 | Version sorting resilience | `[version]::TryParse()` with fallback to `0.0.0.0` | Prevents crashes from non-parseable version strings (e.g. `"analysis-error"` from failed analysis) |
 | Cache key strategy | Content-based (SHA256 hash) | Only creates new cache entries when data actually changes |
+
+## Maintenance
+
+When a new .NET major version appears in BC DevTools assemblies:
+1. Update `dotnet-version` in the Setup job of `build-test.yml` (e.g. `10.0.x` → `11.0.x` or add multi-version)
+2. The reference-based TFM fallback and dynamic `net{major}.0` derivation require no changes
 
 ## Known issues
 
 | Issue | Workaround |
 |---|---|
-| `GetCustomAttributesData()` fails for assemblies targeting newer .NET than the host runtime | Falls through to reference-based TFM detection via `GetReferencedAssemblies()` |
+| `GetCustomAttributesData()` can fail if the installed .NET SDK is older than the assembly's target | Inner try/catch falls through to reference-based TFM detection via `GetReferencedAssemblies()` |
 | `Assembly.Load($bytes)` can fail entirely for corrupted or incompatible assemblies | Returns `"analysis-error"` sentinel; sort and downstream consumers handle non-parseable versions |
 
 ## Key files
