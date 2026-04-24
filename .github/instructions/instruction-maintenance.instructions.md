@@ -93,3 +93,4 @@ These cover conventions for a category of files. Include:
 | `pc0031-partial-records-before-write-operation.instructions.md` | `'src/ALCops.PlatformCop/**/PartialRecordsBeforeWriteOperation*'` | PC0031 rule details |
 | `ac0026-allow-in-customizations-for-omitted-fields.instructions.md` | `'src/ALCops.ApplicationCop/**/AllowInCustomizationsForOmittedFields*'` | AC0026 rule details |
 | `ac0013-field-groups-required.instructions.md` | `'src/ALCops.ApplicationCop/**/FieldGroupsRequired*'` | AC0013 rule details |
+| `get-bc-devtools.instructions.md` | `'.github/actions/get-bc-devtools/**'` | BC DevTools source discovery, assembly analysis, caching |

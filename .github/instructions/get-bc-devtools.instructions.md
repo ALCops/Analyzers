@@ -1,0 +1,67 @@
+---
+applyTo: '.github/actions/get-bc-devtools/**'
+---
+
+# Get BC DevTools Action
+
+## Purpose
+
+The `get-bc-devtools` composite GitHub Action discovers all available BC DevTools sources (Marketplace VSIX, NuGet, BCArtifact), analyzes their assembly metadata (target framework and assembly version), and outputs a unified source list used by the build and test pipeline.
+
+## Architecture
+
+### Script pipeline
+
+1. **`Get-Sources.ps1`** — Merges sources from three providers into a unified list, enriched with cached TFM data:
+   - `Marketplace.ps1` — Queries VS Marketplace for ALLanguage VSIX versions
+   - `NuGet-Packages.ps1` — Queries NuGet.org for `Microsoft.Dynamics.Nav.CodeAnalysis` packages
+   - `BC-Artifacts.ps1` — Queries BC artifact feed for BCArtifact versions
+2. **`Get-BC-DevTools.ps1`** — Main orchestrator. Reads `TargetFramework.json` cache, identifies missing versions, downloads and analyzes assemblies, updates the cache, then outputs enriched sources via `Get-Sources.ps1`.
+3. **`action.yml`** — Composite action entry point. Calls `Get-BC-DevTools.ps1`, deduplicates sources by version, determines lowest version per TFM, and sets outputs.
+4. **`Display-Sources.ps1`** — Renders a summary table to the workflow log.
+
+### Assembly analysis (`Get-AssemblyInfo`)
+
+For each new BC DevTools version, the script downloads `Microsoft.Dynamics.Nav.Analyzers.Common.dll` and inspects it using .NET reflection:
+
+1. Load the assembly bytes via `Assembly.Load($bytes)` (no file lock)
+2. Read `AssemblyVersion` from `GetName().Version`
+3. Attempt to read `TargetFrameworkAttribute` via `GetCustomAttributesData()`
+4. If custom attributes fail (e.g. cross-runtime inspection), fall through to reference-based detection
+5. Reference-based detection: infer TFM from `System.Runtime` version (e.g. 8.x → net8.0, 10.x → net10.0) or `netstandard` reference
+
+### Caching strategy
+
+- `TargetFramework.json` is cached in GitHub Actions cache (`actions/cache`) with content-based keys
+- Cache key pattern: `tfm-json-{sha256hash}` with `restore-keys: tfm-json-`
+- The scheduled daily build keeps the cache alive (evicted after 7 days without access)
+- Stale entries (packages no longer in any source) are pruned automatically
+
+## Design decisions
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Assembly inspection method | `System.Reflection.Assembly.Load($bytes)` with fallback | Direct metadata reading. `ReflectionOnlyLoad` tried first but unavailable on .NET Core |
+| Cross-runtime TFM detection | `GetReferencedAssemblies()` fallback | When `GetCustomAttributesData()` fails (e.g. .NET 10 assembly on .NET 8 runtime), referenced assembly versions provide reliable TFM inference |
+| TFM derivation from `System.Runtime` | Dynamic `net{major}.0` from version | Future-proof: automatically handles net8.0, net9.0, net10.0, etc. without code changes |
+| Version sorting resilience | `[version]::TryParse()` with fallback to `0.0.0.0` | Prevents crashes from non-parseable version strings (e.g. `"analysis-error"` from failed analysis) |
+| Cache key strategy | Content-based (SHA256 hash) | Only creates new cache entries when data actually changes |
+
+## Known issues
+
+| Issue | Workaround |
+|---|---|
+| `GetCustomAttributesData()` fails for assemblies targeting newer .NET than the host runtime | Falls through to reference-based TFM detection via `GetReferencedAssemblies()` |
+| `Assembly.Load($bytes)` can fail entirely for corrupted or incompatible assemblies | Returns `"analysis-error"` sentinel; sort and downstream consumers handle non-parseable versions |
+
+## Key files
+
+| File | Purpose |
+|---|---|
+| `Get-BC-DevTools.ps1` | Main orchestrator: cache management, assembly analysis, source enrichment |
+| `Get-Sources.ps1` | Source merging: combines Marketplace, NuGet, BCArtifact with cache data |
+| `action.yml` | GitHub Action interface: deduplication, TFM boundary detection, output setting |
+| `BC-Artifacts.ps1` | BCArtifact feed query |
+| `Marketplace.ps1` | VS Marketplace API query |
+| `NuGet-Packages.ps1` | NuGet.org API query |
+| `Display-Sources.ps1` | Log display formatting |

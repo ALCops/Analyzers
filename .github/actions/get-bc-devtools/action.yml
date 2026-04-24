@@ -43,7 +43,10 @@ runs:
             ForEach-Object {
                 $_.Group | Sort-Object { if ($typePriority.ContainsKey($_.packageType)) { $typePriority[$_.packageType] } else { 99 } } | Select-Object -First 1
             } |
-            Sort-Object { [version]$_.version } -Descending
+            Sort-Object {
+                $v = $null
+                if ([version]::TryParse($_.version, [ref]$v)) { $v } else { [version]'0.0.0.0' }
+            } -Descending
 
         # Lowest source per TFM
         # AL Language ships as netstandard2.0; ALCops consumes these from a netstandard2.1 build target

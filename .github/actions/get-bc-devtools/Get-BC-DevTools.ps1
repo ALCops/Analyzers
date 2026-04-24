@@ -55,8 +55,11 @@ function Save-TargetFrameworkJson {
     
     Write-Host "Updating TargetFramework.json with $($Data.Count) entries..." -ForegroundColor Yellow
     
-    # Sort by version for better readability
-    $sortedData = $Data | Sort-Object { [version]$_.Version } -Descending
+    # Sort by version for better readability (handle non-parseable versions gracefully)
+    $sortedData = $Data | Sort-Object {
+        $v = $null
+        if ([version]::TryParse($_.Version, [ref]$v)) { $v } else { [version]'0.0.0.0' }
+    } -Descending
     $jsonOutput = $sortedData | ConvertTo-Json -Depth 3
     $jsonOutput | Set-Content $JsonPath -Encoding UTF8
     
@@ -108,60 +111,75 @@ function Get-AssemblyInfo {
         # Get Assembly Version
         $assemblyVersion = $assembly.GetName().Version.ToString()
         
-        # Try to get TargetFrameworkAttribute
-        $customAttributes = $assembly.GetCustomAttributesData()
-        $targetFrameworkAttr = $customAttributes | Where-Object { 
-            $_.AttributeType.Name -eq 'TargetFrameworkAttribute' 
-        }
-        
+        # Try to get TargetFrameworkAttribute via custom attributes.
+        # This can fail when the assembly targets a newer .NET version than the host runtime
+        # (e.g. .NET 10 assembly inspected from .NET 8) because GetCustomAttributesData()
+        # attempts to resolve System.Runtime which doesn't exist on the older runtime.
         $targetFramework = "unknown"
-        if ($targetFrameworkAttr) {
-            $frameworkName = $targetFrameworkAttr.ConstructorArguments[0].Value
+        try {
+            $customAttributes = $assembly.GetCustomAttributesData()
+            $targetFrameworkAttr = $customAttributes | Where-Object { 
+                $_.AttributeType.Name -eq 'TargetFrameworkAttribute' 
+            }
             
-            # Parse the framework name to extract just the target framework moniker
-            if ($frameworkName -match '\.NETStandard,Version=v(.+)') {
-                $targetFramework = "netstandard$($matches[1])"
-            }
-            elseif ($frameworkName -match '\.NETCoreApp,Version=v(.+)') {
-                $targetFramework = "net$($matches[1])"
-            }
-            elseif ($frameworkName -match '\.NETFramework,Version=v(.+)') {
-                $version = $matches[1] -replace '\.', ''
-                $targetFramework = "net$version"
+            if ($targetFrameworkAttr) {
+                $frameworkName = $targetFrameworkAttr.ConstructorArguments[0].Value
+                
+                # Parse the framework name to extract just the target framework moniker
+                if ($frameworkName -match '\.NETStandard,Version=v(.+)') {
+                    $targetFramework = "netstandard$($matches[1])"
+                }
+                elseif ($frameworkName -match '\.NETCoreApp,Version=v(.+)') {
+                    $targetFramework = "net$($matches[1])"
+                }
+                elseif ($frameworkName -match '\.NETFramework,Version=v(.+)') {
+                    $version = $matches[1] -replace '\.', ''
+                    $targetFramework = "net$version"
+                }
+                else {
+                    # Return a cleaned version of the framework name
+                    $targetFramework = $frameworkName -replace '\.NET|,Version=v', '' -replace '\.', ''
+                }
             }
             else {
-                # Return a cleaned version of the framework name
-                $targetFramework = $frameworkName -replace '\.NET|,Version=v', '' -replace '\.', ''
-            }
-        }
-        else {
-            # Alternative: try to get from AssemblyMetadataAttribute
-            $metadataAttrs = $customAttributes | Where-Object { 
-                $_.AttributeType.Name -eq 'AssemblyMetadataAttribute' 
-            }
-            
-            foreach ($attr in $metadataAttrs) {
-                $key = $attr.ConstructorArguments[0].Value
-                $value = $attr.ConstructorArguments[1].Value
-                if ($key -eq 'TargetFramework') {
-                    $targetFramework = $value
-                    break
+                # Alternative: try to get from AssemblyMetadataAttribute
+                $metadataAttrs = $customAttributes | Where-Object { 
+                    $_.AttributeType.Name -eq 'AssemblyMetadataAttribute' 
+                }
+                
+                foreach ($attr in $metadataAttrs) {
+                    $key = $attr.ConstructorArguments[0].Value
+                    $value = $attr.ConstructorArguments[1].Value
+                    if ($key -eq 'TargetFramework') {
+                        $targetFramework = $value
+                        break
+                    }
                 }
             }
         }
+        catch {
+            Write-Warning "GetCustomAttributesData() failed for '$AssemblyPath': $($_.Exception.Message)"
+            # $targetFramework remains "unknown"; fall through to reference-based detection below
+        }
 
         # Last-resort fallback: some assemblies (e.g. older BC BCArtifact builds) are compiled
-        # without emitting TargetFrameworkAttribute at all. Infer the TFM from the referenced
-        # assemblies instead — a reference to 'netstandard' reliably identifies netstandard2.0
-        # builds, and a reference to 'System.Runtime' with no netstandard reference indicates net8.0+.
+        # without emitting TargetFrameworkAttribute at all, or the attribute could not be read
+        # (e.g. .NET 10 assemblies inspected from a .NET 8 host).
+        # Infer the TFM from the referenced assemblies instead:
+        # - A reference to 'netstandard' identifies netstandard builds.
+        # - A reference to 'System.Runtime' indicates a .NET Core/.NET 5+ build;
+        #   derive the TFM from its major version (e.g. 8→net8.0, 10→net10.0).
         if ($targetFramework -eq 'unknown') {
             $refNames = $assembly.GetReferencedAssemblies() | ForEach-Object { $_.Name }
             $netstdRef = $assembly.GetReferencedAssemblies() | Where-Object { $_.Name -eq 'netstandard' }
             if ($netstdRef) {
                 $targetFramework = "netstandard$($netstdRef.Version.Major).$($netstdRef.Version.Minor)"
             }
-            elseif ('System.Runtime' -in $refNames) {
-                $targetFramework = 'net8.0'
+            else {
+                $sysRuntimeRef = $assembly.GetReferencedAssemblies() | Where-Object { $_.Name -eq 'System.Runtime' }
+                if ($sysRuntimeRef) {
+                    $targetFramework = "net$($sysRuntimeRef.Version.Major).0"
+                }
             }
         }
         
