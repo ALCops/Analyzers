@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework Condition="'$(NavTargetFramework)' != 'net10.0'">net8.0</TargetFramework>
+        <TargetFramework Condition="'$(NavTargetFramework)' == 'net10.0'">net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
@@ -20,7 +21,7 @@
 
         <!-- Normalized TFM used for binary refs -->
         <NavBinaryTfm Condition="'$(IsLegacyNavTfm)'=='true'">netstandard2.1</NavBinaryTfm>
-        <NavBinaryTfm Condition="'$(IsLegacyNavTfm)'!='true'">net8.0</NavBinaryTfm>
+        <NavBinaryTfm Condition="'$(IsLegacyNavTfm)'!='true'">$(NavTargetFramework)</NavBinaryTfm>
 
         <!-- Path to BC dev tools may be overridden by /p:BcDevToolsDir= -->
         <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>

@@ -4,7 +4,7 @@ applyTo: 'src/ALCops.*/**'
 
 # netstandard2.1 Backward Compatibility
 
-All analyzer and common projects multi-target in CI: `netstandard2.1;net8.0`. Several C# 9+ features and newer SDK APIs are unavailable in `netstandard2.1`. Code that compiles fine locally (net8.0 only) will fail in CI without conditional compilation guards.
+All analyzer and common projects multi-target in CI: `netstandard2.1;net8.0;net10.0`. Several C# 9+ features and newer SDK APIs are unavailable in `netstandard2.1`. Code that compiles fine locally (net8.0 only) will fail in CI without conditional compilation guards.
 
 ## C# language features that require guards
 

@@ -50,11 +50,11 @@ Each test project follows the pattern `ALCops.{CopName}.Test`:
 - `AssemblyInfo.cs` : Sets `[assembly: Parallelizable(ParallelScope.All)]`
 - `Rules/` : One folder per rule, containing the test class and subfolders `HasDiagnostic/` and `NoDiagnostic/` (plus `HasFix/` if a code fix exists) with `.al` test fixture files
 - Test classes extend `NavCodeAnalysisBase` and use `RoslynFixtureFactory.Create<T>()`
-- Tests always target `net8.0` only (not multi-target)
+- Tests target `net8.0` by default, but dynamically switch to `net10.0` when `NavTargetFramework=net10.0` is passed
 
 ### Meta-package
 
-- **`ALCops.Analyzers`** (`src/ALCops.Analyzers/`): NuGet packaging project (not in the `.sln`). References all 6 cops + Common with `PrivateAssets="all"`. Always builds both `netstandard2.1` and `net8.0`. Packs all analyzer DLLs into `lib/netstandard2.1/` and `lib/net8.0/` in the NuGet package. Sets `IncludeBuildOutput=false` and `DevelopmentDependency=true`.
+- **`ALCops.Analyzers`** (`src/ALCops.Analyzers/`): NuGet packaging project (not in the `.sln`). References all 6 cops + Common with `PrivateAssets="all"`. Always builds `netstandard2.1`, `net8.0`, and `net10.0`. Packs all analyzer DLLs into `lib/netstandard2.1/`, `lib/net8.0/`, and `lib/net10.0/` in the NuGet package. Sets `IncludeBuildOutput=false` and `DevelopmentDependency=true`.
 
 ## Dependency graph
 
@@ -88,9 +88,9 @@ These are resolved from `$(BcDevToolsDir)/$(TargetFramework)/`, defaulting to `.
 
 Cop and Common projects multi-target conditionally:
 - **Local dev** (`ContinuousIntegrationBuild != true`): `net8.0` only (fast builds)
-- **CI** (`GITHUB_ACTIONS == true` sets `ContinuousIntegrationBuild = true`): `netstandard2.1;net8.0`
+- **CI** (`GITHUB_ACTIONS == true` sets `ContinuousIntegrationBuild = true`): `netstandard2.1;net8.0;net10.0`
 
-This dual-target exists because BC Dev Tools ship in both frameworks. Older BC versions use `netstandard2.1`, newer ones use `net8.0`.
+This triple-target exists because BC Dev Tools ship in multiple frameworks. Older BC versions use `netstandard2.1`, current versions use `net8.0`, and BC 29.0+ use `net10.0`.
 
 Some analyzers are **net8.0-only** when they depend on SDK APIs that are entirely absent in netstandard2.1. These use a `#if NETSTANDARD2_1` guard around the entire class body, compiling as an empty stub (no diagnostics, no-op initialize) on the older target. See `netstandard21-compatibility.instructions.md` for the pattern. Test-side, use `RequireMinimumVersion("16.0")` to skip tests when the netstandard2.1 SDK is loaded at runtime.
 
@@ -99,7 +99,9 @@ The `netstandard2.1` target requires:
 - `Newtonsoft.Json` from BC Dev Tools (Common only, since `System.Text.Json` is unavailable)
 - Conditional `#if NETSTANDARD2_1` / `#if !NETSTANDARD2_1` blocks in source code
 
-Test projects always target `net8.0` only. They use a `NavTargetFramework` property (defaulting to `net8.0`) to select which binary TFM to reference when in CI mode.
+Test projects target `net8.0` by default. When `NavTargetFramework=net10.0` is passed (from the CI test matrix), they dynamically switch to `net10.0`. They use a `NavTargetFramework` property (defaulting to `net8.0`) to select which binary TFM to reference when in CI mode. `NavBinaryTfm` resolves to `$(NavTargetFramework)` for modern TFMs and `netstandard2.1` for legacy TFMs.
+
+The `ALCops.Analyzers` meta-package always builds all three TFMs (`netstandard2.1;net8.0;net10.0`).
 
 ## Naming conventions
 

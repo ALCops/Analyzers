@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
+        <TargetFrameworks>netstandard2.1;net8.0;net10.0</TargetFrameworks>
         <PackageId>ALCops.Analyzers</PackageId>
         <AssemblyName>ALCops.Analyzers</AssemblyName>
         <IncludeBuildOutput>false</IncludeBuildOutput>
@@ -18,23 +18,30 @@
         <ItemGroup>
         <None Include="$(OutputPath)netstandard2.1/ALCops.ApplicationCop.dll" Pack="true" PackagePath="lib/netstandard2.1" Visible="false" />
         <None Include="$(OutputPath)net8.0/ALCops.ApplicationCop.dll" Pack="true" PackagePath="lib/net8.0" Visible="false" />
+        <None Include="$(OutputPath)net10.0/ALCops.ApplicationCop.dll" Pack="true" PackagePath="lib/net10.0" Visible="false" />
 
         <None Include="$(OutputPath)netstandard2.1/ALCops.Common.dll" Pack="true" PackagePath="lib/netstandard2.1" Visible="false" />
         <None Include="$(OutputPath)net8.0/ALCops.Common.dll" Pack="true" PackagePath="lib/net8.0" Visible="false" />
+        <None Include="$(OutputPath)net10.0/ALCops.Common.dll" Pack="true" PackagePath="lib/net10.0" Visible="false" />
 
         <None Include="$(OutputPath)netstandard2.1/ALCops.DocumentationCop.dll" Pack="true" PackagePath="lib/netstandard2.1" Visible="false" />
         <None Include="$(OutputPath)net8.0/ALCops.DocumentationCop.dll" Pack="true" PackagePath="lib/net8.0" Visible="false" />
+        <None Include="$(OutputPath)net10.0/ALCops.DocumentationCop.dll" Pack="true" PackagePath="lib/net10.0" Visible="false" />
 
         <None Include="$(OutputPath)netstandard2.1/ALCops.FormattingCop.dll" Pack="true" PackagePath="lib/netstandard2.1" Visible="false" />
         <None Include="$(OutputPath)net8.0/ALCops.FormattingCop.dll" Pack="true" PackagePath="lib/net8.0" Visible="false" />
+        <None Include="$(OutputPath)net10.0/ALCops.FormattingCop.dll" Pack="true" PackagePath="lib/net10.0" Visible="false" />
 
         <None Include="$(OutputPath)netstandard2.1/ALCops.LinterCop.dll" Pack="true" PackagePath="lib/netstandard2.1" Visible="false" />
         <None Include="$(OutputPath)net8.0/ALCops.LinterCop.dll" Pack="true" PackagePath="lib/net8.0" Visible="false" />
+        <None Include="$(OutputPath)net10.0/ALCops.LinterCop.dll" Pack="true" PackagePath="lib/net10.0" Visible="false" />
 
         <None Include="$(OutputPath)netstandard2.1/ALCops.PlatformCop.dll" Pack="true" PackagePath="lib/netstandard2.1" Visible="false" />
         <None Include="$(OutputPath)net8.0/ALCops.PlatformCop.dll" Pack="true" PackagePath="lib/net8.0" Visible="false" />
+        <None Include="$(OutputPath)net10.0/ALCops.PlatformCop.dll" Pack="true" PackagePath="lib/net10.0" Visible="false" />
 
         <None Include="$(OutputPath)netstandard2.1/ALCops.TestAutomationCop.dll" Pack="true" PackagePath="lib/netstandard2.1" Visible="false" />
         <None Include="$(OutputPath)net8.0/ALCops.TestAutomationCop.dll" Pack="true" PackagePath="lib/net8.0" Visible="false" />
+        <None Include="$(OutputPath)net10.0/ALCops.TestAutomationCop.dll" Pack="true" PackagePath="lib/net10.0" Visible="false" />
     </ItemGroup>
 </Project>
