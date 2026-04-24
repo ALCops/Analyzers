@@ -22,13 +22,15 @@ The `get-bc-devtools` composite GitHub Action discovers all available BC DevTool
 
 ### Assembly analysis (`Get-AssemblyInfo`)
 
-For each new BC DevTools version, the script downloads `Microsoft.Dynamics.Nav.Analyzers.Common.dll` and inspects it using .NET reflection:
+For each new BC DevTools version, the script downloads `Microsoft.Dynamics.Nav.Analyzers.Common.dll` and inspects it using `System.Reflection.Metadata` (built into the .NET runtime, no NuGet package needed):
 
-1. Load the assembly bytes via `Assembly.Load($bytes)` (no file lock)
-2. Read `AssemblyVersion` from `GetName().Version`
-3. Attempt to read `TargetFrameworkAttribute` via `GetCustomAttributesData()`
-4. If custom attributes fail (e.g. cross-runtime inspection), fall through to reference-based detection
-5. Reference-based detection: infer TFM from `System.Runtime` version (e.g. 8.x → net8.0, 10.x → net10.0) or `netstandard` reference
+1. Open the DLL file via `PEReader` (no assembly loading into the AppDomain)
+2. Get a `MetadataReader` from the PE reader
+3. Read `AssemblyVersion` from the assembly definition
+4. Walk custom attributes on the assembly definition to find `TargetFrameworkAttribute`
+5. Decode the attribute blob to extract the framework name (e.g. `.NETCoreApp,Version=v10.0` → `net10.0`)
+
+This approach reads PE metadata directly from the file bytes without loading the assembly into the runtime, making it immune to cross-runtime version mismatches (e.g. inspecting a net10.0 DLL from a net8.0 host)
 
 ### Caching strategy
 
@@ -41,22 +43,18 @@ For each new BC DevTools version, the script downloads `Microsoft.Dynamics.Nav.A
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| .NET SDK in Setup job | Install latest LTS (currently 10.0.x) via `actions/setup-dotnet` | Required for `GetCustomAttributesData()` to resolve `System.Runtime` for current BC DevTools assemblies. Must be updated when a new .NET major version appears in BC DevTools (e.g. .NET 11 expected ~November 2026). |
-| Assembly inspection method | `System.Reflection.Assembly.Load($bytes)` with fallback | Direct metadata reading. `ReflectionOnlyLoad` tried first but unavailable on .NET Core |
-| Cross-runtime TFM detection | `GetReferencedAssemblies()` fallback | Defense-in-depth: when `GetCustomAttributesData()` fails (e.g. new .NET version not yet installed), referenced assembly versions provide reliable TFM inference |
-| TFM derivation from `System.Runtime` | Dynamic `net{major}.0` from version | Future-proof: automatically handles net8.0, net9.0, net10.0, etc. without code changes |
-| Version sorting resilience | `[version]::TryParse()` with fallback to `0.0.0.0` | Prevents crashes from non-parseable version strings (e.g. `"analysis-error"` from failed analysis) |
+| Assembly inspection method | `System.Reflection.Metadata` via `PEReader` + `MetadataReader` | Reads PE metadata directly from file bytes without loading the assembly into the runtime. Immune to cross-runtime version mismatches (e.g. net10.0 DLL on net8.0 host). Built into the .NET runtime, no NuGet package needed. |
+| TFM parsing | Regex on `TargetFrameworkAttribute` value | Handles `.NETStandard`, `.NETCoreApp`, and `.NETFramework` monikers. Future .NET versions are handled automatically. |
 | Cache key strategy | Content-based (SHA256 hash) | Only creates new cache entries when data actually changes |
 
 ## Maintenance
 
 When a new .NET major version appears in BC DevTools assemblies:
-1. Update `dotnet-version` in the Setup job of `build-test.yml` (e.g. add the new version or replace older ones)
-2. Add a `tfm-net{major*10}0-version-lowest` output to `action.yml` (e.g. `tfm-net100-version-lowest` for net10.0)
-3. Propagate the new output through `build-test.yml` workflow_call outputs and setup job outputs
-4. Add conditional "Setup BC DevTools" steps for the new TFM in Build (`build-test.yml`) and Release (`build-and-release.yml`) jobs
-5. Add the new TFM path to `$nugetTfmPaths` in `Get-BC-DevTools.ps1` for NuGet package analysis
-6. The reference-based TFM fallback and dynamic `net{major}.0` derivation require no changes
+1. Add a `tfm-net{major*10}0-version-lowest` output to `action.yml` (e.g. `tfm-net100-version-lowest` for net10.0)
+2. Propagate the new output through `build-test.yml` workflow_call outputs and setup job outputs
+3. Add conditional "Setup BC DevTools" steps for the new TFM in Build (`build-test.yml`) and Release (`build-and-release.yml`) jobs
+4. Add the new TFM path to `$nugetTfmPaths` in `Get-BC-DevTools.ps1` for NuGet package analysis
+5. The `System.Reflection.Metadata`-based TFM detection and TFM parsing require no changes (they handle any .NET version automatically)
 
 ## net10.0 pipeline support
 
@@ -71,8 +69,7 @@ The pipeline is prepared for net10.0 BC DevTools:
 
 | Issue | Workaround |
 |---|---|
-| `GetCustomAttributesData()` can fail if the installed .NET SDK is older than the assembly's target | Inner try/catch falls through to reference-based TFM detection via `GetReferencedAssemblies()` |
-| `Assembly.Load($bytes)` can fail entirely for corrupted or incompatible assemblies | Returns `"analysis-error"` sentinel; sort and downstream consumers handle non-parseable versions |
+| Corrupted or non-.NET assemblies cannot be read by `PEReader` | Returns `"analysis-error"` sentinel; downstream consumers should handle non-parseable versions |
 
 ## Key files
 

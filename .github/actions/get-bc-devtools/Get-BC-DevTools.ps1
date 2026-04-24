@@ -90,90 +90,64 @@ function Get-AssemblyInfo {
     param(
         [string]$AssemblyPath
     )
-    
-    try {
-        # First try to use Cecil or other metadata readers if available, but fallback to reflection
-        # Load assembly metadata without loading the assembly into the current AppDomain
-        $bytes = [System.IO.File]::ReadAllBytes($AssemblyPath)
-        
-        try {
-            # Try to load as reflection-only first
-            $assembly = [System.Reflection.Assembly]::ReflectionOnlyLoad($bytes)
-        }
-        catch {
-            # Fallback to regular load
-            $assembly = [System.Reflection.Assembly]::Load($bytes)
-        }
-        
-        # Get Assembly Version
-        $assemblyVersion = $assembly.GetName().Version.ToString()
-        
-        # Try to get TargetFrameworkAttribute
-        $customAttributes = $assembly.GetCustomAttributesData()
-        $targetFrameworkAttr = $customAttributes | Where-Object { 
-            $_.AttributeType.Name -eq 'TargetFrameworkAttribute' 
-        }
-        
-        $targetFramework = "unknown"
-        if ($targetFrameworkAttr) {
-            $frameworkName = $targetFrameworkAttr.ConstructorArguments[0].Value
-            
-            # Parse the framework name to extract just the target framework moniker
-            if ($frameworkName -match '\.NETStandard,Version=v(.+)') {
-                $targetFramework = "netstandard$($matches[1])"
-            }
-            elseif ($frameworkName -match '\.NETCoreApp,Version=v(.+)') {
-                $targetFramework = "net$($matches[1])"
-            }
-            elseif ($frameworkName -match '\.NETFramework,Version=v(.+)') {
-                $version = $matches[1] -replace '\.', ''
-                $targetFramework = "net$version"
-            }
-            else {
-                # Return a cleaned version of the framework name
-                $targetFramework = $frameworkName -replace '\.NET|,Version=v', '' -replace '\.', ''
-            }
-        }
-        else {
-            # Alternative: try to get from AssemblyMetadataAttribute
-            $metadataAttrs = $customAttributes | Where-Object { 
-                $_.AttributeType.Name -eq 'AssemblyMetadataAttribute' 
-            }
-            
-            foreach ($attr in $metadataAttrs) {
-                $key = $attr.ConstructorArguments[0].Value
-                $value = $attr.ConstructorArguments[1].Value
-                if ($key -eq 'TargetFramework') {
-                    $targetFramework = $value
-                    break
-                }
-            }
-        }
 
-        # Last-resort fallback: some assemblies (e.g. older BC BCArtifact builds) are compiled
-        # without emitting TargetFrameworkAttribute at all, or the attribute could not be read
-        # (e.g. .NET 10 assemblies inspected from a .NET 8 host).
-        # Infer the TFM from the referenced assemblies instead:
-        # - A reference to 'netstandard' identifies netstandard builds.
-        # - A reference to 'System.Runtime' indicates a .NET Core/.NET 5+ build;
-        #   derive the TFM from its major version (e.g. 8→net8.0, 10→net10.0).
-        if ($targetFramework -eq 'unknown') {
-            $refNames = $assembly.GetReferencedAssemblies() | ForEach-Object { $_.Name }
-            $netstdRef = $assembly.GetReferencedAssemblies() | Where-Object { $_.Name -eq 'netstandard' }
-            if ($netstdRef) {
-                $targetFramework = "netstandard$($netstdRef.Version.Major).$($netstdRef.Version.Minor)"
-            }
-            else {
-                $sysRuntimeRef = $assembly.GetReferencedAssemblies() | Where-Object { $_.Name -eq 'System.Runtime' }
-                if ($sysRuntimeRef) {
-                    $targetFramework = "net$($sysRuntimeRef.Version.Major).0"
+    try {
+        # Use System.Reflection.Metadata to read PE metadata without loading the assembly
+        # into the runtime. This avoids cross-runtime failures (e.g. net10.0 DLL on a net8.0 host).
+        $stream = [System.IO.File]::OpenRead($AssemblyPath)
+        try {
+            $peReader = [System.Reflection.PortableExecutable.PEReader]::new($stream)
+            $mdReader = [System.Reflection.Metadata.PEReaderExtensions]::GetMetadataReader($peReader)
+
+            # Assembly version
+            $asmDef = $mdReader.GetAssemblyDefinition()
+            $assemblyVersion = $asmDef.Version.ToString()
+
+            # Walk custom attributes on the assembly to find TargetFrameworkAttribute
+            $targetFramework = 'unknown'
+            foreach ($attrHandle in $asmDef.GetCustomAttributes()) {
+                $attr = $mdReader.GetCustomAttribute($attrHandle)
+
+                # Resolve the attribute type name
+                $ctorHandle = $attr.Constructor
+                $typeName = $null
+                if ($ctorHandle.Kind -eq [System.Reflection.Metadata.HandleKind]::MemberReference) {
+                    $memberRef = $mdReader.GetMemberReference([System.Reflection.Metadata.MemberReferenceHandle]$ctorHandle)
+                    $parentHandle = $memberRef.Parent
+                    if ($parentHandle.Kind -eq [System.Reflection.Metadata.HandleKind]::TypeReference) {
+                        $typeRef = $mdReader.GetTypeReference([System.Reflection.Metadata.TypeReferenceHandle]$parentHandle)
+                        $typeName = $mdReader.GetString($typeRef.Name)
+                    }
                 }
+
+                if ($typeName -ne 'TargetFrameworkAttribute') { continue }
+
+                # Decode the fixed-length string argument from the attribute blob
+                $blobReader = $mdReader.GetBlobReader($attr.Value)
+                $blobReader.ReadUInt16() | Out-Null   # skip prolog (0x0001)
+                $frameworkName = $blobReader.ReadSerializedString()
+
+                if ($frameworkName -match '\.NETStandard,Version=v(.+)') {
+                    $targetFramework = "netstandard$($matches[1])"
+                }
+                elseif ($frameworkName -match '\.NETCoreApp,Version=v(.+)') {
+                    $targetFramework = "net$($matches[1])"
+                }
+                elseif ($frameworkName -match '\.NETFramework,Version=v(.+)') {
+                    $version = $matches[1] -replace '\.', ''
+                    $targetFramework = "net$version"
+                }
+                break
+            }
+
+            return [PSCustomObject]@{
+                TargetFramework = $targetFramework
+                Version         = $assemblyVersion
             }
         }
-        
-        return [PSCustomObject]@{
-            TargetFramework = $targetFramework
-            Version         = $assemblyVersion
+        finally {
+            if ($peReader) { $peReader.Dispose() }
+            $stream.Dispose()
         }
     }
     catch {
