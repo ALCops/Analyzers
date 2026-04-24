@@ -66,7 +66,6 @@ The pipeline is prepared for net10.0 BC DevTools:
 - **Download**: Conditional "Setup BC DevTools" steps in Build and Release jobs download net10.0 DevTools when available
 - **NuGet path**: `setup-bc-devtools` accepts a `tfm` input (default `net8.0`) to resolve `tools/{tfm}/any` in NuGet packages
 - **Analysis**: `Get-BC-DevTools.ps1` tries multiple NuGet TFM paths (`tools/net8.0/any`, `tools/net10.0/any`) when analyzing assemblies
-- **Conditional**: All net10.0 steps use `if: needs.setup.outputs.tfm-net100-version-lowest != ''` so they're skipped when no net10.0 sources exist
 
 ## Known issues
 

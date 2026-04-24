@@ -108,9 +108,9 @@ jobs:
           sources: ${{ needs.setup.outputs.bc-devtools-sources }}
           version-number: ${{ needs.setup.outputs.tfm-net80-version-lowest }}
           target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net8.0
+          tfm: net8.0
 
       - name: Setup BC DevTools (v${{ needs.setup.outputs.tfm-net100-version-lowest }})
-        if: needs.setup.outputs.tfm-net100-version-lowest != ''
         uses: ./.github/actions/setup-bc-devtools
         with:
           sources: ${{ needs.setup.outputs.bc-devtools-sources }}
