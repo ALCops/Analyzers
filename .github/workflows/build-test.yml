@@ -18,6 +18,9 @@ on:
       tfm-net80-version-lowest:
         description: "Target framework net8.0 lowest version"
         value: ${{ jobs.setup.outputs.tfm-net80-version-lowest }}
+      tfm-net100-version-lowest:
+        description: "Target framework net10.0 lowest version"
+        value: ${{ jobs.setup.outputs.tfm-net100-version-lowest }}
   workflow_dispatch:
 
 env:
@@ -76,6 +79,7 @@ jobs:
       bc-devtools-sources: ${{ steps.get-bc-devtools.outputs.sources }}
       tfm-netstandard21-version-lowest: ${{ steps.get-bc-devtools.outputs.tfm-netstandard21-version-lowest }}
       tfm-net80-version-lowest: ${{ steps.get-bc-devtools.outputs.tfm-net80-version-lowest }}
+      tfm-net100-version-lowest: ${{ steps.get-bc-devtools.outputs.tfm-net100-version-lowest }}
       matrix: ${{ steps.setup-test-matrix.outputs.matrix }}
 
   build:
@@ -104,6 +108,15 @@ jobs:
           sources: ${{ needs.setup.outputs.bc-devtools-sources }}
           version-number: ${{ needs.setup.outputs.tfm-net80-version-lowest }}
           target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net8.0
+
+      - name: Setup BC DevTools (v${{ needs.setup.outputs.tfm-net100-version-lowest }})
+        if: needs.setup.outputs.tfm-net100-version-lowest != ''
+        uses: ./.github/actions/setup-bc-devtools
+        with:
+          sources: ${{ needs.setup.outputs.bc-devtools-sources }}
+          version-number: ${{ needs.setup.outputs.tfm-net100-version-lowest }}
+          target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net10.0
+          tfm: net10.0
 
       # ALCops.Common
       - name: Restore ALCops.Common

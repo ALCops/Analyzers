@@ -17,6 +17,9 @@ outputs:
   tfm-net80-version-lowest:
     description: Lowest AL version for net8.0
     value: ${{ steps.get-bc-devtools.outputs.tfm_net80_version_lowest }}
+  tfm-net100-version-lowest:
+    description: Lowest AL version for net10.0
+    value: ${{ steps.get-bc-devtools.outputs.tfm_net100_version_lowest }}
 
 runs:
   using: composite
@@ -60,11 +63,17 @@ runs:
                   Select-Object -First 1 -ExpandProperty version
         Write-Host "Lowest net8.0 version: $net80"
 
+        $net100 = $sources | Where-Object { $_.tfm -eq 'net10.0' -and $_.version } |
+                  Sort-Object { [version]($_.version) } |
+                  Select-Object -First 1 -ExpandProperty version
+        Write-Host "Lowest net10.0 version: $net100"
+
         # Emit outputs
         $jsonCompressed = $sources | ConvertTo-Json -Compress
         echo "sources=$jsonCompressed" >> $env:GITHUB_OUTPUT
         echo "tfm_netstandard21_version_lowest=$ns21" >> $env:GITHUB_OUTPUT
         echo "tfm_net80_version_lowest=$net80" >> $env:GITHUB_OUTPUT
+        echo "tfm_net100_version_lowest=$net100" >> $env:GITHUB_OUTPUT
 
     - name: Display sources
       shell: pwsh

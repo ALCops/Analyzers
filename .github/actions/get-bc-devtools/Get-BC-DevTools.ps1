@@ -287,19 +287,41 @@ function Get-AssetInfo {
         }
     }
 
-    # Determine the archive-internal folder and the full entry path for the target DLL
+    # Determine the archive-internal folder and the full entry path for the target DLL.
+    # For NuGet, try net8.0 first; fall back to net10.0 if the entry isn't found.
+    $nugetTfmPaths = @('tools/net8.0/any', 'tools/net10.0/any')
     $pathInArchive = switch ($PackageType) {
         'VSIX' { 'extension/bin/Analyzers' }
-        'NuGet' { 'tools/net8.0/any' }
+        'NuGet' { $nugetTfmPaths[0] }
         default { throw "Unknown asset type: $PackageType" }
     }
-    $entryPath = "$pathInArchive/Microsoft.Dynamics.Nav.Analyzers.Common.dll"
     $dllPath = Join-Path $TempDirectory 'Microsoft.Dynamics.Nav.Analyzers.Common.dll'
 
     try {
-        # HTTP Range Requests: download only the target DLL from the remote archive
         $rangeScript = Join-Path (Split-Path $PSScriptRoot -Parent) 'shared\Get-RemoteZipEntry.ps1'
-        & $rangeScript -Uri $uri -EntryPath $entryPath -OutputPath $dllPath
+
+        if ($PackageType -eq 'NuGet') {
+            # Try each known NuGet TFM path until one succeeds
+            $extracted = $false
+            foreach ($tfmPath in $nugetTfmPaths) {
+                $entryPath = "$tfmPath/Microsoft.Dynamics.Nav.Analyzers.Common.dll"
+                try {
+                    & $rangeScript -Uri $uri -EntryPath $entryPath -OutputPath $dllPath
+                    $extracted = $true
+                    break
+                }
+                catch {
+                    # Entry not found at this TFM path, try next
+                }
+            }
+            if (-not $extracted) {
+                throw "Microsoft.Dynamics.Nav.Analyzers.Common.dll not found in NuGet package at any known TFM path: $($nugetTfmPaths -join ', ')"
+            }
+        }
+        else {
+            $entryPath = "$pathInArchive/Microsoft.Dynamics.Nav.Analyzers.Common.dll"
+            & $rangeScript -Uri $uri -EntryPath $entryPath -OutputPath $dllPath
+        }
 
         $assemblyInfo = Get-AssemblyInfo -AssemblyPath $dllPath
         return $assemblyInfo

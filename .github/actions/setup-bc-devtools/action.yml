@@ -12,6 +12,10 @@ inputs:
     description: Target path to extract files
     required: false
     default: Microsoft.Dynamics.BusinessCentral.Development.Tools
+  tfm:
+    description: Target framework moniker for NuGet extraction path (e.g. net8.0, net10.0). Only affects NuGet packages.
+    required: false
+    default: net8.0
 
 runs:
   using: composite
@@ -146,10 +150,11 @@ runs:
         ASSET_TYPE: ${{ steps.determine-bc-devtools-asset.outputs.asset-type }}
         TARGET_PATH: ${{ inputs.target-path }}
         ACTION_PATH: ${{ github.action_path }}
+        TFM: ${{ inputs.tfm }}
       run: |
         $pathInArchive = switch ($env:ASSET_TYPE) {
           'VSIX'       { 'extension/bin/Analyzers' }
-          'NuGet'      { 'tools/net8.0/any' }
+          'NuGet'      { "tools/$($env:TFM)/any" }
           'BCArtifact' { 'extension/bin/Analyzers' }
           default { 
             Write-Error "Invalid asset-type: $($env:ASSET_TYPE). Must be 'VSIX', 'NuGet', or 'BCArtifact'."

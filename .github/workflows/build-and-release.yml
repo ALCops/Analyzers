@@ -82,6 +82,15 @@ jobs:
           version-number: ${{ needs.build-and-test.outputs.tfm-net80-version-lowest }}
           target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net8.0
 
+      - name: Setup BC DevTools (v${{ needs.build-and-test.outputs.tfm-net100-version-lowest }})
+        if: needs.build-and-test.outputs.tfm-net100-version-lowest != ''
+        uses: ./.github/actions/setup-bc-devtools
+        with:
+          sources: ${{ needs.build-and-test.outputs.bc-devtools-sources }}
+          version-number: ${{ needs.build-and-test.outputs.tfm-net100-version-lowest }}
+          target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net10.0
+          tfm: net10.0
+
       # GitVersion
       - name: GitVersion - Setup
         uses: gittools/actions/gitversion/setup@v4.5.0

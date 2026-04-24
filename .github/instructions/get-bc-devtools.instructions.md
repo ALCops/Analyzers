@@ -51,8 +51,22 @@ For each new BC DevTools version, the script downloads `Microsoft.Dynamics.Nav.A
 ## Maintenance
 
 When a new .NET major version appears in BC DevTools assemblies:
-1. Update `dotnet-version` in the Setup job of `build-test.yml` (e.g. `10.0.x` → `11.0.x` or add multi-version)
-2. The reference-based TFM fallback and dynamic `net{major}.0` derivation require no changes
+1. Update `dotnet-version` in the Setup job of `build-test.yml` (e.g. add the new version or replace older ones)
+2. Add a `tfm-net{major*10}0-version-lowest` output to `action.yml` (e.g. `tfm-net100-version-lowest` for net10.0)
+3. Propagate the new output through `build-test.yml` workflow_call outputs and setup job outputs
+4. Add conditional "Setup BC DevTools" steps for the new TFM in Build (`build-test.yml`) and Release (`build-and-release.yml`) jobs
+5. Add the new TFM path to `$nugetTfmPaths` in `Get-BC-DevTools.ps1` for NuGet package analysis
+6. The reference-based TFM fallback and dynamic `net{major}.0` derivation require no changes
+
+## net10.0 pipeline support
+
+The pipeline is prepared for net10.0 BC DevTools:
+
+- **Detection**: `action.yml` computes `tfm-net100-version-lowest` from sources where TFM is `net10.0`
+- **Download**: Conditional "Setup BC DevTools" steps in Build and Release jobs download net10.0 DevTools when available
+- **NuGet path**: `setup-bc-devtools` accepts a `tfm` input (default `net8.0`) to resolve `tools/{tfm}/any` in NuGet packages
+- **Analysis**: `Get-BC-DevTools.ps1` tries multiple NuGet TFM paths (`tools/net8.0/any`, `tools/net10.0/any`) when analyzing assemblies
+- **Conditional**: All net10.0 steps use `if: needs.setup.outputs.tfm-net100-version-lowest != ''` so they're skipped when no net10.0 sources exist
 
 ## Known issues
 
