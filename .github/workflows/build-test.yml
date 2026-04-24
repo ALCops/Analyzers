@@ -34,6 +34,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
       - name: Restore TargetFramework.json cache
         id: restore-tfm-cache
         uses: actions/cache/restore@v5
@@ -42,11 +47,6 @@ jobs:
           # Unique key so we never get an exact hit; restore-keys picks up the latest saved entry
           key: tfm-json-${{ github.run_id }}
           restore-keys: tfm-json-
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.x
 
       - name: Get BC DevTools
         id: get-bc-devtools
@@ -226,7 +226,7 @@ jobs:
           sources: ${{ needs.setup.outputs.bc-devtools-sources }}
           version-number: ${{ matrix.version }}
           target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/${{ matrix.tfm == 'net10.0' && 'net10.0' || 'net8.0' }}
-          tfm: ${{ matrix.tfm == 'net10.0' && 'net10.0' || 'net8.0' }}
+          tfm: ${{ matrix.tfm == 'net10.0' && 'net10.0' || 'net8.0' }} #TODO: Awaiting net10.0 for ALCops.RoslynTestKit  
 
       # ALCops.ApplicationCop
       - name: Download ALCops.ApplicationCop biniaries

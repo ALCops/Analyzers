@@ -55,11 +55,8 @@ function Save-TargetFrameworkJson {
     
     Write-Host "Updating TargetFramework.json with $($Data.Count) entries..." -ForegroundColor Yellow
     
-    # Sort by version for better readability (handle non-parseable versions gracefully)
-    $sortedData = $Data | Sort-Object {
-        $v = $null
-        if ([version]::TryParse($_.Version, [ref]$v)) { $v } else { [version]'0.0.0.0' }
-    } -Descending
+    # Sort by version for better readability
+    $sortedData = $Data | Sort-Object { [version]$_.Version } -Descending
     $jsonOutput = $sortedData | ConvertTo-Json -Depth 3
     $jsonOutput | Set-Content $JsonPath -Encoding UTF8
     
@@ -111,55 +108,46 @@ function Get-AssemblyInfo {
         # Get Assembly Version
         $assemblyVersion = $assembly.GetName().Version.ToString()
         
-        # Try to get TargetFrameworkAttribute via custom attributes.
-        # Note: The Setup job installs the latest .NET LTS SDK to ensure GetCustomAttributesData()
-        # can resolve System.Runtime for current BC DevTools assemblies. The inner try/catch
-        # provides defense-in-depth for any future .NET version mismatch.
+        # Try to get TargetFrameworkAttribute
+        $customAttributes = $assembly.GetCustomAttributesData()
+        $targetFrameworkAttr = $customAttributes | Where-Object { 
+            $_.AttributeType.Name -eq 'TargetFrameworkAttribute' 
+        }
+        
         $targetFramework = "unknown"
-        try {
-            $customAttributes = $assembly.GetCustomAttributesData()
-            $targetFrameworkAttr = $customAttributes | Where-Object { 
-                $_.AttributeType.Name -eq 'TargetFrameworkAttribute' 
-            }
+        if ($targetFrameworkAttr) {
+            $frameworkName = $targetFrameworkAttr.ConstructorArguments[0].Value
             
-            if ($targetFrameworkAttr) {
-                $frameworkName = $targetFrameworkAttr.ConstructorArguments[0].Value
-                
-                # Parse the framework name to extract just the target framework moniker
-                if ($frameworkName -match '\.NETStandard,Version=v(.+)') {
-                    $targetFramework = "netstandard$($matches[1])"
-                }
-                elseif ($frameworkName -match '\.NETCoreApp,Version=v(.+)') {
-                    $targetFramework = "net$($matches[1])"
-                }
-                elseif ($frameworkName -match '\.NETFramework,Version=v(.+)') {
-                    $version = $matches[1] -replace '\.', ''
-                    $targetFramework = "net$version"
-                }
-                else {
-                    # Return a cleaned version of the framework name
-                    $targetFramework = $frameworkName -replace '\.NET|,Version=v', '' -replace '\.', ''
-                }
+            # Parse the framework name to extract just the target framework moniker
+            if ($frameworkName -match '\.NETStandard,Version=v(.+)') {
+                $targetFramework = "netstandard$($matches[1])"
+            }
+            elseif ($frameworkName -match '\.NETCoreApp,Version=v(.+)') {
+                $targetFramework = "net$($matches[1])"
+            }
+            elseif ($frameworkName -match '\.NETFramework,Version=v(.+)') {
+                $version = $matches[1] -replace '\.', ''
+                $targetFramework = "net$version"
             }
             else {
-                # Alternative: try to get from AssemblyMetadataAttribute
-                $metadataAttrs = $customAttributes | Where-Object { 
-                    $_.AttributeType.Name -eq 'AssemblyMetadataAttribute' 
-                }
-                
-                foreach ($attr in $metadataAttrs) {
-                    $key = $attr.ConstructorArguments[0].Value
-                    $value = $attr.ConstructorArguments[1].Value
-                    if ($key -eq 'TargetFramework') {
-                        $targetFramework = $value
-                        break
-                    }
-                }
+                # Return a cleaned version of the framework name
+                $targetFramework = $frameworkName -replace '\.NET|,Version=v', '' -replace '\.', ''
             }
         }
-        catch {
-            Write-Warning "GetCustomAttributesData() failed for '$AssemblyPath': $($_.Exception.Message)"
-            # $targetFramework remains "unknown"; fall through to reference-based detection below
+        else {
+            # Alternative: try to get from AssemblyMetadataAttribute
+            $metadataAttrs = $customAttributes | Where-Object { 
+                $_.AttributeType.Name -eq 'AssemblyMetadataAttribute' 
+            }
+            
+            foreach ($attr in $metadataAttrs) {
+                $key = $attr.ConstructorArguments[0].Value
+                $value = $attr.ConstructorArguments[1].Value
+                if ($key -eq 'TargetFramework') {
+                    $targetFramework = $value
+                    break
+                }
+            }
         }
 
         # Last-resort fallback: some assemblies (e.g. older BC BCArtifact builds) are compiled
