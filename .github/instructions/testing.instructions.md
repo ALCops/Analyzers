@@ -283,7 +283,7 @@ Test projects always compile as `net8.0`, so `NETSTANDARD2_1` is never defined. 
 
 ## Testing Analyzers with File System Dependencies
 
-Analyzers that access `Compilation.FileSystem` (e.g., to read XLIFF translation files) need a virtual file system during tests. Use `MemoryFileSystem` (SDK built-in) injected via `AnalyzerTestFixtureConfig.FileSystem` (requires RoslynTestKit 1.0.0+):
+Analyzers that access `Compilation.FileSystem` (e.g., to read XLIFF translation files) need a virtual file system during tests. Use `MemoryFileSystem` (SDK built-in) injected via `AnalyzerTestFixtureConfig.FileSystem` (requires RoslynTestKit 1.1.0+):
 
 ```csharp
 using Microsoft.Dynamics.Nav.CodeAnalysis;
