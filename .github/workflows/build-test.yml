@@ -89,7 +89,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       - name: Setup BC DevTools (v${{ needs.setup.outputs.tfm-netstandard21-version-lowest }})
         uses: ./.github/actions/setup-bc-devtools
@@ -204,7 +204,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       - name: Setup BC v${{ matrix.version }} DevTools
         id: setup-bc-devtools
