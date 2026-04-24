@@ -225,8 +225,8 @@ jobs:
         with:
           sources: ${{ needs.setup.outputs.bc-devtools-sources }}
           version-number: ${{ matrix.version }}
-          target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/${{ matrix.tfm == 'net10.0' && 'net10.0' || 'net8.0' }}
-          tfm: ${{ matrix.tfm == 'net10.0' && 'net10.0' || 'net8.0' }} #TODO: Awaiting net10.0 for ALCops.RoslynTestKit  
+          target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net10.0 # Always use net10.0 target folder for testing
+          tfm: ${{ matrix.tfm }}
 
       # ALCops.ApplicationCop
       - name: Download ALCops.ApplicationCop biniaries
