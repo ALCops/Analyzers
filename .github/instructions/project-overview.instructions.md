@@ -50,7 +50,7 @@ Each test project follows the pattern `ALCops.{CopName}.Test`:
 - `AssemblyInfo.cs` : Sets `[assembly: Parallelizable(ParallelScope.All)]`
 - `Rules/` : One folder per rule, containing the test class and subfolders `HasDiagnostic/` and `NoDiagnostic/` (plus `HasFix/` if a code fix exists) with `.al` test fixture files
 - Test classes extend `NavCodeAnalysisBase` and use `RoslynFixtureFactory.Create<T>()`
-- Tests target `net8.0` by default, but dynamically switch to `net10.0` when `NavTargetFramework=net10.0` is passed
+- Tests target `net10.0` by default, but dynamically switch to `net8.0` when `NavTargetFramework=net8.0` is passed
 
 ### Meta-package
 
@@ -99,7 +99,7 @@ The `netstandard2.1` target requires:
 - `Newtonsoft.Json` from BC Dev Tools (Common only, since `System.Text.Json` is unavailable)
 - Conditional `#if NETSTANDARD2_1` / `#if !NETSTANDARD2_1` blocks in source code
 
-Test projects target `net8.0` by default. When `NavTargetFramework=net10.0` is passed (from the CI test matrix), they dynamically switch to `net10.0`. They use a `NavTargetFramework` property (defaulting to `net8.0`) to select which binary TFM to reference when in CI mode. `NavBinaryTfm` resolves to `$(NavTargetFramework)` for modern TFMs and `netstandard2.1` for legacy TFMs.
+Test projects target `net10.0` by default. When `NavTargetFramework=net8.0` is passed (from the CI test matrix), they dynamically switch to `net8.0`. For legacy TFMs (`netstandard2.0`/`netstandard2.1`), the test project still compiles as `net10.0` since test projects cannot target netstandard. They use a `NavTargetFramework` property (defaulting to `net10.0`) to select both the `TargetFramework` and the binary TFM to reference when in CI mode. `NavBinaryTfm` resolves to `$(NavTargetFramework)` for modern TFMs and `netstandard2.1` for legacy TFMs.
 
 The `ALCops.Analyzers` meta-package always builds all three TFMs (`netstandard2.1;net8.0;net10.0`).
 
