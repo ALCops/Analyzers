@@ -14,13 +14,12 @@
         <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Remove="ALCops.PlatformCopAnalyzers.cs" />
         <EmbeddedResource Update="ALCops.PlatformCopAnalyzers.resx">
             <LogicalName>ALCops.PlatformCop.PlatformCopAnalyzers.resources</LogicalName>
             <Generator>MSBuild:Compile</Generator>
             <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
             <StronglyTypedNamespace>ALCops.PlatformCop</StronglyTypedNamespace>
-            <StronglyTypedFileName>ALCops.PlatformCopAnalyzers.cs</StronglyTypedFileName>
+            <StronglyTypedFileName>$(IntermediateOutputPath)ALCops.PlatformCopAnalyzers.cs</StronglyTypedFileName>
             <StronglyTypedClassName>PlatformCopAnalyzers</StronglyTypedClassName>
         </EmbeddedResource>
     </ItemGroup>
