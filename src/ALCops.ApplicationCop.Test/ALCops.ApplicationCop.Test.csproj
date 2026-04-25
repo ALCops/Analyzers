@@ -31,6 +31,7 @@
 
     <!-- Test/runtime infra -->
     <ItemGroup>
+        <PackageReference Include="ApprovalTests" Version="3.0.0" />
         <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.14.0" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
@@ -66,10 +67,7 @@
 
     <!-- On legacy NAV TFMs, suppress package assets and directly reference the netstandard2.1 DLL -->
     <ItemGroup Condition="'$(IsLegacyNavTfm)'=='true'">
-        <PackageReference Include="ALCops.RoslynTestKit" Version="1.0.0"
-                            ExcludeAssets="all"
-                            IncludeAssets="none"
-                            GeneratePathProperty="true" />
+        <PackageReference Include="ALCops.RoslynTestKit" Version="1.0.0" ExcludeAssets="all" IncludeAssets="none" GeneratePathProperty="true" />
         <Reference Include="$(PkgALCops_RoslynTestKit)/lib/netstandard2.1/RoslynTestKit.dll">
             <Private>True</Private>
         </Reference>

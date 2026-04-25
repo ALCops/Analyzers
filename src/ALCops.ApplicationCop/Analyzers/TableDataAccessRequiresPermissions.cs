@@ -191,9 +191,17 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
     private static void ReportDiagnostic(Action<Diagnostic> report, RequiredPermission required)
     {
         var permissionChar = MethodOperationMap.ToPermissionChar(required.Operation);
+        var tableNamespace = required.VariableType.GetContainingNamespaceQualifiedNameWithReflection() ?? string.Empty;
+
+        var properties = ImmutableDictionary<string, string>.Empty
+            .Add("TableName", required.VariableType.Name)
+            .Add("TableNamespace", tableNamespace)
+            .Add("PermissionChar", permissionChar.ToString());
+
         report(Diagnostic.Create(
             DiagnosticDescriptors.TableDataAccessRequiresPermissions,
             required.Location,
+            properties,
             permissionChar,
             required.VariableType.Name));
     }

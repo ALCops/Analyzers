@@ -1,3 +1,4 @@
+using ALCops.ApplicationCop.CodeFixes;
 using RoslynTestKit;
 
 namespace ALCops.ApplicationCop.Test
@@ -5,6 +6,7 @@ namespace ALCops.ApplicationCop.Test
     public class TableDataAccessRequiresPermissions : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
+        private static readonly Analyzers.TableDataAccessRequiresPermissions _analyzer = new();
         private string _testCasePath;
 
         [SetUp]
@@ -70,6 +72,34 @@ namespace ALCops.ApplicationCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TableDataAccessRequiresPermissions);
+        }
+
+        [Test]
+        [TestCase("AddNewPermissionsProperty")]
+        [TestCase("AddNewTableEntry")]
+        [TestCase("MergePermissionChar")]
+        [TestCase("MergeCanonicalOrder")]
+        [TestCase("AddEntryMultiLine")]
+        [TestCase("AddEntrySingleLine")]
+        [TestCase("AddEntryAlphabetical")]
+        [TestCase("AddEntryAppend")]
+        public async Task HasFix(string testCase)
+        {
+            var currentCode = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
+                .ConfigureAwait(false);
+
+            var expectedCode = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasFix), testCase, "expected.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<TableDataAccessRequiresPermissionsCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.TableDataAccessRequiresPermissions);
         }
     }
 }

@@ -361,7 +361,7 @@
     <value>Code that reads from or writes to table data must declare the required Permissions on the containing object. This ensures the code can run using indirect permissions, which is required when table access is restricted by the user's license. </value>  
   </data>
   <data name="TableDataAccessRequiresPermissionsCodeAction" xml:space="preserve">
-    <value>ALCops: Add missing permissions</value>
+    <value>ALCops: Add missing permission '{0}' for table '{1}'</value>
   </data>
   <data name="TableDataPerCompanyDeclarationTitle" xml:space="preserve">
     <value>DataPerCompany must be explicitly set on table objects</value>
