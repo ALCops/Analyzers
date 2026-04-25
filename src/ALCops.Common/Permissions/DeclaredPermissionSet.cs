@@ -1,9 +1,9 @@
-namespace ALCops.ApplicationCop.Permissions;
+namespace ALCops.Common.Permissions;
 
 /// <summary>
 /// Tracks which database operations are permitted for a specific table.
 /// </summary>
-internal sealed class DeclaredPermissionSet
+public sealed class DeclaredPermissionSet
 {
     private bool _read;
     private bool _insert;

@@ -1,10 +1,10 @@
-namespace ALCops.ApplicationCop.Permissions;
+namespace ALCops.Common.Permissions;
 
 /// <summary>
 /// Represents a database operation that requires permissions.
 /// Mirrors the pattern from Microsoft.Dynamics.Nav.AppSourceCop.Permissions.
 /// </summary>
-internal enum DatabaseOperation
+public enum DatabaseOperation
 {
     None,
     Read,

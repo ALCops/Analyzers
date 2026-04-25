@@ -19,18 +19,20 @@ Detects table data access (reads, inserts, modifies, deletes) that is not covere
 
 ## Architecture
 
-The analyzer is split into a main analyzer class and a shared `Permissions/` module:
+The analyzer uses a shared `Permissions/` module in `ALCops.Common`:
 
 ```
-src/ALCops.ApplicationCop/
-├── Analyzers/
-│   └── TableDataAccessRequiresPermissions.cs   # Analyzer (callbacks + reporting)
+src/ALCops.Common/
 └── Permissions/
     ├── DatabaseOperation.cs                     # Enum: None, Read, Insert, Modify, Delete
     ├── MethodOperationMap.cs                    # Maps method names → DatabaseOperation
     ├── RequiredPermission.cs                    # Record struct holding table + operation + location
     ├── DeclaredPermissionSet.cs                 # Tracks granted ops per table (for future CodeFix)
     └── PermissionResolver.cs                    # Static class: IsCovered(), permission source resolution
+
+src/ALCops.ApplicationCop/
+└── Analyzers/
+    └── TableDataAccessRequiresPermissions.cs    # Analyzer (callbacks + reporting)
 ```
 
 ### PermissionResolver

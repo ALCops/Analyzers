@@ -6,7 +6,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 
-namespace ALCops.ApplicationCop.Permissions;
+namespace ALCops.Common.Permissions;
 
 /// <summary>
 /// Resolves declared permissions from multiple sources:
@@ -15,7 +15,7 @@ namespace ALCops.ApplicationCop.Permissions;
 /// 3. Table-level InherentPermissions property
 /// 4. Page SourceTable exemption
 /// </summary>
-internal static class PermissionResolver
+public static class PermissionResolver
 {
     /// <summary>
     /// Checks whether a required permission is covered by any declared permission source.

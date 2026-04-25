@@ -1,11 +1,11 @@
 using System.Collections.Immutable;
 
-namespace ALCops.ApplicationCop.Permissions;
+namespace ALCops.Common.Permissions;
 
 /// <summary>
 /// Maps AL built-in record method names to the database operation they perform.
 /// </summary>
-internal static class MethodOperationMap
+public static class MethodOperationMap
 {
     private static readonly ImmutableDictionary<string, DatabaseOperation> Map =
         ImmutableDictionary.CreateRange(

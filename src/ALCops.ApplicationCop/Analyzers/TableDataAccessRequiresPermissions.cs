@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using ALCops.ApplicationCop.Permissions;
+using ALCops.Common.Permissions;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
