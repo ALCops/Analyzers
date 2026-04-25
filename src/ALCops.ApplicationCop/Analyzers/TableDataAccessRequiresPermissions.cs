@@ -5,7 +5,6 @@ using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
-using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
 namespace ALCops.ApplicationCop.Analyzers;
 
@@ -40,52 +39,22 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression invocation)
             return;
 
-        if (invocation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
-            return;
-
-        var operation = MethodOperationMap.GetOperation(invocation.TargetMethod.Name);
-        if (operation == DatabaseOperation.None)
-            return;
-
-        // Resolve the record type: either from the instance (explicit call) or from the containing table (implicit self-call)
-        IRecordTypeSymbol? recordType;
-        ITableTypeSymbol? tableType;
-
-        if (invocation.Instance is not null)
-        {
-            // Explicit call: MyTable.Modify()
-            recordType = invocation.Instance.Type as IRecordTypeSymbol;
-        }
-        else
-        {
-            // Implicit self-call: Modify() or this.Modify() inside a table object
-            recordType = ctx.ContainingSymbol.ContainingType as IRecordTypeSymbol;
-        }
-
-        if (recordType is null || recordType.Temporary)
-            return;
-
-        tableType = recordType.OriginalDefinition as ITableTypeSymbol;
-        if (tableType is null)
-            return;
-
-        if (IsSystemTable(tableType))
+        var required = RequiredPermissionDetector.TryGetFromInvocation(invocation, ctx.ContainingSymbol);
+        if (required is null)
             return;
 
         var containingObject = ctx.ContainingSymbol.GetContainingApplicationObjectTypeSymbol();
 
-        if (IsTestCodeunitWithPermissionsDisabled(containingObject))
+        if (RequiredPermissionDetector.IsTestCodeunitWithPermissionsDisabled(containingObject))
             return;
 
         var pageContext = PermissionResolver.GetPageContext(containingObject);
         var containingMethod = ctx.ContainingSymbol as IMethodSymbol;
 
-        var required = new RequiredPermission(tableType, recordType, operation, invocation.Syntax.GetLocation());
-
-        if (PermissionResolver.IsCovered(required, containingObject, containingMethod, pageContext))
+        if (PermissionResolver.IsCovered(required.Value, containingObject, containingMethod, pageContext))
             return;
 
-        ReportDiagnostic(ctx.ReportDiagnostic, required);
+        ReportDiagnostic(ctx.ReportDiagnostic, required.Value);
     }
 
     private void AnalyzeReportDataItem(SymbolAnalysisContext ctx)
@@ -93,29 +62,16 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         if (ctx.IsObsolete())
             return;
 
-        if (ctx.Symbol.GetBooleanPropertyValue(EnumProvider.PropertyKind.UseTemporary) is true)
-            return;
-
-        if (ctx.Symbol is not IReportDataItemSymbol reportDataItem)
-            return;
-
-        if (reportDataItem.GetTypeSymbol() is not IRecordTypeSymbol recordType)
-            return;
-
-        if (recordType.Temporary)
-            return;
-
-        if (recordType.OriginalDefinition is not ITableTypeSymbol tableType || IsSystemTable(tableType))
+        var required = RequiredPermissionDetector.TryGetFromReportDataItem(ctx.Symbol);
+        if (required is null)
             return;
 
         var containingObject = ctx.Symbol.GetContainingApplicationObjectTypeSymbol();
 
-        var required = new RequiredPermission(tableType, recordType, DatabaseOperation.Read, ctx.Symbol.GetLocation());
-
-        if (PermissionResolver.IsCovered(required, containingObject, containingMethod: null, pageContext: null))
+        if (PermissionResolver.IsCovered(required.Value, containingObject, containingMethod: null, pageContext: null))
             return;
 
-        ReportDiagnostic(ctx.ReportDiagnostic, required);
+        ReportDiagnostic(ctx.ReportDiagnostic, required.Value);
     }
 
     private void AnalyzeQueryDataItem(SymbolAnalysisContext ctx)
@@ -123,18 +79,16 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         if (ctx.IsObsolete())
             return;
 
-        var targetSymbol = ((IQueryDataItemSymbol)ctx.Symbol).GetTypeSymbol();
-        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || IsSystemTable(tableType))
+        var required = RequiredPermissionDetector.TryGetFromQueryDataItem(ctx.Symbol);
+        if (required is null)
             return;
 
         var containingObject = ctx.Symbol.GetContainingApplicationObjectTypeSymbol();
 
-        var required = new RequiredPermission(tableType, targetSymbol, DatabaseOperation.Read, ctx.Symbol.GetLocation());
-
-        if (PermissionResolver.IsCovered(required, containingObject, containingMethod: null, pageContext: null))
+        if (PermissionResolver.IsCovered(required.Value, containingObject, containingMethod: null, pageContext: null))
             return;
 
-        ReportDiagnostic(ctx.ReportDiagnostic, required);
+        ReportDiagnostic(ctx.ReportDiagnostic, required.Value);
     }
 
     private void AnalyzeXmlPortNode(SymbolAnalysisContext ctx)
@@ -142,50 +96,15 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         if (ctx.IsObsolete())
             return;
 
-        var nodeSymbol = (IXmlPortNodeSymbol)ctx.Symbol.OriginalDefinition;
-        if (nodeSymbol.SourceTypeKind != EnumProvider.XmlPortSourceTypeKind.Table)
-            return;
+        var containingObject = ctx.Symbol.GetContainingApplicationObjectTypeSymbol();
 
-        var targetSymbol = nodeSymbol.GetTypeSymbol();
-        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || IsSystemTable(tableType))
-            return;
-
-        var xmlPort = (IXmlPortTypeSymbol)ctx.Symbol.GetContainingObjectTypeSymbol();
-        var containingObject = xmlPort as IApplicationObjectTypeSymbol;
-
-        var direction = ResolveXmlPortDirection(xmlPort);
-        var autoReplace = GetXmlPortNodeBoolProperty(ctx.Symbol, EnumProvider.PropertyKind.AutoReplace) ?? true;
-        var autoUpdate = GetXmlPortNodeBoolProperty(ctx.Symbol, EnumProvider.PropertyKind.AutoUpdate) ?? true;
-        var autoSave = GetXmlPortNodeBoolProperty(ctx.Symbol, EnumProvider.PropertyKind.AutoSave) ?? true;
-
-        var location = ctx.Symbol.GetLocation();
-
-        if (direction == EnumProvider.DirectionKind.Import || direction == EnumProvider.DirectionKind.Both)
+        foreach (var required in RequiredPermissionDetector.GetFromXmlPortNode(ctx.Symbol))
         {
-            if (autoReplace || autoUpdate)
-                CheckAndReport(containingObject, targetSymbol, tableType, DatabaseOperation.Modify, location, ctx.ReportDiagnostic);
-            if (autoSave)
-                CheckAndReport(containingObject, targetSymbol, tableType, DatabaseOperation.Insert, location, ctx.ReportDiagnostic);
+            if (PermissionResolver.IsCovered(required, containingObject, containingMethod: null, pageContext: null))
+                continue;
+
+            ReportDiagnostic(ctx.ReportDiagnostic, required);
         }
-
-        if (direction == EnumProvider.DirectionKind.Export || direction == EnumProvider.DirectionKind.Both)
-            CheckAndReport(containingObject, targetSymbol, tableType, DatabaseOperation.Read, location, ctx.ReportDiagnostic);
-    }
-
-    private static void CheckAndReport(
-        IApplicationObjectTypeSymbol? containingObject,
-        ITypeSymbol variableType,
-        ITableTypeSymbol tableType,
-        DatabaseOperation operation,
-        Microsoft.Dynamics.Nav.CodeAnalysis.Text.Location location,
-        Action<Diagnostic> reportDiagnostic)
-    {
-        var required = new RequiredPermission(tableType, variableType, operation, location);
-
-        if (PermissionResolver.IsCovered(required, containingObject, containingMethod: null, pageContext: null))
-            return;
-
-        ReportDiagnostic(reportDiagnostic, required);
     }
 
     private static void ReportDiagnostic(Action<Diagnostic> report, RequiredPermission required)
@@ -204,32 +123,5 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
             properties,
             permissionChar,
             required.VariableType.Name));
-    }
-
-    private static bool IsSystemTable(ITableTypeSymbol table) => table.Id > 2000000000;
-
-    private static bool IsTestCodeunitWithPermissionsDisabled(IApplicationObjectTypeSymbol? containingObject)
-    {
-        if (containingObject is not ICodeunitTypeSymbol codeunit)
-            return false;
-
-        var subtype = codeunit.GetEnumPropertyValue<CodeunitSubtypeKind>(EnumProvider.PropertyKind.Subtype);
-        if (subtype is null || subtype != EnumProvider.CodeunitSubtypeKind.Test)
-            return false;
-
-        var testPermissions = codeunit.GetEnumPropertyValue<TestPermissionsKind>(EnumProvider.PropertyKind.TestPermissions);
-        return testPermissions is not null && testPermissions == EnumProvider.TestPermissionsKind.Disabled;
-    }
-
-    private static DirectionKind ResolveXmlPortDirection(IXmlPortTypeSymbol xmlPort)
-    {
-        var direction = xmlPort.GetEnumPropertyValue<DirectionKind>(EnumProvider.PropertyKind.Direction);
-        return direction ?? EnumProvider.DirectionKind.Both;
-    }
-
-    private static bool? GetXmlPortNodeBoolProperty(ISymbol nodeSymbol, PropertyKind propertyKind)
-    {
-        return (bool?)nodeSymbol.Properties
-            .FirstOrDefault(p => p.PropertyKind == propertyKind)?.Value;
     }
 }
