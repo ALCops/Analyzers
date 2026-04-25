@@ -10,7 +10,7 @@ codeunit 50000 CommentTestCodeunit
         MyTableOne: Record MyTableOne;
         MyTableTwo: Record MyTableTwo;
     begin
-        MyTableOne.FindFirst();
+        [|MyTableOne.FindFirst();|]
         [|MyTableTwo.FindFirst();|]
     end;
 }

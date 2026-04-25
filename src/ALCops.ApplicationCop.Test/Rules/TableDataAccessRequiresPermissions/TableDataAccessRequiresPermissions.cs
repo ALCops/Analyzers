@@ -1,4 +1,3 @@
-using ALCops.ApplicationCop.CodeFixes;
 using RoslynTestKit;
 
 namespace ALCops.ApplicationCop.Test
@@ -6,7 +5,6 @@ namespace ALCops.ApplicationCop.Test
     public class TableDataAccessRequiresPermissions : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
-        private static readonly Analyzers.TableDataAccessRequiresPermissions _analyzer = new();
         private string _testCasePath;
 
         [SetUp]
@@ -22,6 +20,10 @@ namespace ALCops.ApplicationCop.Test
 
         [Test]
         [TestCase("ProcedureCalls")]
+        [TestCase("ProcedureCallsExtended")]
+        [TestCase("GetBySystemId")]
+        [TestCase("Count")]
+        [TestCase("ImplicitSelfCallInTable")]
         [TestCase("XmlPorts")]
         [TestCase("Queries")]
         [TestCase("Reports")]
@@ -52,6 +54,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("PermissionPropertyWithPragma")]
         [TestCase("PermissionPropertyWithComment")]
         [TestCase("MultiplePermissionsDifferentType")]
+        [TestCase("TestPermissionsDisabled")]
+        [TestCase("GetBySystemIdWithPermissions")]
+        [TestCase("CountWithPermissions")]
+        [TestCase("ImplicitSelfCallWithInherentPermissions")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -65,28 +71,5 @@ namespace ALCops.ApplicationCop.Test
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TableDataAccessRequiresPermissions);
         }
-
-        // [Test]
-        // [TestCase("PageRunModelPageIdentifierAndRecord")]
-        // [TestCase("PageRunModelPageIdentifierAndRecordWithPageFIeld")]
-        // [TestCase("PageRunPageIdentifierAndRecord")]
-        // [TestCase("PageRunPageIdentifierAndRecordWithPageField")]
-        // [TestCase("PageRunZeroIdentifierAndRecord")]
-        // public async Task HasFix(string testCase)
-        // {
-        //     var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
-        //         .ConfigureAwait(false);
-
-        //     var expectedCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "expected.al"))
-        //         .ConfigureAwait(false);
-
-        //     var fixture = RoslynFixtureFactory.Create<TableDataAccessRequiresPermissionsCodeFixProvider>(
-        //         new CodeFixTestFixtureConfig
-        //         {
-        //             AdditionalAnalyzers = [_analyzer]
-        //         });
-
-        //     fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.NotBlankRequiredOnPrimaryKeyField);
-        // }
     }
 }

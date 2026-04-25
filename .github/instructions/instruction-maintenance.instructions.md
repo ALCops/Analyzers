@@ -52,6 +52,20 @@ Choose the narrowest scope that covers the relevant files:
 
 Include: purpose, compact diagnostic properties, design decisions table, architecture, known issues, test coverage (summary counts), CodeFix details (if applicable), roadmap/phase 2 items.
 
+#### Test coverage format
+
+Use summary count lines with comma-separated test case names. Do NOT use per-case descriptions, bullet lists, or detailed tables. The format must be:
+
+```
+## Test coverage
+
+**HasDiagnostic (N cases):** CaseName1, CaseName2, CaseName3.
+**NoDiagnostic (N cases):** CaseName1, CaseName2, CaseName3.
+**HasFix (N cases):** CaseName1, CaseName2.
+```
+
+This keeps test names searchable while minimizing token consumption. See PR #220 for rationale.
+
 ### Development guide instruction files
 
 Include: project structure, templates, step-by-step guides, API reference, common pitfalls.
@@ -73,6 +87,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `get-bc-devtools` | `'.github/actions/get-bc-devtools/**'` | BC DevTools discovery and caching |
 | `ac0013-field-groups-required` | rule-scoped | AC0013 rule |
 | `ac0026-allow-in-customizations-for-omitted-fields` | rule-scoped | AC0026 rule |
+| `ac0031-table-data-access-requires-permissions` | rule-scoped | AC0031 rule |
 | `lc0086-page-style-string-literal` | rule-scoped | LC0086 rule |
 | `lc0091-translatable-text-should-be-translated` | rule-scoped | LC0091 rule |
 | `lc0092-naming-pattern` | rule-scoped | LC0092 rule |

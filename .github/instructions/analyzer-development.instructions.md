@@ -654,6 +654,17 @@ private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
 ## Common Pitfalls
 
 - **Always use `EnumProvider`** for SDK enum values. Direct references break across BC versions.
+- **Never compare property values as strings.** Use `ISymbol.GetEnumPropertyValue<T>(EnumProvider.PropertyKind.X)` to get typed enum values, then compare against `EnumProvider` constants. String comparisons against `ValueText` are fragile and bypass the type system. Example:
+  ```csharp
+  // WRONG - fragile string comparison
+  var prop = symbol.Properties.FirstOrDefault(p => p.PropertyKind == EnumProvider.PropertyKind.Subtype);
+  if (prop?.ValueText == "Test") ...
+
+  // CORRECT - typed enum comparison
+  var subtype = symbol.GetEnumPropertyValue<CodeunitSubtypeKind>(EnumProvider.PropertyKind.Subtype);
+  if (subtype == EnumProvider.CodeunitSubtypeKind.Test) ...
+  ```
+  Similarly, use `ISymbol.GetBooleanPropertyValue()` for boolean properties and `ISymbol.GetProperty()` for accessing the `IPropertySymbol` directly. Add missing enum values to `EnumProvider` when needed.
 - **Always check `IsObsolete()` first** in every analysis method. Reporting on obsolete code creates noise.
 - **Never compare raw syntax text to identify symbols.** Do not use `syntax.ToString()`, `node.Identifier.ValueText`, or similar text-based checks to determine what a variable, method, or expression refers to. These are fragile (case-sensitive, whitespace-dependent, miss implicit conversions) and produce incorrect results when the source text doesn't match the canonical symbol name. Instead, resolve the symbol via `IOperation.GetSymbolSafe()`, `SemanticModel.GetSymbolInfo()`, or `SemanticModel.GetDeclaredSymbol()`, then compare using symbol identity (`symbol.Equals(other)`) or symbol properties (`symbol.Kind`, `symbol.Name`). Checking `ISymbol.Name` after resolution is acceptable because it's the compiler-resolved canonical form, not raw source text.
 - **Use `CancellationToken`** via `ctx.CancellationToken.ThrowIfCancellationRequested()` in loops over large collections (e.g., iterating all fields in a table).

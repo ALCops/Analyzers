@@ -15,7 +15,7 @@ codeunit 50000 PragmaTestCodeunit
         MyTableTwo: Record MyTableTwo;
         MyTableThree: Record MyTableThree;
     begin
-        MyTableOne.FindFirst();
+        [|MyTableOne.FindFirst();|]
         [|MyTableTwo.FindFirst();|]
         [|MyTableThree.FindFirst();|]
     end;

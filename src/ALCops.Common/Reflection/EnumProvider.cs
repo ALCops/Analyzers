@@ -253,10 +253,15 @@ public static class EnumProvider
     /// </summary>
     public static class DirectionKind
     {
-
+        private static readonly Lazy<NavCodeAnalysis.DirectionKind> _import =
+            new(() => ParseEnum<NavCodeAnalysis.DirectionKind>(nameof(NavCodeAnalysis.DirectionKind.Import)));
+        private static readonly Lazy<NavCodeAnalysis.DirectionKind> _export =
+            new(() => ParseEnum<NavCodeAnalysis.DirectionKind>(nameof(NavCodeAnalysis.DirectionKind.Export)));
         private static readonly Lazy<NavCodeAnalysis.DirectionKind> _both =
             new(() => ParseEnum<NavCodeAnalysis.DirectionKind>(nameof(NavCodeAnalysis.DirectionKind.Both)));
 
+        public static NavCodeAnalysis.DirectionKind Import => _import.Value;
+        public static NavCodeAnalysis.DirectionKind Export => _export.Value;
         public static NavCodeAnalysis.DirectionKind Both => _both.Value;
     }
     /// <summary>
@@ -599,6 +604,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.DataClassification)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _dataPerCompany =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.DataPerCompany)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _direction =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Direction)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _drillDownPageId =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.DrillDownPageId)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _editable =
@@ -639,6 +646,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Subtype)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _tableRelation =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.TableRelation)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _testPermissions =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.TestPermissions)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _toolTip =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ToolTip)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _useTemporary =
@@ -657,6 +666,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind CaptionML => _captionMl.Value;
         public static NavCodeAnalysis.PropertyKind DataClassification => _dataClassification.Value;
         public static NavCodeAnalysis.PropertyKind DataPerCompany => _dataPerCompany.Value;
+        public static NavCodeAnalysis.PropertyKind Direction => _direction.Value;
         public static NavCodeAnalysis.PropertyKind DrillDownPageId => _drillDownPageId.Value;
         public static NavCodeAnalysis.PropertyKind Editable => _editable.Value;
         public static NavCodeAnalysis.PropertyKind Enabled => _enabled.Value;
@@ -677,6 +687,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind Summary => _summary.Value;
         public static NavCodeAnalysis.PropertyKind Subtype => _subtype.Value;
         public static NavCodeAnalysis.PropertyKind TableRelation => _tableRelation.Value;
+        public static NavCodeAnalysis.PropertyKind TestPermissions => _testPermissions.Value;
         public static NavCodeAnalysis.PropertyKind ToolTip => _toolTip.Value;
         public static NavCodeAnalysis.PropertyKind UseTemporary => _useTemporary.Value;
     }
@@ -727,6 +738,16 @@ public static class EnumProvider
     {
         public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
             CreateEnumDictionary<NavCodeAnalysis.StyleKind>();
+    }
+    /// <summary>
+    /// TestPermissionsKind enum values
+    /// </summary>
+    public static class TestPermissionsKind
+    {
+        private static readonly Lazy<NavCodeAnalysis.TestPermissionsKind> _disabled =
+            new(() => ParseEnum<NavCodeAnalysis.TestPermissionsKind>(nameof(NavCodeAnalysis.TestPermissionsKind.Disabled)));
+
+        public static NavCodeAnalysis.TestPermissionsKind Disabled => _disabled.Value;
     }
     /// <summary>
     /// TableTypeKind enum values
