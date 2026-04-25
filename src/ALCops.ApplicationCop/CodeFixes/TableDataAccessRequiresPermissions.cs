@@ -200,14 +200,10 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         if (propertyList is null)
             return null;
 
-        foreach (var property in propertyList.Properties.OfType<PropertySyntax>())
-        {
-            if (property.Name is not null &&
-                string.Equals(property.Name.Identifier.ValueText, "Permissions", StringComparison.OrdinalIgnoreCase))
-                return property;
-        }
-
-        return null;
+        return propertyList.Properties
+            .OfType<PropertySyntax>()
+            .FirstOrDefault(p => p.Name is { Identifier.ValueText: { } valueText } &&
+                valueText.Equals(nameof(PropertyKind.Permissions), StringComparison.OrdinalIgnoreCase));
     }
 
     private static string ResolveTableNameForFix(string tableName, string tableNamespace,
