@@ -305,6 +305,26 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.UseReturnValueForDatabaseReadMethodsDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UseReturnValueForDatabaseReadMethods));
 
+    public static readonly DiagnosticDescriptor TableDataAccessUnusedPermissionsEntireEntry = new(
+        id: DiagnosticIds.TableDataAccessUnusedPermissions,
+        title: ApplicationCopAnalyzers.TableDataAccessUnusedPermissionsTitle,
+        messageFormat: ApplicationCopAnalyzers.TableDataAccessUnusedPermissionsEntireEntryMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.TableDataAccessUnusedPermissionsDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TableDataAccessUnusedPermissions));
+
+    public static readonly DiagnosticDescriptor TableDataAccessUnusedPermissionsPartialChars = new(
+        id: DiagnosticIds.TableDataAccessUnusedPermissions,
+        title: ApplicationCopAnalyzers.TableDataAccessUnusedPermissionsTitle,
+        messageFormat: ApplicationCopAnalyzers.TableDataAccessUnusedPermissionsPartialCharsMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.TableDataAccessUnusedPermissionsDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TableDataAccessUnusedPermissions));
+
     public static readonly DiagnosticDescriptor ZeroEnumValueReservedForEmpty = new(
         id: DiagnosticIds.ZeroEnumValueReservedForEmpty,
         title: ApplicationCopAnalyzers.ZeroEnumValueReservedForEmptyTitle,
