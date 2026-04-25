@@ -260,71 +260,101 @@ Used when adding `Locked = true` to label values (from `EmptyCaptionLocked.cs`, 
 
 ## Passing data from analyzer to CodeFix via diagnostic properties
 
-When the CodeFix needs information computed by the analyzer (e.g. a replacement name), the analyzer passes it through `ImmutableDictionary<string, string>` properties on the diagnostic:
+When the CodeFix needs information computed by the analyzer (e.g. a replacement name), the analyzer passes it through `ImmutableDictionary<string, string>` properties on the diagnostic. **Always use the `CodeFixProperties` record pattern** described below. Do not use raw dictionary lookups, `out` parameters, or magic strings.
 
-**In the analyzer:**
+### CodeFixProperties pattern (required)
+
+Every CodeFix that receives diagnostic properties must define a **private `CodeFixProperties` type** with a static `TryParse` method. Use `nameof()` on the record/class properties as dictionary keys to ensure compile-time safety between the `TryParse` reader and the analyzer writer.
+
+The type must be dual-defined with `#if` guards because C# 9 records require `System.Runtime.CompilerServices.IsExternalInit`, which does not exist in `netstandard2.1`:
+
+```csharp
+#if NETSTANDARD2_1
+    // C# 9 records require IsExternalInit which doesn't exist in netstandard2.1.
+    // We use a regular class for netstandard2.1 and a record for .NET 8+ to maintain compatibility with both targets.
+    private sealed class CodeFixProperties
+    {
+        public string TableName { get; }
+        public string PermissionChar { get; }
+
+        private CodeFixProperties(string tableName, string permissionChar)
+        {
+            TableName = tableName;
+            PermissionChar = permissionChar;
+        }
+
+        public static CodeFixProperties? TryParse(ImmutableDictionary<string, string>? properties)
+        {
+            if (properties is null)
+                return null;
+
+            if (!properties.TryGetValue(nameof(TableName), out var tableName) || string.IsNullOrEmpty(tableName))
+                return null;
+
+            if (!properties.TryGetValue(nameof(PermissionChar), out var permissionChar) || string.IsNullOrEmpty(permissionChar))
+                return null;
+
+            return new CodeFixProperties(tableName, permissionChar);
+        }
+    }
+#endif
+
+#if NET8_0_OR_GREATER
+    private sealed record CodeFixProperties(string TableName, string PermissionChar)
+    {
+        public static CodeFixProperties? TryParse(ImmutableDictionary<string, string>? properties)
+        {
+            if (properties is null)
+                return null;
+
+            if (!properties.TryGetValue(nameof(TableName), out var tableName) || string.IsNullOrEmpty(tableName))
+                return null;
+
+            if (!properties.TryGetValue(nameof(PermissionChar), out var permissionChar) || string.IsNullOrEmpty(permissionChar))
+                return null;
+
+            return new CodeFixProperties(tableName, permissionChar);
+        }
+    }
+#endif
+```
+
+### Rules for this pattern
+
+1. **Both `#if` blocks must have identical `TryParse` logic.** The only difference is `sealed class` (netstandard2.1) vs `sealed record` (net8.0+).
+2. **Use `nameof()` for all dictionary keys** in `TryParse`. This links the key string to the property name at compile time.
+3. **The analyzer side should use the same key strings** (e.g. `"TableName"`, `"PermissionChar"`). Since the record is `private` to the CodeFix, the analyzer cannot use `nameof()` across the boundary. Keeping property names identical to the dictionary keys makes mismatches easy to spot in review.
+4. **Return `null` from `TryParse` on any missing required property.** Use early returns, not exceptions.
+5. **Optional properties** use `TryGetValue` without a null-return guard, defaulting to `string.Empty` or a sensible fallback.
+6. **Place the `CodeFixProperties` type at the top** of the CodeFix class, before the inner `CodeAction` class.
+
+### Consuming the properties in RegisterInstanceCodeFix
+
+```csharp
+private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot,
+    TextSpan span, Document document)
+{
+    var diagnostic = ctx.Diagnostics[0];
+    var props = CodeFixProperties.TryParse(diagnostic.Properties);
+    if (props is null)
+        return;
+
+    // Use props.TableName, props.PermissionChar, etc.
+}
+```
+
+### Setting properties in the analyzer
+
 ```csharp
 var properties = ImmutableDictionary<string, string>.Empty
-    .Add("ReplacementMethodName", replacementMethod.Expression.ToString());
+    .Add("TableName", tableName)
+    .Add("PermissionChar", permissionChar.ToString());
 
 ctx.ReportDiagnostic(Diagnostic.Create(
     DiagnosticDescriptors.MyRule,
     location,
-    properties,   // ← passed here
+    properties,
     messageArg1, messageArg2));
-```
-
-**In the CodeFix:**
-```csharp
-var diagnostic = ctx.Diagnostics[0];
-var properties = CodeFixProperties.TryParse(diagnostic.Properties);
-if (properties is null) return;
-```
-
-This requires a `CodeFixProperties` helper class with multi-target support:
-
-```csharp
-#if NETSTANDARD2_1
-// C# 9 records require IsExternalInit which doesn't exist in netstandard2.1
-private sealed class CodeFixProperties
-{
-    public string ReplacementMethodName { get; }
-
-    private CodeFixProperties(string replacementMethodName)
-    {
-        ReplacementMethodName = replacementMethodName;
-    }
-
-    public static CodeFixProperties? TryParse(ImmutableDictionary<string, string>? properties)
-    {
-        if (properties is null)
-            return null;
-
-        if (!properties.TryGetValue(nameof(ReplacementMethodName), out var value)
-            || string.IsNullOrEmpty(value))
-            return null;
-
-        return new CodeFixProperties(value);
-    }
-}
-#endif
-
-#if NET8_0_OR_GREATER
-private sealed record CodeFixProperties(string ReplacementMethodName)
-{
-    public static CodeFixProperties? TryParse(ImmutableDictionary<string, string>? properties)
-    {
-        if (properties is null)
-            return null;
-
-        if (!properties.TryGetValue(nameof(ReplacementMethodName), out var value)
-            || string.IsNullOrEmpty(value))
-            return null;
-
-        return new CodeFixProperties(value);
-    }
-}
-#endif
 ```
 
 Only use this pattern when the CodeFix needs computed data from the analyzer. Most CodeFixes reconstruct what they need directly from the syntax tree.

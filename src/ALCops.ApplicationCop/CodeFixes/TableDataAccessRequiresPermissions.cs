@@ -13,6 +13,61 @@ namespace ALCops.ApplicationCop.CodeFixes;
 [CodeFixProvider(nameof(TableDataAccessRequiresPermissionsCodeFixProvider))]
 public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixProvider
 {
+#if NETSTANDARD2_1
+    // C# 9 records require 'System.Runtime.CompilerServices.IsExternalInit' which doesn't exist in netstandard2.1.
+    // We use a regular class for netstandard2.1 and a record for .NET 8+ to maintain compatibility with both targets.
+    private sealed class CodeFixProperties
+    {
+        public string TableName { get; }
+        public string TableNamespace { get; }
+        public char PermissionChar { get; }
+
+        private CodeFixProperties(string tableName, string tableNamespace, char permissionChar)
+        {
+            TableName = tableName;
+            TableNamespace = tableNamespace;
+            PermissionChar = permissionChar;
+        }
+
+        public static CodeFixProperties? TryParse(ImmutableDictionary<string, string>? properties)
+        {
+            if (properties is null)
+                return null;
+
+            if (!properties.TryGetValue(nameof(TableName), out var tableName) || string.IsNullOrEmpty(tableName))
+                return null;
+
+            if (!properties.TryGetValue(nameof(PermissionChar), out var charStr) || string.IsNullOrEmpty(charStr))
+                return null;
+
+            properties.TryGetValue(nameof(TableNamespace), out var tableNamespace);
+
+            return new CodeFixProperties(tableName, tableNamespace ?? string.Empty, charStr[0]);
+        }
+    }
+#endif
+
+#if NET8_0_OR_GREATER
+    private sealed record CodeFixProperties(string TableName, string TableNamespace, char PermissionChar)
+    {
+        public static CodeFixProperties? TryParse(ImmutableDictionary<string, string>? properties)
+        {
+            if (properties is null)
+                return null;
+
+            if (!properties.TryGetValue(nameof(TableName), out var tableName) || string.IsNullOrEmpty(tableName))
+                return null;
+
+            if (!properties.TryGetValue(nameof(PermissionChar), out var charStr) || string.IsNullOrEmpty(charStr))
+                return null;
+
+            properties.TryGetValue(nameof(TableNamespace), out var tableNamespace);
+
+            return new CodeFixProperties(tableName, tableNamespace ?? string.Empty, charStr[0]);
+        }
+    }
+#endif
+
     private class TableDataAccessRequiresPermissionsCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
@@ -51,7 +106,8 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         TextSpan span, Document document)
     {
         var diagnostic = ctx.Diagnostics[0];
-        if (!TryParseProperties(diagnostic.Properties, out var tableName, out var tableNamespace, out var permissionChar))
+        var props = CodeFixProperties.TryParse(diagnostic.Properties);
+        if (props is null)
             return;
 
         var node = syntaxRoot.FindNode(span);
@@ -65,10 +121,10 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
 
         // Resolve table name using C#-like namespace resolution
         var compilationUnit = objectSyntax.FirstAncestorOrSelf<CompilationUnitSyntax>();
-        var resolvedTableName = ResolveTableNameForFix(tableName, tableNamespace, compilationUnit);
+        var resolvedTableName = ResolveTableNameForFix(props.TableName, props.TableNamespace, compilationUnit);
 
         ctx.RegisterCodeFix(
-            CreateCodeAction(objectSyntax, resolvedTableName, permissionChar, document, generateFixAll: true),
+            CreateCodeAction(objectSyntax, resolvedTableName, props.PermissionChar, document, generateFixAll: true),
             diagnostic);
     }
 
@@ -217,30 +273,5 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
 
         return PermissionTableNameResolver.ResolveTableName(
             tableName, tableNamespace, fileNamespace, importedNamespaces);
-    }
-
-    private static bool TryParseProperties(ImmutableDictionary<string, string>? properties,
-        out string tableName, out string tableNamespace, out char permissionChar)
-    {
-        tableName = string.Empty;
-        tableNamespace = string.Empty;
-        permissionChar = ' ';
-
-        if (properties is null)
-            return false;
-
-        if (!properties.TryGetValue("TableName", out var name) || string.IsNullOrEmpty(name))
-            return false;
-
-        if (!properties.TryGetValue("PermissionChar", out var charStr) ||
-            string.IsNullOrEmpty(charStr))
-            return false;
-
-        properties.TryGetValue("TableNamespace", out var ns);
-
-        tableName = name;
-        tableNamespace = ns ?? string.Empty;
-        permissionChar = charStr[0];
-        return true;
     }
 }
