@@ -27,12 +27,16 @@ src/ALCops.Common/
     ├── DatabaseOperation.cs                     # Enum: None, Read, Insert, Modify, Delete
     ├── MethodOperationMap.cs                    # Maps method names → DatabaseOperation
     ├── RequiredPermission.cs                    # Record struct holding table + operation + location
-    ├── DeclaredPermissionSet.cs                 # Tracks granted ops per table (for future CodeFix)
-    └── PermissionResolver.cs                    # Static class: IsCovered(), permission source resolution
+    ├── DeclaredPermissionSet.cs                 # Tracks granted ops per table
+    ├── PermissionResolver.cs                    # Static class: IsCovered(), permission source resolution
+    ├── PermissionSyntaxHelper.cs                # Shared helpers for multi-line/sorted insertion
+    └── PermissionTableNameResolver.cs           # C#-like namespace resolution for table names
 
 src/ALCops.ApplicationCop/
-└── Analyzers/
-    └── TableDataAccessRequiresPermissions.cs    # Analyzer (callbacks + reporting)
+├── Analyzers/
+│   └── TableDataAccessRequiresPermissions.cs    # Analyzer (callbacks + reporting)
+└── CodeFixes/
+    └── TableDataAccessRequiresPermissions.cs    # CodeFix (add missing permissions)
 ```
 
 ### PermissionResolver
@@ -69,22 +73,57 @@ Maps AL built-in record methods to `DatabaseOperation`:
 | `DatabaseOperation` is a simple enum, not `[Flags]` | Each method call maps to exactly one operation; matches AppSourceCop pattern |
 | Namespace-aware matching is primary, object ID is secondary | Namespaces are the modern AL convention; IDs provide backwards compatibility |
 | `PermissionResolver` is static | No state needed; all inputs passed as parameters |
-| `DeclaredPermissionSet` exists but is unused by the analyzer | Prepared for future CodeFix (add missing permissions) and inverted rule (unused permissions) |
+| `DeclaredPermissionSet` exists but is unused by the analyzer | Prepared for future inverted rule (unused permissions) |
 | `Rec.Modify()` in table objects detected via explicit Instance path | The AL compiler resolves `Rec.Modify()` with a non-null Instance |
 | InherentPermissions attribute parsed via syntax text splitting | The attribute's syntax is well-defined; avoids complex semantic analysis |
 | `TestPermissions = Disabled` suppresses diagnostic | Test codeunits with disabled permissions are intentionally testing without permission checks |
 
+## CodeFix
+
+The `TableDataAccessRequiresPermissionsCodeFixProvider` adds missing permissions. It supports FixAll.
+
+### Scenarios
+
+| Scenario | Behavior |
+|---|---|
+| No `Permissions` property | Creates `Permissions = tabledata {Table} = {op};` |
+| Table already listed | Merges the missing char in canonical `rimd` order |
+| Table not listed, single-line format | Appends `, tabledata {Table} = {op}` (or inserts alphabetically if sorted) |
+| Table not listed, multi-line format | Appends with `\n` + matching indentation (or inserts alphabetically if sorted) |
+| Extension objects | CodeFix is skipped (extensions cannot declare Permissions) |
+
+### Table name resolution
+
+Uses C#-like namespace resolution (`PermissionTableNameResolver`):
+- Same namespace or imported via `using`: simple name (`MyTable`)
+- Different namespace, not imported: qualified name (`MyNamespace.MyTable`)
+
+### Multi-line insertion
+
+`SeparatedSyntaxList.Insert()` creates default comma separators without newline trivia. The `InsertIntoMultiLineList` helper fixes this by using `ReplaceToken` to copy trailing trivia from an existing separator onto the newly created one.
+
+### Design decisions (CodeFix-specific)
+
+| Decision | Rationale |
+|---|---|
+| Passes TableName, TableNamespace, PermissionChar via `ImmutableDictionary` properties | Standard CodeFix data passing pattern |
+| Permission chars are lowercase (`rimd`) | Consistent with AL conventions |
+| Sorted detection uses case-insensitive string comparison | AL identifiers are case-insensitive |
+| Multi-line separator fix via `ReplaceToken` | Avoids need for internal `SeparatedSyntaxList` constructor |
+
 ## Test coverage
 
 **HasDiagnostic (8 cases):** ProcedureCalls, ProcedureCallsExtended, GetBySystemId, Count, ImplicitSelfCallInTable, XmlPorts, Queries, Reports.
-**NoDiagnostic (18 cases):** ProcedureCallsPermissionsProperty, ProcedureCallsPermissionsPropertyFullyQualified, ProcedureCallsInherentPermissionsProperty, ProcedureCallsInherentPermissionsAttribute, PageSourceTable, PageExtensionSourceTable, XmlPortPermissionsProperty, XmlPortInherentPermissions, QueryPermissionsProperty, QueryInherentPermissions, ReportPermissionsProperty, ReportInherentPermissions, XMLPortWithTableElementProps, PermissionsAsObjectId, PermissionPropertyWithPragma, PermissionPropertyWithComment, MultiplePermissionsDifferentType, TestPermissionsDisabled, GetBySystemIdWithPermissions, CountWithPermissions, ImplicitSelfCallWithInherentPermissions.
+**NoDiagnostic (21 cases):** ProcedureCallsPermissionsProperty, ProcedureCallsPermissionsPropertyFullyQualified, ProcedureCallsInherentPermissionsProperty, ProcedureCallsInherentPermissionsAttribute, PageSourceTable, PageExtensionSourceTable, XmlPortPermissionsProperty, XmlPortInherentPermissions, QueryPermissionsProperty, QueryInherentPermissions, ReportPermissionsProperty, ReportInherentPermissions, XMLPortWithTableElementProps, PermissionsAsObjectId, PermissionPropertyWithPragma, PermissionPropertyWithComment, MultiplePermissionsDifferentType, TestPermissionsDisabled, GetBySystemIdWithPermissions, CountWithPermissions, ImplicitSelfCallWithInherentPermissions.
+**HasFix (8 cases):** AddNewPermissionsProperty, AddNewTableEntry, MergePermissionChar, MergeCanonicalOrder, AddEntryMultiLine, AddEntrySingleLine, AddEntryAlphabetical, AddEntryAppend.
 
 ## Known issues / future work
 
 - **IntegerTable** test case is skipped (commented out)
 - **Bare implicit calls** (`Modify()` without `Rec.`) inside table objects may not be detected as invocations; use `Rec.Modify()` pattern
 - **CalcFields/CalcSums** are not yet covered (out of scope for initial implementation)
-- **CodeFix** to add missing permissions is planned (will use `DeclaredPermissionSet`)
+- **CodeFix: blank line formatting** When creating a new Permissions property on an object that has no properties, no blank line is inserted between the new property and the first member (trigger/procedure)
+- **CodeFix: cross-namespace test** The single-file test framework cannot test qualified table name resolution; both objects must be in the same file
 - **Inverted rule** (permissions declared but not needed) is planned as a separate diagnostic
 
 ## Related GitHub issues (from LinterCop LC0068)
