@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
+using ALCops.Common;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -10,9 +11,7 @@ namespace ALCops.PlatformCop.Analyzers;
 public sealed class TemporaryRecordTriggerInvocation : DiagnosticAnalyzer
 {
     private static readonly ImmutableHashSet<string> MethodsThatMayRunTriggers =
-        ImmutableHashSet.Create(
-            StringComparer.Ordinal,
-            "Insert", "Modify", "Delete", "DeleteAll", "Validate", "ModifyAll");
+        RecordMethodClassification.TriggerMethods;
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
             DiagnosticDescriptors.TemporaryRecordTriggerInvocation);

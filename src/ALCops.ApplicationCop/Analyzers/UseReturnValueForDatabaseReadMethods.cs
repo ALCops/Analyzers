@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -16,13 +17,7 @@ public class UseReturnValueForDatabaseReadMethods : DiagnosticAnalyzer
             DiagnosticDescriptors.UseReturnValueForDatabaseReadMethods);
 
     private static readonly ImmutableHashSet<string> DatabaseReadMethods =
-        ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
-            "Find",
-            "FindFirst",
-            "FindLast",
-            "Get",
-            "GetBySystemId");
+        RecordMethodClassification.SingleRecordReadMethods;
 
     public override void Initialize(AnalysisContext context) =>
         context.RegisterOperationAction(

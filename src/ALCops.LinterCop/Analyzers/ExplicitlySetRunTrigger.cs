@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -14,14 +15,7 @@ public sealed class ExplicitlySetRunTrigger : DiagnosticAnalyzer
 {
     private const string RunTriggerParameterName = "RunTrigger";
     private static readonly ImmutableHashSet<string> BuiltInMethodNames =
-        ImmutableHashSet.Create(
-            StringComparer.Ordinal,
-            "Insert",
-            "Modify",
-            "ModifyAll",
-            "Delete",
-            "DeleteAll"
-        );
+        RecordMethodClassification.RunTriggerParameterMethods;
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

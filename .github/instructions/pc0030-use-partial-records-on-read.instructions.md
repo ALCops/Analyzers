@@ -143,8 +143,14 @@ This is an SDK bug. If a future SDK version fixes it, the type checks become har
 
 ## Method classification
 
+Method classifications are centralized in `ALCops.Common.RecordMethodClassification`. This analyzer uses:
+- `RecordMethodClassification.SingleRecordReadMethods` + `FindSet` for read methods (trigger diagnostic)
+- `RecordMethodClassification.WriteMethods` for write/mutation methods (suppress entire variable)
+- `RecordMethodClassification.LoadFieldsMethods` for load fields methods (suppress diagnostic)
+- `RecordMethodClassification.JitLoadWriteMethods` for JIT load write methods (used by PC0031)
+
 ### Read methods (trigger diagnostic)
-`Get`, `Find`, `FindFirst`, `FindLast`, `FindSet`
+`Get`, `GetBySystemId`, `Find`, `FindFirst`, `FindLast`, `FindSet`
 
 ### Load fields methods (suppress diagnostic)
 `SetLoadFields`, `AddLoadFields`, `SetBaseLoadFields`
@@ -172,11 +178,11 @@ AA0242 (CodeCop's `Rule0242PartialRecordsDetectJitLoads`) is the **complement** 
 
 ## Test coverage
 
-52 test cases total:
+55 test cases total:
 
-**HasDiagnostic (16 cases):** LocalRecordGet, LocalRecordFindFirst, LocalRecordFindSet, LocalRecordFindLast, LocalRecordFind, LocalRecordMultipleReads, LocalRecordRefFindFirst, SetLoadFieldsAfterGet, ClearBetweenSetLoadFieldsAndGet, ResetBetweenSetLoadFieldsAndGet, SetLoadFieldsNoArgsBetween, CaseBranchWithoutSetLoadFields, IfBranchWithoutSetLoadFields, ClearResetsWriteOp, ClearResetsPassedToFunction, LoopNoSetLoadFields.
+**HasDiagnostic (17 cases):** LocalRecordGet, LocalRecordGetBySystemId, LocalRecordFindFirst, LocalRecordFindSet, LocalRecordFindLast, LocalRecordFind, LocalRecordMultipleReads, LocalRecordRefFindFirst, SetLoadFieldsAfterGet, ClearBetweenSetLoadFieldsAndGet, ResetBetweenSetLoadFieldsAndGet, SetLoadFieldsNoArgsBetween, CaseBranchWithoutSetLoadFields, IfBranchWithoutSetLoadFields, ClearResetsWriteOp, ClearResetsPassedToFunction, LoopNoSetLoadFields.
 
-**NoDiagnostic (25 cases):** HasSetLoadFields, HasAddLoadFields, HasSetBaseLoadFields, HasModify, HasInsert, HasDelete, HasDeleteAll, HasModifyAll, HasRename, HasTransferFields, HasInit, HasCopy, PassedToFunction, PassedToEvent, PassedToPageRun, TemporaryTable, GlobalVariable, ParameterVariable, IsEmptyOnly, CDSTable, RecordRefSetTableWithModify, RecordRefSetTablePassedToFunction, DatabaseObjectReference, IfBothBranchesSetLoadFields, LoopSetLoadFieldsBefore.
+**NoDiagnostic (26 cases):** HasSetLoadFields, HasSetLoadFieldsGetBySystemId, HasAddLoadFields, HasSetBaseLoadFields, HasModify, HasInsert, HasDelete, HasDeleteAll, HasModifyAll, HasRename, HasTransferFields, HasInit, HasCopy, PassedToFunction, PassedToEvent, PassedToPageRun, TemporaryTable, GlobalVariable, ParameterVariable, IsEmptyOnly, CDSTable, RecordRefSetTableWithModify, RecordRefSetTablePassedToFunction, DatabaseObjectReference, IfBothBranchesSetLoadFields, LoopSetLoadFieldsBefore.
 
 **HasFix (11 cases):** SingleField, MultipleFields, QuotedFieldName, NoFieldAccess, SetRangeFieldExcluded, SetFilterFieldExcluded, SetRangeValueArgIncluded, AllFieldsInFilters, TestFieldIncluded, SetCurrentKeyExcluded, MixedFilterAndConsume.
 

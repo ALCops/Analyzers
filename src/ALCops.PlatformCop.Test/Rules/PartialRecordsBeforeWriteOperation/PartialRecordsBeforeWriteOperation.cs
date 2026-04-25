@@ -30,6 +30,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("SetBaseLoadFieldsThenModify")]
         [TestCase("BranchWithWrite")]
         [TestCase("QualifiedSetLoadFields")]
+        [TestCase("SetLoadFieldsThenGetBySystemIdThenModify")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))

@@ -80,6 +80,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `codefix-development` | `'src/ALCops.*/CodeFixes/**'` | How to write code fixes |
 | `testing` | `'src/*.Test/**'` | Test conventions and patterns |
 | `common-library` | `'src/ALCops.Common/**'` | Shared library guidelines |
+| `record-method-classification` | `'src/ALCops.Common/RecordMethodClassification.cs'` | Record method categorization utility |
 | `netstandard21-compatibility` | `'src/ALCops.*/**'` | netstandard2.1 compat patterns |
 | `settings-schema` | `ALCopsSettings.cs` | Settings file schema |
 | `cicd` | `'.github/**'` | CI/CD workflows |

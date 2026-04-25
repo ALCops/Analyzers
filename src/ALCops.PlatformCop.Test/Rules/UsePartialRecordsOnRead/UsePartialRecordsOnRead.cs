@@ -22,6 +22,7 @@ namespace ALCops.PlatformCop.Test
 
         [Test]
         [TestCase("LocalRecordGet")]
+        [TestCase("LocalRecordGetBySystemId")]
         [TestCase("LocalRecordFindFirst")]
         [TestCase("LocalRecordFindSet")]
         [TestCase("LocalRecordFindLast")]
@@ -47,6 +48,7 @@ namespace ALCops.PlatformCop.Test
 
         [Test]
         [TestCase("HasSetLoadFields")]
+        [TestCase("HasSetLoadFieldsGetBySystemId")]
         [TestCase("HasAddLoadFields")]
         [TestCase("HasSetBaseLoadFields")]
         [TestCase("HasModify")]

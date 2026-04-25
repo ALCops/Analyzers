@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -12,30 +13,18 @@ namespace ALCops.PlatformCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class PartialRecordOperations : DiagnosticAnalyzer
 {
-    private static readonly HashSet<string> ReadMethods = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Get", "Find", "FindFirst", "FindLast", "FindSet"
-    };
+    private static readonly ImmutableHashSet<string> ReadMethods = RecordMethodClassification.SingleRecordReadMethods
+        .Union(ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, "FindSet"));
 
-    private static readonly HashSet<string> LoadFieldsMethods = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "SetLoadFields", "AddLoadFields", "SetBaseLoadFields"
-    };
+    private static readonly ImmutableHashSet<string> LoadFieldsMethods = RecordMethodClassification.LoadFieldsMethods;
 
-    private static readonly HashSet<string> WriteMethods = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Insert", "Modify", "ModifyAll", "Delete", "DeleteAll",
-        "Rename", "TransferFields", "Init", "Copy"
-    };
+    private static readonly ImmutableHashSet<string> WriteMethods = RecordMethodClassification.WriteMethods;
 
     /// <summary>
     /// Subset of WriteMethods that trigger JIT loads when partial records are active.
     /// Excludes ModifyAll (set-based, no record load), DeleteAll (same), Init (no SQL).
     /// </summary>
-    private static readonly HashSet<string> JitLoadWriteMethods = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Insert", "Modify", "Delete", "Rename", "TransferFields", "Copy"
-    };
+    private static readonly ImmutableHashSet<string> JitLoadWriteMethods = RecordMethodClassification.JitLoadWriteMethods;
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
