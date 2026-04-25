@@ -10,15 +10,9 @@ Detects table/table extension fields that are not placed on any page and do not 
 
 ## Diagnostic properties
 
-| Property | Value |
-|---|---|
-| ID | `AC0026` |
-| Category | Design |
-| Severity | Info |
-| Enabled by default | true |
-| MessageFormat | `Field '{0}' is not added to any page and does not have the AllowInCustomizations property set.` |
-| Version gate | `AddPageControlInPageCustomization` feature |
-| netstandard2.1 | Full support (no net8.0-only APIs used) |
+**AC0026** · Category: Design · Severity: Info · Enabled: true
+Message: `Field '{0}' is not added to any page and does not have the AllowInCustomizations property set.`
+Version gate: `AddPageControlInPageCustomization` feature · Full netstandard2.1 support
 
 ## Design decisions
 
@@ -82,32 +76,8 @@ Uses `RegisterCompilationStartAction` to build page lookups once per compilation
 
 ## Test coverage
 
-### HasDiagnostic (6 cases)
-
-| Test case | Scenario |
-|---|---|
-| FieldOmittedPage | Field not on any page |
-| ObsoleteStateNo | Non-obsolete field (ObsoleteState = No) flags |
-| TableExtension | Field in table extension not on page |
-| TableExtensionBaseDrillDownPageId | Table extension where base has DrillDownPageId |
-| TableExtensionBaseLookupPageId | Table extension where base has LookupPageId |
-| TableExtensionBaseTableHasAllowInCustomizations | Table extension where base has AllowInCustomizations |
-
-### NoDiagnostic (11 cases)
-
-| Test case | Suppression reason |
-|---|---|
-| AllowInCustomizationsIsSet | AllowInCustomizations already set on field |
-| AllowInCustomizationsOnField | AllowInCustomizations set at field level |
-| AllowInCustomizationsOnTable | AllowInCustomizations set at table level |
-| AllowInCustomizationsOnTableExtension | AllowInCustomizations set at table extension level |
-| DisabledField | Field has Enabled = false |
-| FieldOnPage | Field is placed on a page |
-| FieldTypeNotSupported | Field type is Blob/Media/etc. |
-| FlowFilterField | FlowFilter field class |
-| ObsoleteStatePending | Obsolete field (pending) |
-| ObsoleteStateRemoved | Obsolete field (removed) |
-| TableExtension | Table extension field that is on a page |
+**HasDiagnostic (6 cases):** FieldOmittedPage, ObsoleteStateNo, TableExtension, TableExtensionBaseDrillDownPageId, TableExtensionBaseLookupPageId, TableExtensionBaseTableHasAllowInCustomizations.
+**NoDiagnostic (11 cases):** AllowInCustomizationsIsSet, AllowInCustomizationsOnField, AllowInCustomizationsOnTable, AllowInCustomizationsOnTableExtension, DisabledField, FieldOnPage, FieldTypeNotSupported, FlowFilterField, ObsoleteStatePending, ObsoleteStateRemoved, TableExtension (field on page).
 
 ## Relationship to Microsoft's AS0138
 

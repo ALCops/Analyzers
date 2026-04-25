@@ -8,16 +8,7 @@ This project uses **NUnit 4.1.0** with **ALCops.RoslynTestKit 0.4.1** to test AL
 
 ## Project Structure
 
-There are 6 analyzer/test project pairs:
-
-| Analyzer Project | Test Project | Namespace |
-|---|---|---|
-| ALCops.ApplicationCop | ALCops.ApplicationCop.Test | `ALCops.ApplicationCop.Test` |
-| ALCops.DocumentationCop | ALCops.DocumentationCop.Test | `ALCops.DocumentationCop.Test` |
-| ALCops.FormattingCop | ALCops.FormattingCop.Test | `ALCops.FormattingCop.Test` |
-| ALCops.LinterCop | ALCops.LinterCop.Test | `ALCops.LinterCop.Test` |
-| ALCops.PlatformCop | ALCops.PlatformCop.Test | `ALCops.PlatformCop.Test` |
-| ALCops.TestAutomationCop | ALCops.TestAutomationCop.Test | `ALCops.TestAutomationCop.Test` |
+6 analyzer/test project pairs (see `project-overview.instructions.md` for full solution layout). Each test project follows the namespace pattern `ALCops.{Cop}.Test`.
 
 ## Directory Layout per Rule
 
@@ -411,102 +402,10 @@ Tests run in parallel across assemblies (`[assembly: Parallelizable(ParallelScop
 
 ## Step-by-Step: Adding Tests for a New Rule
 
-Suppose you are adding tests for a new rule `MyNewRule` in `ALCops.LinterCop`:
-
-### 1. Create the directory structure
-
-```
-src/ALCops.LinterCop.Test/Rules/MyNewRule/
-├── MyNewRule.cs
-├── HasDiagnostic/
-│   ├── ViolationCase1.al
-│   └── ViolationCase2.al
-└── NoDiagnostic/
-    ├── CorrectCase1.al
-    └── CorrectCase2.al
-```
-
-### 2. Write the .al fixture files
-
-**HasDiagnostic/ViolationCase1.al** (code that triggers the diagnostic):
-
-```al
-codeunit 50100 MyCodeunit
-{
-    procedure MyProcedure()
-    begin
-        [|SomeBadPattern|];
-    end;
-}
-```
-
-**NoDiagnostic/CorrectCase1.al** (code that does not trigger the diagnostic):
-
-```al
-codeunit 50100 MyCodeunit
-{
-    procedure MyProcedure()
-    begin
-        [|SomeGoodPattern|];
-    end;
-}
-```
-
-### 3. Write the test class
-
-**MyNewRule.cs**:
-
-```csharp
-using RoslynTestKit;
-
-namespace ALCops.LinterCop.Test
-{
-    public class MyNewRule : NavCodeAnalysisBase
-    {
-        private AnalyzerTestFixture _fixture;
-        private string _testCasePath;
-
-        [SetUp]
-        public void Setup()
-        {
-            _fixture = RoslynFixtureFactory.Create<Analyzers.MyNewRuleAnalyzer>();
-
-            _testCasePath = Path.Combine(
-                Directory.GetParent(
-                    Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(MyNewRule)));
-        }
-
-        [Test]
-        [TestCase("ViolationCase1")]
-        [TestCase("ViolationCase2")]
-        public async Task HasDiagnostic(string testCase)
-        {
-            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
-                .ConfigureAwait(false);
-
-            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.MyNewRule);
-        }
-
-        [Test]
-        [TestCase("CorrectCase1")]
-        [TestCase("CorrectCase2")]
-        public async Task NoDiagnostic(string testCase)
-        {
-            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
-                .ConfigureAwait(false);
-
-            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.MyNewRule);
-        }
-    }
-}
-```
-
-### 4. Run and verify
-
-```bash
-dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~MyNewRule"
-```
+1. **Create directory structure**: `src/ALCops.{Cop}.Test/Rules/{RuleName}/` with `{RuleName}.cs`, `HasDiagnostic/`, and `NoDiagnostic/` subdirectories
+2. **Write .al fixture files**: `HasDiagnostic/*.al` (code triggering diagnostic, with `[|...|]` markers) and `NoDiagnostic/*.al` (valid code, also with markers)
+3. **Write test class**: Follow the Test Class Template above using `RoslynFixtureFactory.Create<Analyzers.{AnalyzerClassName}>()`
+4. **Run**: `dotnet test src/ALCops.{Cop}.Test/ --filter "FullyQualifiedName~{RuleName}"`
 
 ## Common Mistakes to Avoid
 

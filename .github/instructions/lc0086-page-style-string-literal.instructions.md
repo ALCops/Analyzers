@@ -16,15 +16,9 @@ Detects string literals that match `PageStyle` enum value names (e.g., `'Unfavor
 
 ## Diagnostic properties
 
-| Property | Value |
-|---|---|
-| ID | `LC0086` |
-| Category | Design |
-| Severity | Warning |
-| Enabled by default | true |
-| MessageFormat | `Avoid using the string literal '{0}' for page styling. Use the PageStyle datatype instead (PageStyle::{1}).` |
-| Version gate | `Fall2024OrGreater` (PageStyle datatype introduced in BC25, 2024 Wave 2) |
-| netstandard2.1 | Full support (no net8.0-only APIs used) |
+**LC0086** · Category: Design · Severity: Warning · Enabled: true
+Message: `Avoid using the string literal '{0}' for page styling. Use the PageStyle datatype instead (PageStyle::{1}).`
+Version gate: `Fall2024OrGreater` (PageStyle introduced in BC25) · Full netstandard2.1 support
 
 ## Design decisions
 
@@ -107,29 +101,8 @@ The shared `EnumProvider.StyleKind.CanonicalNames` uses `StringComparer.OrdinalI
 
 ## Test coverage
 
-### HasDiagnostic (4 cases)
-
-| Test case | Scenario |
-|---|---|
-| Label | `Label 'Unfavorable', Locked = true` in a codeunit |
-| Page | `MyFieldStyle := 'Unfavorable'` in a page OnAfterGetRecord trigger |
-| IfStatement | `if MyText = 'None' then` in a page procedure |
-| ExitStatement | `exit('Standard')` in a codeunit procedure |
-
-### NoDiagnostic (10 cases)
-
-| Test case | Suppression reason |
-|---|---|
-| AssignToStyleExpr | `StyleExpr = 'Standard'` (direct StyleExpr property) |
-| AssignToTableField | Assignment to a table field via global variable |
-| AssignToTableFieldLocal | Assignment to a table field via local variable |
-| AssignToTableFieldRec | Assignment to a table field via Rec variable |
-| Enum | String literal inside an Enum definition |
-| Label | Unlocked label `Label 'Unfavorable'` (no Locked = true) |
-| LockedLabelLowercase | `Label 'standard', Locked = true` (case-sensitive, lowercase doesn't match) |
-| LockedLabelUppercase | `Label 'STANDARD', Locked = true` (case-sensitive, uppercase doesn't match) |
-| Page | Caption property on a page field |
-| RecordMethodInvocation | String literal as argument to a Record method |
+**HasDiagnostic (4 cases):** Label (locked), Page (StyleExpr assignment), IfStatement, ExitStatement.
+**NoDiagnostic (10 cases):** AssignToStyleExpr, AssignToTableField, AssignToTableFieldLocal, AssignToTableFieldRec, Enum, Label (unlocked), LockedLabelLowercase, LockedLabelUppercase, Page (Caption), RecordMethodInvocation.
 
 ## Differences from BC.LinterCop LC0086
 

@@ -15,15 +15,9 @@ Detects `CreateGuid()` calls whose result flows into a Guid field that is part o
 
 ## Diagnostic properties
 
-| Property | Value |
-|---|---|
-| ID | `PC0029` |
-| Category | Performance |
-| Severity | Info |
-| Enabled by default | true |
-| MessageFormat | `Use 'CreateSequentialGuid()' instead of '{0}'. {1}` |
-| Version gate | `Fall2025OrGreater` (runtime 16.0, currently commented out until SDK ships) |
-| netstandard2.1 | Full support (no net8.0-only APIs used) |
+**PC0029** · Category: Performance · Severity: Info · Enabled: true
+Message: `Use 'CreateSequentialGuid()' instead of '{0}'. {1}`
+Version gate: `Fall2025OrGreater` (runtime 16.0, currently commented out until SDK ships) · Full netstandard2.1 support
 
 ## Design decisions
 
@@ -157,37 +151,9 @@ Provides a QuickFix "ALCops: Use CreateSequentialGuid()" that replaces `CreateGu
 
 ## Test coverage
 
-### HasDiagnostic (10 cases)
-
-| Test case | Scenario |
-|---|---|
-| DirectAssignmentToPrimaryKey | `MyTable."Primary Key" := CreateGuid()` |
-| ValidatePrimaryKeyField | `MyTable.Validate("Primary Key", CreateGuid())` |
-| DirectAssignmentToSecondaryKeyField | Assignment to field in a secondary key |
-| VariableAssignedToKeyField | `MyGuid := CreateGuid(); MyTable."PK" := MyGuid;` |
-| CrossProcedureIntraModule | `SetPK(CreateGuid())` where SetPK assigns param to key field |
-| OnInsertTrigger | `Rec."Primary Key" := CreateGuid()` in table OnInsert trigger |
-| QualifiedCreateGuid | `MyTable."Primary Key" := Guid.CreateGuid()` |
-| MultiLevelTracing | `ProcA(CreateGuid())` -> ProcB(guid) -> key field assignment |
-| ValidateSecondaryKeyField | `MyTable.Validate("Index Field", CreateGuid())` for secondary key |
-| DatabaseObjectReference | `CreateGuid()` flows to key field with `DATABASE::MyTable` in same method (BoundApplicationObjectAccess) |
-
-### NoDiagnostic (5 cases)
-
-| Test case | Suppression reason |
-|---|---|
-| NonKeyGuidField | Field is not in any key |
-| TemporaryTable | Temporary table (no SQL backing) |
-| GuidVariableNotInKey | Variable used in Message(), not assigned to key field |
-| NonGuidKeyField | Table has non-Guid key field, no CreateGuid() for it |
-| AssignedToGuidVariableUsedElsewhere | Variable passed to unrelated procedure, not to key field |
-
-### HasFix (2 cases)
-
-| Test case | Scenario |
-|---|---|
-| SimpleCreateGuid | `CreateGuid()` -> `Guid.CreateSequentialGuid()` |
-| QualifiedCreateGuid | `Guid.CreateGuid()` -> `Guid.CreateSequentialGuid()` |
+**HasDiagnostic (10 cases):** DirectAssignmentToPrimaryKey, ValidatePrimaryKeyField, DirectAssignmentToSecondaryKeyField, VariableAssignedToKeyField, CrossProcedureIntraModule, OnInsertTrigger, QualifiedCreateGuid, MultiLevelTracing, ValidateSecondaryKeyField, DatabaseObjectReference.
+**NoDiagnostic (5 cases):** NonKeyGuidField, TemporaryTable, GuidVariableNotInKey, NonGuidKeyField, AssignedToGuidVariableUsedElsewhere.
+**HasFix (2 cases):** SimpleCreateGuid, QualifiedCreateGuid.
 
 ## Phase 2 roadmap (not yet implemented)
 

@@ -8,19 +8,7 @@ ALCops Analyzers is a collection of 6 AL code analyzers for Business Central, bu
 
 ## Project Structure
 
-```
-src/
-  ALCops.ApplicationCop/       # AC prefix - Business logic and application patterns
-  ALCops.DocumentationCop/     # DC prefix - Code documentation rules
-  ALCops.FormattingCop/        # FC prefix - Code style and formatting
-  ALCops.LinterCop/            # LC prefix - General linting and code quality
-  ALCops.PlatformCop/          # PC prefix - Platform correctness and runtime safety
-  ALCops.TestAutomationCop/    # TA prefix - Test codeunit conventions
-  ALCops.Common/               # Shared utilities, extensions, reflection helpers
-  ALCops.Analyzers/            # Umbrella package that bundles all cops
-```
-
-Each cop project follows the same internal layout:
+See `project-overview.instructions.md` for full solution layout. Each cop project follows this internal layout:
 
 ```
 ALCops.<CopName>/
@@ -479,60 +467,7 @@ PropertyInfoLookup.Lookup(SymbolKind.Page, PropertyKind.PageType)
 
 ### Building a Self-Maintaining Dictionary
 
-Since `EnumPropertyTypeInfo` and `EnumPropertyMemberInfo` are internal types, access them via reflection. The pattern iterates all `SymbolKind × PropertyKind` combinations at startup and merges options per `PropertyKind`:
-
-```csharp
-private static readonly Lazy<Dictionary<PropertyKind, ImmutableDictionary<string, string>>>
-    _enumPropertyValuesByKind = new(() =>
-{
-    var result = new Dictionary<PropertyKind, ImmutableDictionary<string, string>>();
-
-    var lookupMethod = typeof(PropertyInfoLookup)
-        .GetMethod("Lookup", BindingFlags.Public | BindingFlags.Static);
-    if (lookupMethod is null) return result;
-
-    // Find internal types via safe assembly scanning
-    Type[] sdkTypes;
-    try { sdkTypes = typeof(PropertyInfoLookup).Assembly.GetTypes(); }
-    catch (ReflectionTypeLoadException ex)
-    { sdkTypes = ex.Types.Where(t => t != null).ToArray()!; }
-
-    var enumPropTypeInfo = sdkTypes.FirstOrDefault(t => t?.Name == "EnumPropertyTypeInfo");
-    var optionsProp = enumPropTypeInfo?.GetProperty("Options",
-        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-    if (enumPropTypeInfo is null || optionsProp is null) return result;
-
-    PropertyInfo? nameProp = null;
-    foreach (var sk in Enum.GetValues<SymbolKind>())
-        foreach (var pk in Enum.GetValues<PropertyKind>())
-        {
-            try
-            {
-                var info = lookupMethod.Invoke(null, new object[] { sk, pk });
-                if (info?.GetType() != enumPropTypeInfo) continue;
-
-                if (optionsProp.GetValue(info) is not IEnumerable options) continue;
-
-                if (!result.ContainsKey(pk))
-                    result[pk] = ImmutableDictionary<string, string>.Empty;
-
-                var builder = result[pk].ToBuilder();
-                builder.KeyComparer = StringComparer.OrdinalIgnoreCase;
-
-                foreach (var opt in options)
-                {
-                    nameProp ??= opt.GetType().GetProperty("Name");
-                    if (nameProp?.GetValue(opt) is string name && !builder.ContainsKey(name))
-                        builder[name] = name;
-                }
-                result[pk] = builder.ToImmutable();
-            }
-            catch { } // Silently skip version-incompatible combinations
-        }
-
-    return result;
-}, LazyThreadSafetyMode.PublicationOnly);
-```
+Since `EnumPropertyTypeInfo` and `EnumPropertyMemberInfo` are internal types, access them via reflection. The pattern iterates all `SymbolKind × PropertyKind` combinations at startup and merges options per `PropertyKind`. See `PropertyAccessor.cs` in `ALCops.Common/Reflection/` for the full implementation.
 
 ### Key Facts
 
@@ -638,206 +573,16 @@ public override VersionCompatibility SupportedVersions =>
 
 ## Writing Tests
 
-Tests use NUnit with `RoslynTestKit`. Each test lives in a folder matching the rule name under `Rules/`.
-
-### Test Structure
-
-```
-ALCops.<CopName>.Test/
-  Rules/
-    <RuleName>/
-      <RuleName>.cs              # Test class
-      HasDiagnostic/             # AL files that SHOULD trigger the diagnostic
-        <TestCase>.al
-      NoDiagnostic/              # AL files that should NOT trigger the diagnostic
-        <TestCase>.al
-```
-
-### Test Class Pattern
-
-```csharp
-using RoslynTestKit;
-
-namespace ALCops.PlatformCop.Test
-{
-    public class AutoIncrementInTemporaryTable : NavCodeAnalysisBase
-    {
-        private AnalyzerTestFixture _fixture;
-        private string _testCasePath;
-
-        [SetUp]
-        public void Setup()
-        {
-            _fixture = RoslynFixtureFactory.Create<Analyzers.AutoIncrementInTemporaryTable>();
-
-            _testCasePath = Path.Combine(
-                Directory.GetParent(
-                    Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(AutoIncrementInTemporaryTable)));
-        }
-
-        [Test]
-        [TestCase("AutoIncrementFieldInTemporaryTable")]
-        public async Task HasDiagnostic(string testCase)
-        {
-            var code = await File.ReadAllTextAsync(
-                Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
-                .ConfigureAwait(false);
-
-            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.AutoIncrementInTemporaryTable);
-        }
-
-        [Test]
-        [TestCase("AutoIncrementFieldInTable")]
-        [TestCase("RegularFieldInTemporaryTable")]
-        public async Task NoDiagnostic(string testCase)
-        {
-            var code = await File.ReadAllTextAsync(
-                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
-                .ConfigureAwait(false);
-
-            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.AutoIncrementInTemporaryTable);
-        }
-    }
-}
-```
-
-### Test AL Files
-
-Use `[|...|]` markers to indicate where the diagnostic should (or should not) fire:
-
-```al
-// HasDiagnostic/AutoIncrementFieldInTemporaryTable.al
-table 50100 MyTable
-{
-    TableType = Temporary;
-
-    fields
-    {
-        field(1; MyField; Integer)
-        {
-            [|AutoIncrement = true|];
-        }
-    }
-}
-```
-
-```al
-// NoDiagnostic/AutoIncrementFieldInTable.al
-table 50100 MyTable
-{
-    fields
-    {
-        field(1; MyField; Integer)
-        {
-            [|AutoIncrement = false|];
-        }
-    }
-}
-```
+See `testing.instructions.md` for the full testing guide, including test class patterns, AL fixture file syntax, assertion methods, and step-by-step instructions.
 
 ## Step-by-Step: Adding a New Rule
 
-Suppose you are adding rule `PC0029` to PlatformCop.
-
-### 1. Add the diagnostic ID
-
-In `src/ALCops.PlatformCop/DiagnosticIds.cs`, add:
-
-```csharp
-public static readonly string MyNewRule = "PC0029";
-```
-
-### 2. Add resource strings
-
-In `src/ALCops.PlatformCop/ALCops.PlatformCopAnalyzers.resx`, add three `<data>` entries:
-
-```xml
-<data name="MyNewRuleTitle" xml:space="preserve">
-  <value>Short title for the rule</value>
-</data>
-<data name="MyNewRuleMessageFormat" xml:space="preserve">
-  <value>The {0} '{1}' has a problem because...</value>
-</data>
-<data name="MyNewRuleDescription" xml:space="preserve">
-  <value>Detailed explanation of why this rule exists and what it checks.</value>
-</data>
-```
-
-### 3. Add the diagnostic descriptor
-
-In `src/ALCops.PlatformCop/DiagnosticDescriptors.cs`, add:
-
-```csharp
-public static readonly DiagnosticDescriptor MyNewRule = new(
-    id: DiagnosticIds.MyNewRule,
-    title: PlatformCopAnalyzers.MyNewRuleTitle,
-    messageFormat: PlatformCopAnalyzers.MyNewRuleMessageFormat,
-    category: Category.Design,
-    defaultSeverity: DiagnosticSeverity.Warning,
-    isEnabledByDefault: true,
-    description: PlatformCopAnalyzers.MyNewRuleDescription,
-    helpLinkUri: GetHelpUri(DiagnosticIds.MyNewRule));
-```
-
-### 4. Create the analyzer class
-
-Create `src/ALCops.PlatformCop/Analyzers/MyNewRule.cs`:
-
-```csharp
-using System.Collections.Immutable;
-using ALCops.Common.Extensions;
-using ALCops.Common.Reflection;
-using Microsoft.Dynamics.Nav.CodeAnalysis;
-using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
-
-namespace ALCops.PlatformCop.Analyzers;
-
-[DiagnosticAnalyzer]
-public sealed class MyNewRule : DiagnosticAnalyzer
-{
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-        ImmutableArray.Create(DiagnosticDescriptors.MyNewRule);
-
-    public override void Initialize(AnalysisContext context) =>
-        context.RegisterSymbolAction(
-            this.Analyze,
-            EnumProvider.SymbolKind.Table);
-
-    private void Analyze(SymbolAnalysisContext ctx)
-    {
-        if (ctx.IsObsolete())
-            return;
-
-        // Your analysis logic...
-
-        ctx.ReportDiagnostic(Diagnostic.Create(
-            DiagnosticDescriptors.MyNewRule,
-            ctx.Symbol.GetLocation(),
-            ctx.Symbol.Kind.ToString(),
-            ctx.Symbol.Name));
-    }
-}
-```
-
-### 5. Write tests
-
-Create the test folder structure:
-
-```
-src/ALCops.PlatformCop.Test/Rules/MyNewRule/
-  MyNewRule.cs
-  HasDiagnostic/
-    <TestCase>.al
-  NoDiagnostic/
-    <TestCase>.al
-```
-
-Write the test class following the pattern above, using `RoslynFixtureFactory.Create<Analyzers.MyNewRule>()`.
-
-### 6. Build and verify
-
-Build the solution and run the tests to confirm the analyzer works.
+1. **Add diagnostic ID** in `DiagnosticIds.cs`: `public static readonly string MyNewRule = "PC0029";`
+2. **Add resource strings** in `.resx` file: `*Title`, `*MessageFormat`, `*Description` entries
+3. **Add descriptor** in `DiagnosticDescriptors.cs` referencing the ID, resource strings, category, severity, and help URI
+4. **Create analyzer class** in `Analyzers/` using the template patterns above (symbol-based, operation-based, or syntax-based)
+5. **Create test class** in the test project under `Rules/<RuleName>/` with `HasDiagnostic/` and `NoDiagnostic/` AL fixtures
+6. **Build and verify**: `dotnet build && dotnet test`
 
 ## Gathering All Extensions of a Kind (ConditionalWeakTable Cache Pattern)
 

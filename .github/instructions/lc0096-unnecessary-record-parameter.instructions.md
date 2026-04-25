@@ -17,14 +17,9 @@ Detects redundant record parameters passed to methods where the same record vari
 
 ## Diagnostic properties
 
-| Property | Value |
-|---|---|
-| ID | `LC0096` |
-| Category | Usage |
-| Severity | Warning |
-| Enabled by default | true |
-| MessageFormat | `The record variable '{0}' is passed as an argument to a method that is already invoked on the same record. Remove the redundant parameter.` |
-| Version gate | None |
+**LC0096** · Category: Usage · Severity: Warning · Enabled: true
+Message: `The record variable '{0}' is passed as an argument to a method that is already invoked on the same record. Remove the redundant parameter.`
+No version gate · Full netstandard2.1 support
 
 ## Design decisions
 
@@ -110,28 +105,8 @@ Arguments may be wrapped in `IConversionExpression` by the SDK. When `argument.V
 
 ## Test coverage
 
-### HasDiagnostic (6 cases)
-
-| Test case | Scenario |
-|---|---|
-| ExternalRecordMethodCall | `MyRecord.MyProcedure(MyRecord)` from a codeunit |
-| InternalTableMethodCall | `MyProcedure(Rec)` inside a table |
-| InternalPageMethodCall | `MyProcedure(Rec)` inside a page (local method) |
-| InternalTableExtensionMethodCall | `MyProcedure(Rec)` inside a table extension |
-| InternalPageExtensionMethodCall | `MyProcedure(Rec)` inside a page extension (local method) |
-| MultipleArguments | `MyRecord.MyProcedure(OtherParam, MyRecord)` flags matching arg |
-
-### NoDiagnostic (7 cases)
-
-| Test case | Suppression reason |
-|---|---|
-| DifferentParameter | `MyRecord.MyProcedure(MyRecord2)` different variable |
-| EventPublisher | `OnBeforeMyProcedure(Rec, IsHandled)` event publisher skipped |
-| BuiltInMethods | `Clear(MyTable)` built-in method |
-| PageRunModal | `Page.RunModal(Page::MyPage, MyTable)` built-in, not on the record |
-| FieldAccessExpression | `MyTable.MyProcedure(MyTable."Name")` field value, not the record |
-| PublicPageMethodWithRec | `CalculateInBackground(Rec)` on public page method (intentional API) |
-| DatabaseObjectReference | `MyTable.MyProcedure(DATABASE::MyTable, MyTable)` application object access (SDK bug trigger) |
+**HasDiagnostic (6 cases):** ExternalRecordMethodCall, InternalTableMethodCall, InternalPageMethodCall (local), InternalTableExtensionMethodCall, InternalPageExtensionMethodCall (local), MultipleArguments.
+**NoDiagnostic (7 cases):** DifferentParameter, EventPublisher, BuiltInMethods, PageRunModal, FieldAccessExpression, PublicPageMethodWithRec, DatabaseObjectReference.
 
 ## Phase 2 roadmap (not yet implemented)
 

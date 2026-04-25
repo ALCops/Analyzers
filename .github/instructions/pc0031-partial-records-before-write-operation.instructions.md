@@ -16,15 +16,9 @@ Detects `SetLoadFields`/`AddLoadFields`/`SetBaseLoadFields` calls on record vari
 
 ## Diagnostic properties
 
-| Property | Value |
-|---|---|
-| ID | `PC0031` |
-| Category | Performance |
-| Severity | Warning |
-| Enabled by default | true |
-| MessageFormat | `Do not use '{0}' before write operations ({1}) on '{2}'. Partial records cause a JIT load on write, resulting in an extra SQL roundtrip and possible runtime errors.` |
-| Version gate | `Spring2021OrGreater` (SetLoadFields introduced in runtime 6.0, BC17) |
-| netstandard2.1 | Full support (no net8.0-only APIs used) |
+**PC0031** · Category: Performance · Severity: Warning · Enabled: true
+Message: `Do not use '{0}' before write operations ({1}) on '{2}'. Partial records cause a JIT load on write, resulting in an extra SQL roundtrip and possible runtime errors.`
+Version gate: `Spring2021OrGreater` (runtime 6.0, BC17) · Full netstandard2.1 support
 
 ## Design decisions
 
@@ -45,9 +39,11 @@ Detects `SetLoadFields`/`AddLoadFields`/`SetBaseLoadFields` calls on record vari
 
 ## Architecture
 
+PC0031 shares the `PartialRecordOperations` analyzer class and `SetLoadFieldsWalker` with PC0030. See `pc0030-use-partial-records-on-read.instructions.md` for the shared flow-sensitive analysis infrastructure (registration strategy, control flow fork/merge semantics, state architecture, reset operations, merge deduplication, known issues).
+
 ### Shared analyzer class
 
-PC0031 is implemented in the same `PartialRecordOperations` DiagnosticAnalyzer class as PC0030. Both rules share the `SetLoadFieldsWalker` inner class which performs a single walk per method body. The two rules are mutually exclusive on the same variable: when writes exist, PC0030 is suppressed and PC0031 may fire; when no writes exist, PC0031 can't fire.
+The two rules are mutually exclusive on the same variable: when writes exist, PC0030 is suppressed and PC0031 may fire; when no writes exist, PC0031 can't fire.
 
 ### PC0031-specific tracking
 
@@ -107,43 +103,9 @@ Provides a QuickFix "ALCops: Remove SetLoadFields" that removes the entire `Expr
 
 ## Test coverage
 
-### HasDiagnostic (9 cases)
-
-| Test case | Scenario |
-|---|---|
-| SetLoadFieldsThenModify | `SetLoadFields + Get + Modify` |
-| SetLoadFieldsThenDelete | `SetLoadFields + Get + Delete` |
-| SetLoadFieldsThenRename | `SetLoadFields + Get + Rename` |
-| SetLoadFieldsThenTransferFields | `SetLoadFields + Get + TransferFields` |
-| SetLoadFieldsThenCopy | `SetLoadFields + Get + Copy` |
-| AddLoadFieldsThenModify | `AddLoadFields variant` |
-| SetBaseLoadFieldsThenModify | `SetBaseLoadFields variant` |
-| BranchWithWrite | `SetLoadFields + Get + conditional Modify` |
-| QualifiedSetLoadFields | `SetLoadFields + FindFirst + Modify` |
-
-### NoDiagnostic (11 cases)
-
-| Test case | Suppression reason |
-|---|---|
-| SetLoadFieldsReadOnly | No write operation (read-only usage) |
-| NoSetLoadFieldsModify | No SetLoadFields (no partial records) |
-| ModifyAll | ModifyAll excluded from trigger set |
-| DeleteAll | DeleteAll excluded from trigger set |
-| Init | Init excluded from trigger set |
-| TemporaryTable | Temporary table (no SQL backing) |
-| ClearBetweenSetLoadFieldsAndModify | Clear resets partial records state |
-| WriteThenSetLoadFields | Write (Delete) before SetLoadFields; uses full buffer, no JIT |
-| WriteAfterSetLoadFieldsBeforePartialRead | Write (Delete) after SetLoadFields but before partial read; uses full buffer from prior Get |
-| SetLoadFieldsNoArgsResetsPartialRead | SetLoadFields("PK") + Get + SetLoadFields() no-args + Get + Delete; no-args cancels partial records entirely |
-| SetLoadFieldsThenInsert | `SetLoadFields + Init + Insert` with no read; Init creates fresh record, no partial data |
-
-### HasFix (3 cases)
-
-| Test case | Scenario |
-|---|---|
-| RemoveSetLoadFields | Remove `SetLoadFields(...)` statement |
-| RemoveAddLoadFields | Remove `AddLoadFields(...)` statement |
-| RemoveSetBaseLoadFields | Remove `SetBaseLoadFields()` statement |
+**HasDiagnostic (9 cases):** SetLoadFieldsThenModify, SetLoadFieldsThenDelete, SetLoadFieldsThenRename, SetLoadFieldsThenTransferFields, SetLoadFieldsThenCopy, AddLoadFieldsThenModify, SetBaseLoadFieldsThenModify, BranchWithWrite, QualifiedSetLoadFields.
+**NoDiagnostic (11 cases):** SetLoadFieldsReadOnly, NoSetLoadFieldsModify, ModifyAll, DeleteAll, Init, TemporaryTable, ClearBetweenSetLoadFieldsAndModify, WriteThenSetLoadFields, WriteAfterSetLoadFieldsBeforePartialRead, SetLoadFieldsNoArgsResetsPartialRead, SetLoadFieldsThenInsert.
+**HasFix (3 cases):** RemoveSetLoadFields, RemoveAddLoadFields, RemoveSetBaseLoadFields.
 
 ## Phase 2 roadmap (not yet implemented)
 

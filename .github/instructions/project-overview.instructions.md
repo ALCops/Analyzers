@@ -138,15 +138,7 @@ The settings provider uses `Newtonsoft.Json` on `netstandard2.1` and `System.Tex
 
 ## Versioning
 
-Three-channel release strategy using GitVersion with `GitHubFlow/v1` workflow:
-- **Alpha** (`main` branch): Auto-published on every push. Version: `X.Y.0-alpha.N` (Minor increment).
-- **Beta** (`release/vX.Y.Z` branch): Manual publish via workflow_dispatch. Version: `X.Y.0-beta.N` (ContinuousDelivery mode).
-- **Stable** (tag `vX.Y.Z`): Auto-published on tag push. Version from tag.
-
-`tracks-release-branches: true` on main means creating `release/v0.7.0` auto-bumps main to `0.8.0-alpha.1`.
-Override increment per commit with `+semver: major/minor/patch`.
-
-See `release-strategy.instructions.md` for full details.
+Three-channel release strategy (Alpha/Beta/Stable) using GitVersion. See `release-strategy.instructions.md` for full details.
 
 ## Branching policy
 
@@ -191,11 +183,4 @@ Requires BC Dev Tools at `../../Microsoft.Dynamics.BusinessCentral.Development.T
 
 ## Adding a new diagnostic rule
 
-1. Add the diagnostic ID to `DiagnosticIds.cs` (use the correct prefix)
-2. Add message strings to the `.resx` file (Title, MessageFormat, Description)
-3. Add the `DiagnosticDescriptor` to `DiagnosticDescriptors.cs` with the correct category, severity, and help URI
-4. Create the analyzer class in `Analyzers/` decorated with `[DiagnosticAnalyzer]`
-5. Optionally create a code fix in `CodeFixes/` decorated with `[CodeFixProvider]`
-6. Create test class in the corresponding test project under `Rules/{RuleName}/`
-7. Add `.al` test fixtures in `HasDiagnostic/` and `NoDiagnostic/` (and `HasFix/` if applicable)
-8. Add documentation page at the docs site (`alcops.dev`)
+See `analyzer-development.instructions.md` for the step-by-step guide.

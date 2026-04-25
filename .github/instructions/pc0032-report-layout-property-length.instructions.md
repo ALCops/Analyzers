@@ -13,15 +13,9 @@ Detects `Caption` and `Summary` properties on report layout blocks (`rendering >
 
 ## Diagnostic properties
 
-| Property | Value |
-|---|---|
-| ID | `PC0032` |
-| Category | Design |
-| Severity | Error |
-| Enabled by default | true |
-| MessageFormat | `Report layout {0} is {1} characters long, but the maximum is 250. Business Central will fail at runtime when selecting this layout.` |
-| Version gate | None |
-| netstandard2.1 | Full support (no net8.0-only APIs used) |
+**PC0032** · Category: Design · Severity: **Error** · Enabled: true
+Message: `Report layout {0} is {1} characters long, but the maximum is 250. Business Central will fail at runtime when selecting this layout.`
+No version gate · Full netstandard2.1 support
 
 ## Design decisions
 
@@ -58,20 +52,5 @@ Follows the same approach as `EmptyCaptionLocked` (AC0033), which registers on `
 
 ## Test coverage
 
-### HasDiagnostic (4 cases)
-
-| Test case | Scenario |
-|---|---|
-| CaptionExceeds250 | Report layout with Caption of 251 characters |
-| SummaryExceeds250 | Report layout with Summary of 251 characters |
-| ReportExtensionCaptionExceeds250 | Reportextension layout with Caption of 251 characters |
-| BothExceed250 | Report layout with both Caption and Summary exceeding 250 characters |
-
-### NoDiagnostic (5 cases)
-
-| Test case | Suppression reason |
-|---|---|
-| CaptionExactly250 | Caption at exactly 250 characters (boundary, inclusive limit) |
-| CaptionUnder250 | Short Caption (16 characters) |
-| SummaryUnder250 | Short Summary (39 characters) |
-| NoCaptionOrSummary | Layout block without Caption or Summary properties |
+**HasDiagnostic (4 cases):** CaptionExceeds250, SummaryExceeds250, ReportExtensionCaptionExceeds250, BothExceed250.
+**NoDiagnostic (5 cases):** CaptionExactly250 (boundary), CaptionUnder250, SummaryUnder250, NoCaptionOrSummary.

@@ -10,15 +10,9 @@ Checks that tables used by pages define both `Brick` and `DropDown` field groups
 
 ## Diagnostic properties
 
-| Property | Value |
-|---|---|
-| ID | `AC0013` |
-| Category | Design |
-| Severity | Info |
-| Enabled by default | false |
-| MessageFormat | `Table '{0}' does not have a '{1}' field group.` |
-| Version gate | None |
-| netstandard2.1 | Full support (no net8.0-only APIs used) |
+**AC0013** · Category: Design · Severity: Info · Enabled: **false** (opt-in)
+Message: `Table '{0}' does not have a '{1}' field group.`
+No version gate · Full netstandard2.1 support
 
 ## Design decisions
 
@@ -55,19 +49,7 @@ Uses `RegisterCompilationStartAction` to discover which tables are referenced by
 
 ## Test coverage
 
-### HasDiagnostic (commented out)
+Tests are commented out (TODO: `WithRuleSetPath` in RoslynTestKit needed since rule is `isEnabledByDefault: false`).
 
-Tests are commented out with a TODO about `WithRuleSetPath` in RoslynTestKit. The rule is `isEnabledByDefault: false`, so test fixtures don't trigger it without explicit enablement.
-
-| Test case | Scenario |
-|---|---|
-| BrickIsMissing | Table without Brick field group |
-| DropDownIsMissing | Table without DropDown field group |
-| TemporaryTable | Temporary table referenced by a page |
-
-### NoDiagnostic (2 cases)
-
-| Test case | Suppression reason |
-|---|---|
-| HasBrickAndDropDown | Table has both field groups defined |
-| TemporaryTable | Temporary table not referenced by any page |
+**HasDiagnostic (3 cases, commented out):** BrickIsMissing, DropDownIsMissing, TemporaryTable (referenced by page).
+**NoDiagnostic (2 cases):** HasBrickAndDropDown, TemporaryTable (no page reference).

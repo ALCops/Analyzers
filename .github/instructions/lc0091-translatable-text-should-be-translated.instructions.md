@@ -16,14 +16,9 @@ Checks that all translatable texts (captions, tooltips, labels) in AL code have 
 
 ## Diagnostic properties
 
-| Property | Value |
-|---|---|
-| ID | `LC0091` |
-| Category | Design |
-| Severity | Warning |
-| Enabled by default | true |
-| MessageFormat | `Missing translation for '{0}' in language(s): {1}` |
-| Version gate | None |
+**LC0091** · Category: Design · Severity: Warning · Enabled: true · **net8.0-only** (empty stub on netstandard2.1)
+Message: `Missing translation for '{0}' in language(s): {1}`
+No version gate
 
 ## Design decisions
 
@@ -128,36 +123,11 @@ This matches the AL compiler's XLIFF generation behavior exactly.
 
 ## Test coverage
 
-### HasDiagnostic (6 cases)
-| Test case | Scenario |
-|---|---|
-| LocalLabel | Local label variable without translation |
-| GlobalLabel | Global label variable without translation |
-| TableFieldCaption | Table field with untranslated caption |
-| EnumValueCaption | Enum value with untranslated caption |
-| PageControlToolTip | Page control with untranslated tooltip |
-| ReportLabel | Report label without translation |
-
-### HasDiagnosticWithLanguagesToTranslateNoXliff (1 case)
-| Test case | Scenario |
-|---|---|
-| LocalLabel | LanguagesToTranslate=["da-DK"], no XLIFF files. Settings declare required languages without XLIFF files. |
-
-### HasDiagnosticWithLanguagesToTranslatePartialXliff (1 case)
-| Test case | Scenario |
-|---|---|
-| LocalLabel | LanguagesToTranslate=["da-DK","de-DE"], only da-DK XLIFF. Settings add de-DE as required language. |
-
-### NoDiagnostic (2 cases)
-| Test case | Suppression reason |
-|---|---|
-| LockedLabel | Label with Locked=true |
-| LockedReportLabel | Report label with Locked=true |
-
-### NoDiagnosticNoXliff (1 case)
-| Test case | Suppression reason |
-|---|---|
-| NoXliffFiles | No XLIFF files present in file system, no LanguagesToTranslate setting |
+**HasDiagnostic (6 cases):** LocalLabel, GlobalLabel, TableFieldCaption, EnumValueCaption, PageControlToolTip, ReportLabel.
+**HasDiagnosticWithLanguagesToTranslateNoXliff (1 case):** LocalLabel with LanguagesToTranslate=["da-DK"], no XLIFF files.
+**HasDiagnosticWithLanguagesToTranslatePartialXliff (1 case):** LocalLabel with LanguagesToTranslate=["da-DK","de-DE"], only da-DK XLIFF.
+**NoDiagnostic (2 cases):** LockedLabel, LockedReportLabel.
+**NoDiagnosticNoXliff (1 case):** No XLIFF files present, no LanguagesToTranslate setting.
 
 ## Test infrastructure
 

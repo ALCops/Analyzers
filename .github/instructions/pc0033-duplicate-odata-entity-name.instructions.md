@@ -15,16 +15,10 @@ Detects page controls that produce duplicate OData EntityNames after the EDMX na
 
 ## Diagnostic properties
 
-| Property | Value |
-|---|---|
-| ID | `PC0033` |
-| Category | Design |
-| Severity | Warning |
-| Enabled by default | true |
-| MessageFormat | `Control '{0}' has a duplicate OData EntityName '{1}'. This will cause a runtime error when using 'Edit in Excel'.` |
-| Version gate | None |
-| netstandard2.1 | Full support (no net8.0-only APIs used) |
-| OData transformation | Via SDK's `MangleIntoValidXmlIdentifier` accessed through reflection (`ODataNameHelper` in ALCops.Common) |
+**PC0033** · Category: Design · Severity: Warning · Enabled: true
+Message: `Control '{0}' has a duplicate OData EntityName '{1}'. This will cause a runtime error when using 'Edit in Excel'.`
+No version gate · Full netstandard2.1 support
+OData transformation via SDK's `MangleIntoValidXmlIdentifier` accessed through reflection (`ODataNameHelper` in ALCops.Common)
 
 ## Design decisions
 
@@ -157,28 +151,8 @@ If the SDK's `MangleIntoValidXmlIdentifier` method is not found (older BC SDK ve
 
 ## Test coverage
 
-### HasDiagnostic (8 cases)
-
-| Test case | Scenario |
-|---|---|
-| DotRemoval | `"PTE No."` and `"PTE No"` both become `PTE_No` |
-| PercentSign | `"Tax%"` and `TaxPercent` both become `TaxPercent` |
-| ParenthesisRemoval | `"Balance (LCY)"` and `Balance_LCY` both become `Balance_LCY` |
-| SlashToUnderscore | `"Country/Region"` and `Country_Region` both become `Country_Region` |
-| PageExtensionCollision | Extension control `"Item No"` collides with base page `"Item No."` |
-| PrimaryKeyCollision | Control `Primary_Key` collides with PK field `"Primary Key"` |
-| ThreeWayCollision | Three controls with different special chars (`"A B"`, `"A.B"`, `"A-B"`) all producing `A_B` |
-| MultiplePageExtensionCollision | Two page extensions each adding a control that collides (`"PTE No"` and `"PTE No."` both → `PTE_No`) |
-
-### NoDiagnostic (5 cases)
-
-| Test case | Suppression reason |
-|---|---|
-| UniqueNames | All controls have distinct OData names |
-| ApiPage | API page type (excluded from check) |
-| RoleCenterPage | RoleCenter page type (excluded) |
-| ObsoletePage | Page with `ObsoleteState = Pending` (skipped) |
-| PageExtensionUniqueNames | Extension controls have unique names relative to base |
+**HasDiagnostic (8 cases):** DotRemoval, PercentSign, ParenthesisRemoval, SlashToUnderscore, PageExtensionCollision, PrimaryKeyCollision, ThreeWayCollision, MultiplePageExtensionCollision.
+**NoDiagnostic (5 cases):** UniqueNames, ApiPage, RoleCenterPage, ObsoletePage, PageExtensionUniqueNames.
 
 ## Phase 2 roadmap (not yet implemented)
 

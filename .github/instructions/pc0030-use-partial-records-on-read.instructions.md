@@ -16,14 +16,9 @@ Recommends using `SetLoadFields` (or `AddLoadFields`/`SetBaseLoadFields`) before
 
 ## Diagnostic properties
 
-| Property | Value |
-|---|---|
-| ID | `PC0030` |
-| Category | Performance |
-| Severity | Info |
-| Enabled by default | true |
-| MessageFormat | `Use SetLoadFields before '{0}.{1}()' to improve performance by loading only the fields that are needed.` |
-| Version gate | `Spring2021OrGreater` (SetLoadFields introduced in runtime 6.0, BC17) |
+**PC0030** · Category: Performance · Severity: Info · Enabled: true
+Message: `Use SetLoadFields before '{0}.{1}()' to improve performance by loading only the fields that are needed.`
+Version gate: `Spring2021OrGreater` (runtime 6.0, BC17) · Full netstandard2.1 support
 
 ## Design decisions
 
@@ -177,71 +172,13 @@ AA0242 (CodeCop's `Rule0242PartialRecordsDetectJitLoads`) is the **complement** 
 
 ## Test coverage
 
-52 test cases organized as:
+52 test cases total:
 
-### HasDiagnostic (16 cases)
-| Test case | Scenario |
-|---|---|
-| LocalRecordGet | Basic Get() without SetLoadFields |
-| LocalRecordFindFirst | FindFirst() |
-| LocalRecordFindSet | FindSet() + Next loop |
-| LocalRecordFindLast | FindLast() |
-| LocalRecordFind | Find() |
-| LocalRecordMultipleReads | Multiple read ops on same variable (both should report) |
-| LocalRecordRefFindFirst | RecordRef FindFirst() |
-| SetLoadFieldsAfterGet | SetLoadFields AFTER Get (Bug A: statement ordering) |
-| ClearBetweenSetLoadFieldsAndGet | Clear() invalidates SetLoadFields before Get (Bug B) |
-| ResetBetweenSetLoadFieldsAndGet | Reset() invalidates SetLoadFields before Get (Bug B) |
-| SetLoadFieldsNoArgsBetween | SetLoadFields() with 0 args resets partial records state (Bug B) |
-| CaseBranchWithoutSetLoadFields | SetLoadFields in one case branch, Get in other branches (Bug C) |
-| IfBranchWithoutSetLoadFields | SetLoadFields in if-true, Get in else branch (Bug C) |
-| ClearResetsWriteOp | Modify then Clear then Get (Clear resets write op flag) |
-| ClearResetsPassedToFunction | PassedToFunction then Clear then Get (Clear resets passed flag) |
-| LoopNoSetLoadFields | FindSet in while condition + Get in body, no SetLoadFields |
+**HasDiagnostic (16 cases):** LocalRecordGet, LocalRecordFindFirst, LocalRecordFindSet, LocalRecordFindLast, LocalRecordFind, LocalRecordMultipleReads, LocalRecordRefFindFirst, SetLoadFieldsAfterGet, ClearBetweenSetLoadFieldsAndGet, ResetBetweenSetLoadFieldsAndGet, SetLoadFieldsNoArgsBetween, CaseBranchWithoutSetLoadFields, IfBranchWithoutSetLoadFields, ClearResetsWriteOp, ClearResetsPassedToFunction, LoopNoSetLoadFields.
 
-### NoDiagnostic (25 cases)
-| Test case | Suppression reason |
-|---|---|
-| HasSetLoadFields | SetLoadFields already present |
-| HasAddLoadFields | AddLoadFields already present |
-| HasSetBaseLoadFields | SetBaseLoadFields already present |
-| HasModify | Write operation (Modify) |
-| HasInsert | Write operation (Insert) |
-| HasDelete | Write operation (Delete) |
-| HasDeleteAll | Write operation (DeleteAll) |
-| HasModifyAll | Write operation (ModifyAll) |
-| HasRename | Write operation (Rename) |
-| HasTransferFields | Write operation (TransferFields) |
-| HasInit | Write operation (Init) |
-| HasCopy | Write operation (Copy) |
-| PassedToFunction | Variable passed to user-defined function |
-| PassedToEvent | Variable passed to IntegrationEvent publisher |
-| PassedToPageRun | Variable passed to PAGE.Run() |
-| TemporaryTable | Temporary record variable |
-| GlobalVariable | Global variable (Phase 1: skip) |
-| ParameterVariable | Parameter variable (not a local) |
-| IsEmptyOnly | Only IsEmpty call, no read operation |
-| CDSTable | CDS table type (non-Normal) |
-| RecordRefSetTableWithModify | RecordRef.Get() + SetTable(MyTable) + MyTable.Modify() |
-| RecordRefSetTablePassedToFunction | RecordRef.Get() + SetTable(MyTable) + MyTable passed to function |
-| DatabaseObjectReference | DATABASE::MyTable as method argument (BoundObjectAccess) |
-| IfBothBranchesSetLoadFields | SetLoadFields in both if branches, Get after if (AND merge) |
-| LoopSetLoadFieldsBefore | SetLoadFields before while loop, Get inside loop body |
+**NoDiagnostic (25 cases):** HasSetLoadFields, HasAddLoadFields, HasSetBaseLoadFields, HasModify, HasInsert, HasDelete, HasDeleteAll, HasModifyAll, HasRename, HasTransferFields, HasInit, HasCopy, PassedToFunction, PassedToEvent, PassedToPageRun, TemporaryTable, GlobalVariable, ParameterVariable, IsEmptyOnly, CDSTable, RecordRefSetTableWithModify, RecordRefSetTablePassedToFunction, DatabaseObjectReference, IfBothBranchesSetLoadFields, LoopSetLoadFieldsBefore.
 
-### HasFix (11 cases)
-| Test case | Scenario |
-|---|---|
-| SingleField | One field accessed, inserts SetLoadFields with that field |
-| MultipleFields | Two fields accessed, inserts SetLoadFields with both (sorted alphabetically) |
-| QuotedFieldName | Field with spaces, properly quoted in SetLoadFields |
-| NoFieldAccess | No field access found, falls back to primary key fields |
-| SetRangeFieldExcluded | SetRange(F1, 'A') + exit(F2): only F2 in SetLoadFields (F1 is filter selector) |
-| SetFilterFieldExcluded | SetFilter(F1, '%1', 'A') + exit(F2): only F2 in SetLoadFields |
-| SetRangeValueArgIncluded | SetRange(F1, MyTable.F2): F2 included (value arg is consumed) |
-| AllFieldsInFilters | SetRange(F1) + SetRange(F2) only, no consumed fields: falls back to PK |
-| TestFieldIncluded | TestField(F1, 'X') + exit(F2): both F1 and F2 included (TestField consumes) |
-| SetCurrentKeyExcluded | SetCurrentKey(F1) + exit(F2): only F2 in SetLoadFields |
-| MixedFilterAndConsume | SetRange(F1, 'A') + exit(F1 + F2): both included (F1 consumed in exit) |
+**HasFix (11 cases):** SingleField, MultipleFields, QuotedFieldName, NoFieldAccess, SetRangeFieldExcluded, SetFilterFieldExcluded, SetRangeValueArgIncluded, AllFieldsInFilters, TestFieldIncluded, SetCurrentKeyExcluded, MixedFilterAndConsume.
 
 ## CodeFix: UsePartialRecordsOnReadCodeFixProvider
 

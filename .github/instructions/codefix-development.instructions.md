@@ -457,34 +457,12 @@ dotnet test ALCops.sln --filter "FullyQualifiedName~MyRule"
 
 ## Test infrastructure
 
-- **Test framework**: NUnit 4.x
-- **Test kit**: `ALCops.RoslynTestKit` (custom package, version 0.4.1)
-- **Base class**: `NavCodeAnalysisBase` (from RoslynTestKit)
-- **Fixture factory**: `RoslynFixtureFactory.Create<T>()` for both analyzers and code fixes
-- **Test projects** always target `net8.0` only
+See `testing.instructions.md` for the full testing guide. CodeFix-specific details:
 
-Test directory structure for a rule with a CodeFix:
-
-```
-Rules/
-└── MyRule/
-    ├── MyRule.cs               # Test class
-    ├── HasDiagnostic/          # .al files where diagnostic IS expected
-    │   ├── TestCase1.al
-    │   └── TestCase2.al
-    ├── NoDiagnostic/           # .al files where diagnostic is NOT expected
-    │   ├── ValidCase1.al
-    │   └── ValidCase2.al
-    └── HasFix/                 # CodeFix test cases (current → expected)
-        └── TestCaseName/
-            ├── current.al      # Input code (with [|...|] marker)
-            └── expected.al     # Expected output after fix
-```
-
-Three test method patterns:
-- `HasDiagnostic(string testCase)` - verifies diagnostic fires at markers
-- `NoDiagnostic(string testCase)` - verifies no false positives
-- `HasFix(string testCase)` - verifies the CodeFix produces the expected output
+- `RoslynFixtureFactory.Create<T>()` takes the CodeFix type as generic parameter (not the analyzer)
+- `AdditionalAnalyzers` must include the analyzer instance so diagnostics are produced
+- `fixture.TestCodeFix()` verifies the transformation from current to expected code
+- Test cases live in `HasFix/<TestCaseName>/` with `current.al` (with `[|...|]` marker) and `expected.al`
 
 ## Existing implementations reference
 

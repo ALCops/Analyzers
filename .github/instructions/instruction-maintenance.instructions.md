@@ -50,47 +50,35 @@ Choose the narrowest scope that covers the relevant files:
 
 ### Rule-specific instruction files
 
-These are the most common type. Include:
-
-1. **Purpose**: What the rule checks and why it matters. Include references (GitHub discussions, MS Docs).
-2. **Diagnostic properties**: ID, category, severity, message format, version gate.
-3. **Design decisions table**: Document every non-obvious choice with Decision, Choice, and Rationale columns. This is the most valuable section for future maintainers.
-4. **Architecture**: Registration strategy, analysis flow, key implementation details.
-5. **Known issues and workarounds**: SDK bugs, edge cases, defensive coding patterns.
-6. **Method/symbol classifications**: Tables of methods grouped by behavior (e.g., read methods, write methods, suppression methods).
-7. **Relationship to other rules**: How this rule interacts with or complements other diagnostics.
-8. **Test coverage**: Table of all test cases with scenario descriptions, organized by HasDiagnostic/NoDiagnostic/HasFix.
-9. **Phase 2 / roadmap**: Planned but unimplemented features, to prevent agents from re-discovering the same ideas.
-10. **CodeFix details** (if applicable): Design decisions, architecture, field detection strategy.
+Include: purpose, compact diagnostic properties, design decisions table, architecture, known issues, test coverage (summary counts), CodeFix details (if applicable), roadmap/phase 2 items.
 
 ### Development guide instruction files
 
-These cover conventions for a category of files. Include:
-
-1. **Project structure**: Directory layout, file naming.
-2. **Templates**: Canonical code patterns that new files should follow.
-3. **Step-by-step guides**: How to add a new analyzer, codefix, test, etc.
-4. **API reference**: Key SDK types, methods, and their usage patterns.
-5. **Common pitfalls**: Mistakes to avoid, with explanations of why.
+Include: project structure, templates, step-by-step guides, API reference, common pitfalls.
 
 ## Existing instruction files
 
 | File | Scope | Purpose |
 |---|---|---|
-| `project-overview.instructions.md` | `'**'` | Solution structure, dependencies, build config |
-| `analyzer-development.instructions.md` | `'src/ALCops.*/Analyzers/**'` | How to write analyzers |
-| `codefix-development.instructions.md` | `'src/ALCops.*/CodeFixes/**'` | How to write code fixes |
-| `testing.instructions.md` | `'src/*.Test/**'` | Test conventions and patterns |
-| `common-library.instructions.md` | `'src/ALCops.Common/**'` | Shared library guidelines |
-| `cicd.instructions.md` | `'.github/**'` | CI/CD workflows and scripts |
-| `release-strategy.instructions.md` | `'.github/**'` | Release channels, versioning, GitVersion config, cleanup |
-| `pc0030-use-partial-records-on-read.instructions.md` | `'src/ALCops.PlatformCop/**/{UsePartialRecordsOnRead,PartialRecordOperations}*'` | PC0030 rule details |
-| `lc0096-unnecessary-record-parameter.instructions.md` | `'src/ALCops.LinterCop/**/UnnecessaryRecordParameterInMethodCall*'` | LC0096 rule details |
-| `lc0086-page-style-string-literal.instructions.md` | `'src/ALCops.LinterCop/**/PageStyleStringLiteral*'` | LC0086 rule details |
-| `lc0092-naming-pattern.instructions.md` | `'src/ALCops.LinterCop/**/NamingPattern*'` | LC0092 rule details |
-| `lc0091-translatable-text-should-be-translated.instructions.md` | `'src/ALCops.LinterCop/**/TranslatableTextShouldBeTranslated*'` | LC0091 rule details |
-| `pc0029-use-sequential-guid.instructions.md` | `'src/ALCops.PlatformCop/**/UseSequentialGuid*'` | PC0029 rule details |
-| `pc0031-partial-records-before-write-operation.instructions.md` | `'src/ALCops.PlatformCop/**/PartialRecordsBeforeWriteOperation*'` | PC0031 rule details |
-| `ac0026-allow-in-customizations-for-omitted-fields.instructions.md` | `'src/ALCops.ApplicationCop/**/AllowInCustomizationsForOmittedFields*'` | AC0026 rule details |
-| `ac0013-field-groups-required.instructions.md` | `'src/ALCops.ApplicationCop/**/FieldGroupsRequired*'` | AC0013 rule details |
-| `get-bc-devtools.instructions.md` | `'.github/actions/get-bc-devtools/**'` | BC DevTools source discovery, assembly analysis, caching |
+| `project-overview` | `'**'` | Solution structure, dependencies, build config |
+| `instruction-maintenance` | `'**'` | This file: how to maintain instruction files |
+| `analyzer-development` | `'src/ALCops.*/Analyzers/**'` | How to write analyzers |
+| `codefix-development` | `'src/ALCops.*/CodeFixes/**'` | How to write code fixes |
+| `testing` | `'src/*.Test/**'` | Test conventions and patterns |
+| `common-library` | `'src/ALCops.Common/**'` | Shared library guidelines |
+| `netstandard21-compatibility` | `'src/ALCops.*/**'` | netstandard2.1 compat patterns |
+| `settings-schema` | `ALCopsSettings.cs` | Settings file schema |
+| `cicd` | `'.github/**'` | CI/CD workflows |
+| `release-strategy` | `'.github/**'` | Release channels, versioning, cleanup |
+| `get-bc-devtools` | `'.github/actions/get-bc-devtools/**'` | BC DevTools discovery and caching |
+| `ac0013-field-groups-required` | rule-scoped | AC0013 rule |
+| `ac0026-allow-in-customizations-for-omitted-fields` | rule-scoped | AC0026 rule |
+| `lc0086-page-style-string-literal` | rule-scoped | LC0086 rule |
+| `lc0091-translatable-text-should-be-translated` | rule-scoped | LC0091 rule |
+| `lc0092-naming-pattern` | rule-scoped | LC0092 rule |
+| `lc0096-unnecessary-record-parameter` | rule-scoped | LC0096 rule |
+| `pc0029-use-sequential-guid` | rule-scoped | PC0029 rule |
+| `pc0030-use-partial-records-on-read` | rule-scoped | PC0030 rule |
+| `pc0031-partial-records-before-write-operation` | rule-scoped | PC0031 rule |
+| `pc0032-report-layout-property-length` | rule-scoped | PC0032 rule |
+| `pc0033-duplicate-odata-entity-name` | rule-scoped | PC0033 rule |

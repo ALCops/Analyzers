@@ -15,14 +15,9 @@ Validates names of procedures, variables, parameters, return values, objects, fi
 
 ## Diagnostic properties
 
-| Property | Value |
-|---|---|
-| ID | `LC0092` |
-| Category | Naming |
-| Severity | Warning |
-| Enabled by default | true |
-| MessageFormat | `{0} name "{1}" {2}` |
-| Version gate | None |
+**LC0092** · Category: Naming · Severity: Warning · Enabled: true
+Message: `{0} name "{1}" {2}`
+No version gate · Full netstandard2.1 support
 
 ## Design decisions
 
@@ -166,43 +161,8 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 
 ## Test coverage
 
-### HasDiagnostic (10 cases)
-
-| Test case | Scenario |
-|---|---|
-| ProcedureLowerCaseStart | Procedure starting with lowercase |
-| VariableLowerCaseStart | Global variable starting with lowercase |
-| VariableWithSpecialChars | Variable with % character (disallow pattern) |
-| ParameterLowerCaseStart | Parameter starting with lowercase |
-| ReturnValueLowerCaseStart | Named return value starting with lowercase |
-| ObjectLowerCaseStart | Codeunit with lowercase name |
-| FieldWithSpecialChars | Field with % character (disallow pattern) |
-| EnumValueLowerCaseStart | Enum value starting with lowercase |
-| ActionLowerCaseStart | Page action starting with lowercase |
-| ControlLowerCaseStart | Page control (group) starting with lowercase |
-
-### NoDiagnostic (13 cases)
-
-| Test case | Suppression reason |
-|---|---|
-| ProcedurePascalCase | Correctly named procedure |
-| VariablePascalCase | Correctly named variables (local + global) |
-| FieldWithLettersAndDigits | Field names with letters, digits, spaces, parentheses |
-| ObsoleteProcedure | Obsolete procedure (skipped) |
-| TriggerMethod | Trigger (skipped, platform-defined) |
-| InterfaceImplementingMethod | Interface implementation (skipped, can't rename) |
-| EventSubscriberPascalCase | Correctly named event subscriber |
-| EventSubscriberPlatformParams | Event subscriber with platform param `xRec` (skipped, params must match publisher) |
-| EventSubscriberUserParams | Event subscriber with user-defined lowercase param `myTable` matching publisher signature (skipped) |
-| ApiPageControlCamelCase | API page control with camelCase name (skipped, AA0102 requires camelCase) |
-| ActionAcceleratorKey | Action/group with `&` keyboard accelerator prefix (e.g., `"&Line"`, stripped before pattern matching) |
-| EnumValueBlankSpace | Enum value with whitespace-only name `" "` (skipped, common "empty" value pattern) |
-| SingleLetterVariable | Single-letter lowercase variable names (`i`, `t`, `x`) in procedure (exempt by default pattern) |
-| SingleLetterParameter | Single-letter lowercase parameter names (`i`, `t`) in procedure signature (exempt by default pattern) |
-| UnderscorePrefix | Variable names with underscore prefix followed by PascalCase (`_Text`, `_MyVariable`) |
-| XRecVariable | Local variable with xRec prefix (`xSalesLine: Record MyTable`) |
-| XRecParameter | Parameter with xRec prefix (`xSalesLine: Record MyTable`) |
-| ParameterPascalCase | Correctly named parameters |
+**HasDiagnostic (10 cases):** ProcedureLowerCaseStart, VariableLowerCaseStart, VariableWithSpecialChars, ParameterLowerCaseStart, ReturnValueLowerCaseStart, ObjectLowerCaseStart, FieldWithSpecialChars, EnumValueLowerCaseStart, ActionLowerCaseStart, ControlLowerCaseStart.
+**NoDiagnostic (17 cases):** ProcedurePascalCase, VariablePascalCase, FieldWithLettersAndDigits, ObsoleteProcedure, TriggerMethod, InterfaceImplementingMethod, EventSubscriberPascalCase, EventSubscriberPlatformParams, EventSubscriberUserParams, ApiPageControlCamelCase, ActionAcceleratorKey, EnumValueBlankSpace, SingleLetterVariable, SingleLetterParameter, UnderscorePrefix, XRecVariable, XRecParameter, ParameterPascalCase.
 
 ## Phase 2 roadmap (not yet implemented)
 
