@@ -63,6 +63,7 @@ jobs:
           fi
 
       - name: Save TargetFramework.json cache
+        if: steps.restore-tfm-cache.outputs.cache-matched-key != format('tfm-json-{0}', steps.hash-tfm.outputs.hash)
         uses: actions/cache/save@v5
         with:
           path: ${{ runner.temp }}/TargetFramework.json
