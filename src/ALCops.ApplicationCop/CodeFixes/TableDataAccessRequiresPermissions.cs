@@ -5,6 +5,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeFixes;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
 
@@ -89,7 +90,11 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         ImmutableArray.Create(DiagnosticDescriptors.TableDataAccessRequiresPermissions.Id);
 
     public sealed override FixAllProvider GetFixAllProvider() =>
+#if NET8_0_OR_GREATER
+        new PermissionsFixAllProvider();
+#else
         WellKnownFixAllProviders.BatchFixer;
+#endif
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
     {
@@ -240,8 +245,13 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         SeparatedSyntaxList<PermissionSyntax> newPermissions;
         if (isMultiLine)
         {
-            var indentation = PermissionSyntaxHelper.GetEntryIndentation(permissionValue);
-            newEntry = newEntry.WithLeadingTrivia(SyntaxFactory.ParseLeadingTrivia(indentation));
+            // Only add indentation trivia when inserting at index > 0.
+            // Index 0 is on the same line as "Permissions = " and needs no indentation.
+            if (insertIndex > 0)
+            {
+                var indentation = PermissionSyntaxHelper.GetEntryIndentation(permissionValue);
+                newEntry = newEntry.WithLeadingTrivia(SyntaxFactory.ParseLeadingTrivia(indentation));
+            }
             return PermissionSyntaxHelper.InsertIntoMultiLineList(permissionValue, permissions, insertIndex, newEntry);
         }
         else
@@ -275,4 +285,180 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         return PermissionTableNameResolver.ResolveTableName(
             tableName, tableNamespace, fileNamespace, importedNamespaces);
     }
+
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Custom FixAll provider that applies all permission changes in a single tree transformation.
+    /// The default BatchFixer applies fixes sequentially, which can cause issues when multiple
+    /// diagnostics modify the same Permissions property (uppercase normalization, stale spans).
+    /// </summary>
+    private sealed class PermissionsFixAllProvider : DocumentBasedFixAllByDiagnosticsProvider
+    {
+        protected override string GetFixAllTitle(FixAllContext fixAllContext) =>
+            ApplicationCopAnalyzers.TableDataAccessRequiresPermissionsFixAllCodeAction;
+
+        protected override async Task<Document?> FixAllAsync(
+            FixAllContext fixAllContext, Document document, ImmutableArray<Diagnostic> diagnostics)
+        {
+            if (diagnostics.IsEmpty)
+                return document;
+
+            var root = await document.GetSyntaxRootAsync(fixAllContext.CancellationToken)
+                .ConfigureAwait(false);
+            if (root is null)
+                return document;
+
+            var tablePermissions = CollectTablePermissions(diagnostics);
+            if (tablePermissions.Count == 0)
+                return document;
+
+            var node = root.FindNode(diagnostics[0].Location.SourceSpan);
+            var objectSyntax = node?.FirstAncestorOrSelf<ObjectSyntax>();
+            if (objectSyntax is null || objectSyntax is ApplicationObjectExtensionSyntax)
+                return document;
+
+            var compilationUnit = objectSyntax.FirstAncestorOrSelf<CompilationUnitSyntax>();
+            var propertyList = objectSyntax.PropertyList;
+            var newPropertyList = ApplyAllPermissionChanges(
+                propertyList, tablePermissions, compilationUnit);
+
+            var newRoot = root.ReplaceNode(propertyList, newPropertyList);
+            return document.WithSyntaxRoot(newRoot);
+        }
+
+        private static Dictionary<string, (string Namespace, HashSet<char> Chars)>
+            CollectTablePermissions(ImmutableArray<Diagnostic> diagnostics)
+        {
+            var result = new Dictionary<string, (string Namespace, HashSet<char> Chars)>(
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (var diagnostic in diagnostics)
+            {
+                var props = CodeFixProperties.TryParse(diagnostic.Properties);
+                if (props is null)
+                    continue;
+
+                if (!result.TryGetValue(props.TableName, out var entry))
+                {
+                    entry = (props.TableNamespace, new HashSet<char>());
+                    result[props.TableName] = entry;
+                }
+                entry.Chars.Add(props.PermissionChar);
+            }
+
+            return result;
+        }
+
+        private static PropertyListSyntax ApplyAllPermissionChanges(
+            PropertyListSyntax propertyList,
+            Dictionary<string, (string Namespace, HashSet<char> Chars)> tablePermissions,
+            CompilationUnitSyntax? compilationUnit)
+        {
+            var permissionsProperty = FindPermissionsProperty(propertyList);
+
+            if (permissionsProperty is null)
+                return CreateNewPermissionsPropertyForAll(
+                    propertyList, tablePermissions, compilationUnit);
+
+            if (permissionsProperty.Value is not PermissionPropertyValueSyntax permissionValue)
+                return propertyList;
+
+            foreach (var (tableName, (tableNamespace, chars)) in tablePermissions)
+            {
+                var resolvedName = ResolveTableNameForFix(
+                    tableName, tableNamespace, compilationUnit);
+
+                var existingEntry = PermissionSyntaxHelper.FindExistingEntry(
+                    permissionValue, resolvedName);
+
+                if (existingEntry is not null)
+                    permissionValue = MergeAllChars(
+                        permissionValue, existingEntry, chars);
+                else
+                    permissionValue = AddNewEntryWithAllChars(
+                        permissionValue, resolvedName, chars);
+            }
+
+            var newProperty = permissionsProperty.WithValue(permissionValue);
+            return propertyList.WithProperties(
+                propertyList.Properties.Replace(permissionsProperty, newProperty));
+        }
+
+        private static PropertyListSyntax CreateNewPermissionsPropertyForAll(
+            PropertyListSyntax propertyList,
+            Dictionary<string, (string Namespace, HashSet<char> Chars)> tablePermissions,
+            CompilationUnitSyntax? compilationUnit)
+        {
+            var permissionValue = SyntaxFactory.PermissionPropertyValue();
+
+            foreach (var (tableName, (tableNamespace, chars)) in tablePermissions)
+            {
+                var resolvedName = ResolveTableNameForFix(
+                    tableName, tableNamespace, compilationUnit);
+                var permChars = BuildCanonicalPermissionString(chars);
+                var entry = PermissionSyntaxHelper.CreatePermissionSyntax(
+                    resolvedName, permChars);
+                permissionValue = permissionValue.AddPermissionProperties(entry);
+            }
+
+            var property = SyntaxFactory.Property(
+                EnumProvider.PropertyKind.Permissions,
+                (PropertyValueSyntax)permissionValue);
+
+            return propertyList.AddProperties(property);
+        }
+
+        private static PermissionPropertyValueSyntax MergeAllChars(
+            PermissionPropertyValueSyntax permissionValue,
+            PermissionSyntax existingEntry, HashSet<char> chars)
+        {
+            var currentPerms = existingEntry.Permissions.ValueText ?? string.Empty;
+            var merged = currentPerms;
+            foreach (var c in chars)
+                merged = PermissionSyntaxHelper.NormalizePermissionString(merged, c);
+
+            var newToken = SyntaxFactory.Identifier(merged);
+            var updatedEntry = existingEntry.WithPermissions(newToken);
+
+            return permissionValue.WithPermissionProperties(
+                permissionValue.PermissionProperties.Replace(existingEntry, updatedEntry));
+        }
+
+        private static PermissionPropertyValueSyntax AddNewEntryWithAllChars(
+            PermissionPropertyValueSyntax permissionValue, string tableName, HashSet<char> chars)
+        {
+            var permissions = permissionValue.PermissionProperties;
+            var isSorted = PermissionSyntaxHelper.ArePermissionsSorted(permissions);
+            var isMultiLine = PermissionSyntaxHelper.IsMultiLineFormat(permissionValue);
+            var insertIndex = PermissionSyntaxHelper.FindInsertionIndex(
+                permissions, tableName, isSorted);
+            var permChars = BuildCanonicalPermissionString(chars);
+
+            var newEntry = PermissionSyntaxHelper.CreatePermissionSyntax(tableName, permChars);
+
+            if (isMultiLine)
+            {
+                if (insertIndex > 0)
+                {
+                    var indentation = PermissionSyntaxHelper.GetEntryIndentation(permissionValue);
+                    newEntry = newEntry.WithLeadingTrivia(
+                        SyntaxFactory.ParseLeadingTrivia(indentation));
+                }
+                return PermissionSyntaxHelper.InsertIntoMultiLineList(
+                    permissionValue, permissions, insertIndex, newEntry);
+            }
+
+            var newPermissions = permissions.Insert(insertIndex, newEntry);
+            return permissionValue.WithPermissionProperties(newPermissions);
+        }
+
+        private static string BuildCanonicalPermissionString(HashSet<char> chars)
+        {
+            var result = string.Empty;
+            foreach (var c in chars)
+                result = PermissionSyntaxHelper.NormalizePermissionString(result, c);
+            return result;
+        }
+    }
+#endif
 }

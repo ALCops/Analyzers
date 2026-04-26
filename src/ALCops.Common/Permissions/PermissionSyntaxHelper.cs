@@ -136,7 +136,8 @@ public static class PermissionSyntaxHelper
 
     /// <summary>
     /// Gets the indentation string for multi-line formatting by examining existing entries.
-    /// Returns the leading whitespace of the first tabledata keyword.
+    /// In multi-line format, the first entry shares the line with "Permissions = " and has
+    /// no indentation trivia, so entries at index &gt; 0 are checked first.
     /// </summary>
     public static string GetEntryIndentation(PermissionPropertyValueSyntax permissionValue)
     {
@@ -144,8 +145,19 @@ public static class PermissionSyntaxHelper
         if (permissions.Count == 0)
             return "                  ";
 
-        var firstEntry = permissions[0];
-        var leadingTrivia = firstEntry.GetLeadingTrivia();
+        for (int i = 1; i < permissions.Count; i++)
+        {
+            var indentation = GetWhitespaceOnlyTrivia(permissions[i].GetLeadingTrivia());
+            if (indentation is not null)
+                return indentation;
+        }
+
+        var firstIndentation = GetWhitespaceOnlyTrivia(permissions[0].GetLeadingTrivia());
+        return firstIndentation ?? "                  ";
+    }
+
+    private static string? GetWhitespaceOnlyTrivia(SyntaxTriviaList leadingTrivia)
+    {
         foreach (var trivia in leadingTrivia)
         {
             var text = trivia.ToString();
@@ -153,7 +165,7 @@ public static class PermissionSyntaxHelper
                 return text;
         }
 
-        return "                  ";
+        return null;
     }
 
     private static string? GetTableNameFromPermission(PermissionSyntax permission)
@@ -195,6 +207,8 @@ public static class PermissionSyntaxHelper
     /// <summary>
     /// Inserts a permission entry into a multi-line permission list, preserving
     /// the multi-line format by fixing separator trivia after insertion.
+    /// When inserting at index 0, the displaced first entry receives indentation trivia
+    /// since it moves from position 0 (same line as "Permissions = ") to position 1 (own line).
     /// </summary>
     public static PermissionPropertyValueSyntax InsertIntoMultiLineList(
         PermissionPropertyValueSyntax permissionValue,
@@ -204,6 +218,18 @@ public static class PermissionSyntaxHelper
     {
         var newPermissions = existing.Insert(insertIndex, newEntry);
         var result = permissionValue.WithPermissionProperties(newPermissions);
+
+        // When inserting at index 0, the displaced first entry (now at index 1) was on
+        // the same line as "Permissions = " and has no indentation trivia. Add it.
+        if (insertIndex == 0 && existing.Count > 0)
+        {
+            var indentation = GetEntryIndentation(permissionValue);
+            var displacedEntry = result.PermissionProperties[1];
+            var indentedEntry = displacedEntry.WithLeadingTrivia(
+                SyntaxFactory.ParseLeadingTrivia(indentation));
+            result = result.WithPermissionProperties(
+                result.PermissionProperties.Replace(displacedEntry, indentedEntry));
+        }
 
         // Insert() creates a new comma separator without newline trailing trivia.
         // Copy the trivia pattern from an existing separator to fix multi-line formatting.
