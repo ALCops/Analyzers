@@ -494,45 +494,21 @@ See `testing.instructions.md` for the full testing guide. CodeFix-specific detai
 - `fixture.TestCodeFix()` verifies the transformation from current to expected code
 - Test cases live in `HasFix/<TestCaseName>/` with `current.al` (with `[|...|]` marker) and `expected.al`
 
-## Existing implementations reference
+## Reference implementations by pattern
 
-| Cop | File | Diagnostic | Fix description |
-|---|---|---|---|
-| ApplicationCop | `EmptyCaptionLocked.cs` | AC0018 | Add `Locked = true` to empty caption |
-| ApplicationCop | `GlobalLanguageImplementTranslationHelper.cs` | AC0005 | Refactor to use Translation Helper codeunit |
-| ApplicationCop | `InstallAndUpgradeCodeunitsShouldBeInternal.cs` | AC0007 | Set `Access = Internal` |
-| ApplicationCop | `IntegrationEventsInInternalCodeunitConvertToInternalEvent.cs` | AC0012 | Convert IntegrationEvent to InternalEvent |
-| ApplicationCop | `IntegrationEventsInInternalCodeunitRemoveAccessInternal.cs` | AC0012 | Remove `Access = Internal` property |
-| ApplicationCop | `LabelWithTokSuffixMustBeLocked.cs` | AC0020 | Add `Locked = true` to Tok-suffixed label |
-| ApplicationCop | `NotBlankNotAllowedOnPrimaryKeyField.cs` | AC0003 | Set `NotBlank = false` on PK field |
-| ApplicationCop | `NotBlankRequiredOnPrimaryKeyField.cs` | AC0002 | Set `NotBlank = true` on PK field |
-| ApplicationCop | `PermissionSetCaptionLength.cs` | AC0009 | Truncate PermissionSet caption to 30 chars |
-| ApplicationCop | `PublicEventPublisher.cs` | AC0024 | Make event publisher method local |
-| ApplicationCop | `RunPageImplementPageManagement.cs` | AC0006 | Refactor to use Page Management codeunit |
-| ApplicationCop | `TableDataAccessRequiresPermissions.cs` | AC0031 | Add missing permission declaration |
-| ApplicationCop | `TableDataAccessUnusedPermissionsCodeFixProvider.cs` | AC0032 | Remove unused permission declaration |
-| FormattingCop | `CasingMismatchKeyword.cs` | FC0002 | Fix keyword casing via text replacement |
-| FormattingCop | `PermissionDeclarationOrderCodeFixProvider.cs` | FC0004 | Sort permission declarations alphabetically |
-| FormattingCop | `UseParenthesisForFunctionCall.cs` | FC0003 | Add `()` to function calls |
-| LinterCop | `AllowInCustomizationsRedundancy.cs` | LC0094 | Remove redundant AllowInCustomizations property |
-| LinterCop | `ApplicationAreaRedundancy.cs` | LC0020 | Remove redundant ApplicationArea property |
-| LinterCop | `BuiltInDateTimeMethod.cs` | LC0083 | Replace deprecated DateTime method |
-| LinterCop | `DataClassificationRedundancy.cs` | LC0019 | Remove redundant DataClassification property |
-| LinterCop | `ObjectIdInDeclaration.cs` | LC0003 | Replace numeric object ID with name reference |
-| LinterCop | `RecordInstanceIsolationLevel.cs` | LC0031 | Add `ReadIsolation` with UpdLock |
-| PlatformCop | `ApplicationAreaOnApiPage.cs` | PC0024 | Remove ApplicationArea from API page |
-| PlatformCop | `EditableFlowField.cs` | PC0001 | Add/update `Editable = false` property |
-| PlatformCop | `EventPublisherIsHandledByVar.cs` | PC0011 | Add `var` keyword to IsHandled parameter |
-| PlatformCop | `EventSubscriberVarKeyword.cs` | PC0010 | Add `var` keyword to parameter |
-| PlatformCop | `ExtensiblePropertyExplicitlySet.cs` | PC0005 | Set Extensible property |
-| PlatformCop | `FilterStringSingleQuoteEscaping.cs` | PC0019 | Fix quote escaping in filter strings |
-| PlatformCop | `GuidEmptyStringComparison.cs` | PC0015 | Replace `guid == ''` with `IsNullGuid(guid)` |
-| PlatformCop | `JsonTokenJPathUsesDoubleQuotes.cs` | PC0014 | Replace double quotes with single quotes in JPath |
-| PlatformCop | `MandatoryFieldMissingOnApiPage.cs` | PC0026 | Add mandatory field to API page |
-| PlatformCop | `OperatorAndPlaceholderInFilterExpression.cs` | PC0008 | Wrap filter placeholder in StrSubstNo |
-| PlatformCop | `PartialRecordsBeforeWriteOperation.cs` | PC0031 | Remove partial record operations before write |
-| PlatformCop | `PossibleOverflowAssigningAppendMaxLengthToLabel.cs` | PC0022 | Add MaxLength to label to prevent overflow |
-| PlatformCop | `PossibleOverflowAssigningApplyCopyStr.cs` | PC0022 | Apply CopyStr to prevent overflow |
-| PlatformCop | `SetRangeWithFilterOperators.cs` | PC0003 | Replace SetRange with SetFilter |
-| PlatformCop | `UsePartialRecordsOnRead.cs` | PC0030 | Add SetLoadFields for partial records |
-| PlatformCop | `UseSequentialGuid.cs` | PC0029 | Replace CreateGuid with CreateSequentialGuid |
+When writing a new CodeFix, find an existing one that uses the same technique. Use `ls src/*/CodeFixes/` to discover all CodeFix files.
+
+| Pattern | Good reference | What it demonstrates |
+|---|---|---|
+| Add/set a property | `EditableFlowField.cs` (PlatformCop) | Insert or update a property on a syntax node |
+| Remove a property | `AllowInCustomizationsRedundancy.cs` (LinterCop) | Delete a property and clean up trivia |
+| Add a keyword/token | `EventSubscriberVarKeyword.cs` (PlatformCop) | Insert a keyword into a parameter list |
+| Replace an expression | `GuidEmptyStringComparison.cs` (PlatformCop) | Swap one expression for another |
+| Replace a method call | `SetRangeWithFilterOperators.cs` (PlatformCop) | Rewrite a method invocation with different method/args |
+| Rewrite a string literal | `JsonTokenJPathUsesDoubleQuotes.cs` (PlatformCop) | Text manipulation within a string token |
+| Add syntax tokens | `UseParenthesisForFunctionCall.cs` (FormattingCop) | Insert tokens (parentheses) into existing syntax |
+| Reorder/rebuild a property value | `PermissionDeclarationOrderCodeFixProvider.cs` (FormattingCop) | Sort entries, rebuild multi-line `PermissionPropertyValue` |
+| Add entries to a list property | `TableDataAccessRequiresPermissions.cs` (ApplicationCop) | Insert into existing list, handle alphabetical insertion |
+| Remove entries from a list property | `TableDataAccessUnusedPermissionsCodeFixProvider.cs` (ApplicationCop) | Remove specific entries, handle cleanup of entire property |
+| Two alternative fixes for one diagnostic | `IntegrationEventsInInternalCodeunit*.cs` (ApplicationCop) | Two CodeFix classes sharing one diagnostic ID |
+| Complex multi-node rewrite | `PossibleOverflowAssigningApplyCopyStr.cs` (PlatformCop) | Wrap expressions in function calls, handle multiple overload shapes |
