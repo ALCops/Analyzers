@@ -643,6 +643,7 @@ private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
 - `GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection` retrieves symbols from all referenced modules, not just the current one
 - Always use `OriginalDefinition` when comparing symbols from different contexts (extension target vs base object)
 - Requires `using System.Runtime.CompilerServices;` for `ConditionalWeakTable`
+- **Only use `ConditionalWeakTable<Compilation, ...>` within a single action type.** The `Compilation` object instance from `SemanticModel.Compilation` (in `CodeBlockAction`, `OperationAction`, `SyntaxNodeAction`) is a **different object** from `ctx.Compilation` in `CompilationAction` or `CompilationStartAction`. `ConditionalWeakTable` uses reference equality, so data written by one action type is invisible to another. If you need to share state across action types, use `CompilationStartAction` closures instead (see "Performance Anti-Patterns" below).
 
 ### Existing implementations
 
@@ -672,6 +673,106 @@ private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
 - **One analyzer class per rule or tightly related rule group.** The `AnalyzeCountMethod` analyzer handles both `LC0081` (IsEmpty) and `LC0082` (FindWithNext) because they share the same analysis logic.
 - **Use `ImmutableArray.Create()`** for `SupportedDiagnostics`, listing all descriptors the analyzer may report.
 - **Location matters.** Report diagnostics at the most specific location: the offending property, syntax node, or symbol, not the entire object.
+
+## Performance Anti-Patterns
+
+Performance matters. The Base Application has ~7,900 files and ~100,000 method/trigger bodies. A rule that adds 0.1ms per method adds 10 seconds to compilation. The following anti-patterns have caused real regressions.
+
+### DO NOT use `RegisterOperationAction` for high-frequency invocations
+
+`RegisterOperationAction(callback, OperationKind.InvocationExpression)` fires once per invocation expression in the entire compilation. Each callback carries overhead from the SDK's action dispatching. For the Base Application, this means ~115,000 callbacks for invocation expressions alone.
+
+If your analyzer only cares about invocations in methods that meet certain criteria (e.g., the containing object has a `Permissions` property), most of these callbacks are wasted.
+
+**Instead:** Use `RegisterCodeBlockAction` to get the full method body, apply cheap pre-filters first, then call `GetOperation(body)` once per qualifying method and walk the operation tree with an `OperationWalker` subclass. This gives you one semantic call per method instead of one per invocation.
+
+```csharp
+// WRONG - fires for every invocation in the entire compilation
+context.RegisterOperationAction(
+    AnalyzeInvocation,
+    EnumProvider.OperationKind.InvocationExpression);
+
+// BETTER - one callback per method, pre-filter before expensive work
+compilationCtx.RegisterCodeBlockAction(ctx =>
+{
+    if (ctx.CodeBlock is not MethodOrTriggerDeclarationSyntax method)
+        return;
+
+    // Cheap pre-filter: skip methods in objects that can't produce diagnostics
+    var obj = ctx.OwningSymbol?.GetContainingApplicationObjectTypeSymbol();
+    if (obj?.GetProperty(EnumProvider.PropertyKind.Permissions) is null)
+        return;
+
+    // Walk the operation tree for this method body
+    var operation = ctx.SemanticModel.GetOperation(method.Body, ctx.CancellationToken);
+    if (operation is null)
+        return;
+
+    var walker = new MyOperationWalker(/* ... */);
+    walker.Visit(operation);
+});
+```
+
+See `PartialRecordOperations.cs` and `TableDataAccessUnusedPermissions.cs` for real examples.
+
+### DO NOT call `GetOperation()` without pre-filtering
+
+`SemanticModel.GetOperation()` costs ~0.05-0.1ms per call. Across 100K methods, that is 5-10 seconds. Most methods will not contain the patterns your analyzer cares about.
+
+**Pre-filter at the syntax level first.** Walk the syntax tree (which is free, already parsed) looking for relevant invocation names, node kinds, or keywords. Only call `GetOperation()` if the syntax scan finds a potential match.
+
+```csharp
+// Scan syntax tree for DB method names before expensive GetOperation
+bool hasPossibleMatch = false;
+body.WalkDescendantsAndPerformAction(node =>
+{
+    if (hasPossibleMatch) return;
+    if (!node.IsKind(EnumProvider.SyntaxKind.InvocationExpression)) return;
+
+    var invocation = (InvocationExpressionSyntax)node;
+    string? name = invocation.Expression switch
+    {
+        MemberAccessExpressionSyntax m => m.Name.Identifier.ValueText,
+        IdentifierNameSyntax id => id.Identifier.ValueText,
+        _ => null
+    };
+
+    if (name is not null && IsRelevantMethodName(name))
+        hasPossibleMatch = true;
+});
+
+if (!hasPossibleMatch) return; // Skip GetOperation entirely
+```
+
+Note: syntax-level method name checks are case-insensitive string comparisons, not semantic resolution. This is acceptable as a pre-filter because false positives just mean an unnecessary (but inexpensive) `GetOperation` call. False negatives would be a correctness bug, so the name set must be comprehensive.
+
+### DO NOT share state across action types via `ConditionalWeakTable<Compilation>`
+
+`ConditionalWeakTable` uses reference equality on the `Compilation` key. The `Compilation` instance from `SemanticModel.Compilation` (available in `CodeBlockAction`, `OperationAction`, `SyntaxNodeAction`) is a **different object** from `ctx.Compilation` in `CompilationAction`. Data stored by one action type is invisible to the other, causing silent data loss.
+
+`ConditionalWeakTable<Compilation>` is safe when used within a single action type (e.g., only in `SymbolAction` callbacks, as in `DuplicateODataEntityName`). It fails when you need to write in `CodeBlockAction` and read in `CompilationAction`.
+
+**Instead:** Use `CompilationStartAction` + `RegisterCompilationEndAction` with closures:
+
+```csharp
+public override void Initialize(AnalysisContext context)
+{
+    context.RegisterCompilationStartAction(OnCompilationStart);
+}
+
+private void OnCompilationStart(CompilationStartAnalysisContext compilationCtx)
+{
+    // Shared state, guaranteed same instance across all callbacks
+    var accumulator = new ConcurrentDictionary<string, ConcurrentBag<MyData>>();
+
+    // All inner actions capture the same accumulator via closure
+    compilationCtx.RegisterCodeBlockAction(ctx => CollectData(ctx, accumulator));
+    compilationCtx.RegisterSymbolAction(ctx => CollectMore(ctx, accumulator), ...);
+    compilationCtx.RegisterCompilationEndAction(ctx => Analyze(ctx, accumulator));
+}
+```
+
+`RegisterCompilationEndAction` runs after all `CodeBlockAction` and `SymbolAction` callbacks complete. This is the correct way to implement collect-then-analyze patterns.
 
 ## SDK GetSymbol() Bug
 

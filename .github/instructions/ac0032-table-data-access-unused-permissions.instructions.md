@@ -23,12 +23,12 @@ Two `DiagnosticDescriptor` instances share the same ID but have different messag
 
 ## Architecture
 
-Uses `RegisterCompilationAction` (whole-object analysis) because `CompilationStartAnalysisContext` does not expose `RegisterOperationAction`.
+Uses a `CompilationStartAction` closure pattern for two-phase analysis: parallel collection followed by sequential analysis. All actions share state via closures captured in `OnCompilationStart`.
 
 ```
 src/ALCops.ApplicationCop/
 ├── Analyzers/
-│   └── TableDataAccessUnusedPermissions.cs           # Analyzer (CompilationAction)
+│   └── TableDataAccessUnusedPermissions.cs           # Analyzer (CompilationStart + CodeBlock + CompilationEnd)
 └── CodeFixes/
     └── TableDataAccessUnusedPermissionsCodeFixProvider.cs  # CodeFix (remove entry / reduce chars / remove property)
 
@@ -39,34 +39,47 @@ src/ALCops.Common/
 
 ### Analysis flow
 
-1. Iterate all objects via `compilation.GetDeclaredApplicationObjectSymbols()`
-2. Skip test codeunits with `TestPermissions = Disabled`
-3. For each object with a `Permissions` property:
-   a. Collect all required permissions (invocations, data items, xmlport nodes)
-   b. Get page SourceTable context (implicit RIMD exemption)
-   c. For each declared `tabledata` entry, check if the table is accessed
-4. Report per-entry diagnostics with properties for the CodeFix
+**Registration (`Initialize` + `OnCompilationStart`):**
+- `RegisterCompilationStartAction` creates a shared `ConcurrentDictionary` accumulator
+- From within `CompilationStartAction`, registers `CodeBlockAction`, `SymbolAction` (x3), and `CompilationEndAction`
+- All callbacks capture the accumulator via closure (guaranteed same instance)
+
+**Phase 1 (parallel, compiler-driven):**
+1. `RegisterCodeBlockAction`: For each method/trigger, check if containing object has `Permissions` property (early exit for ~70% of callbacks). Syntax-level pre-filter scans for DB method names before the expensive `GetOperation` call (eliminates ~75% of remaining methods). Call `GetOperation(body)` once per method, then walk the operation tree via `InvocationCollectorWalker` (extends `OperationWalker`).
+2. `RegisterSymbolAction` (ReportDataItem, QueryDataItem, XmlPortNode): Collect data item permissions into the same accumulator.
+
+**Phase 2 (sequential):**
+3. `RegisterCompilationEndAction`: Iterate objects with `Permissions` property, look up accumulated data, compare declared vs. required, report diagnostics.
 
 ### Key methods
 
 | Method | Purpose |
 |---|---|
-| `AnalyzeCompilation` | Entry point; iterates objects |
-| `CollectRequiredPermissions` | Aggregates all table accesses in the object |
-| `CollectFromInvocations` | Walks syntax tree for `InvocationExpression` nodes, bridges to `SemanticModel.GetOperation()` |
+| `OnCompilationStart` | Creates shared accumulator, registers all inner actions with closures |
+| `CollectFromCodeBlock` | Phase 1 entry; syntax pre-filter, then `GetOperation` + `InvocationCollectorWalker` |
+| `InvocationCollectorWalker` | `OperationWalker` subclass; visits `IInvocationExpression` nodes |
+| `CollectFromReportDataItem/QueryDataItem/XmlPortNode` | Phase 1; data item collection via `RegisterSymbolAction` |
+| `AnalyzeCompilation` | Phase 2; iterates objects, reads accumulated data, reports diagnostics |
 | `AnalyzePermissionEntry` | Compares one declared entry against collected required permissions |
 | `PermissionMatchesTable` | Matches identifier/qualified/objectId syntax against `ITableTypeSymbol` |
 
 ### Threading model
 
-Single-threaded. `RegisterCompilationAction` runs once after compilation completes. No `ConcurrentDictionary` needed (unlike the earlier CompilationStart+End design).
+Phase 1 callbacks run in parallel (compiler-managed thread pool). `ConcurrentDictionary` + `ConcurrentBag` ensure thread safety. Shared state is captured via closures from `CompilationStartAction` (no `ConditionalWeakTable` needed). Object keys use `$"{Kind}:{Id}"` strings for safe identity across different symbol instances.
+
+Phase 2 (`RegisterCompilationEndAction`) runs once after all Phase 1 callbacks complete. Reads are sequential, no concurrent writes.
 
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| `RegisterCompilationAction` instead of CompilationStart+End | `CompilationStartAnalysisContext` lacks `RegisterOperationAction` |
-| Whole-object analysis (not per-invocation collection) | Simpler, no thread-safety concerns, single pass |
+| `CompilationStartAction` + `CompilationEndAction` closure pattern | Guarantees shared state across CodeBlockAction, SymbolAction, and CompilationEndAction via closures. `ConditionalWeakTable<Compilation>` does NOT work because `Compilation` instances differ across action types. |
+| `RegisterCodeBlockAction` + `OperationWalker` | Amortizes `GetOperation` cost: one call per method body instead of per invocation node. Compiler parallelizes callbacks. |
+| Syntax-level pre-filter before `GetOperation` | Scans method body for DB method names (Find, Get, Insert, etc.) via syntax tree walk. Eliminates ~75% of `GetOperation` calls. `GetOperation` dominates cost at ~0.1ms each. |
+| `OperationWalker` for invocation collection | SDK-provided visitor pattern; only visits `IInvocationExpression` nodes efficiently |
+| String keys (`Kind:Id`) instead of symbol reference equality | Symbol instances from `GetContainingApplicationObjectTypeSymbol()` and `GetDeclaredApplicationObjectSymbols()` may differ |
+| Early exit on `Permissions` property check in CodeBlockAction | ~70% of callbacks are in objects without `Permissions`; avoids `GetOperation` call entirely |
+| `RegisterSymbolAction` for data items | Compiler handles member enumeration; simpler than manual iteration |
 | Two descriptors sharing one ID | Same conceptual rule, different message clarity |
 | `PermissionMatchesTable` duplicated from `PermissionResolver` | Avoids coupling; operates on syntax nodes, not resolved symbols |
 | Page SourceTable exemption | Pages implicitly need RIMD on their source table |
