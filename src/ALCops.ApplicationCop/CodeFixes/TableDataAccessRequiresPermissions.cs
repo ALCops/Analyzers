@@ -72,9 +72,6 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
-        public override string? FixAllSingleInstanceTitle => string.Empty;
-        public override string? FixAllTitle =>
-            ApplicationCopAnalyzers.TableDataAccessRequiresPermissionsFixAllCodeAction;
 
         public TableDataAccessRequiresPermissionsCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument,

@@ -70,9 +70,6 @@ public sealed class TableDataAccessUnusedPermissionsCodeFixProvider : CodeFixPro
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
-        public override string? FixAllSingleInstanceTitle => string.Empty;
-        public override string? FixAllTitle =>
-            ApplicationCopAnalyzers.TableDataAccessUnusedPermissionsFixAllCodeAction;
 
         public TableDataAccessUnusedPermissionsCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument,

@@ -363,9 +363,6 @@
   <data name="TableDataAccessRequiresPermissionsCodeAction" xml:space="preserve">
     <value>ALCops: Add missing permission '{0}' for table '{1}'</value>
   </data>
-  <data name="TableDataAccessRequiresPermissionsFixAllCodeAction" xml:space="preserve">
-    <value>ALCops: Add all missing permissions</value>
-  </data>
   <data name="TableDataPerCompanyDeclarationTitle" xml:space="preserve">
     <value>DataPerCompany must be explicitly set on table objects</value>
   </data>
@@ -443,9 +440,6 @@
   </data>
   <data name="TableDataAccessUnusedPermissionsCodeAction" xml:space="preserve">
     <value>ALCops: Remove unused permission for table '{0}'</value>
-  </data>
-  <data name="TableDataAccessUnusedPermissionsFixAllCodeAction" xml:space="preserve">
-    <value>ALCops: Remove all unused permissions</value>
   </data>
   <data name="ZeroEnumValueReservedForEmptyTitle" xml:space="preserve">
     <value>Reserve Enum value zero (0) for empty value</value>
