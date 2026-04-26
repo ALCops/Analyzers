@@ -110,6 +110,7 @@ Uses C#-like namespace resolution (`PermissionTableNameResolver`):
 | Permission chars are lowercase (`rimd`) | Consistent with AL conventions |
 | Sorted detection uses case-insensitive string comparison | AL identifiers are case-insensitive |
 | Multi-line separator fix via `ReplaceToken` | Avoids need for internal `SeparatedSyntaxList` constructor |
+| `FixAllTitle` uses a separate generic resx string (`TableDataAccessRequiresPermissionsFixAllCodeAction`) | FixAll applies across multiple permissions/tables, so the title must not reference a specific permission or table |
 
 ## Test coverage
 
