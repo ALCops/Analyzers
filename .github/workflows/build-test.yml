@@ -67,7 +67,6 @@ jobs:
         uses: actions/cache/save@v5
         with:
           path: ${{ runner.temp }}/TargetFramework.json
-          # Content-based key: only creates a new entry when the file actually changed
           key: tfm-json-${{ steps.hash-tfm.outputs.hash }}
 
       - name: Setup matrix for test
