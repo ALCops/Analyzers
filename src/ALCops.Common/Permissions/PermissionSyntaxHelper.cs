@@ -14,8 +14,8 @@ public static class PermissionSyntaxHelper
     private const string CanonicalOrder = "rimd";
 
     /// <summary>
-    /// Checks whether the permission entries in a PermissionPropertyValueSyntax are sorted
-    /// alphabetically by table name (case-insensitive).
+    /// Checks whether the permission entries are sorted alphabetically by
+    /// (type keyword, object name), both case-insensitive.
     /// Returns true if 0 or 1 entries (trivially sorted).
     /// </summary>
     public static bool ArePermissionsSorted(SeparatedSyntaxList<PermissionSyntax> permissions)
@@ -23,17 +23,26 @@ public static class PermissionSyntaxHelper
         if (permissions.Count <= 1)
             return true;
 
+        string? previousType = null;
         string? previousName = null;
         foreach (var permission in permissions)
         {
-            var name = GetTableNameFromPermission(permission);
-            if (name is null)
+            var type = GetPermissionTypeText(permission);
+            var name = GetObjectNameFromPermission(permission);
+            if (name is null || type is null)
                 continue;
 
-            if (previousName is not null &&
-                string.Compare(previousName, name, StringComparison.OrdinalIgnoreCase) > 0)
-                return false;
+            if (previousType is not null && previousName is not null)
+            {
+                int typeCompare = string.Compare(previousType, type, StringComparison.OrdinalIgnoreCase);
+                if (typeCompare > 0)
+                    return false;
+                if (typeCompare == 0 &&
+                    string.Compare(previousName, name, StringComparison.OrdinalIgnoreCase) > 0)
+                    return false;
+            }
 
+            previousType = type;
             previousName = name;
         }
 
@@ -118,7 +127,9 @@ public static class PermissionSyntaxHelper
     }
 
     /// <summary>
-    /// Finds the insertion index for a new entry in a sorted permission list.
+    /// Finds the insertion index for a new entry in a sorted permission list,
+    /// comparing by (type keyword, object name). The new entry type defaults to "tabledata"
+    /// since AC0031 only inserts tabledata entries.
     /// If not sorted, returns the count (append).
     /// </summary>
     public static int FindInsertionIndex(SeparatedSyntaxList<PermissionSyntax> permissions, string tableName, bool isSorted)
@@ -126,10 +137,18 @@ public static class PermissionSyntaxHelper
         if (!isSorted)
             return permissions.Count;
 
+        const string newType = "tabledata";
         for (int i = 0; i < permissions.Count; i++)
         {
-            var name = GetTableNameFromPermission(permissions[i]);
-            if (name is not null && string.Compare(name, tableName, StringComparison.OrdinalIgnoreCase) > 0)
+            var entryType = GetPermissionTypeText(permissions[i]);
+            var entryName = GetObjectNameFromPermission(permissions[i]);
+            if (entryType is null || entryName is null)
+                continue;
+
+            int typeCompare = string.Compare(newType, entryType, StringComparison.OrdinalIgnoreCase);
+            if (typeCompare < 0)
+                return i;
+            if (typeCompare == 0 && string.Compare(tableName, entryName, StringComparison.OrdinalIgnoreCase) < 0)
                 return i;
         }
 
@@ -147,7 +166,7 @@ public static class PermissionSyntaxHelper
             if (!permission.ObjectType.IsKind(EnumProvider.SyntaxKind.TableDataKeyword))
                 continue;
 
-            var name = GetTableNameFromPermission(permission);
+            var name = GetObjectNameFromPermission(permission);
             if (name is not null && string.Equals(name, tableName, StringComparison.OrdinalIgnoreCase))
                 return permission;
         }
@@ -189,7 +208,20 @@ public static class PermissionSyntaxHelper
         return null;
     }
 
-    private static string? GetTableNameFromPermission(PermissionSyntax permission)
+    /// <summary>
+    /// Gets the type keyword text from a PermissionSyntax (e.g. "tabledata", "codeunit", "page").
+    /// </summary>
+    public static string? GetPermissionTypeText(PermissionSyntax permission)
+    {
+        var objectType = permission.ObjectType;
+        return objectType.ValueText?.ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Gets the object name from a PermissionSyntax entry.
+    /// Works for any permission type (tabledata, codeunit, page, etc.).
+    /// </summary>
+    public static string? GetObjectNameFromPermission(PermissionSyntax permission)
     {
         var identifier = permission.ObjectReference?.Identifier;
         if (identifier is null)
@@ -283,5 +315,82 @@ public static class PermissionSyntaxHelper
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Sorts the permission entries by (type keyword, object name), both case-insensitive.
+    /// Returns a new list with the entries in sorted order, stripping leading trivia from
+    /// all entries (callers are responsible for applying formatting).
+    /// </summary>
+    public static List<PermissionSyntax> GetSortedPermissions(SeparatedSyntaxList<PermissionSyntax> permissions)
+    {
+        var entries = new List<PermissionSyntax>(permissions.Count);
+        foreach (var permission in permissions)
+            entries.Add(permission);
+
+        entries.Sort((a, b) =>
+        {
+            var typeA = GetPermissionTypeText(a) ?? string.Empty;
+            var typeB = GetPermissionTypeText(b) ?? string.Empty;
+            int typeCompare = string.Compare(typeA, typeB, StringComparison.OrdinalIgnoreCase);
+            if (typeCompare != 0)
+                return typeCompare;
+
+            var nameA = GetObjectNameFromPermission(a) ?? string.Empty;
+            var nameB = GetObjectNameFromPermission(b) ?? string.Empty;
+            return string.Compare(nameA, nameB, StringComparison.OrdinalIgnoreCase);
+        });
+
+        return entries;
+    }
+
+    /// <summary>
+    /// Builds a multi-line PermissionPropertyValueSyntax from an ordered list of entries.
+    /// The first entry has no leading trivia (it shares the line with "Permissions = ").
+    /// Subsequent entries are indented and preceded by a newline.
+    /// </summary>
+    public static PermissionPropertyValueSyntax BuildMultiLinePermissionValue(
+        List<PermissionSyntax> sortedEntries,
+        string indentation)
+    {
+        if (sortedEntries.Count == 0)
+            return SyntaxFactory.PermissionPropertyValue();
+
+        // Strip trivia from all entries, then apply formatting
+        var formatted = new List<PermissionSyntax>(sortedEntries.Count);
+        for (int i = 0; i < sortedEntries.Count; i++)
+        {
+            var entry = sortedEntries[i]
+                .WithLeadingTrivia(SyntaxFactory.TriviaList())
+                .WithTrailingTrivia(SyntaxFactory.TriviaList());
+
+            if (i > 0)
+                entry = entry.WithLeadingTrivia(SyntaxFactory.ParseLeadingTrivia(indentation));
+
+            formatted.Add(entry);
+        }
+
+        // Build the list with comma separators that have newline trailing trivia
+        var result = SyntaxFactory.PermissionPropertyValue()
+            .AddPermissionProperties(formatted[0]);
+
+        for (int i = 1; i < formatted.Count; i++)
+        {
+            var currentList = result.PermissionProperties;
+            var newList = currentList.Add(formatted[i]);
+            result = result.WithPermissionProperties(newList);
+
+            // Fix the separator trivia: the newly added separator needs newline trailing trivia
+            var separators = result.PermissionProperties.GetSeparators().ToList();
+            var lastSeparator = separators[separators.Count - 1];
+            if (!HasNewlineTrivia(lastSeparator.TrailingTrivia))
+            {
+                var newlineTrivia = SyntaxFactory.ParseTrailingTrivia("\n");
+                var fixedSeparator = lastSeparator.WithTrailingTrivia(newlineTrivia);
+                result = (PermissionPropertyValueSyntax)result.ReplaceToken(lastSeparator, fixedSeparator);
+            }
+        }
+
+        return result;
     }
 }

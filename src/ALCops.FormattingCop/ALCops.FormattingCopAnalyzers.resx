@@ -150,4 +150,16 @@
   <data name="UseParenthesisForFunctionCallCodeAction" xml:space="preserve">
     <value>Add parenthesis</value>
   </data>
+  <data name="PermissionDeclarationOrderTitle" xml:space="preserve">
+    <value>Permission declarations should be ordered alphabetically</value>
+  </data>
+  <data name="PermissionDeclarationOrderMessageFormat" xml:space="preserve">
+    <value>The Permissions property entries are not ordered alphabetically by type and name.</value>
+  </data>
+  <data name="PermissionDeclarationOrderDescription" xml:space="preserve">
+    <value>Permission entries in the Permissions property should be ordered alphabetically, first by object type (codeunit, page, report, table, tabledata, etc.) and then by object name. Consistent ordering improves readability and reduces merge conflicts.</value>
+  </data>
+  <data name="PermissionDeclarationOrderCodeAction" xml:space="preserve">
+    <value>ALCops: Sort permission declarations alphabetically</value>
+  </data>
 </root>

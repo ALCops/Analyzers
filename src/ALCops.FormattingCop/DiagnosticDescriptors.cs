@@ -36,6 +36,16 @@ public static class DiagnosticDescriptors
         description: FormattingCopAnalyzers.UseParenthesisForFunctionCallDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UseParenthesisForFunctionCall));
 
+    public static readonly DiagnosticDescriptor PermissionDeclarationOrder = new(
+        id: DiagnosticIds.PermissionDeclarationOrder,
+        title: FormattingCopAnalyzers.PermissionDeclarationOrderTitle,
+        messageFormat: FormattingCopAnalyzers.PermissionDeclarationOrderMessageFormat,
+        category: Category.Style,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: FormattingCopAnalyzers.PermissionDeclarationOrderDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PermissionDeclarationOrder));
+
 
     public static string GetHelpUri(string identifier)
     {
