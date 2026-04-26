@@ -31,6 +31,10 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         {
             ctx.CancellationToken.ThrowIfCancellationRequested();
 
+            if (obj.Kind == EnumProvider.SymbolKind.PermissionSet
+                || obj.Kind == EnumProvider.SymbolKind.PermissionSetExtension)
+                continue;
+
             if (RequiredPermissionDetector.IsTestCodeunitWithPermissionsDisabled(obj))
                 continue;
 

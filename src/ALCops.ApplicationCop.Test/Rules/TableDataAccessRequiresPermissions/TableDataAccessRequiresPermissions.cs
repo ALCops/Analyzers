@@ -82,6 +82,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("AddEntryMultiLine")]
         [TestCase("AddEntrySingleLine")]
         [TestCase("AddEntryAlphabetical")]
+        [TestCase("AddEntryAlphabeticalFirst")]
         [TestCase("AddEntryAppend")]
         public async Task HasFix(string testCase)
         {

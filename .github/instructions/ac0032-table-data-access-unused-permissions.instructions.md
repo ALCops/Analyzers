@@ -71,6 +71,7 @@ Single-threaded. `RegisterCompilationAction` runs once after compilation complet
 | `PermissionMatchesTable` duplicated from `PermissionResolver` | Avoids coupling; operates on syntax nodes, not resolved symbols |
 | Page SourceTable exemption | Pages implicitly need RIMD on their source table |
 | Temporary records NOT exempted | Declaring permissions on temp-only tables is dead code |
+| Skip permissionset/permissionsetextension objects | These objects declare permissions as their core purpose, not as code-access declarations; flagging them is always a false positive |
 | `DeclaredPermissionSet` reused for RIMD tracking | Existing type from AC0031's permission module |
 
 ## CodeFix
@@ -108,7 +109,7 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 ## Test coverage
 
 **HasDiagnostic (8 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord.
-**NoDiagnostic (6 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead.
+**NoDiagnostic (8 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension.
 **HasFix (3 cases):** RemoveEntireEntry, ReduceChars, RemoveEntireProperty.
 
 ## Known limitations

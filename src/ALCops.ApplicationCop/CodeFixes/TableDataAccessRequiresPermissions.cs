@@ -120,17 +120,22 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         if (objectSyntax is ApplicationObjectExtensionSyntax)
             return;
 
+        // Capture the object's identity so we can re-find it in a (potentially modified) document.
+        // This is critical for FixAll: BatchFixer applies fixes sequentially, and each fix may
+        // modify the tree. Using a stale objectSyntax reference causes ReplaceNode to fail silently.
+        var objectIdentity = GetObjectIdentity(objectSyntax);
+
         // Resolve table name using C#-like namespace resolution
         var compilationUnit = objectSyntax.FirstAncestorOrSelf<CompilationUnitSyntax>();
         var resolvedTableName = ResolveTableNameForFix(props.TableName, props.TableNamespace, compilationUnit);
 
         ctx.RegisterCodeFix(
-            CreateCodeAction(objectSyntax, resolvedTableName, props.PermissionChar, document, generateFixAll: true),
+            CreateCodeAction(objectIdentity, resolvedTableName, props.PermissionChar, document, generateFixAll: true),
             diagnostic);
     }
 
     private static TableDataAccessRequiresPermissionsCodeAction CreateCodeAction(
-        ObjectSyntax objectSyntax, string tableName, char permissionChar,
+        (SyntaxKind Kind, string? Name) objectIdentity, string tableName, char permissionChar,
         Document document, bool generateFixAll)
     {
         var title = string.Format(
@@ -140,15 +145,25 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
 
         return new TableDataAccessRequiresPermissionsCodeAction(
             title,
-            ct => ApplyFix(document, objectSyntax, tableName, permissionChar, ct),
+            ct => ApplyFix(document, objectIdentity, tableName, permissionChar, ct),
             nameof(TableDataAccessRequiresPermissionsCodeFixProvider),
             generateFixAll);
     }
 
-    private static async Task<Document> ApplyFix(Document document, ObjectSyntax objectSyntax,
+    private static async Task<Document> ApplyFix(Document document,
+        (SyntaxKind Kind, string? Name) objectIdentity,
         string tableName, char permissionChar, CancellationToken cancellationToken)
     {
-        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
+        var root = await document.GetSyntaxRootAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (root is null)
+            return document;
+
+        // Re-find the object in the current tree to avoid stale node references.
+        // BatchFixer applies fixes sequentially, modifying the document between each.
+        var objectSyntax = FindObjectByIdentity(root, objectIdentity);
+        if (objectSyntax is null)
+            return document;
 
         var propertyList = objectSyntax.PropertyList;
         PropertyListSyntax newPropertyList;
@@ -157,21 +172,38 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
 
         if (permissionsProperty is null)
         {
-            // No Permissions property exists: create one from scratch
             newPropertyList = AddNewPermissionsProperty(propertyList, tableName, permissionChar);
         }
         else
         {
-            // Permissions property exists: add or merge
             newPropertyList = UpdateExistingPermissionsProperty(propertyList, permissionsProperty, tableName, permissionChar);
         }
 
-        var root = await syntaxRootTask.ConfigureAwait(false);
-        if (root is null)
-            return document;
-
         var newRoot = root.ReplaceNode(propertyList, newPropertyList);
         return document.WithSyntaxRoot(newRoot);
+    }
+
+    private static (SyntaxKind Kind, string? Name) GetObjectIdentity(ObjectSyntax objectSyntax)
+    {
+        var name = objectSyntax.Name?.Identifier.ValueText;
+        return (objectSyntax.Kind, name);
+    }
+
+    private static ObjectSyntax? FindObjectByIdentity(SyntaxNode root,
+        (SyntaxKind Kind, string? Name) identity)
+    {
+        foreach (var node in root.DescendantNodes())
+        {
+            if (node is ObjectSyntax obj
+                && obj is not ApplicationObjectExtensionSyntax
+                && obj.Kind == identity.Kind
+                && string.Equals(obj.Name?.Identifier.ValueText, identity.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                return obj;
+            }
+        }
+
+        return null;
     }
 
     private static PropertyListSyntax AddNewPermissionsProperty(
@@ -240,8 +272,13 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         SeparatedSyntaxList<PermissionSyntax> newPermissions;
         if (isMultiLine)
         {
-            var indentation = PermissionSyntaxHelper.GetEntryIndentation(permissionValue);
-            newEntry = newEntry.WithLeadingTrivia(SyntaxFactory.ParseLeadingTrivia(indentation));
+            // Only add indentation trivia when inserting at index > 0.
+            // Index 0 is on the same line as "Permissions = " and needs no indentation.
+            if (insertIndex > 0)
+            {
+                var indentation = PermissionSyntaxHelper.GetEntryIndentation(permissionValue);
+                newEntry = newEntry.WithLeadingTrivia(SyntaxFactory.ParseLeadingTrivia(indentation));
+            }
             return PermissionSyntaxHelper.InsertIntoMultiLineList(permissionValue, permissions, insertIndex, newEntry);
         }
         else

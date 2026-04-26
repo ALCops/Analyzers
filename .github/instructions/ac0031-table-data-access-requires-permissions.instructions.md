@@ -77,6 +77,7 @@ Maps AL built-in record methods to `DatabaseOperation`:
 | `Rec.Modify()` in table objects detected via explicit Instance path | The AL compiler resolves `Rec.Modify()` with a non-null Instance |
 | InherentPermissions attribute parsed via syntax text splitting | The attribute's syntax is well-defined; avoids complex semantic analysis |
 | `TestPermissions = Disabled` suppresses diagnostic | Test codeunits with disabled permissions are intentionally testing without permission checks |
+| Skip permissionset/permissionsetextension objects | These objects declare permissions as their core purpose, not code that accesses tables; skipping improves performance |
 
 ## CodeFix
 
@@ -107,16 +108,18 @@ Uses C#-like namespace resolution (`PermissionTableNameResolver`):
 | Decision | Rationale |
 |---|---|
 | Passes TableName, TableNamespace, PermissionChar via `ImmutableDictionary` properties | Standard CodeFix data passing pattern |
-| Permission chars are lowercase (`rimd`) | Consistent with AL conventions |
+| Permission chars preserve existing casing convention | If existing permissions use uppercase (e.g. `RM`), added chars match (`RIM`). Defaults to lowercase for new entries. |
+| `ApplyFix` re-finds ObjectSyntax by kind+name from current tree | BatchFixer applies fixes sequentially; using captured node references causes stale-reference bugs (phantom entries, wrong merges) |
 | Sorted detection uses case-insensitive string comparison | AL identifiers are case-insensitive |
 | Multi-line separator fix via `ReplaceToken` | Avoids need for internal `SeparatedSyntaxList` constructor |
 | `FixAllTitle` uses a separate generic resx string (`TableDataAccessRequiresPermissionsFixAllCodeAction`) | FixAll applies across multiple permissions/tables, so the title must not reference a specific permission or table |
+| `insertIndex == 0` gets special trivia handling in multi-line lists | First entry sits on the `Permissions = ` line with no leading indentation; displaced entries need indentation added |
 
 ## Test coverage
 
 **HasDiagnostic (8 cases):** ProcedureCalls, ProcedureCallsExtended, GetBySystemId, Count, ImplicitSelfCallInTable, XmlPorts, Queries, Reports.
 **NoDiagnostic (21 cases):** ProcedureCallsPermissionsProperty, ProcedureCallsPermissionsPropertyFullyQualified, ProcedureCallsInherentPermissionsProperty, ProcedureCallsInherentPermissionsAttribute, PageSourceTable, PageExtensionSourceTable, XmlPortPermissionsProperty, XmlPortInherentPermissions, QueryPermissionsProperty, QueryInherentPermissions, ReportPermissionsProperty, ReportInherentPermissions, XMLPortWithTableElementProps, PermissionsAsObjectId, PermissionPropertyWithPragma, PermissionPropertyWithComment, MultiplePermissionsDifferentType, TestPermissionsDisabled, GetBySystemIdWithPermissions, CountWithPermissions, ImplicitSelfCallWithInherentPermissions.
-**HasFix (8 cases):** AddNewPermissionsProperty, AddNewTableEntry, MergePermissionChar, MergeCanonicalOrder, AddEntryMultiLine, AddEntrySingleLine, AddEntryAlphabetical, AddEntryAppend.
+**HasFix (9 cases):** AddNewPermissionsProperty, AddNewTableEntry, MergePermissionChar, MergeCanonicalOrder, AddEntryMultiLine, AddEntrySingleLine, AddEntryAlphabetical, AddEntryAppend, AddEntryAlphabeticalFirst.
 
 ## Known issues / future work
 
