@@ -36,14 +36,18 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
 
     private void AnalyzeInvocation(OperationAnalysisContext ctx)
     {
+        var containingObject = ctx.ContainingSymbol.GetContainingApplicationObjectTypeSymbol();
+
+        if (containingObject?.Kind == EnumProvider.SymbolKind.PermissionSet
+            || containingObject?.Kind == EnumProvider.SymbolKind.PermissionSetExtension)
+            return;
+
         if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression invocation)
             return;
 
         var required = RequiredPermissionDetector.TryGetFromInvocation(invocation, ctx.ContainingSymbol);
         if (required is null)
             return;
-
-        var containingObject = ctx.ContainingSymbol.GetContainingApplicationObjectTypeSymbol();
 
         if (RequiredPermissionDetector.IsTestCodeunitWithPermissionsDisabled(containingObject))
             return;
