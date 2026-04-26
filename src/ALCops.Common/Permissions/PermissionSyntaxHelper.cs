@@ -11,7 +11,7 @@ namespace ALCops.Common.Permissions;
 /// </summary>
 public static class PermissionSyntaxHelper
 {
-    private const string CanonicalOrder = "rimd";
+    private const string CanonicalOrder = MethodOperationMap.CanonicalOrder;
 
     /// <summary>
     /// Checks whether the permission entries are sorted alphabetically by

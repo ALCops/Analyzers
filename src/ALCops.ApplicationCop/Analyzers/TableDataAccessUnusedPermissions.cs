@@ -95,7 +95,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (!hasMatch)
         {
             // Table not accessed at all
-            var normalizedDeclared = NormalizePermissionChars(declaredChars);
+            var normalizedDeclared = GetUnusedChars(declaredChars, new DeclaredPermissionSet());
             var properties = BuildProperties(tableName, normalizedDeclared, string.Empty);
             reportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.TableDataAccessUnusedPermissionsEntireEntry,
@@ -318,33 +318,23 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         return entry.ObjectReference.GetText().ToString().Trim();
     }
 
-    private static string NormalizePermissionChars(string chars)
-    {
-        return new string(chars
-            .Where(c => "rimdRIMD".Contains(c))
-            .Select(c => char.ToLowerInvariant(c))
-            .Distinct()
-            .OrderBy(c => "rimd".IndexOf(c))
-            .ToArray());
-    }
-
     private static string GetUsedChars(string declaredChars, DeclaredPermissionSet required)
     {
         return new string(declaredChars
-            .Where(c => "rimdRIMD".Contains(c) && required.HasPermission(MethodOperationMap.FromPermissionChar(c)))
+            .Where(c => MethodOperationMap.IsValidPermissionChar(c) && required.HasPermission(MethodOperationMap.FromPermissionChar(c)))
             .Select(c => char.ToLowerInvariant(c))
             .Distinct()
-            .OrderBy(c => "rimd".IndexOf(c))
+            .OrderBy(c => MethodOperationMap.CanonicalOrder.IndexOf(c))
             .ToArray());
     }
 
     private static string GetUnusedChars(string declaredChars, DeclaredPermissionSet required)
     {
         return new string(declaredChars
-            .Where(c => "rimdRIMD".Contains(c) && !required.HasPermission(MethodOperationMap.FromPermissionChar(c)))
+            .Where(c => MethodOperationMap.IsValidPermissionChar(c) && !required.HasPermission(MethodOperationMap.FromPermissionChar(c)))
             .Select(c => char.ToLowerInvariant(c))
             .Distinct()
-            .OrderBy(c => "rimd".IndexOf(c))
+            .OrderBy(c => MethodOperationMap.CanonicalOrder.IndexOf(c))
             .ToArray());
     }
 

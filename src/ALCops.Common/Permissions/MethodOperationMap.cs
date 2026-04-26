@@ -37,6 +37,14 @@ public static class MethodOperationMap
     public static DatabaseOperation GetOperation(string methodName) =>
         Map.TryGetValue(methodName, out var op) ? op : DatabaseOperation.None;
 
+    /// <summary>
+    /// The canonical ordering of permission characters: read, insert, modify, delete.
+    /// </summary>
+    public const string CanonicalOrder = "rimd";
+
+    public static bool IsValidPermissionChar(char c) =>
+        FromPermissionChar(c) != DatabaseOperation.None;
+
     public static char ToPermissionChar(DatabaseOperation operation) =>
         operation switch
         {
