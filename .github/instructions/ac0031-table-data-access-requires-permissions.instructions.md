@@ -107,11 +107,11 @@ Uses C#-like namespace resolution (`PermissionTableNameResolver`):
 | Decision | Rationale |
 |---|---|
 | Passes TableName, TableNamespace, PermissionChar via `ImmutableDictionary` properties | Standard CodeFix data passing pattern |
-| Permission chars are lowercase (`rimd`) | Consistent with AL conventions |
+| Permission chars preserve existing casing convention | If existing permissions use uppercase (e.g. `RM`), added chars match (`RIM`). Defaults to lowercase for new entries. |
+| `ApplyFix` re-finds ObjectSyntax by kind+name from current tree | BatchFixer applies fixes sequentially; using captured node references causes stale-reference bugs (phantom entries, wrong merges) |
 | Sorted detection uses case-insensitive string comparison | AL identifiers are case-insensitive |
 | Multi-line separator fix via `ReplaceToken` | Avoids need for internal `SeparatedSyntaxList` constructor |
 | `FixAllTitle` uses a separate generic resx string (`TableDataAccessRequiresPermissionsFixAllCodeAction`) | FixAll applies across multiple permissions/tables, so the title must not reference a specific permission or table |
-| Custom `PermissionsFixAllProvider` replaces `BatchFixer` (net8.0+) | BatchFixer applies fixes sequentially, causing uppercase normalization and phantom entries when multiple diagnostics modify the same Permissions node. Custom provider collects all diagnostics and applies a single tree transformation. |
 | `insertIndex == 0` gets special trivia handling in multi-line lists | First entry sits on the `Permissions = ` line with no leading indentation; displaced entries need indentation added |
 
 ## Test coverage
@@ -127,5 +127,4 @@ Uses C#-like namespace resolution (`PermissionTableNameResolver`):
 - **CalcFields/CalcSums** are not yet covered (out of scope for initial implementation)
 - **CodeFix: blank line formatting** When creating a new Permissions property on an object that has no properties, no blank line is inserted between the new property and the first member (trigger/procedure)
 - **CodeFix: cross-namespace test** The single-file test framework cannot test qualified table name resolution; both objects must be in the same file
-- **CodeFix: FixAll not directly testable** RoslynTestKit has no FixAll test API; FixAll behavior can only be verified via VS Code
 - **Inverted rule** (permissions declared but not needed) is planned as a separate diagnostic

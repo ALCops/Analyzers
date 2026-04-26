@@ -63,9 +63,13 @@ public static class PermissionSyntaxHelper
     /// <summary>
     /// Merges a new permission char into an existing permission string,
     /// returning the result in canonical 'rimd' order.
+    /// Preserves the casing convention of the existing string: if existing chars
+    /// are uppercase, the new char is added as uppercase (and vice versa).
     /// </summary>
     public static string NormalizePermissionString(string existing, char newChar)
     {
+        var useUpperCase = IsUpperCaseConvention(existing);
+
         var chars = new HashSet<char>();
         foreach (var c in existing)
             chars.Add(char.ToLowerInvariant(c));
@@ -77,10 +81,27 @@ public static class PermissionSyntaxHelper
         foreach (var c in CanonicalOrder)
         {
             if (chars.Contains(c))
-                result[count++] = c;
+                result[count++] = useUpperCase ? char.ToUpperInvariant(c) : c;
         }
 
         return new string(result, 0, count);
+    }
+
+    /// <summary>
+    /// Detects whether the existing permission string uses uppercase convention.
+    /// Returns true if the majority of non-empty chars are uppercase.
+    /// Defaults to false (lowercase) for empty strings.
+    /// </summary>
+    private static bool IsUpperCaseConvention(string permissions)
+    {
+        int upper = 0, lower = 0;
+        foreach (var c in permissions)
+        {
+            if (char.IsUpper(c)) upper++;
+            else if (char.IsLower(c)) lower++;
+        }
+
+        return upper > lower;
     }
 
     /// <summary>
