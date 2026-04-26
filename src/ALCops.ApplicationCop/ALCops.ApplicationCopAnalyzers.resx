@@ -444,6 +444,9 @@
   <data name="TableDataAccessUnusedPermissionsCodeAction" xml:space="preserve">
     <value>ALCops: Remove unused permission for table '{0}'</value>
   </data>
+  <data name="TableDataAccessUnusedPermissionsFixAllCodeAction" xml:space="preserve">
+    <value>ALCops: Remove all unused permissions</value>
+  </data>
   <data name="ZeroEnumValueReservedForEmptyTitle" xml:space="preserve">
     <value>Reserve Enum value zero (0) for empty value</value>
   </data>
