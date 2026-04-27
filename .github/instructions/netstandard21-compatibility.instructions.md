@@ -94,3 +94,19 @@ Use `set` instead of `init` on netstandard2.1:
 3. The netstandard2.1 block must use a regular `struct` or `class` with explicit constructor and get-only properties (no `init`).
 4. Search for `IFieldSymbol` `.Type` usage; use `OriginalDefinition.GetTypeSymbol()` on netstandard2.1 (requires `using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols`).
 5. When in doubt, look at existing examples listed above.
+
+## Reflection shims to clean up when dropping netstandard2.1 and net8.0
+
+The `ALCops.Common/Reflection/` folder contains helpers that use `System.Reflection` to handle SDK API differences. Some are only needed on older TFMs and have `#if NET10_0_OR_GREATER` guards that call the SDK directly on net10.0. Others are needed on ALL TFMs.
+
+When dropping netstandard2.1 and net8.0, grep for `COMPAT(netstandard2.1` to find all shims. Then:
+
+| File | Status | Action when dropping old TFMs |
+|---|---|---|
+| `Reflection/StringHelper.cs` | Bypassed on net10.0 via `#if` in `StringExtensions.cs` | Delete file. Replace `QuoteIdentifierIfNeededWithReflection()` calls with `Microsoft.Dynamics.Nav.CodeAnalysis.Utilities.StringExtensions.QuoteIdentifierIfNeeded()`. |
+| `Reflection/SymbolHelper.cs` (`GetContainingNamespaceQualifiedName`) | Bypassed on net10.0 via `#if` in `SymbolInterfaceExtensions.cs` | Delete method. Replace `GetContainingNamespaceQualifiedNameWithReflection()` calls with `symbol.ContainingNamespace?.QualifiedName`. |
+| `Reflection/SymbolHelper.cs` (`ToDisplayStringWithReflection`) | Already `#if NETSTANDARD2_1` only | Delete method. Remove `ToDisplayStringWithReflection()` calls and use `symbol.ToDisplayString()` directly. |
+| `Reflection/CompilationHelper.cs` | Accesses non-public SDK internals | **Keep** (reflection needed on all TFMs). |
+| `Reflection/EnumProvider.cs` | Runtime compat for enum value changes | **Keep** (reflection needed on all TFMs). |
+| `Reflection/VersionProvider.cs` | Forward-compat for future version fields | **Keep** (reflection needed on all TFMs). |
+| `Reflection/PropertyAccessor.cs` | Generic runtime compat utility | **Keep** (reflection needed on all TFMs). |

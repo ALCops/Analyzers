@@ -8,14 +8,21 @@ namespace ALCops.Common.Extensions;
 public static class SymbolInterfaceExtensions
 {
     /// <summary>
-    /// Gets the QualifiedName of the ContainingNamespace for a symbol using reflection.
-    /// This method handles breaking changes between versions where ContainingNamespace
-    /// may not exist in older versions of Microsoft.Dynamics.Nav.CodeAnalysis.
+    /// Gets the QualifiedName of the ContainingNamespace for a symbol.
+    /// COMPAT(netstandard2.1, net8.0): Uses reflection to handle versions where
+    /// ContainingNamespace or INamespaceSymbol.QualifiedName may not exist.
+    /// On net10.0+, calls the SDK directly.
+    /// TODO: When netstandard2.1 and net8.0 are dropped, inline as
+    /// symbol?.ContainingNamespace?.QualifiedName and delete SymbolHelper.GetContainingNamespaceQualifiedName.
     /// </summary>
     /// <param name="symbol">The symbol to get the containing namespace qualified name from.</param>
     /// <returns>The qualified name of the containing namespace, or null if not available.</returns>
     public static string? GetContainingNamespaceQualifiedNameWithReflection(this ISymbol? symbol)
+#if NET10_0_OR_GREATER
+        => symbol?.ContainingNamespace?.QualifiedName;
+#else
         => SymbolHelper.GetContainingNamespaceQualifiedName(symbol);
+#endif
 
     public static IPageTypeSymbol? GetPageTypeSymbol(this ISymbol symbol)
     {
@@ -46,6 +53,8 @@ public static class SymbolInterfaceExtensions
     }
 
     #region Obsolete Extension Methods
+    // COMPAT(netstandard2.1, net8.0): IsObsoletePendingMove and IsObsoleteMoved may not exist in older SDK versions.
+    // TODO: When netstandard2.1 and net8.0 are dropped, check if these properties are on ISymbol directly.
     private static readonly Lazy<PropertyInfo?> _isObsoletePendingMoveProperty =
         new(() => typeof(ISymbol).GetProperty("IsObsoletePendingMove"));
 

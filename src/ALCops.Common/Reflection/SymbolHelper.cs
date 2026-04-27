@@ -4,9 +4,12 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 namespace ALCops.Common.Reflection;
 
 /// <summary>
-/// Provides safe symbol property access methods using reflection.
-/// These methods are designed to maintain compatibility across different API versions
-/// where properties like ContainingNamespace may not exist in older versions.
+/// COMPAT(netstandard2.1, net8.0): Reflection-based symbol property access.
+/// Provides safe access to properties that may not exist in older SDK versions.
+/// On net10.0+, callers in SymbolInterfaceExtensions.cs bypass this class and call the SDK directly.
+/// TODO: When netstandard2.1 and net8.0 are dropped, delete GetContainingNamespaceQualifiedName
+/// and replace callers with symbol.ContainingNamespace?.QualifiedName.
+/// ToDisplayStringWithReflection is already netstandard2.1-only and will be removed with that TFM.
 /// </summary>
 public static class SymbolHelper
 {

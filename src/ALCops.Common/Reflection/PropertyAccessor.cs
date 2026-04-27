@@ -4,8 +4,8 @@ namespace ALCops.Common.Reflection;
 
 /// <summary>
 /// Provides safe property access methods using reflection.
-/// These methods are designed to maintain compatibility across different API versions
-/// by safely accessing properties that may not exist in all versions.
+/// NOTE: This is a generic compat utility for runtime API differences across SDK versions.
+/// Required on ALL target frameworks. Do not attempt to eliminate.
 /// </summary>
 public static class PropertyAccessor
 {

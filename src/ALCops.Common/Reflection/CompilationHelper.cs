@@ -4,6 +4,11 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 
 namespace ALCops.Common.Reflection;
 
+/// <summary>
+/// Reflection-based access to non-public Compilation properties.
+/// NOTE: This is NOT a backward-compat shim. These properties are internal to the SDK
+/// and require reflection on ALL target frameworks. Do not attempt to eliminate.
+/// </summary>
 public static class CompilationHelper
 {
     private static readonly BindingFlags Flags = BindingFlags.Instance | BindingFlags.NonPublic;

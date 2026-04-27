@@ -2,6 +2,14 @@ using System.Reflection;
 
 namespace ALCops.Common.Reflection;
 
+/// <summary>
+/// COMPAT(netstandard2.1, net8.0): Reflection-based wrapper for QuoteIdentifierIfNeeded.
+/// This file exists because the SDK method signature changed between versions:
+/// - Older SDKs: QuoteIdentifierIfNeeded(string)
+/// - Newer SDKs (net10.0+): QuoteIdentifierIfNeeded(string, bool)
+/// On net10.0+, StringExtensions.cs calls the SDK directly and this class is unused.
+/// TODO: Delete this file when netstandard2.1 and net8.0 TFMs are dropped.
+/// </summary>
 public static class StringHelper
 {
     // Cache the method info for QuoteIdentifierIfNeeded with the optional parameter >= 17.0.29.44223
