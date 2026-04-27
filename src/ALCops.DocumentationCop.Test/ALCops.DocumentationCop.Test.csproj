@@ -37,7 +37,6 @@
         <PackageReference Include="NUnit" Version="4.1.0" />
         <PackageReference Include="NUnit3TestAdapter" Version="5.1.0" />
         <PackageReference Include="NUnit.Analyzers" Version="4.2.0" />
-        <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
         <Using Include="NUnit.Framework" />
     </ItemGroup>
 
