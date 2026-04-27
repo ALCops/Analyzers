@@ -5,7 +5,7 @@ name: Cleanup Pre-release Packages
 #
 # Logic:
 #   1. Superseded pre-releases (base version <= latest stable): unlist/delete ALL
-#   2. Current pre-releases (base version > latest stable): keep last 3, unlist/delete the rest
+#   2. Current pre-releases (base version > latest stable): keep last 3 per channel (alpha/beta), unlist/delete the rest
 #
 # NuGet.org: unlists packages (still downloadable by exact version pin)
 # GitHub Packages: permanently deletes old versions
@@ -108,7 +108,7 @@ jobs:
             LATEST_STABLE=$(printf '%s\n' "${STABLE[@]}" | sort -V | tail -n1)
             echo "Latest stable: $LATEST_STABLE"
           else
-            echo "No stable versions found, will only trim current alphas"
+            echo "No stable versions found, will only trim current pre-releases"
           fi
 
           # Categorize pre-releases into superseded vs current
@@ -139,14 +139,30 @@ jobs:
             TO_UNLIST+=("$v")
           done
 
-          # Current pre-releases: keep last N (by SemVer sort)
-          if [ ${#CURRENT[@]} -gt "$KEEP_LAST_N" ]; then
-            mapfile -t SORTED_CURRENT < <(printf '%s\n' "${CURRENT[@]}" | sort -V)
-            REMOVE_COUNT=$(( ${#SORTED_CURRENT[@]} - KEEP_LAST_N ))
-            for ((i=0; i<REMOVE_COUNT; i++)); do
-              TO_UNLIST+=("${SORTED_CURRENT[$i]}")
-            done
-          fi
+          # Split current pre-releases by channel (alpha vs beta)
+          CURRENT_ALPHA=()
+          CURRENT_BETA=()
+          for v in "${CURRENT[@]}"; do
+            if [[ "$v" == *-beta.* ]]; then
+              CURRENT_BETA+=("$v")
+            else
+              CURRENT_ALPHA+=("$v")
+            fi
+          done
+
+          echo "Current alphas: ${#CURRENT_ALPHA[@]}, betas: ${#CURRENT_BETA[@]}"
+
+          # Keep last N per channel (by SemVer sort)
+          for channel_name in "alpha" "beta"; do
+            declare -n channel_arr="CURRENT_${channel_name^^}"
+            if [ ${#channel_arr[@]} -gt "$KEEP_LAST_N" ]; then
+              mapfile -t sorted < <(printf '%s\n' "${channel_arr[@]}" | sort -V)
+              remove_count=$(( ${#sorted[@]} - KEEP_LAST_N ))
+              for ((i=0; i<remove_count; i++)); do
+                TO_UNLIST+=("${sorted[$i]}")
+              done
+            fi
+          done
 
           echo ""
           echo "=== NuGet.org: unlisting ${#TO_UNLIST[@]} versions ==="
@@ -228,13 +244,30 @@ jobs:
             TO_DELETE+=("$v")
           done
 
-          if [ ${#CURRENT[@]} -gt "$KEEP_LAST_N" ]; then
-            mapfile -t SORTED_CURRENT < <(printf '%s\n' "${CURRENT[@]}" | sort -V)
-            REMOVE_COUNT=$(( ${#SORTED_CURRENT[@]} - KEEP_LAST_N ))
-            for ((i=0; i<REMOVE_COUNT; i++)); do
-              TO_DELETE+=("${SORTED_CURRENT[$i]}")
-            done
-          fi
+          # Split current pre-releases by channel (alpha vs beta)
+          CURRENT_ALPHA=()
+          CURRENT_BETA=()
+          for v in "${CURRENT[@]}"; do
+            if [[ "$v" == *-beta.* ]]; then
+              CURRENT_BETA+=("$v")
+            else
+              CURRENT_ALPHA+=("$v")
+            fi
+          done
+
+          echo "Current alphas: ${#CURRENT_ALPHA[@]}, betas: ${#CURRENT_BETA[@]}"
+
+          # Keep last N per channel (by SemVer sort)
+          for channel_name in "alpha" "beta"; do
+            declare -n channel_arr="CURRENT_${channel_name^^}"
+            if [ ${#channel_arr[@]} -gt "$KEEP_LAST_N" ]; then
+              mapfile -t sorted < <(printf '%s\n' "${channel_arr[@]}" | sort -V)
+              remove_count=$(( ${#sorted[@]} - KEEP_LAST_N ))
+              for ((i=0; i<remove_count; i++)); do
+                TO_DELETE+=("${sorted[$i]}")
+              done
+            fi
+          done
 
           echo ""
           echo "=== GitHub Packages: deleting ${#TO_DELETE[@]} versions ==="

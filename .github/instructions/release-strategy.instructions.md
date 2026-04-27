@@ -16,7 +16,7 @@ ALCops Analyzers uses a three-channel release strategy with GitVersion auto-comp
 
 ### Alpha releases
 
-Every push to `main` that passes CI automatically publishes an alpha package to NuGet.org and GitHub Packages. No GitHub Release is created. A weekly cleanup job unlists old alphas from NuGet.org (keeping the last 3) to prevent clutter.
+Every push to `main` that passes CI automatically publishes an alpha package to NuGet.org and GitHub Packages. No GitHub Release is created. A weekly cleanup job unlists old alphas from NuGet.org (keeping the last 3 per channel) to prevent clutter.
 
 ### Beta releases
 
@@ -163,7 +163,7 @@ A weekly scheduled workflow (`scheduled-cleanup.yml`) runs every Sunday at 06:00
 ### What it does
 
 1. **Superseded pre-releases**: Unlists from NuGet.org and deletes from GitHub Packages all pre-release versions whose base version is at or below the latest stable (e.g., all `0.7.0-alpha.*` and `0.7.0-beta.*` after `0.7.0` is released)
-2. **Old current alphas**: For pre-releases above the latest stable, keeps the last 3 and unlists/deletes the rest
+2. **Old current pre-releases**: For pre-releases above the latest stable, keeps the last 3 per channel (alpha and beta independently) and unlists/deletes the rest. This prevents alphas (which have higher base versions) from pushing out betas.
 
 ### NuGet.org vs GitHub Packages cleanup
 
