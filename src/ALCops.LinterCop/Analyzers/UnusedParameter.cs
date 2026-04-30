@@ -15,29 +15,64 @@ public sealed class UnusedParameter : DiagnosticAnalyzer
 
     public override void Initialize(AnalysisContext context)
     {
-        context.RegisterCodeBlockStartAction(AnalyzeCodeBlockStart);
+        context.RegisterCodeBlockAction(AnalyzeCodeBlock);
     }
 
-    private static void AnalyzeCodeBlockStart(CodeBlockStartAnalysisContext startContext)
+    private static void AnalyzeCodeBlock(CodeBlockAnalysisContext context)
     {
-        if (startContext.OwningSymbol.Kind != SymbolKind.Method)
+        if (context.IsObsolete() || context.CodeBlock is not MethodOrTriggerDeclarationSyntax methodSyntax)
             return;
 
-        IMethodSymbol methodSymbol = (IMethodSymbol)startContext.OwningSymbol;
-
-        if (!ShouldAnalyzeMethod(methodSymbol))
+        if (context.OwningSymbol is not IMethodSymbol method)
             return;
 
-        if (methodSymbol.Parameters.IsEmpty)
+        if (!ShouldAnalyzeMethod(method))
             return;
 
-        var tracker = new ParameterUsageTracker(methodSymbol, startContext.CancellationToken);
-
-        if (tracker.IsEmpty)
+        if (method.Parameters.IsEmpty)
             return;
 
-        startContext.RegisterSyntaxNodeAction(tracker.AnalyzeSyntaxNode, SyntaxKind.IdentifierName, SyntaxKind.IdentifierNameOrEmpty);
-        startContext.RegisterCodeBlockEndAction(tracker.CodeBlockEndAction);
+        if (methodSyntax.Body is null)
+            return;
+
+        var unusedParameters = GetNonSynthesizedParameters(method);
+        if (unusedParameters.Count == 0)
+            return;
+
+        MarkReferencedParameters(methodSyntax.Body, unusedParameters);
+
+        foreach (IParameterSymbol parameter in unusedParameters.Values)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.UnusedParameter,
+                    parameter.GetLocation(),
+                    parameter.Name,
+                    method.Name));
+        }
+    }
+
+    private static Dictionary<string, IParameterSymbol> GetNonSynthesizedParameters(IMethodSymbol method)
+    {
+        var parameters = new Dictionary<string, IParameterSymbol>(SemanticFacts.NameEqualityComparer);
+        foreach (IParameterSymbol parameter in method.Parameters)
+        {
+            if (!parameter.IsSynthesized)
+                parameters[parameter.Name] = parameter;
+        }
+        return parameters;
+    }
+
+    private static void MarkReferencedParameters(SyntaxNode body, Dictionary<string, IParameterSymbol> unusedParameters)
+    {
+        foreach (SyntaxNode node in body.DescendantNodes())
+        {
+            if (unusedParameters.Count == 0)
+                return;
+
+            if (node is IdentifierNameSyntax identifier)
+                unusedParameters.Remove(identifier.Unquoted());
+        }
     }
 
     private static bool ShouldAnalyzeMethod(IMethodSymbol method)
@@ -68,69 +103,5 @@ public sealed class UnusedParameter : DiagnosticAnalyzer
             return false;
 
         return true;
-    }
-
-    private sealed class ParameterUsageTracker
-    {
-        private readonly HashSet<ISymbol> unusedParameters;
-        private readonly HashSet<string> unusedParameterNames;
-        private readonly IMethodSymbol method;
-
-        public bool IsEmpty => unusedParameters.Count == 0;
-
-        public ParameterUsageTracker(IMethodSymbol method, CancellationToken cancellationToken)
-        {
-            this.method = method;
-            unusedParameters = new HashSet<ISymbol>();
-            unusedParameterNames = new HashSet<string>(SemanticFacts.NameEqualityComparer);
-
-            ImmutableArray<IParameterSymbol>.Enumerator enumerator = method.Parameters.GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                IParameterSymbol parameter = enumerator.Current;
-                cancellationToken.ThrowIfCancellationRequested();
-                if (!parameter.IsSynthesized)
-                {
-                    unusedParameters.Add(parameter);
-                    unusedParameterNames.Add(parameter.Name);
-                }
-            }
-        }
-
-        public void AnalyzeSyntaxNode(SyntaxNodeAnalysisContext context)
-        {
-            if (unusedParameters.Count == 0)
-                return;
-
-            // Skip identifiers that are part of parameter declarations themselves
-            if (context.Node.Parent.IsKind(SyntaxKind.Parameter, SyntaxKind.ReturnValue))
-                return;
-
-            if (context.Node is not IdentifierNameSyntax identifierNameSyntax)
-                return;
-
-            if (!unusedParameterNames.Contains(identifierNameSyntax.Unquoted()))
-                return;
-
-            ISymbol? symbol = context.SemanticModel.GetSymbolInfo(identifierNameSyntax, context.CancellationToken).Symbol;
-            if (symbol is not null && unusedParameters.Contains(symbol))
-            {
-                unusedParameters.Remove(symbol);
-                unusedParameterNames.Remove(symbol.Name);
-            }
-        }
-
-        public void CodeBlockEndAction(CodeBlockAnalysisContext context)
-        {
-            foreach (ISymbol parameter in unusedParameters)
-            {
-                context.ReportDiagnostic(
-                    Diagnostic.Create(
-                        DiagnosticDescriptors.UnusedParameter,
-                        parameter.GetLocation(),
-                        parameter.Name,
-                        method.Name));
-            }
-        }
     }
 }
