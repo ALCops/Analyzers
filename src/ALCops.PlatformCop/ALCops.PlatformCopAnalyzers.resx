@@ -453,4 +453,13 @@
   <data name="DuplicateODataEntityNameDescription" xml:space="preserve">
     <value>Page controls are exposed as OData properties with transformed names (dots removed, spaces replaced by underscores, parentheses removed, slashes replaced by underscores, apostrophes replaced by _x0027_, percent signs replaced by Percent). When two or more controls produce the same OData EntityName after transformation, 'Edit in Excel' and other OData integrations fail at runtime. Primary key fields are automatically included in the OData metadata even if not on the page, so control names must also be unique relative to primary key field names.</value>
   </data>
+  <data name="PlaceholderArgumentCountMismatchTitle" xml:space="preserve">
+    <value>Placeholder argument count mismatch</value>
+  </data>
+  <data name="PlaceholderArgumentCountMismatchMessageFormat" xml:space="preserve">
+    <value>The format string contains {0} placeholder(s), but {1} argument(s) were provided.</value>
+  </data>
+  <data name="PlaceholderArgumentCountMismatchDescription" xml:space="preserve">
+    <value>When calling StrSubstNo, Error, Message, or Confirm with a format string containing placeholders (%1, %2, #1, etc.), the number of substitution arguments must match the number of unique placeholders. A mismatch means either placeholders will remain unsubstituted at runtime or arguments will be silently ignored. This rule extends CodeCop AA0131 to cover cases it misses: the zero-arguments gap and the Confirm method.</value>
+  </data>
 </root>

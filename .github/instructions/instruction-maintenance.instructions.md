@@ -100,3 +100,4 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `pc0031-partial-records-before-write-operation` | rule-scoped | PC0031 rule |
 | `pc0032-report-layout-property-length` | rule-scoped | PC0032 rule |
 | `pc0033-duplicate-odata-entity-name` | rule-scoped | PC0033 rule |
+| `pc0034-placeholder-argument-count-mismatch` | rule-scoped | PC0034 rule |

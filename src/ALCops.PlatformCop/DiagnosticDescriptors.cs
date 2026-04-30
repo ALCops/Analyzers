@@ -325,6 +325,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.DuplicateODataEntityNameDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.DuplicateODataEntityName));
 
+    public static readonly DiagnosticDescriptor PlaceholderArgumentCountMismatch = new(
+        id: DiagnosticIds.PlaceholderArgumentCountMismatch,
+        title: PlatformCopAnalyzers.PlaceholderArgumentCountMismatchTitle,
+        messageFormat: PlatformCopAnalyzers.PlaceholderArgumentCountMismatchMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.PlaceholderArgumentCountMismatchDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PlaceholderArgumentCountMismatch));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLower());
