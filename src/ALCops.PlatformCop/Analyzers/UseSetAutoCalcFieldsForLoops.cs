@@ -74,10 +74,10 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
         return dataItem.Name;
     }
 
-    private sealed class CalcFieldsDiagnosticInfo
+    private sealed class CalcFieldsDiagnosticInfo(Location location, string variableName)
     {
-        public required Location Location { get; init; }
-        public required string VariableName { get; init; }
+        public Location Location { get; } = location;
+        public string VariableName { get; } = variableName;
     }
 
     private sealed class CalcFieldsInLoopWalker : OperationWalker
@@ -114,11 +114,9 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
                 var instanceName = GetInstanceVariableName(operation);
                 if (instanceName is not null && IsLoopVariable(instanceName))
                 {
-                    _diagnostics.Add(new CalcFieldsDiagnosticInfo
-                    {
-                        Location = operation.Syntax.GetLocation(),
-                        VariableName = instanceName
-                    });
+                    _diagnostics.Add(new CalcFieldsDiagnosticInfo(
+                        operation.Syntax.GetLocation(),
+                        instanceName));
                 }
             }
 
