@@ -335,6 +335,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.PlaceholderArgumentCountMismatchDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.PlaceholderArgumentCountMismatch));
 
+    public static readonly DiagnosticDescriptor UseSetAutoCalcFieldsForLoops = new(
+        id: DiagnosticIds.UseSetAutoCalcFieldsForLoops,
+        title: PlatformCopAnalyzers.UseSetAutoCalcFieldsForLoopsTitle,
+        messageFormat: PlatformCopAnalyzers.UseSetAutoCalcFieldsForLoopsMessageFormat,
+        category: Category.Performance,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.UseSetAutoCalcFieldsForLoopsDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UseSetAutoCalcFieldsForLoops));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLower());
