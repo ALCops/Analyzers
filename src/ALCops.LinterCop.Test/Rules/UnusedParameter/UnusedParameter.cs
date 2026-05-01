@@ -28,9 +28,6 @@ namespace ALCops.LinterCop.Test
         [TestCase("VarParameterUnused")]
         public async Task HasDiagnostic(string testCase)
         {
-            // RequireMinimumVersion("13.0",
-            //     "LC0095 requires SDK v13+ for reliable IMethodSymbol.IsLocal and RegisterCodeBlockAction behavior");
-
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -47,9 +44,6 @@ namespace ALCops.LinterCop.Test
         [TestCase("ParameterUsedInExpression")]
         public async Task NoDiagnostic(string testCase)
         {
-            // RequireMinimumVersion("13.0",
-            //     "LC0095 requires SDK v13+ for reliable IMethodSymbol.IsLocal and RegisterCodeBlockAction behavior");
-
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -61,9 +55,6 @@ namespace ALCops.LinterCop.Test
         [TestCase("RemoveMiddleParameter")]
         public async Task HasFix(string testCase)
         {
-            // RequireMinimumVersion("13.0",
-            //     "LC0095 requires SDK v13+ for reliable IMethodSymbol.IsLocal and RegisterCodeBlockAction behavior");
-
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
                 .ConfigureAwait(false);
 
