@@ -161,9 +161,10 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
                     return forEachStatement;
 
                 case MethodOrTriggerDeclarationSyntax:
-                    // We've reached the method body without finding a loop
-                    // This is the report OnAfterGetRecord case - insert before the CalcFields itself
-                    return FindContainingStatement(calcFieldsInvocation);
+                    // We've reached the method body without finding a loop.
+                    // This is the report OnAfterGetRecord case where SetAutoCalcFields
+                    // belongs in OnPreDataItem, not here. No CodeFix for this scenario.
+                    return null;
             }
             current = current.Parent;
         }
