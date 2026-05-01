@@ -22,6 +22,7 @@ namespace ALCops.PlatformCop.Test
 
         [Test]
         [TestCase("SelectToken")]
+        [TestCase("SelectTokens")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -32,6 +33,7 @@ namespace ALCops.PlatformCop.Test
 
         [Test]
         [TestCase("SelectToken")]
+        [TestCase("SelectTokens")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
@@ -42,6 +44,7 @@ namespace ALCops.PlatformCop.Test
 
         [Test]
         [TestCase("SelectToken")]
+        [TestCase("SelectTokens")]
         public async Task HasFix(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))

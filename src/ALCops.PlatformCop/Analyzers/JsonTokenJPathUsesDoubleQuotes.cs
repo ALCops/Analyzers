@@ -9,8 +9,19 @@ namespace ALCops.PlatformCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class JsonTokenJPathUsesDoubleQuotes : DiagnosticAnalyzer
 {
-    private const string JsonTokenTypeName = "JsonToken";
-    private const string SelectTokenMethodName = "SelectToken";
+    private static readonly HashSet<string> MethodNames = new(StringComparer.Ordinal)
+    {
+        "SelectToken",
+        "SelectTokens"
+    };
+
+    private static readonly HashSet<string> JsonTypeNames = new(StringComparer.Ordinal)
+    {
+        "JsonToken",
+        "JsonObject",
+        "JsonArray"
+    };
+
     private const string PathParameterName = "Path";
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
@@ -35,10 +46,10 @@ public sealed class JsonTokenJPathUsesDoubleQuotes : DiagnosticAnalyzer
         if (method.MethodKind != MethodKind.BuiltInMethod)
             return;
 
-        if (!string.Equals(method.Name, SelectTokenMethodName, StringComparison.Ordinal))
+        if (!MethodNames.Contains(method.Name))
             return;
 
-        if (!string.Equals(method.ContainingSymbol?.Name, JsonTokenTypeName, StringComparison.Ordinal))
+        if (method.ContainingSymbol?.Name is not string containingName || !JsonTypeNames.Contains(containingName))
             return;
 
         List<StringLiteralValueSyntax>? stringLiterals = null;
