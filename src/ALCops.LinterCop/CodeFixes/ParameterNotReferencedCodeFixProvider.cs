@@ -8,17 +8,17 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
 
 namespace ALCops.LinterCop.CodeFixes;
 
-[CodeFixProvider(nameof(UnusedParameterCodeFixProvider))]
-public sealed class UnusedParameterCodeFixProvider : CodeFixProvider
+[CodeFixProvider(nameof(ParameterNotReferencedCodeFixProvider))]
+public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
 {
-    private class UnusedParameterCodeAction : CodeAction.DocumentChangeAction
+    private class ParameterNotReferencedCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
         public override string? FixAllSingleInstanceTitle => string.Empty;
         public override string? FixAllTitle => Title;
 
-        public UnusedParameterCodeAction(string title,
+        public ParameterNotReferencedCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument,
             string equivalenceKey, bool generateFixAll)
             : base(title, createChangedDocument, equivalenceKey)
@@ -28,7 +28,7 @@ public sealed class UnusedParameterCodeFixProvider : CodeFixProvider
     }
 
     public sealed override ImmutableArray<string> FixableDiagnosticIds =>
-        ImmutableArray.Create(DiagnosticDescriptors.UnusedParameter.Id);
+        ImmutableArray.Create(DiagnosticDescriptors.ParameterNotReferenced.Id);
 
     public sealed override FixAllProvider GetFixAllProvider() =>
          WellKnownFixAllProviders.BatchFixer;
@@ -53,17 +53,17 @@ public sealed class UnusedParameterCodeFixProvider : CodeFixProvider
             ctx.Diagnostics[0]);
     }
 
-    private static UnusedParameterCodeAction CreateCodeAction(SyntaxNode node, Document document,
+    private static ParameterNotReferencedCodeAction CreateCodeAction(SyntaxNode node, Document document,
         bool generateFixAll)
     {
-        return new UnusedParameterCodeAction(
-            LinterCopAnalyzers.UnusedParameterCodeAction,
-            ct => RemoveUnusedParameter(document, node, ct),
-            nameof(UnusedParameterCodeFixProvider),
+        return new ParameterNotReferencedCodeAction(
+            LinterCopAnalyzers.ParameterNotReferencedCodeAction,
+            ct => RemoveUnreferencedParameter(document, node, ct),
+            nameof(ParameterNotReferencedCodeFixProvider),
             generateFixAll);
     }
 
-    private static async Task<Document> RemoveUnusedParameter(Document document, SyntaxNode node,
+    private static async Task<Document> RemoveUnreferencedParameter(Document document, SyntaxNode node,
         CancellationToken cancellationToken)
     {
         Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);

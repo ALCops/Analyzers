@@ -101,4 +101,4 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `pc0032-report-layout-property-length` | rule-scoped | PC0032 rule |
 | `pc0033-duplicate-odata-entity-name` | rule-scoped | PC0033 rule |
 | `pc0034-placeholder-argument-count-mismatch` | rule-scoped | PC0034 rule |
-| `lc0095-unused-parameter` | rule-scoped | LC0095 rule |
+| `lc0095-parameter-not-referenced` | rule-scoped | LC0095 rule |

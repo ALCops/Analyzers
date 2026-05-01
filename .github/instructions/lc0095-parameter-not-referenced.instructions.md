@@ -1,8 +1,8 @@
 ---
-applyTo: 'src/ALCops.LinterCop/**/UnusedParameter*'
+applyTo: 'src/ALCops.LinterCop/**/ParameterNotReferenced*'
 ---
 
-# LC0095 - Unused Parameter in Procedure
+# LC0095 - Parameter Not Referenced
 
 ## Purpose
 
@@ -19,12 +19,13 @@ Flags parameters that are declared but never referenced in the procedure body. E
 
 ## Architecture
 
-Uses `RegisterCodeBlockStartAction` pattern:
-1. At code block start, checks if method qualifies (skips local, triggers, interface impls, events, obsolete)
-2. Special case: event subscribers ARE included even though they are local (AA0137 excludes them)
-3. Collects all non-synthesized parameters into a `HashSet`
-4. Registers `SyntaxNodeAction` on `IdentifierName`/`IdentifierNameOrEmpty` to track usage
-5. At code block end, reports any parameters still in the unused set
+Uses `RegisterCodeBlockAction` pattern:
+1. Gets method syntax and symbol from `CodeBlockAnalysisContext`
+2. Applies `ShouldAnalyzeMethod` filter (skips local, triggers, interface impls, events, obsolete)
+3. Special case: event subscribers ARE included even though they are local (AA0137 excludes them)
+4. Collects non-synthesized parameter names into a `Dictionary<string, IParameterSymbol>`
+5. Walks `methodSyntax.Body.DescendantNodes()` for `IdentifierNameSyntax` matches (case-insensitive)
+6. Reports diagnostic for any parameters with no matching identifier in the body
 
 Key helper: `MethodImplementsInterfaceMethod()` from `ALCops.Common.Extensions.MethodSymbolInterfaceExtensions`
 

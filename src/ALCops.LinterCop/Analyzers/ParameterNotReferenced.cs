@@ -8,10 +8,10 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 namespace ALCops.LinterCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public sealed class UnusedParameter : DiagnosticAnalyzer
+public sealed class ParameterNotReferenced : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-        ImmutableArray.Create(DiagnosticDescriptors.UnusedParameter);
+        ImmutableArray.Create(DiagnosticDescriptors.ParameterNotReferenced);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -45,7 +45,7 @@ public sealed class UnusedParameter : DiagnosticAnalyzer
         {
             context.ReportDiagnostic(
                 Diagnostic.Create(
-                    DiagnosticDescriptors.UnusedParameter,
+                    DiagnosticDescriptors.ParameterNotReferenced,
                     parameter.GetLocation(),
                     parameter.Name,
                     method.Name));

@@ -399,16 +399,16 @@
   <data name="TranslatableTextShouldBeTranslatedDescription" xml:space="preserve">
     <value>All translatable texts (captions, tooltips, labels, option captions) should have translations in the project's XLIFF files for every target language. Missing translations cause the application to display the source language text to users in other locales, degrading the user experience.</value>
   </data>
-  <data name="UnusedParameterTitle" xml:space="preserve">
-    <value>Unused parameter in procedure</value>
+  <data name="ParameterNotReferencedTitle" xml:space="preserve">
+    <value>Parameter is not referenced</value>
   </data>
-  <data name="UnusedParameterMessageFormat" xml:space="preserve">
-    <value>Parameter '{0}' is not used in procedure '{1}'.</value>
+  <data name="ParameterNotReferencedMessageFormat" xml:space="preserve">
+    <value>Parameter '{0}' is not referenced in procedure '{1}'.</value>
   </data>
-  <data name="UnusedParameterDescription" xml:space="preserve">
+  <data name="ParameterNotReferencedDescription" xml:space="preserve">
     <value>Parameters that are declared but never referenced in the procedure body add noise and maintenance burden. This rule extends CodeCop AA0137 to cover internal procedures, public procedures, and event subscribers. Remove the unused parameter or use it in the procedure body.</value>
   </data>
-  <data name="UnusedParameterCodeAction" xml:space="preserve">
-    <value>ALCops: Remove unused parameter</value>
+  <data name="ParameterNotReferencedCodeAction" xml:space="preserve">
+    <value>ALCops: Remove unreferenced parameter</value>
   </data>
 </root>
