@@ -73,9 +73,14 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
             return;
 
         var baseControls = CollectFieldControlEntries(targetPage.FlattenedControls);
-        var pkEntries = CollectPrimaryKeyEntries(targetPage.RelatedTable);
-
         var siblingControls = CollectSiblingExtensionControls(ctx, pageExtension, targetPage);
+
+        // Build set of PK fields already referenced by any control on the page
+        var referencedFields = CollectReferencedFields(targetPage.FlattenedControls);
+        CollectReferencedFieldsInto(referencedFields, pageExtension.AddedControlsFlattened);
+        AddSiblingReferencedFields(referencedFields, ctx, pageExtension, targetPage);
+
+        var pkEntries = CollectPrimaryKeyEntries(targetPage.RelatedTable, referencedFields);
 
         var allEntries = new List<ODataNameEntry>(
             extensionControls.Count + baseControls.Count + pkEntries.Count + siblingControls.Count);
@@ -149,7 +154,8 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
             return;
 
         var controlEntries = CollectFieldControlEntries(page.FlattenedControls);
-        var pkEntries = CollectPrimaryKeyEntries(page.RelatedTable);
+        var referencedFields = CollectReferencedFields(page.FlattenedControls);
+        var pkEntries = CollectPrimaryKeyEntries(page.RelatedTable, referencedFields);
 
         var allEntries = new List<ODataNameEntry>(controlEntries.Count + pkEntries.Count);
         allEntries.AddRange(controlEntries);
@@ -178,7 +184,7 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
         return entries;
     }
 
-    private static List<ODataNameEntry> CollectPrimaryKeyEntries(ITableTypeSymbol? table)
+    private static List<ODataNameEntry> CollectPrimaryKeyEntries(ITableTypeSymbol? table, HashSet<IFieldSymbol> referencedFields)
     {
         var entries = new List<ODataNameEntry>();
         if (table?.PrimaryKey is null)
@@ -186,6 +192,9 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
 
         foreach (var field in table.PrimaryKey.Fields)
         {
+            if (field.OriginalDefinition is IFieldSymbol fieldDef && referencedFields.Contains(fieldDef))
+                continue;
+
             var odataName = ODataNameHelper.MangleIntoValidXmlIdentifier(field.Name);
             if (odataName is null)
                 continue;
@@ -193,6 +202,47 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
             entries.Add(new ODataNameEntry(odataName, field.Name, field.GetLocation(), null));
         }
         return entries;
+    }
+
+    private static HashSet<IFieldSymbol> CollectReferencedFields(ImmutableArray<IControlSymbol> controls)
+    {
+        var set = new HashSet<IFieldSymbol>();
+        CollectReferencedFieldsInto(set, controls);
+        return set;
+    }
+
+    private static void CollectReferencedFieldsInto(HashSet<IFieldSymbol> set, ImmutableArray<IControlSymbol> controls)
+    {
+        foreach (var control in controls)
+        {
+            if (control.ControlKind != EnumProvider.ControlKind.Field)
+                continue;
+
+            if (control.RelatedFieldSymbol is not IFieldSymbol field)
+                continue;
+
+            set.Add((IFieldSymbol)field.OriginalDefinition);
+        }
+    }
+
+    private static void AddSiblingReferencedFields(
+        HashSet<IFieldSymbol> set,
+        SymbolAnalysisContext ctx,
+        IPageExtensionBaseTypeSymbol currentExtension,
+        IPageBaseTypeSymbol targetPage)
+    {
+        var allPageExtensions = GetCachedPageExtensions(ctx.Compilation);
+
+        foreach (var ext in allPageExtensions)
+        {
+            if (ReferenceEquals(ext, currentExtension))
+                continue;
+
+            if (!SameApplicationObject(ext.Target?.OriginalDefinition, targetPage))
+                continue;
+
+            CollectReferencedFieldsInto(set, ext.AddedControlsFlattened);
+        }
     }
 
     private static void ReportDuplicates(

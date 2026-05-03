@@ -152,7 +152,7 @@ If the SDK's `MangleIntoValidXmlIdentifier` method is not found (older BC SDK ve
 ## Test coverage
 
 **HasDiagnostic (8 cases):** DotRemoval, PercentSign, ParenthesisRemoval, SlashToUnderscore, PageExtensionCollision, PrimaryKeyCollision, ThreeWayCollision, MultiplePageExtensionCollision.
-**NoDiagnostic (5 cases):** UniqueNames, ApiPage, RoleCenterPage, ObsoletePage, PageExtensionUniqueNames.
+**NoDiagnostic (6 cases):** UniqueNames, ApiPage, RoleCenterPage, ObsoletePage, PageExtensionUniqueNames, PrimaryKeyFieldOnPage.
 
 ## Phase 2 roadmap (not yet implemented)
 

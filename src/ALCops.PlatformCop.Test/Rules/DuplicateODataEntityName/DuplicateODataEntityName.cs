@@ -47,6 +47,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("RoleCenterPage")]
         [TestCase("ObsoletePage")]
         [TestCase("PageExtensionUniqueNames")]
+        [TestCase("PrimaryKeyFieldOnPage")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
