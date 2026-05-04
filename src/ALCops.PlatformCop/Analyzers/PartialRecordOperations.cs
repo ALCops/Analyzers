@@ -344,7 +344,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             Visit(operation.IfFalseStatement);
             var falseBranchState = SaveFlowState();
 
-            MergeFlowStates(trueBranchState, falseBranchState, preForkReads);
+            MergeFlowStates([trueBranchState, falseBranchState], preForkReads);
         }
 
         public override void VisitCaseStatement(ICaseStatement operation)
@@ -395,7 +395,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                 Visit(operation.Body);
                 var postBodyState = SaveFlowState();
 
-                MergeFlowStates(preLoopState, postBodyState, preForkReads);
+                MergeFlowStates([preLoopState, postBodyState], preForkReads);
             }
         }
 
@@ -409,7 +409,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             Visit(operation.Body);
             var postBodyState = SaveFlowState();
 
-            MergeFlowStates(preLoopState, postBodyState, preForkReads);
+            MergeFlowStates([preLoopState, postBodyState], preForkReads);
         }
 
         public override void VisitForEachLoopStatement(IForEachLoopStatement operation)
@@ -421,7 +421,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             Visit(operation.Body);
             var postBodyState = SaveFlowState();
 
-            MergeFlowStates(preLoopState, postBodyState, preForkReads);
+            MergeFlowStates([preLoopState, postBodyState], preForkReads);
         }
 
         #endregion
@@ -439,16 +439,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         private void RestoreFlowState(Dictionary<string, FlowFlags> saved)
         {
             foreach (var kvp in saved)
-            {
-                if (_flowState.TryGetValue(kvp.Key, out var current))
-                {
-                    current.HasLoadFields = kvp.Value.HasLoadFields;
-                    current.HasWriteOp = kvp.Value.HasWriteOp;
-                    current.PassedToFunction = kvp.Value.PassedToFunction;
-                    current.UncoveredReads.Clear();
-                    current.UncoveredReads.AddRange(kvp.Value.UncoveredReads);
-                }
-            }
+                _flowState[kvp.Key] = kvp.Value.Clone();
         }
 
         private static Dictionary<string, FlowFlags> CloneState(Dictionary<string, FlowFlags> source)
@@ -472,27 +463,6 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                     result[kvp.Key] = new HashSet<int>(kvp.Value.UncoveredReads.Select(r => r.Location.SourceSpan.Start));
             }
             return result;
-        }
-
-        private void MergeFlowStates(Dictionary<string, FlowFlags> stateA, Dictionary<string, FlowFlags> stateB,
-            Dictionary<string, HashSet<int>>? preForkReads = null)
-        {
-            foreach (var kvp in _flowState)
-            {
-                var a = stateA[kvp.Key];
-                var b = stateB[kvp.Key];
-
-                kvp.Value.HasLoadFields = a.HasLoadFields && b.HasLoadFields;
-                kvp.Value.HasWriteOp = a.HasWriteOp || b.HasWriteOp;
-                kvp.Value.PassedToFunction = a.PassedToFunction || b.PassedToFunction;
-                kvp.Value.HasPartialRead = a.HasPartialRead || b.HasPartialRead;
-
-                HashSet<int>? preFork = null;
-                preForkReads?.TryGetValue(kvp.Key, out preFork);
-                MergeUncoveredReads(kvp.Value, a.UncoveredReads, b.UncoveredReads, preFork);
-                MergeLoadFieldsLocations(kvp.Value, a.LoadFieldsLocations, b.LoadFieldsLocations);
-                MergeWriteMethodNames(kvp.Value, a.WriteMethodNamesAfterPartialRead, b.WriteMethodNamesAfterPartialRead);
-            }
         }
 
         private void MergeFlowStates(List<Dictionary<string, FlowFlags>> branchStates,
@@ -543,69 +513,6 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             }
         }
 
-        /// <summary>
-        /// Merges uncovered reads from two branches with deduplication by source position.
-        /// Pre-fork reads use intersection semantics (keep only if in both branches),
-        /// in-branch reads use union semantics (keep if in either branch).
-        /// </summary>
-        private static void MergeUncoveredReads(FlowFlags target,
-            List<ReadInfo> readsA, List<ReadInfo> readsB, HashSet<int>? preForkPositions)
-        {
-            target.UncoveredReads.Clear();
-
-            var seen = new HashSet<int>();
-            foreach (var read in readsA)
-                if (seen.Add(read.Location.SourceSpan.Start))
-                    target.UncoveredReads.Add(read);
-
-            foreach (var read in readsB)
-                if (seen.Add(read.Location.SourceSpan.Start))
-                    target.UncoveredReads.Add(read);
-
-            // Pre-fork reads use intersection: keep only if present in BOTH branches.
-            // If a branch retroactively cleared a pre-fork read (via write/pass), it stays cleared.
-            if (preForkPositions is { Count: > 0 })
-            {
-                var positionsInA = new HashSet<int>(readsA.Select(r => r.Location.SourceSpan.Start));
-                var positionsInB = new HashSet<int>(readsB.Select(r => r.Location.SourceSpan.Start));
-
-                target.UncoveredReads.RemoveAll(read =>
-                    preForkPositions.Contains(read.Location.SourceSpan.Start) &&
-                    !(positionsInA.Contains(read.Location.SourceSpan.Start) &&
-                      positionsInB.Contains(read.Location.SourceSpan.Start)));
-            }
-        }
-
-        private static void MergeLoadFieldsLocations(FlowFlags target,
-            List<LoadFieldsInfo> locsA, List<LoadFieldsInfo> locsB)
-        {
-            target.LoadFieldsLocations.Clear();
-
-            var seen = new HashSet<int>();
-            foreach (var info in locsA)
-                if (seen.Add(info.Location.SourceSpan.Start))
-                    target.LoadFieldsLocations.Add(info);
-
-            foreach (var info in locsB)
-                if (seen.Add(info.Location.SourceSpan.Start))
-                    target.LoadFieldsLocations.Add(info);
-        }
-
-        private static void MergeWriteMethodNames(FlowFlags target,
-            HashSet<string>? setA, HashSet<string>? setB)
-        {
-            if (setA is null && setB is null)
-            {
-                target.WriteMethodNamesAfterPartialRead = null;
-                return;
-            }
-
-            var merged = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (setA is not null) merged.UnionWith(setA);
-            if (setB is not null) merged.UnionWith(setB);
-            target.WriteMethodNamesAfterPartialRead = merged.Count > 0 ? merged : null;
-        }
-
         private static void MergeWriteMethodNames(FlowFlags target, params HashSet<string>?[] sets)
         {
             HashSet<string>? merged = null;
@@ -627,71 +534,74 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         {
             var methodName = operation.TargetMethod.Name;
 
-            if (operation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod)
-            {
-                if (ReadMethods.Contains(methodName))
-                {
-                    // PC0031: a read while HasLoadFields means the record buffer is now partial
-                    if (flowFlags.HasLoadFields)
-                        flowFlags.HasPartialRead = true;
-
-                    // Check ALL flow flags: hasLoadFields (SetLoadFields before read),
-                    // hasWriteOp (write before read means SetLoadFields could break the write),
-                    // passedToFunction (callee might need all fields).
-                    // Write/pass AFTER read is handled by retroactive clearing of UncoveredReads.
-                    if (!flowFlags.HasLoadFields && !flowFlags.HasWriteOp && !flowFlags.PassedToFunction)
-                        flowFlags.UncoveredReads.Add(new ReadInfo(operation.Syntax.GetLocation(), methodName));
-                }
-                else if (LoadFieldsMethods.Contains(methodName))
-                {
-                    if (string.Equals(methodName, "SetLoadFields", StringComparison.OrdinalIgnoreCase)
-                        && operation.Arguments.IsEmpty)
-                    {
-                        // SetLoadFields() with no arguments resets partial records to "load all"
-                        flowFlags.HasLoadFields = false;
-                        flowFlags.HasPartialRead = false;
-                        flowFlags.LoadFieldsLocations.Clear();
-                        flowFlags.WriteMethodNamesAfterPartialRead = null;
-                    }
-                    else
-                    {
-                        flowFlags.HasLoadFields = true;
-                        flowFlags.LoadFieldsLocations.Add(
-                            new LoadFieldsInfo(operation.Syntax.GetLocation(), methodName));
-                        state.EverHadLoadFields = true;
-                    }
-                }
-                else if (WriteMethods.Contains(methodName))
-                {
-                    // Retroactively suppress uncovered reads: a write after a read means
-                    // adding SetLoadFields before the read could break the write operation
-                    flowFlags.UncoveredReads.Clear();
-                    flowFlags.HasWriteOp = true;
-                    state.EverHadWriteOp = true;
-
-                    // PC0031: only record writes for JIT-load detection when a partial read
-                    // has occurred on this flow path. Writes before SetLoadFields or between
-                    // SetLoadFields and the next read use the full record buffer and don't JIT.
-                    if (flowFlags.HasPartialRead && JitLoadWriteMethods.Contains(methodName))
-                        flowFlags.AddWriteAfterPartialRead(methodName);
-                }
-                else if (string.Equals(methodName, "Reset", StringComparison.OrdinalIgnoreCase))
-                {
-                    flowFlags.ResetFlags();
-                }
-                else if (state.IsRecordRef
-                    && string.Equals(methodName, "SetTable", StringComparison.OrdinalIgnoreCase)
-                    && operation.Arguments.Length == 1)
-                    state.SetTableTargets.Add(GetVariableNameFromArgument(operation.Arguments[0]));
-            }
-            else
+            if (operation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
             {
                 // Non-built-in method called on the record variable (table-defined method):
                 // retroactively suppress uncovered reads (callee might access any field)
                 flowFlags.UncoveredReads.Clear();
                 flowFlags.PassedToFunction = true;
                 state.EverPassedToFunction = true;
+                return;
             }
+
+            if (ReadMethods.Contains(methodName))
+                HandleReadMethod(operation, flowFlags, methodName);
+            else if (LoadFieldsMethods.Contains(methodName))
+                HandleLoadFieldsMethod(operation, state, flowFlags, methodName);
+            else if (WriteMethods.Contains(methodName))
+                HandleWriteMethod(state, flowFlags, methodName);
+            else if (string.Equals(methodName, "Reset", StringComparison.OrdinalIgnoreCase))
+                flowFlags.ResetFlags();
+            else if (state.IsRecordRef
+                && string.Equals(methodName, "SetTable", StringComparison.OrdinalIgnoreCase)
+                && operation.Arguments.Length == 1)
+                state.SetTableTargets.Add(GetVariableNameFromArgument(operation.Arguments[0]));
+        }
+
+        private static void HandleReadMethod(IInvocationExpression operation, FlowFlags flowFlags, string methodName)
+        {
+            // PC0031: a read while HasLoadFields means the record buffer is now partial
+            if (flowFlags.HasLoadFields)
+                flowFlags.HasPartialRead = true;
+
+            // Only flag reads where no suppression condition exists.
+            // Write/pass AFTER read is handled by retroactive clearing of UncoveredReads.
+            if (!flowFlags.HasLoadFields && !flowFlags.HasWriteOp && !flowFlags.PassedToFunction)
+                flowFlags.UncoveredReads.Add(new ReadInfo(operation.Syntax.GetLocation(), methodName));
+        }
+
+        private static void HandleLoadFieldsMethod(IInvocationExpression operation,
+            VariableState state, FlowFlags flowFlags, string methodName)
+        {
+            if (string.Equals(methodName, "SetLoadFields", StringComparison.OrdinalIgnoreCase)
+                && operation.Arguments.IsEmpty)
+            {
+                // SetLoadFields() with no arguments resets partial records to "load all"
+                flowFlags.HasLoadFields = false;
+                flowFlags.HasPartialRead = false;
+                flowFlags.LoadFieldsLocations.Clear();
+                flowFlags.WriteMethodNamesAfterPartialRead = null;
+                return;
+            }
+
+            flowFlags.HasLoadFields = true;
+            flowFlags.LoadFieldsLocations.Add(
+                new LoadFieldsInfo(operation.Syntax.GetLocation(), methodName));
+            state.EverHadLoadFields = true;
+        }
+
+        private static void HandleWriteMethod(VariableState state, FlowFlags flowFlags, string methodName)
+        {
+            // Retroactively suppress uncovered reads: a write after a read means
+            // adding SetLoadFields before the read could break the write operation
+            flowFlags.UncoveredReads.Clear();
+            flowFlags.HasWriteOp = true;
+            state.EverHadWriteOp = true;
+
+            // PC0031: only record writes for JIT-load detection when a partial read
+            // has occurred on this flow path.
+            if (flowFlags.HasPartialRead && JitLoadWriteMethods.Contains(methodName))
+                flowFlags.AddWriteAfterPartialRead(methodName);
         }
 
         private void CheckArgumentsForTrackedVariables(IInvocationExpression operation)
