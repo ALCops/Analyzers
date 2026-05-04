@@ -18,7 +18,7 @@ Detects `Permissions` property entries that have no corresponding table data acc
 | Help URI | https://alcops.dev/docs/analyzers/applicationcop/ac0032/ |
 
 Two `DiagnosticDescriptor` instances share the same ID but have different message formats:
-- `TableDataAccessUnusedPermissionsEntireEntry`: table not accessed at all
+- `TableDataAccessUnusedPermissionsEntireEntry`: no database operations found on the table
 - `TableDataAccessUnusedPermissionsPartialChars`: table accessed but not all declared RIMD chars are needed
 
 ## Architecture

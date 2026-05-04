@@ -430,13 +430,13 @@
     <value>Unused permission declared</value>
   </data>
   <data name="TableDataAccessUnusedPermissionsEntireEntryMessageFormat" xml:space="preserve">
-    <value>Permission 'tabledata {0}' is declared but no code in this object accesses table '{0}'.</value>
+    <value>Permission 'tabledata {0}' is declared but this object performs no database operations on table '{0}'.</value>
   </data>
   <data name="TableDataAccessUnusedPermissionsPartialCharsMessageFormat" xml:space="preserve">
     <value>Permission '{0}' on 'tabledata {1}' is not needed. Only '{2}' is required.</value>
   </data>
   <data name="TableDataAccessUnusedPermissionsDescription" xml:space="preserve">
-    <value>The Permissions property declares table data access that is not used by any code in this object. Unused permissions are dead code and should be removed or reduced to match actual usage. The Permissions property only applies to direct table access within the object itself; it does not flow through to called objects.</value>
+    <value>The Permissions property declares table data access for which no corresponding database operations (read, insert, modify, delete) were found in this object. Unused permissions are dead code and should be removed or reduced to match actual usage. The Permissions property only applies to direct database operations within the object itself; it does not flow through to called objects.</value>
   </data>
   <data name="TableDataAccessUnusedPermissionsCodeAction" xml:space="preserve">
     <value>ALCops: Remove unused permission for table '{0}'</value>
