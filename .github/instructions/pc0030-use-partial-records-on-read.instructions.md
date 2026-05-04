@@ -49,6 +49,8 @@ These decisions were made during the initial design and should be preserved unle
 | Retroactive read clearing | Clear UncoveredReads when write/pass encountered | Handles `Get(); Modify()` pattern where write comes after read |
 | Loop analysis | Single pass, no fixed-point iteration | Acceptable approximation; fixed-point adds complexity for rare edge cases |
 | RecordRef flow analysis | Kept method-level (EverHad* flags) | RecordRef SetTable linkage is already complex; bug fixes focus on Record variables |
+| Pre-fork read merge rule | Intersection (must be in ALL branches) | Reads before a fork that are retroactively cleared by write/pass in any branch should stay cleared; prevents false positives on `if FindSet then repeat Modify` pattern |
+| In-branch read merge rule | Union (in ANY branch) | Reads added inside a branch are genuinely uncovered on their specific path and should be reported |
 
 ## Architecture
 
@@ -89,7 +91,7 @@ Uses `RegisterCodeBlockAction` (not `RegisterOperationAction`) to analyze entire
 | `HasLoadFields` | AND (all branches must have it) | If any path lacks SetLoadFields, the read might execute without it |
 | `HasWriteOp` | OR (any branch having it) | If any path writes, suggesting SetLoadFields could interfere |
 | `PassedToFunction` | OR (any branch having it) | If any path passes the variable, callee might access any field |
-| `UncoveredReads` | Union (concat all branches) | A read uncovered in ANY branch should be reported |
+| `UncoveredReads` | Pre-fork: intersection; in-branch: union | Pre-fork reads retroactively cleared in any branch stay cleared; in-branch reads on specific paths should be reported |
 
 ### Reset operations
 
@@ -178,11 +180,11 @@ AA0242 (CodeCop's `Rule0242PartialRecordsDetectJitLoads`) is the **complement** 
 
 ## Test coverage
 
-55 test cases total:
+58 test cases total:
 
 **HasDiagnostic (17 cases):** LocalRecordGet, LocalRecordGetBySystemId, LocalRecordFindFirst, LocalRecordFindSet, LocalRecordFindLast, LocalRecordFind, LocalRecordMultipleReads, LocalRecordRefFindFirst, SetLoadFieldsAfterGet, ClearBetweenSetLoadFieldsAndGet, ResetBetweenSetLoadFieldsAndGet, SetLoadFieldsNoArgsBetween, CaseBranchWithoutSetLoadFields, IfBranchWithoutSetLoadFields, ClearResetsWriteOp, ClearResetsPassedToFunction, LoopNoSetLoadFields.
 
-**NoDiagnostic (26 cases):** HasSetLoadFields, HasSetLoadFieldsGetBySystemId, HasAddLoadFields, HasSetBaseLoadFields, HasModify, HasInsert, HasDelete, HasDeleteAll, HasModifyAll, HasRename, HasTransferFields, HasInit, HasCopy, PassedToFunction, PassedToEvent, PassedToPageRun, TemporaryTable, GlobalVariable, ParameterVariable, IsEmptyOnly, CDSTable, RecordRefSetTableWithModify, RecordRefSetTablePassedToFunction, DatabaseObjectReference, IfBothBranchesSetLoadFields, LoopSetLoadFieldsBefore.
+**NoDiagnostic (29 cases):** HasSetLoadFields, HasSetLoadFieldsGetBySystemId, HasAddLoadFields, HasSetBaseLoadFields, HasModify, HasInsert, HasDelete, HasDeleteAll, HasModifyAll, HasRename, HasTransferFields, HasInit, HasCopy, PassedToFunction, PassedToEvent, PassedToPageRun, TemporaryTable, GlobalVariable, ParameterVariable, IsEmptyOnly, CDSTable, RecordRefSetTableWithModify, RecordRefSetTablePassedToFunction, DatabaseObjectReference, IfBothBranchesSetLoadFields, LoopSetLoadFieldsBefore, FindSetWithModifyInLoop, FindSetWithPassedToFunctionInLoop, GetWithConditionalModify.
 
 **HasFix (11 cases):** SingleField, MultipleFields, QuotedFieldName, NoFieldAccess, SetRangeFieldExcluded, SetFilterFieldExcluded, SetRangeValueArgIncluded, AllFieldsInFilters, TestFieldIncluded, SetCurrentKeyExcluded, MixedFilterAndConsume.
 

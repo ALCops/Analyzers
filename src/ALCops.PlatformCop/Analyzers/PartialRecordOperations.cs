@@ -334,6 +334,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         {
             Visit(operation.Condition);
 
+            var preForkReads = CapturePreForkReadPositions();
             var preBranchState = SaveFlowState();
 
             Visit(operation.IfTrueStatement);
@@ -343,13 +344,14 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             Visit(operation.IfFalseStatement);
             var falseBranchState = SaveFlowState();
 
-            MergeFlowStates(trueBranchState, falseBranchState);
+            MergeFlowStates(trueBranchState, falseBranchState, preForkReads);
         }
 
         public override void VisitCaseStatement(ICaseStatement operation)
         {
             Visit(operation.Value);
 
+            var preForkReads = CapturePreForkReadPositions();
             var preCaseState = SaveFlowState();
             var branchStates = new List<Dictionary<string, FlowFlags>>();
 
@@ -372,7 +374,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                 branchStates.Add(CloneState(preCaseState));
             }
 
-            MergeFlowStates(branchStates);
+            MergeFlowStates(branchStates, preForkReads);
         }
 
         public override void VisitWhileRepeatLoopStatement(IWhileRepeatLoopStatement operation)
@@ -388,11 +390,12 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                 // while-do: body might not execute
                 Visit(operation.Condition);
 
+                var preForkReads = CapturePreForkReadPositions();
                 var preLoopState = SaveFlowState();
                 Visit(operation.Body);
                 var postBodyState = SaveFlowState();
 
-                MergeFlowStates(preLoopState, postBodyState);
+                MergeFlowStates(preLoopState, postBodyState, preForkReads);
             }
         }
 
@@ -401,22 +404,24 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             Visit(operation.InitialValue);
             Visit(operation.EndValue);
 
+            var preForkReads = CapturePreForkReadPositions();
             var preLoopState = SaveFlowState();
             Visit(operation.Body);
             var postBodyState = SaveFlowState();
 
-            MergeFlowStates(preLoopState, postBodyState);
+            MergeFlowStates(preLoopState, postBodyState, preForkReads);
         }
 
         public override void VisitForEachLoopStatement(IForEachLoopStatement operation)
         {
             Visit(operation.Expression);
 
+            var preForkReads = CapturePreForkReadPositions();
             var preLoopState = SaveFlowState();
             Visit(operation.Body);
             var postBodyState = SaveFlowState();
 
-            MergeFlowStates(preLoopState, postBodyState);
+            MergeFlowStates(preLoopState, postBodyState, preForkReads);
         }
 
         #endregion
@@ -454,7 +459,23 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             return clone;
         }
 
-        private void MergeFlowStates(Dictionary<string, FlowFlags> stateA, Dictionary<string, FlowFlags> stateB)
+        /// <summary>
+        /// Captures current UncoveredReads positions per variable before a fork.
+        /// Used during merge to apply intersection semantics for pre-fork reads.
+        /// </summary>
+        private Dictionary<string, HashSet<int>> CapturePreForkReadPositions()
+        {
+            var result = new Dictionary<string, HashSet<int>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in _flowState)
+            {
+                if (kvp.Value.UncoveredReads.Count > 0)
+                    result[kvp.Key] = new HashSet<int>(kvp.Value.UncoveredReads.Select(r => r.Location.SourceSpan.Start));
+            }
+            return result;
+        }
+
+        private void MergeFlowStates(Dictionary<string, FlowFlags> stateA, Dictionary<string, FlowFlags> stateB,
+            Dictionary<string, HashSet<int>>? preForkReads = null)
         {
             foreach (var kvp in _flowState)
             {
@@ -466,13 +487,16 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                 kvp.Value.PassedToFunction = a.PassedToFunction || b.PassedToFunction;
                 kvp.Value.HasPartialRead = a.HasPartialRead || b.HasPartialRead;
 
-                MergeUncoveredReads(kvp.Value, a.UncoveredReads, b.UncoveredReads);
+                HashSet<int>? preFork = null;
+                preForkReads?.TryGetValue(kvp.Key, out preFork);
+                MergeUncoveredReads(kvp.Value, a.UncoveredReads, b.UncoveredReads, preFork);
                 MergeLoadFieldsLocations(kvp.Value, a.LoadFieldsLocations, b.LoadFieldsLocations);
                 MergeWriteMethodNames(kvp.Value, a.WriteMethodNamesAfterPartialRead, b.WriteMethodNamesAfterPartialRead);
             }
         }
 
-        private void MergeFlowStates(List<Dictionary<string, FlowFlags>> branchStates)
+        private void MergeFlowStates(List<Dictionary<string, FlowFlags>> branchStates,
+            Dictionary<string, HashSet<int>>? preForkReads = null)
         {
             if (branchStates.Count == 0)
                 return;
@@ -484,12 +508,28 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                 kvp.Value.PassedToFunction = branchStates.Any(bs => bs[kvp.Key].PassedToFunction);
                 kvp.Value.HasPartialRead = branchStates.Any(bs => bs[kvp.Key].HasPartialRead);
 
+                HashSet<int>? preFork = null;
+                preForkReads?.TryGetValue(kvp.Key, out preFork);
+
                 kvp.Value.UncoveredReads.Clear();
                 var seenReads = new HashSet<int>();
                 foreach (var bs in branchStates)
+                {
                     foreach (var read in bs[kvp.Key].UncoveredReads)
+                    {
                         if (seenReads.Add(read.Location.SourceSpan.Start))
                             kvp.Value.UncoveredReads.Add(read);
+                    }
+                }
+
+                // Pre-fork reads use intersection: keep only if present in ALL branches
+                if (preFork is { Count: > 0 })
+                {
+                    kvp.Value.UncoveredReads.RemoveAll(read =>
+                        preFork.Contains(read.Location.SourceSpan.Start) &&
+                        !branchStates.All(bs => bs[kvp.Key].UncoveredReads.Any(
+                            r => r.Location.SourceSpan.Start == read.Location.SourceSpan.Start)));
+                }
 
                 kvp.Value.LoadFieldsLocations.Clear();
                 var seenLF = new HashSet<int>();
@@ -505,11 +545,11 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
         /// <summary>
         /// Merges uncovered reads from two branches with deduplication by source position.
-        /// Pre-fork reads exist in both branches; without dedup, list size doubles at each
-        /// nesting level causing exponential growth and OOM on large codebases.
+        /// Pre-fork reads use intersection semantics (keep only if in both branches),
+        /// in-branch reads use union semantics (keep if in either branch).
         /// </summary>
         private static void MergeUncoveredReads(FlowFlags target,
-            List<ReadInfo> readsA, List<ReadInfo> readsB)
+            List<ReadInfo> readsA, List<ReadInfo> readsB, HashSet<int>? preForkPositions)
         {
             target.UncoveredReads.Clear();
 
@@ -521,6 +561,19 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             foreach (var read in readsB)
                 if (seen.Add(read.Location.SourceSpan.Start))
                     target.UncoveredReads.Add(read);
+
+            // Pre-fork reads use intersection: keep only if present in BOTH branches.
+            // If a branch retroactively cleared a pre-fork read (via write/pass), it stays cleared.
+            if (preForkPositions is { Count: > 0 })
+            {
+                var positionsInA = new HashSet<int>(readsA.Select(r => r.Location.SourceSpan.Start));
+                var positionsInB = new HashSet<int>(readsB.Select(r => r.Location.SourceSpan.Start));
+
+                target.UncoveredReads.RemoveAll(read =>
+                    preForkPositions.Contains(read.Location.SourceSpan.Start) &&
+                    !(positionsInA.Contains(read.Location.SourceSpan.Start) &&
+                      positionsInB.Contains(read.Location.SourceSpan.Start)));
+            }
         }
 
         private static void MergeLoadFieldsLocations(FlowFlags target,
