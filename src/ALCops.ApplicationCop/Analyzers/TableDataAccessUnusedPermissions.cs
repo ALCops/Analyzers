@@ -135,7 +135,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         {
             _cancellationToken.ThrowIfCancellationRequested();
 
-            var required = RequiredPermissionDetector.TryGetFromInvocation(operation, _containingSymbol);
+            var required = RequiredPermissionDetector.TryGetFromInvocation(operation, _containingSymbol, includeSystemTables: true);
             if (required is not null)
                 AddRequiredPermission(_accumulator, _containingObject, required.Value);
 
@@ -147,7 +147,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         SymbolAnalysisContext ctx,
         ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> accumulator)
     {
-        var required = RequiredPermissionDetector.TryGetFromReportDataItem(ctx.Symbol);
+        var required = RequiredPermissionDetector.TryGetFromReportDataItem(ctx.Symbol, includeSystemTables: true);
         if (required is null)
             return;
 
@@ -162,7 +162,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         SymbolAnalysisContext ctx,
         ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> accumulator)
     {
-        var required = RequiredPermissionDetector.TryGetFromQueryDataItem(ctx.Symbol);
+        var required = RequiredPermissionDetector.TryGetFromQueryDataItem(ctx.Symbol, includeSystemTables: true);
         if (required is null)
             return;
 
@@ -181,7 +181,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (containingObject is null)
             return;
 
-        foreach (var required in RequiredPermissionDetector.GetFromXmlPortNode(ctx.Symbol))
+        foreach (var required in RequiredPermissionDetector.GetFromXmlPortNode(ctx.Symbol, includeSystemTables: true))
             AddRequiredPermission(accumulator, containingObject, required);
     }
 

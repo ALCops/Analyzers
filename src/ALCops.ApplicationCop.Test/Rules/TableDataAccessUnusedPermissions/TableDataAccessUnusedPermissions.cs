@@ -46,6 +46,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("QueryDataItemRead")]
         [TestCase("PermissionSet")]
         [TestCase("PermissionSetExtension")]
+        [TestCase("SystemTable")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

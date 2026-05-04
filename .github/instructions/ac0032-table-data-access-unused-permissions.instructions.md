@@ -83,6 +83,7 @@ Phase 2 (`RegisterCompilationEndAction`) runs once after all Phase 1 callbacks c
 | Two descriptors sharing one ID | Same conceptual rule, different message clarity |
 | `PermissionMatchesTable` duplicated from `PermissionResolver` | Avoids coupling; operates on syntax nodes, not resolved symbols |
 | Page SourceTable exemption | Pages implicitly need RIMD on their source table |
+| System tables included in collection | AC0032 passes `includeSystemTables: true` to `RequiredPermissionDetector` so that declared permissions on system tables (ID > 2B) are matched against actual accesses, preventing false positives. AC0031 uses the default `false` to avoid suggesting permissions on virtual tables. |
 | Temporary records NOT exempted | Declaring permissions on temp-only tables is dead code |
 | Skip permissionset/permissionsetextension objects | These objects declare permissions as their core purpose, not as code-access declarations; flagging them is always a false positive |
 | `DeclaredPermissionSet` reused for RIMD tracking | Existing type from AC0031's permission module |
@@ -122,7 +123,7 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 ## Test coverage
 
 **HasDiagnostic (8 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord.
-**NoDiagnostic (8 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension.
+**NoDiagnostic (9 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable.
 **HasFix (3 cases):** RemoveEntireEntry, ReduceChars, RemoveEntireProperty.
 
 ## Known limitations

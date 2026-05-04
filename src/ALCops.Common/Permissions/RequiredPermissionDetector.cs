@@ -15,9 +15,15 @@ public static class RequiredPermissionDetector
     /// Determines if an invocation expression requires a database permission.
     /// Returns null if the invocation doesn't require a permission (not a DB method, temporary record, system table, etc.).
     /// </summary>
+    /// <param name="includeSystemTables">
+    /// When true, system tables (ID &gt; 2,000,000,000) are included in the results.
+    /// AC0031 uses false (default) to avoid suggesting permissions on virtual tables, like for example the Integer table
+    /// AC0032 uses true so that declared permissions on system tables are not flagged as unused.
+    /// </param>
     public static RequiredPermission? TryGetFromInvocation(
         IInvocationExpression invocation,
-        ISymbol containingSymbol)
+        ISymbol containingSymbol,
+        bool includeSystemTables = false)
     {
         if (invocation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
             return null;
@@ -37,7 +43,7 @@ public static class RequiredPermissionDetector
             return null;
 
         var tableType = recordType.OriginalDefinition as ITableTypeSymbol;
-        if (tableType is null || IsSystemTable(tableType))
+        if (tableType is null || (!includeSystemTables && IsSystemTable(tableType)))
             return null;
 
         return new RequiredPermission(tableType, recordType, operation, invocation.Syntax.GetLocation());
@@ -47,7 +53,7 @@ public static class RequiredPermissionDetector
     /// Determines if a report data item requires a database permission.
     /// Returns null if it doesn't (temporary record, system table, wrong symbol type, etc.).
     /// </summary>
-    public static RequiredPermission? TryGetFromReportDataItem(ISymbol symbol)
+    public static RequiredPermission? TryGetFromReportDataItem(ISymbol symbol, bool includeSystemTables = false)
     {
         if (symbol.GetBooleanPropertyValue(EnumProvider.PropertyKind.UseTemporary) is true)
             return null;
@@ -61,7 +67,7 @@ public static class RequiredPermissionDetector
         if (recordType.Temporary)
             return null;
 
-        if (recordType.OriginalDefinition is not ITableTypeSymbol tableType || IsSystemTable(tableType))
+        if (recordType.OriginalDefinition is not ITableTypeSymbol tableType || (!includeSystemTables && IsSystemTable(tableType)))
             return null;
 
         return new RequiredPermission(tableType, recordType, DatabaseOperation.Read, symbol.GetLocation());
@@ -71,10 +77,10 @@ public static class RequiredPermissionDetector
     /// Determines if a query data item requires a database permission.
     /// Returns null if the underlying table is a system table.
     /// </summary>
-    public static RequiredPermission? TryGetFromQueryDataItem(ISymbol symbol)
+    public static RequiredPermission? TryGetFromQueryDataItem(ISymbol symbol, bool includeSystemTables = false)
     {
         var targetSymbol = ((IQueryDataItemSymbol)symbol).GetTypeSymbol();
-        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || IsSystemTable(tableType))
+        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || (!includeSystemTables && IsSystemTable(tableType)))
             return null;
 
         return new RequiredPermission(tableType, targetSymbol, DatabaseOperation.Read, symbol.GetLocation());
@@ -84,14 +90,14 @@ public static class RequiredPermissionDetector
     /// Gets required permissions for an xmlport table node.
     /// May yield multiple permissions depending on direction and auto-save/replace/update properties.
     /// </summary>
-    public static IEnumerable<RequiredPermission> GetFromXmlPortNode(ISymbol symbol)
+    public static IEnumerable<RequiredPermission> GetFromXmlPortNode(ISymbol symbol, bool includeSystemTables = false)
     {
         var nodeSymbol = (IXmlPortNodeSymbol)symbol.OriginalDefinition;
         if (nodeSymbol.SourceTypeKind != EnumProvider.XmlPortSourceTypeKind.Table)
             yield break;
 
         var targetSymbol = nodeSymbol.GetTypeSymbol();
-        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || IsSystemTable(tableType))
+        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || (!includeSystemTables && IsSystemTable(tableType)))
             yield break;
 
         var xmlPort = (IXmlPortTypeSymbol)symbol.GetContainingObjectTypeSymbol();
