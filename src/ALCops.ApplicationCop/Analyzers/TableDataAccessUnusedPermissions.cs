@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Permissions;
@@ -12,19 +13,6 @@ namespace ALCops.ApplicationCop.Analyzers;
 [DiagnosticAnalyzer]
 public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 {
-    private static readonly SyntaxKind[] ObjectSyntaxKinds =
-    [
-        EnumProvider.SyntaxKind.CodeunitObject,
-        EnumProvider.SyntaxKind.TableObject,
-        EnumProvider.SyntaxKind.TableExtensionObject,
-        EnumProvider.SyntaxKind.PageObject,
-        EnumProvider.SyntaxKind.PageExtensionObject,
-        EnumProvider.SyntaxKind.ReportObject,
-        EnumProvider.SyntaxKind.ReportExtensionObject,
-        EnumProvider.SyntaxKind.QueryObject,
-        EnumProvider.SyntaxKind.XmlPortObject
-    ];
-
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
             DiagnosticDescriptors.TableDataAccessUnusedPermissionsEntireEntry,
@@ -32,92 +20,153 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
     public override void Initialize(AnalysisContext context)
     {
-        context.RegisterSyntaxNodeAction(AnalyzeApplicationObject, ObjectSyntaxKinds);
+        context.RegisterCompilationStartAction(OnCompilationStart);
     }
 
-    private static void AnalyzeApplicationObject(SyntaxNodeAnalysisContext ctx)
+    private static void OnCompilationStart(CompilationStartAnalysisContext compilationCtx)
     {
-        if (ctx.ContainingSymbol is not IApplicationObjectTypeSymbol obj)
+        var accumulator = new ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>>();
+        var objectsWithPermissions = new ConcurrentDictionary<string, bool>();
+
+        compilationCtx.RegisterCodeBlockAction(ctx => CollectFromCodeBlock(ctx, accumulator, objectsWithPermissions));
+
+        compilationCtx.RegisterSymbolAction(
+            ctx => CollectFromDataItem(ctx, accumulator, objectsWithPermissions),
+            EnumProvider.SymbolKind.ReportDataItem,
+            EnumProvider.SymbolKind.QueryDataItem,
+            EnumProvider.SymbolKind.XmlPortNode);
+
+        compilationCtx.RegisterCompilationEndAction(ctx => AnalyzeCompilation(ctx, accumulator));
+    }
+
+    private static string GetObjectKey(IApplicationObjectTypeSymbol obj)
+        => string.Concat(obj.Kind.ToString(), ":", obj.Id.ToString());
+
+    private static void CollectFromCodeBlock(
+        CodeBlockAnalysisContext ctx,
+        ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> accumulator,
+        ConcurrentDictionary<string, bool> objectsWithPermissions)
+    {
+        if (ctx.IsObsolete() ||
+            ctx.CodeBlock is not MethodOrTriggerDeclarationSyntax methodOrTrigger)
             return;
 
-        if (obj.Kind == EnumProvider.SymbolKind.PermissionSet
-            || obj.Kind == EnumProvider.SymbolKind.PermissionSetExtension)
+        var containingObject = ctx.OwningSymbol?.GetContainingApplicationObjectTypeSymbol();
+        if (containingObject is null)
             return;
 
-        if (RequiredPermissionDetector.IsTestCodeunitWithPermissionsDisabled(obj))
+        // Fast skip: only process objects that have a Permissions property.
+        // Cache the lookup to avoid repeated property access for the same object.
+        var key = GetObjectKey(containingObject);
+        if (!objectsWithPermissions.GetOrAdd(key, _ =>
+            containingObject.GetProperty(EnumProvider.PropertyKind.Permissions) is not null))
             return;
 
-        var permissionsProperty = obj.GetProperty(EnumProvider.PropertyKind.Permissions);
-        if (permissionsProperty is null)
+        var body = methodOrTrigger.Body;
+        if (body is null)
             return;
 
-        var permissionsSyntax = permissionsProperty.GetPropertyValueSyntax<PermissionPropertyValueSyntax>();
-        if (permissionsSyntax is null)
+        // Syntax-level pre-filter: skip methods with no potential DB invocations
+        if (!HasPossibleDbInvocation(body))
             return;
 
-        var declaredEntries = permissionsSyntax.PermissionProperties;
-        if (declaredEntries.Count == 0)
+        var operation = ctx.SemanticModel.GetOperation(body, ctx.CancellationToken);
+        if (operation is null)
             return;
 
-        var requiredPermissions = new List<RequiredPermission>();
+        var walker = new InvocationCollectorWalker(accumulator, containingObject, key, ctx.CancellationToken);
+        walker.Visit(operation);
+    }
 
-        CollectFromInvocations(ctx, requiredPermissions);
-        CollectFromDataItems(obj, requiredPermissions);
+    private static void CollectFromDataItem(
+        SymbolAnalysisContext ctx,
+        ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> accumulator,
+        ConcurrentDictionary<string, bool> objectsWithPermissions)
+    {
+        var containingObject = ctx.Symbol.GetContainingApplicationObjectTypeSymbol();
+        if (containingObject is null)
+            return;
 
-        var pageContext = PermissionResolver.GetPageContext(obj);
+        var key = GetObjectKey(containingObject);
+        if (!objectsWithPermissions.GetOrAdd(key, _ =>
+            containingObject.GetProperty(EnumProvider.PropertyKind.Permissions) is not null))
+            return;
 
-        foreach (var entry in declaredEntries)
+        RequiredPermission? required = null;
+
+        if (ctx.Symbol.Kind == EnumProvider.SymbolKind.ReportDataItem)
+            required = RequiredPermissionDetector.TryGetFromReportDataItem(ctx.Symbol, includeSystemTables: true);
+        else if (ctx.Symbol.Kind == EnumProvider.SymbolKind.QueryDataItem)
+            required = RequiredPermissionDetector.TryGetFromQueryDataItem(ctx.Symbol, includeSystemTables: true);
+        else if (ctx.Symbol.Kind == EnumProvider.SymbolKind.XmlPortNode)
         {
-            if (!entry.ObjectType.IsKind(EnumProvider.SyntaxKind.TableDataKeyword))
+            var bag = accumulator.GetOrAdd(key, _ => new ConcurrentBag<RequiredPermission>());
+            foreach (var r in RequiredPermissionDetector.GetFromXmlPortNode(ctx.Symbol, includeSystemTables: true))
+                bag.Add(r);
+            return;
+        }
+
+        if (required is not null)
+        {
+            var bag = accumulator.GetOrAdd(key, _ => new ConcurrentBag<RequiredPermission>());
+            bag.Add(required.Value);
+        }
+    }
+
+    private static void AnalyzeCompilation(
+        CompilationAnalysisContext ctx,
+        ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> accumulator)
+    {
+        foreach (var symbol in ctx.Compilation.GetDeclaredApplicationObjectSymbols())
+        {
+            ctx.CancellationToken.ThrowIfCancellationRequested();
+
+            if (symbol.Kind == EnumProvider.SymbolKind.PermissionSet
+                || symbol.Kind == EnumProvider.SymbolKind.PermissionSetExtension)
                 continue;
 
-            AnalyzePermissionEntry(entry, requiredPermissions, pageContext, ctx.ReportDiagnostic);
+            if (RequiredPermissionDetector.IsTestCodeunitWithPermissionsDisabled(symbol))
+                continue;
+
+            var permissionsProperty = symbol.GetProperty(EnumProvider.PropertyKind.Permissions);
+            if (permissionsProperty is null)
+                continue;
+
+            var permissionsSyntax = permissionsProperty.GetPropertyValueSyntax<PermissionPropertyValueSyntax>();
+            if (permissionsSyntax is null)
+                continue;
+
+            var declaredEntries = permissionsSyntax.PermissionProperties;
+            if (declaredEntries.Count == 0)
+                continue;
+
+            var key = GetObjectKey(symbol);
+            accumulator.TryGetValue(key, out var collectedBag);
+            var requiredPermissions = collectedBag?.ToList() ?? [];
+
+            var pageContext = PermissionResolver.GetPageContext(symbol);
+
+            foreach (var entry in declaredEntries)
+            {
+                if (!entry.ObjectType.IsKind(EnumProvider.SyntaxKind.TableDataKeyword))
+                    continue;
+
+                AnalyzePermissionEntry(entry, requiredPermissions, pageContext, ctx.ReportDiagnostic);
+            }
         }
     }
 
     /// <summary>
-    /// Walks the object syntax tree for invocation expressions, calling GetOperation
-    /// per individual node. If GetOperation fails for one invocation, others still succeed.
-    /// Skips invocations inside obsolete methods.
+    /// Syntax-level check: does the body contain any invocation with a name that maps to a DB operation?
     /// </summary>
-    private static void CollectFromInvocations(
-        SyntaxNodeAnalysisContext ctx,
-        List<RequiredPermission> requiredPermissions)
-    {
-        // Iterate method/trigger bodies within the object, skip obsolete ones
-        foreach (var descendant in ctx.Node.DescendantNodes())
-        {
-            if (descendant is not MethodOrTriggerDeclarationSyntax method)
-                continue;
-
-            var methodSymbol = ctx.SemanticModel.GetDeclaredSymbol(method, ctx.CancellationToken);
-            if (methodSymbol is null || methodSymbol.IsObsolete())
-                continue;
-
-            var body = method.Body;
-            if (body is null)
-                continue;
-
-            CollectFromMethodBody(ctx, methodSymbol, body, requiredPermissions);
-        }
-    }
-
-    private static void CollectFromMethodBody(
-        SyntaxNodeAnalysisContext ctx,
-        ISymbol containingSymbol,
-        BlockSyntax body,
-        List<RequiredPermission> requiredPermissions)
+    private static bool HasPossibleDbInvocation(BlockSyntax body)
     {
         foreach (var node in body.DescendantNodes())
         {
-            ctx.CancellationToken.ThrowIfCancellationRequested();
-
             if (!node.IsKind(EnumProvider.SyntaxKind.InvocationExpression))
                 continue;
 
             var invocationSyntax = (InvocationExpressionSyntax)node;
-
-            // Syntax pre-filter: check method name before expensive GetOperation
             string? methodName = invocationSyntax.Expression switch
             {
                 MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.ValueText,
@@ -125,50 +174,44 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 _ => null
             };
 
-            if (methodName is null || MethodOperationMap.GetOperation(methodName) == DatabaseOperation.None)
-                continue;
-
-            var operation = ctx.SemanticModel.GetOperation(invocationSyntax, ctx.CancellationToken);
-            if (operation is null || operation.Kind != EnumProvider.OperationKind.InvocationExpression)
-                continue;
-
-            var invocationOp = (IInvocationExpression)operation;
-            var required = RequiredPermissionDetector.TryGetFromInvocation(
-                invocationOp,
-                containingSymbol,
-                includeSystemTables: true);
-
-            if (required is not null)
-                requiredPermissions.Add(required.Value);
+            if (methodName is not null && MethodOperationMap.GetOperation(methodName) != DatabaseOperation.None)
+                return true;
         }
+
+        return false;
     }
 
-    /// <summary>
-    /// Collects required permissions from data items (report, query, xmlport members).
-    /// </summary>
-    private static void CollectFromDataItems(
-        IApplicationObjectTypeSymbol obj,
-        List<RequiredPermission> requiredPermissions)
+    private sealed class InvocationCollectorWalker : OperationWalker
     {
-        foreach (var member in obj.GetMembers())
+        private readonly ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> _accumulator;
+        private readonly IApplicationObjectTypeSymbol _containingObject;
+        private readonly string _key;
+        private readonly CancellationToken _cancellationToken;
+
+        public InvocationCollectorWalker(
+            ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> accumulator,
+            IApplicationObjectTypeSymbol containingObject,
+            string key,
+            CancellationToken cancellationToken)
         {
-            if (member.Kind == EnumProvider.SymbolKind.ReportDataItem)
+            _accumulator = accumulator;
+            _containingObject = containingObject;
+            _key = key;
+            _cancellationToken = cancellationToken;
+        }
+
+        public override void VisitInvocationExpression(IInvocationExpression operation)
+        {
+            _cancellationToken.ThrowIfCancellationRequested();
+
+            var required = RequiredPermissionDetector.TryGetFromInvocation(operation, _containingObject, includeSystemTables: true);
+            if (required is not null)
             {
-                var required = RequiredPermissionDetector.TryGetFromReportDataItem(member, includeSystemTables: true);
-                if (required is not null)
-                    requiredPermissions.Add(required.Value);
+                var bag = _accumulator.GetOrAdd(_key, _ => new ConcurrentBag<RequiredPermission>());
+                bag.Add(required.Value);
             }
-            else if (member.Kind == EnumProvider.SymbolKind.QueryDataItem)
-            {
-                var required = RequiredPermissionDetector.TryGetFromQueryDataItem(member, includeSystemTables: true);
-                if (required is not null)
-                    requiredPermissions.Add(required.Value);
-            }
-            else if (member.Kind == EnumProvider.SymbolKind.XmlPortNode)
-            {
-                foreach (var required in RequiredPermissionDetector.GetFromXmlPortNode(member, includeSystemTables: true))
-                    requiredPermissions.Add(required);
-            }
+
+            base.VisitInvocationExpression(operation);
         }
     }
 
@@ -180,7 +223,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
     {
         var identifier = entry.ObjectReference.Identifier;
 
-        // Page SourceTable exemption: the page's own source table implicitly needs permissions
+        // Page SourceTable exemption
         if (pageContext?.RelatedTable is not null
             && PermissionMatchesTable(identifier, pageContext.RelatedTable))
             return;
@@ -203,7 +246,6 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
         if (!hasMatch)
         {
-            // Table not accessed at all
             var normalizedDeclared = GetUnusedChars(declaredChars, new DeclaredPermissionSet());
             var properties = BuildProperties(tableName, normalizedDeclared, string.Empty);
             reportDiagnostic(Diagnostic.Create(
@@ -229,10 +271,6 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         }
     }
 
-    /// <summary>
-    /// Matches a permission entry's table reference against a table type symbol.
-    /// Handles IdentifierNameSyntax, QualifiedNameSyntax, and ObjectIdSyntax.
-    /// </summary>
     private static bool PermissionMatchesTable(SyntaxNode identifier, ITableTypeSymbol table)
     {
         if (identifier.Kind == EnumProvider.SyntaxKind.IdentifierName)
@@ -265,10 +303,6 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         return false;
     }
 
-    /// <summary>
-    /// Gets a display name for the table from a permission entry.
-    /// Uses the original text as written in the permission declaration.
-    /// </summary>
     private static string GetDisplayTableName(PermissionSyntax entry)
     {
         var identifier = entry.ObjectReference.Identifier;
@@ -316,4 +350,5 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             .Add("UnusedChars", unusedChars)
             .Add("UsedChars", usedChars);
     }
+
 }
