@@ -43,19 +43,19 @@ src/ALCops.Common/
 - `RegisterSyntaxNodeAction` on 9 application object syntax kinds (CodeunitObject, TableObject, TableExtensionObject, PageObject, PageExtensionObject, ReportObject, ReportExtensionObject, QueryObject, XmlPortObject)
 
 **Per-object analysis (`AnalyzeApplicationObject`):**
-1. Cast `ctx.ContainingSymbol` to `IApplicationObjectTypeSymbol` (early exit if not)
-2. Skip PermissionSet/PermissionSetExtension, test codeunits with permissions disabled
+1. `GetDeclaredSymbol(ctx.Node)` to obtain `IApplicationObjectTypeSymbol` (early exit if not)
+2. Skip PermissionSet/PermissionSetExtension, obsolete objects, test codeunits with permissions disabled
 3. Get `Permissions` property (early exit if null, covers ~70% of objects)
 4. **Collect DB invocations** (`CollectFromInvocations`):
+   - Build global record variable map from `containingObject.GetMembers()` (object-level vars)
    - Walk `ctx.Node.DescendantNodes()` for `MethodOrTriggerDeclarationSyntax`
    - Skip obsolete methods via `GetDeclaredSymbol` + `IsObsolete()`
-   - For each method body: walk descendant `InvocationExpression` nodes
-   - Syntax pre-filter: check method name against `MethodOperationMap`
-   - Call `GetOperation()` per individual invocation node (not per body)
-   - Null-safe: if one GetOperation fails, others still succeed
-   - Use `RequiredPermissionDetector.TryGetFromInvocation` on successful operations
+   - For each method body: syntax pre-filter (`HasPossibleDbInvocation`)
+   - Build per-method record variable map from `IMethodSymbol.LocalVariables` + `.Parameters`
+   - Walk method body for `InvocationExpressionSyntax`, resolve via variable map lookup (fast path)
+   - Fall back to `GetSymbolInfo` only for complex receivers (function calls, array indexing)
 5. **Collect data items** (`CollectFromDataItems`):
-   - Iterate `obj.GetMembers()` for ReportDataItem, QueryDataItem, XmlPortNode symbols
+   - Iterate `containingObject.GetMembers()` for ReportDataItem, QueryDataItem, XmlPortNode symbols
    - Use `RequiredPermissionDetector.TryGetFrom*` methods
 6. Compare declared entries against collected permissions, report diagnostics
 
@@ -64,9 +64,11 @@ src/ALCops.Common/
 | Method | Purpose |
 |---|---|
 | `AnalyzeApplicationObject` | Entry point; checks Permissions, orchestrates collection and reporting |
-| `CollectFromInvocations` | Iterates method bodies, calls GetOperation per invocation node |
-| `CollectFromMethodBody` | Per-method body: syntax pre-filter, GetOperation, RequiredPermissionDetector |
+| `CollectFromInvocations` | Builds variable maps, walks method bodies, resolves DB calls via syntax + symbol lookup |
+| `TryGetPermissionFromInvocation` | Resolves a single invocation: fast path via variable map, fallback via GetSymbolInfo |
+| `TryGetPermissionViaSymbolInfo` | Fallback for complex receivers: uses GetSymbolInfo to resolve method and receiver type |
 | `CollectFromDataItems` | Iterates object members for report/query/xmlport data items |
+| `HasPossibleDbInvocation` | Syntax pre-filter: checks if body has any invocation name matching a DB operation |
 | `AnalyzePermissionEntry` | Compares one declared entry against collected required permissions |
 | `PermissionMatchesTable` | Matches identifier/qualified/objectId syntax against `ITableTypeSymbol` |
 
@@ -79,11 +81,14 @@ Each `SyntaxNodeAction` callback is self-contained with no shared mutable state.
 | Decision | Rationale |
 |---|---|
 | `RegisterSyntaxNodeAction` on object kinds | Self-contained per-object analysis; no CompilationStart/End coupling; gives SemanticModel directly |
-| Per-node `GetOperation` (not per-body) | If one invocation's GetOperation fails, others still succeed. Prevents false positives from silent data loss. Pattern validated by Microsoft's RecDbInvocationAnalyzer. |
-| No `OperationWalker` | Per-node GetOperation replaces the walker; each invocation is resolved individually |
+| Variable map + syntax resolution | Resolves ~66% of DB calls via dictionary lookup from `IMethodSymbol.LocalVariables`/`.Parameters`; avoids expensive `GetOperation` calls entirely |
+| Global variable map from `GetMembers()` | Captures object-level Record variables that account for ~34% of invocations not resolvable from locals/params |
+| `GetSymbolInfo` fallback for complex receivers | Handles function return values, array indexing, property access; only ~1% of invocations need this path |
+| No `GetOperation` / `OperationWalker` | `GetOperation` in `SyntaxNodeAction` costs ~0.3ms/call (no pre-computed cache); variable map approach is 4.5x faster |
+| No cross-callback shared state | Eliminates the fragile two-phase accumulator pattern that caused false positives during incremental compilation |
 | Iterate `DescendantNodes()` for methods | Finds all MethodOrTriggerDeclarationSyntax in the object, skip obsolete ones |
 | Skip obsolete methods via symbol | `GetDeclaredSymbol` + `IsObsolete()` on the method symbol |
-| Syntax pre-filter per invocation | Same optimization: checks method name against MethodOperationMap before GetOperation |
+| Syntax pre-filter per method body | `HasPossibleDbInvocation` checks method names against MethodOperationMap before expensive analysis |
 | Data items via `GetMembers()` | Direct member iteration replaces separate `RegisterSymbolAction` callbacks |
 | No CompilationEnd needed | Eliminates the fragile two-phase pattern that caused false positives |
 | Page SourceTable exemption unchanged | Same logic, just moved into per-object callback |

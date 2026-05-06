@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Permissions;
@@ -20,138 +19,265 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
     public override void Initialize(AnalysisContext context)
     {
-        context.RegisterCompilationStartAction(OnCompilationStart);
+        context.RegisterSyntaxNodeAction(
+            AnalyzeApplicationObject,
+            EnumProvider.SyntaxKind.CodeunitObject,
+            EnumProvider.SyntaxKind.TableObject,
+            EnumProvider.SyntaxKind.TableExtensionObject,
+            EnumProvider.SyntaxKind.PageObject,
+            EnumProvider.SyntaxKind.PageExtensionObject,
+            EnumProvider.SyntaxKind.ReportObject,
+            EnumProvider.SyntaxKind.ReportExtensionObject,
+            EnumProvider.SyntaxKind.QueryObject,
+            EnumProvider.SyntaxKind.XmlPortObject);
     }
 
-    private static void OnCompilationStart(CompilationStartAnalysisContext compilationCtx)
+    private static void AnalyzeApplicationObject(SyntaxNodeAnalysisContext ctx)
     {
-        var accumulator = new ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>>();
-        var objectsWithPermissions = new ConcurrentDictionary<string, bool>();
-
-        compilationCtx.RegisterCodeBlockAction(ctx => CollectFromCodeBlock(ctx, accumulator, objectsWithPermissions));
-
-        compilationCtx.RegisterSymbolAction(
-            ctx => CollectFromDataItem(ctx, accumulator, objectsWithPermissions),
-            EnumProvider.SymbolKind.ReportDataItem,
-            EnumProvider.SymbolKind.QueryDataItem,
-            EnumProvider.SymbolKind.XmlPortNode);
-
-        compilationCtx.RegisterCompilationEndAction(ctx => AnalyzeCompilation(ctx, accumulator));
-    }
-
-    private static string GetObjectKey(IApplicationObjectTypeSymbol obj)
-        => string.Concat(obj.Kind.ToString(), ":", obj.Id.ToString());
-
-    private static void CollectFromCodeBlock(
-        CodeBlockAnalysisContext ctx,
-        ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> accumulator,
-        ConcurrentDictionary<string, bool> objectsWithPermissions)
-    {
-        if (ctx.IsObsolete() ||
-            ctx.CodeBlock is not MethodOrTriggerDeclarationSyntax methodOrTrigger)
+        var declaredSymbol = ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, ctx.CancellationToken);
+        if (declaredSymbol is not IApplicationObjectTypeSymbol containingObject)
             return;
 
-        var containingObject = ctx.OwningSymbol?.GetContainingApplicationObjectTypeSymbol();
-        if (containingObject is null)
+        if (containingObject.Kind == EnumProvider.SymbolKind.PermissionSet
+            || containingObject.Kind == EnumProvider.SymbolKind.PermissionSetExtension
+            || containingObject.IsObsolete()
+            || RequiredPermissionDetector.IsTestCodeunitWithPermissionsDisabled(containingObject))
             return;
 
-        // Fast skip: only process objects that have a Permissions property.
-        // Cache the lookup to avoid repeated property access for the same object.
-        var key = GetObjectKey(containingObject);
-        if (!objectsWithPermissions.GetOrAdd(key, _ =>
-            containingObject.GetProperty(EnumProvider.PropertyKind.Permissions) is not null))
+        var permissionsProperty = containingObject.GetProperty(EnumProvider.PropertyKind.Permissions);
+        if (permissionsProperty is null)
             return;
 
-        var body = methodOrTrigger.Body;
-        if (body is null)
+        var permissionsSyntax = permissionsProperty.GetPropertyValueSyntax<PermissionPropertyValueSyntax>();
+        if (permissionsSyntax is null)
             return;
 
-        // Syntax-level pre-filter: skip methods with no potential DB invocations
-        if (!HasPossibleDbInvocation(body))
+        var declaredEntries = permissionsSyntax.PermissionProperties;
+        if (declaredEntries.Count == 0)
             return;
 
-        var operation = ctx.SemanticModel.GetOperation(body, ctx.CancellationToken);
-        if (operation is null)
-            return;
+        var requiredPermissions = new List<RequiredPermission>();
 
-        var walker = new InvocationCollectorWalker(accumulator, containingObject, key, ctx.CancellationToken);
-        walker.Visit(operation);
-    }
+        CollectFromInvocations(ctx, containingObject, requiredPermissions);
+        CollectFromDataItems(containingObject, requiredPermissions);
 
-    private static void CollectFromDataItem(
-        SymbolAnalysisContext ctx,
-        ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> accumulator,
-        ConcurrentDictionary<string, bool> objectsWithPermissions)
-    {
-        var containingObject = ctx.Symbol.GetContainingApplicationObjectTypeSymbol();
-        if (containingObject is null)
-            return;
-
-        var key = GetObjectKey(containingObject);
-        if (!objectsWithPermissions.GetOrAdd(key, _ =>
-            containingObject.GetProperty(EnumProvider.PropertyKind.Permissions) is not null))
-            return;
-
-        RequiredPermission? required = null;
-
-        if (ctx.Symbol.Kind == EnumProvider.SymbolKind.ReportDataItem)
-            required = RequiredPermissionDetector.TryGetFromReportDataItem(ctx.Symbol, includeSystemTables: true);
-        else if (ctx.Symbol.Kind == EnumProvider.SymbolKind.QueryDataItem)
-            required = RequiredPermissionDetector.TryGetFromQueryDataItem(ctx.Symbol, includeSystemTables: true);
-        else if (ctx.Symbol.Kind == EnumProvider.SymbolKind.XmlPortNode)
+        var pageContext = PermissionResolver.GetPageContext(containingObject);
+        foreach (var entry in declaredEntries)
         {
-            var bag = accumulator.GetOrAdd(key, _ => new ConcurrentBag<RequiredPermission>());
-            foreach (var r in RequiredPermissionDetector.GetFromXmlPortNode(ctx.Symbol, includeSystemTables: true))
-                bag.Add(r);
-            return;
-        }
-
-        if (required is not null)
-        {
-            var bag = accumulator.GetOrAdd(key, _ => new ConcurrentBag<RequiredPermission>());
-            bag.Add(required.Value);
+            if (!entry.ObjectType.IsKind(EnumProvider.SyntaxKind.TableDataKeyword))
+                continue;
+            AnalyzePermissionEntry(entry, requiredPermissions, pageContext, ctx.ReportDiagnostic);
         }
     }
 
-    private static void AnalyzeCompilation(
-        CompilationAnalysisContext ctx,
-        ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> accumulator)
+    private static void CollectFromInvocations(
+        SyntaxNodeAnalysisContext ctx,
+        IApplicationObjectTypeSymbol containingObject,
+        List<RequiredPermission> requiredPermissions)
     {
-        foreach (var symbol in ctx.Compilation.GetDeclaredApplicationObjectSymbols())
+        // Build object-level record variable map (global vars)
+        Dictionary<string, IRecordTypeSymbol>? globalRecordVarMap = null;
+        foreach (var member in containingObject.GetMembers())
         {
+            if (member is IVariableSymbol globalVar
+                && globalVar.Type is IRecordTypeSymbol globalRecordType
+                && !globalRecordType.Temporary)
+            {
+                globalRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
+                globalRecordVarMap.TryAdd(globalVar.Name, globalRecordType);
+            }
+        }
+
+        foreach (var node in ctx.Node.DescendantNodes())
+        {
+            if (node is not MethodOrTriggerDeclarationSyntax methodSyntax)
+                continue;
+
+            var body = methodSyntax.Body;
+            if (body is null)
+                continue;
+
+            if (!HasPossibleDbInvocation(body))
+                continue;
+
             ctx.CancellationToken.ThrowIfCancellationRequested();
 
-            if (symbol.Kind == EnumProvider.SymbolKind.PermissionSet
-                || symbol.Kind == EnumProvider.SymbolKind.PermissionSetExtension)
+            var methodSymbol = ctx.SemanticModel.GetDeclaredSymbol(methodSyntax, ctx.CancellationToken) as IMethodSymbol;
+            if (methodSymbol is null || methodSymbol.IsObsolete())
                 continue;
 
-            if (RequiredPermissionDetector.IsTestCodeunitWithPermissionsDisabled(symbol))
-                continue;
+            // Build per-method record variable map from locals + parameters
+            Dictionary<string, IRecordTypeSymbol>? localRecordVarMap = null;
 
-            var permissionsProperty = symbol.GetProperty(EnumProvider.PropertyKind.Permissions);
-            if (permissionsProperty is null)
-                continue;
-
-            var permissionsSyntax = permissionsProperty.GetPropertyValueSyntax<PermissionPropertyValueSyntax>();
-            if (permissionsSyntax is null)
-                continue;
-
-            var declaredEntries = permissionsSyntax.PermissionProperties;
-            if (declaredEntries.Count == 0)
-                continue;
-
-            var key = GetObjectKey(symbol);
-            accumulator.TryGetValue(key, out var collectedBag);
-            var requiredPermissions = collectedBag?.ToList() ?? [];
-
-            var pageContext = PermissionResolver.GetPageContext(symbol);
-
-            foreach (var entry in declaredEntries)
+            foreach (var local in methodSymbol.LocalVariables)
             {
-                if (!entry.ObjectType.IsKind(EnumProvider.SyntaxKind.TableDataKeyword))
+                if (local.Type is IRecordTypeSymbol recordType && !recordType.Temporary)
+                {
+                    localRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
+                    localRecordVarMap.TryAdd(local.Name, recordType);
+                }
+            }
+
+            foreach (var param in methodSymbol.Parameters)
+            {
+                if (param.ParameterType is IRecordTypeSymbol recordType && !recordType.Temporary)
+                {
+                    localRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
+                    localRecordVarMap.TryAdd(param.Name, recordType);
+                }
+            }
+
+            // Walk method body for DB invocations
+            foreach (var descendant in body.DescendantNodes())
+            {
+                if (descendant is not InvocationExpressionSyntax invocation)
                     continue;
 
-                AnalyzePermissionEntry(entry, requiredPermissions, pageContext, ctx.ReportDiagnostic);
+                var permission = TryGetPermissionFromInvocation(
+                    invocation, containingObject, localRecordVarMap, globalRecordVarMap, ctx);
+
+                if (permission is not null)
+                    requiredPermissions.Add(permission.Value);
+            }
+        }
+    }
+
+    private static RequiredPermission? TryGetPermissionFromInvocation(
+        InvocationExpressionSyntax invocation,
+        IApplicationObjectTypeSymbol containingObject,
+        Dictionary<string, IRecordTypeSymbol>? localRecordVarMap,
+        Dictionary<string, IRecordTypeSymbol>? globalRecordVarMap,
+        SyntaxNodeAnalysisContext ctx)
+    {
+        // Extract method name and receiver from syntax
+        string? methodName = null;
+        string? receiverName = null;
+        bool hasComplexReceiver = false;
+
+        if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+        {
+            methodName = memberAccess.Name.Identifier.ValueText;
+            if (memberAccess.Expression is IdentifierNameSyntax identifierName)
+                receiverName = identifierName.Identifier.ValueText;
+            else
+                hasComplexReceiver = true;
+        }
+        else if (invocation.Expression is IdentifierNameSyntax simpleName)
+        {
+            methodName = simpleName.Identifier.ValueText;
+        }
+
+        if (methodName is null)
+            return null;
+
+        var operation = MethodOperationMap.GetOperation(methodName);
+        if (operation == DatabaseOperation.None)
+            return null;
+
+        // Fast path: resolve receiver via variable map lookup
+        if (receiverName is not null)
+        {
+            IRecordTypeSymbol? recordType = null;
+
+            if (localRecordVarMap is not null)
+                localRecordVarMap.TryGetValue(receiverName, out recordType);
+
+            if (recordType is null && globalRecordVarMap is not null)
+                globalRecordVarMap.TryGetValue(receiverName, out recordType);
+
+            if (recordType is not null)
+            {
+                var tableType = recordType.OriginalDefinition as ITableTypeSymbol;
+                if (tableType is not null)
+                    return new RequiredPermission(tableType, recordType, operation, invocation.GetLocation());
+                return null;
+            }
+        }
+
+        // Implicit self (no receiver, inside table/tableext)
+        if (receiverName is null && !hasComplexReceiver)
+        {
+            if (containingObject is IRecordTypeSymbol selfRecord && !selfRecord.Temporary)
+            {
+                var tableType = selfRecord.OriginalDefinition as ITableTypeSymbol;
+                if (tableType is not null)
+                    return new RequiredPermission(tableType, selfRecord, operation, invocation.GetLocation());
+            }
+            return null;
+        }
+
+        // Fallback: complex receiver or unresolved simple name (use GetSymbolInfo)
+        return TryGetPermissionViaSymbolInfo(invocation, containingObject, ctx);
+    }
+
+    private static RequiredPermission? TryGetPermissionViaSymbolInfo(
+        InvocationExpressionSyntax invocation,
+        IApplicationObjectTypeSymbol containingObject,
+        SyntaxNodeAnalysisContext ctx)
+    {
+        var symbolInfo = ctx.SemanticModel.GetSymbolInfo(invocation, ctx.CancellationToken);
+        if (symbolInfo.Symbol is not IMethodSymbol targetMethod)
+            return null;
+
+        if (targetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
+            return null;
+
+        var operation = MethodOperationMap.GetOperation(targetMethod.Name);
+        if (operation == DatabaseOperation.None)
+            return null;
+
+        // Get receiver type via GetSymbolInfo on the receiver expression
+        IRecordTypeSymbol? recordType = null;
+
+        if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+        {
+            var receiverSymbolInfo = ctx.SemanticModel.GetSymbolInfo(memberAccess.Expression, ctx.CancellationToken);
+            ITypeSymbol? receiverType = receiverSymbolInfo.Symbol switch
+            {
+                IVariableSymbol v => v.Type,
+                IParameterSymbol p => p.ParameterType,
+                IMethodSymbol m => m.ReturnValueSymbol?.ReturnType,
+                _ => null
+            };
+            recordType = receiverType as IRecordTypeSymbol;
+        }
+        else
+        {
+            recordType = containingObject as IRecordTypeSymbol;
+        }
+
+        if (recordType is null || recordType.Temporary)
+            return null;
+
+        var tableType = recordType.OriginalDefinition as ITableTypeSymbol;
+        if (tableType is null)
+            return null;
+
+        return new RequiredPermission(tableType, recordType, operation, invocation.GetLocation());
+    }
+
+    private static void CollectFromDataItems(
+        IApplicationObjectTypeSymbol containingObject,
+        List<RequiredPermission> requiredPermissions)
+    {
+        foreach (var member in containingObject.GetMembers())
+        {
+            if (member.Kind == EnumProvider.SymbolKind.ReportDataItem)
+            {
+                var required = RequiredPermissionDetector.TryGetFromReportDataItem(member, includeSystemTables: true);
+                if (required is not null)
+                    requiredPermissions.Add(required.Value);
+            }
+            else if (member.Kind == EnumProvider.SymbolKind.QueryDataItem)
+            {
+                var required = RequiredPermissionDetector.TryGetFromQueryDataItem(member, includeSystemTables: true);
+                if (required is not null)
+                    requiredPermissions.Add(required.Value);
+            }
+            else if (member.Kind == EnumProvider.SymbolKind.XmlPortNode)
+            {
+                foreach (var r in RequiredPermissionDetector.GetFromXmlPortNode(member, includeSystemTables: true))
+                    requiredPermissions.Add(r);
             }
         }
     }
@@ -179,40 +305,6 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         }
 
         return false;
-    }
-
-    private sealed class InvocationCollectorWalker : OperationWalker
-    {
-        private readonly ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> _accumulator;
-        private readonly IApplicationObjectTypeSymbol _containingObject;
-        private readonly string _key;
-        private readonly CancellationToken _cancellationToken;
-
-        public InvocationCollectorWalker(
-            ConcurrentDictionary<string, ConcurrentBag<RequiredPermission>> accumulator,
-            IApplicationObjectTypeSymbol containingObject,
-            string key,
-            CancellationToken cancellationToken)
-        {
-            _accumulator = accumulator;
-            _containingObject = containingObject;
-            _key = key;
-            _cancellationToken = cancellationToken;
-        }
-
-        public override void VisitInvocationExpression(IInvocationExpression operation)
-        {
-            _cancellationToken.ThrowIfCancellationRequested();
-
-            var required = RequiredPermissionDetector.TryGetFromInvocation(operation, _containingObject, includeSystemTables: true);
-            if (required is not null)
-            {
-                var bag = _accumulator.GetOrAdd(_key, _ => new ConcurrentBag<RequiredPermission>());
-                bag.Add(required.Value);
-            }
-
-            base.VisitInvocationExpression(operation);
-        }
     }
 
     private static void AnalyzePermissionEntry(
@@ -350,5 +442,4 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             .Add("UnusedChars", unusedChars)
             .Add("UsedChars", usedChars);
     }
-
 }
