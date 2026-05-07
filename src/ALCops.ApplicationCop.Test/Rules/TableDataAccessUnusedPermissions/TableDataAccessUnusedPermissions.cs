@@ -29,6 +29,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("UnusedOnQuery")]
         [TestCase("UnusedOnXmlPort")]
         [TestCase("TemporaryRecord")]
+        [TestCase("ParameterPartialUnused")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -47,6 +48,11 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("PermissionSet")]
         [TestCase("PermissionSetExtension")]
         [TestCase("SystemTable")]
+        [TestCase("ParameterOperations")]
+        [TestCase("UppercasePermissions")]
+        [TestCase("ParameterAllOperations")]
+        [TestCase("LocalVarSpacedTable")]
+        [TestCase("GlobalVarSpacedTable")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -86,6 +92,7 @@ namespace ALCops.ApplicationCop.Test
 
         [Test]
         [TestCase("ReduceChars")]
+        [TestCase("ReplaceChars")]
         public async Task HasFixPartialChars(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(

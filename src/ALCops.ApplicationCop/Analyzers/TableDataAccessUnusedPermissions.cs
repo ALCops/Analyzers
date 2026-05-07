@@ -351,15 +351,15 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         var unusedChars = GetUnusedChars(declaredChars, matchingOps);
         if (unusedChars.Length > 0)
         {
-            var usedChars = GetUsedChars(declaredChars, matchingOps);
-            var properties = BuildProperties(tableName, unusedChars, usedChars);
+            var requiredChars = GetRequiredChars(matchingOps);
+            var properties = BuildProperties(tableName, unusedChars, requiredChars);
             reportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.TableDataAccessUnusedPermissionsPartialChars,
                 entry.GetLocation(),
                 properties,
                 unusedChars,
                 tableName,
-                usedChars));
+                requiredChars));
         }
     }
 
@@ -414,14 +414,18 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         return entry.ObjectReference.GetText().ToString().Trim();
     }
 
-    private static string GetUsedChars(string declaredChars, DeclaredPermissionSet required)
+    private static string GetRequiredChars(DeclaredPermissionSet required)
     {
-        return new string(declaredChars
-            .Where(c => MethodOperationMap.IsValidPermissionChar(c) && required.HasPermission(MethodOperationMap.FromPermissionChar(c)))
-            .Select(c => char.ToLowerInvariant(c))
-            .Distinct()
-            .OrderBy(c => MethodOperationMap.CanonicalOrder.IndexOf(c))
-            .ToArray());
+        Span<char> buffer = stackalloc char[4];
+        int count = 0;
+
+        foreach (var c in MethodOperationMap.CanonicalOrder)
+        {
+            if (required.HasPermission(MethodOperationMap.FromPermissionChar(c)))
+                buffer[count++] = c;
+        }
+
+        return new string(buffer[..count]);
     }
 
     private static string GetUnusedChars(string declaredChars, DeclaredPermissionSet required)
