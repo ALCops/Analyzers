@@ -655,6 +655,31 @@ internal static class TransferFieldsRelations
                 new Version(16, 0),
                 null),
             new TableRelation(
+                new ObjectName("Microsoft.ExpenseAgent", "Expense Report Header"),
+                new ObjectName("Microsoft.ExpenseAgent", "Posted Expense Report Header"),
+                new Version(28, 1),
+                null),
+            new TableRelation(
+                new ObjectName("Microsoft.ExpenseAgent", "Expense Report Line"),
+                new ObjectName("Microsoft.ExpenseAgent", "Posted Expense Report Line"),
+                new Version(28, 1),
+                null),
+            new TableRelation(
+                new ObjectName("Microsoft.ExpenseAgent", "Expense Report Line Item"),
+                new ObjectName("Microsoft.ExpenseAgent", "Posted Exp. Rep. Line Item"),
+                new Version(28, 1),
+                null),
+            new TableRelation(
+                new ObjectName("Microsoft.ExpenseAgent", "Expense Report Line Particip."),
+                new ObjectName("Microsoft.ExpenseAgent", "Posted Exp. Rep. Line Particip"),
+                new Version(28, 1),
+                null),
+            new TableRelation(
+                new ObjectName("Microsoft.ExpenseAgent", "Expense Report Line Per Diem"),
+                new ObjectName("Microsoft.ExpenseAgent", "Posted Exp. Rep. Line Per Diem"),
+                new Version(28, 1),
+                null),
+            new TableRelation(
                 new ObjectName("Microsoft.Finance.Analysis", "Analysis by Dim. Parameters"),
                 new ObjectName("Microsoft.Finance.Analysis", "Analysis by Dim. User Param."),
                 new Version(16, 3),
