@@ -55,6 +55,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("LocalVarSpacedTable")]
         [TestCase("GlobalVarSpacedTable")]
         [TestCase("ReportDataItemModify")]
+        [TestCase("ReportDataItemAliasModify")]
         [TestCase("XmlPortTableElementModify")]
         public async Task NoDiagnostic(string testCase)
         {

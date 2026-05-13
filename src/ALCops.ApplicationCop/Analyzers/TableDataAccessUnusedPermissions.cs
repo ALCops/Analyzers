@@ -184,7 +184,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         {
             methodName = memberAccess.Name.Identifier.ValueText;
             if (memberAccess.Expression is IdentifierNameSyntax identifierName)
-                receiverName = identifierName.Identifier.ValueText;
+                receiverName = identifierName.Identifier.ValueText?.UnquoteIdentifier();
             else
                 hasComplexReceiver = true;
         }
