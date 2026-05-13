@@ -47,7 +47,7 @@ src/ALCops.Common/
 2. Skip PermissionSet/PermissionSetExtension, obsolete objects, test codeunits with permissions disabled
 3. Get `Permissions` property (early exit if null, covers ~70% of objects)
 4. **Collect DB invocations** (`CollectFromInvocations`):
-   - Build global record variable map from `containingObject.GetMembers()` (object-level vars)
+   - Build object-scope record map (`objectScopeRecordMap`) from `containingObject.GetMembers()`: global vars, report data items (via `GetTypeSymbol()`), xmlport table elements (via `FlattenedNodes` + `GetTypeSymbol()`)
    - Walk `ctx.Node.DescendantNodes()` for `MethodOrTriggerDeclarationSyntax`
    - Skip obsolete methods via `GetDeclaredSymbol` + `IsObsolete()`
    - For each method body: syntax pre-filter (`HasPossibleDbInvocation`)
@@ -56,6 +56,7 @@ src/ALCops.Common/
    - Fall back to `GetSymbolInfo` only for complex receivers (function calls, array indexing)
 5. **Collect data items** (`CollectFromDataItems`):
    - Iterate `containingObject.GetMembers()` for ReportDataItem, QueryDataItem, XmlPortNode symbols
+   - For XmlPortNode: also iterate `FlattenedNodes` to reach nested table elements
    - Use `RequiredPermissionDetector.TryGetFrom*` methods
 6. Compare declared entries against collected permissions, report diagnostics
 
@@ -64,10 +65,11 @@ src/ALCops.Common/
 | Method | Purpose |
 |---|---|
 | `AnalyzeApplicationObject` | Entry point; checks Permissions, orchestrates collection and reporting |
-| `CollectFromInvocations` | Builds variable maps, walks method bodies, resolves DB calls via syntax + symbol lookup |
+| `CollectFromInvocations` | Builds object-scope record map (vars + data items), walks method bodies, resolves DB calls via syntax + symbol lookup |
 | `TryGetPermissionFromInvocation` | Resolves a single invocation: fast path via variable map, fallback via GetSymbolInfo |
 | `TryGetPermissionViaSymbolInfo` | Fallback for complex receivers: uses GetSymbolInfo to resolve method and receiver type |
-| `CollectFromDataItems` | Iterates object members for report/query/xmlport data items |
+| `CollectFromDataItems` | Iterates object members for report/query/xmlport data items (incl. nested xmlport nodes via FlattenedNodes) |
+| `AddXmlPortNodeToVarMap` | Adds an xmlport table element to the object-scope record map if it references a non-temporary table |
 | `HasPossibleDbInvocation` | Syntax pre-filter: checks if body has any invocation name matching a DB operation |
 | `AnalyzePermissionEntry` | Compares one declared entry against collected required permissions |
 | `PermissionMatchesTable` | Matches identifier/qualified/objectId syntax against `ITableTypeSymbol` |
@@ -83,6 +85,8 @@ Each `SyntaxNodeAction` callback is self-contained with no shared mutable state.
 | `RegisterSyntaxNodeAction` on object kinds | Self-contained per-object analysis; no CompilationStart/End coupling; gives SemanticModel directly |
 | Variable map + syntax resolution | Resolves ~66% of DB calls via dictionary lookup from `IMethodSymbol.LocalVariables`/`.Parameters`; avoids expensive `GetOperation` calls entirely |
 | Global variable map from `GetMembers()` | Captures object-level Record variables that account for ~34% of invocations not resolvable from locals/params |
+| Data items in object-scope record map | Report data items and xmlport table elements act as implicit record variables in trigger code; added to the same map for fast-path resolution via `GetTypeSymbol()` |
+| XmlPort nested nodes via `FlattenedNodes` | `GetMembers()` returns only top-level schema nodes; nested table elements (inside textelement) require iterating `IXmlPortNodeSymbol.FlattenedNodes` |
 | `GetSymbolInfo` fallback for complex receivers | Handles function return values, array indexing, property access; only ~1% of invocations need this path |
 | No `GetOperation` / `OperationWalker` | `GetOperation` in `SyntaxNodeAction` costs ~0.3ms/call (no pre-computed cache); variable map approach is 4.5x faster |
 | No cross-callback shared state | Eliminates the fragile two-phase accumulator pattern that caused false positives during incremental compilation |
@@ -132,9 +136,9 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 
 ## Test coverage
 
-**HasDiagnostic (8 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord.
-**NoDiagnostic (9 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable.
-**HasFix (3 cases):** RemoveEntireEntry, ReduceChars, RemoveEntireProperty.
+**HasDiagnostic (10 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord, ParameterPartialUnused, ReportDataItemPartialUnused.
+**NoDiagnostic (13 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, XmlPortTableElementModify.
+**HasFix (4 cases):** RemoveEntireEntry, ReduceChars, RemoveEntireProperty, ReplaceChars.
 
 ## Known limitations
 

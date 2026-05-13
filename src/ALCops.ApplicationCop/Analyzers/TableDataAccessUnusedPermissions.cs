@@ -4,6 +4,7 @@ using ALCops.Common.Permissions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 
@@ -75,16 +76,41 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         IApplicationObjectTypeSymbol containingObject,
         List<RequiredPermission> requiredPermissions)
     {
-        // Build object-level record variable map (global vars)
-        Dictionary<string, IRecordTypeSymbol>? globalRecordVarMap = null;
+        // Build object-scope record map (global vars, report data items, xmlport table elements)
+        Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap = null;
         foreach (var member in containingObject.GetMembers())
         {
             if (member is IVariableSymbol globalVar
                 && globalVar.Type is IRecordTypeSymbol globalRecordType
                 && !globalRecordType.Temporary)
             {
-                globalRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
-                globalRecordVarMap.TryAdd(globalVar.Name, globalRecordType);
+                objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
+                objectScopeRecordMap.TryAdd(globalVar.Name, globalRecordType);
+                continue;
+            }
+
+            // Report data items act as implicit record variables in trigger code
+            if (member.Kind == EnumProvider.SymbolKind.ReportDataItem
+                && member.GetBooleanPropertyValue(EnumProvider.PropertyKind.UseTemporary) is not true
+                && member.GetTypeSymbol() is IRecordTypeSymbol dataItemRecordType
+                && !dataItemRecordType.Temporary)
+            {
+                objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
+                objectScopeRecordMap.TryAdd(member.Name, dataItemRecordType);
+                continue;
+            }
+
+            // XmlPort table elements act as implicit record variables in trigger code
+            if (member.Kind == EnumProvider.SymbolKind.XmlPortNode
+                && member is IXmlPortNodeSymbol xmlPortNode)
+            {
+                AddXmlPortNodeToVarMap(xmlPortNode, ref objectScopeRecordMap);
+
+                // Nested nodes (tableelement inside textelement) are not direct members
+                foreach (var nestedNode in xmlPortNode.FlattenedNodes)
+                    AddXmlPortNodeToVarMap(nestedNode, ref objectScopeRecordMap);
+
+                continue;
             }
         }
 
@@ -134,7 +160,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     continue;
 
                 var permission = TryGetPermissionFromInvocation(
-                    invocation, containingObject, localRecordVarMap, globalRecordVarMap, ctx);
+                    invocation, containingObject, localRecordVarMap, objectScopeRecordMap, ctx);
 
                 if (permission is not null)
                     requiredPermissions.Add(permission.Value);
@@ -146,7 +172,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         InvocationExpressionSyntax invocation,
         IApplicationObjectTypeSymbol containingObject,
         Dictionary<string, IRecordTypeSymbol>? localRecordVarMap,
-        Dictionary<string, IRecordTypeSymbol>? globalRecordVarMap,
+        Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap,
         SyntaxNodeAnalysisContext ctx)
     {
         // Extract method name and receiver from syntax
@@ -182,8 +208,8 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             if (localRecordVarMap is not null)
                 localRecordVarMap.TryGetValue(receiverName, out recordType);
 
-            if (recordType is null && globalRecordVarMap is not null)
-                globalRecordVarMap.TryGetValue(receiverName, out recordType);
+            if (recordType is null && objectScopeRecordMap is not null)
+                objectScopeRecordMap.TryGetValue(receiverName, out recordType);
 
             if (recordType is not null)
             {
@@ -278,7 +304,30 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             {
                 foreach (var r in RequiredPermissionDetector.GetFromXmlPortNode(member, includeSystemTables: true))
                     requiredPermissions.Add(r);
+
+                // Nested nodes (tableelement inside textelement) are not direct members
+                if (member is IXmlPortNodeSymbol topNode)
+                {
+                    foreach (var nestedNode in topNode.FlattenedNodes)
+                    {
+                        foreach (var r in RequiredPermissionDetector.GetFromXmlPortNode(nestedNode, includeSystemTables: true))
+                            requiredPermissions.Add(r);
+                    }
+                }
             }
+        }
+    }
+
+    private static void AddXmlPortNodeToVarMap(
+        IXmlPortNodeSymbol node,
+        ref Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap)
+    {
+        if (node.SourceTypeKind == EnumProvider.XmlPortSourceTypeKind.Table
+            && ((ISymbol)node).GetTypeSymbol() is IRecordTypeSymbol recordType
+            && !recordType.Temporary)
+        {
+            objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
+            objectScopeRecordMap.TryAdd(((ISymbol)node).Name, recordType);
         }
     }
 

@@ -30,6 +30,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("UnusedOnXmlPort")]
         [TestCase("TemporaryRecord")]
         [TestCase("ParameterPartialUnused")]
+        [TestCase("ReportDataItemPartialUnused")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -53,6 +54,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("ParameterAllOperations")]
         [TestCase("LocalVarSpacedTable")]
         [TestCase("GlobalVarSpacedTable")]
+        [TestCase("ReportDataItemModify")]
+        [TestCase("XmlPortTableElementModify")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
