@@ -144,7 +144,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             if (targetName is null || !trackedVariables.TryGetValue(targetName, out var targetState))
                 return true;
 
-            if (targetState.EverHadWriteOp || targetState.EverPassedToFunction || targetState.EverHadLoadFields)
+            if (targetState.EverHadFullRecordAccess || targetState.EverPassedToFunction || targetState.EverHadLoadFields)
                 return true;
         }
 
@@ -181,20 +181,21 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         public List<string?> SetTableTargets { get; } = new();
 
         public bool EverHadLoadFields { get; set; }
-        public bool EverHadWriteOp { get; set; }
+        public bool EverHadFullRecordAccess { get; set; }
         public bool EverPassedToFunction { get; set; }
     }
 
     /// <summary>
     /// Per-variable flow state tracked during the walk. Forked at branch points, merged at join points.
-    /// UncoveredReads accumulates reads not covered by SetLoadFields. Write/pass operations
-    /// retroactively clear this list (a write after a read means SetLoadFields could break the write).
+    /// UncoveredReads accumulates reads not covered by SetLoadFields. Full-record-access operations
+    /// (writes, whole-record assignments) and pass-to-function operations retroactively clear this list
+    /// (adding SetLoadFields before the read could break the subsequent operation).
     /// At branch merge, uncovered reads from all branches are unioned.
     /// </summary>
     private sealed class FlowFlags
     {
         public bool HasLoadFields { get; set; }
-        public bool HasWriteOp { get; set; }
+        public bool HasFullRecordAccess { get; set; }
         public bool PassedToFunction { get; set; }
         public bool HasPartialRead { get; set; }
         public List<ReadInfo> UncoveredReads { get; private set; } = new();
@@ -204,7 +205,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         public FlowFlags Clone() => new()
         {
             HasLoadFields = HasLoadFields,
-            HasWriteOp = HasWriteOp,
+            HasFullRecordAccess = HasFullRecordAccess,
             PassedToFunction = PassedToFunction,
             HasPartialRead = HasPartialRead,
             UncoveredReads = new List<ReadInfo>(UncoveredReads),
@@ -221,7 +222,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         public void ResetFlags()
         {
             HasLoadFields = false;
-            HasWriteOp = false;
+            HasFullRecordAccess = false;
             PassedToFunction = false;
             HasPartialRead = false;
             LoadFieldsLocations.Clear();
@@ -326,6 +327,25 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             CheckArgumentsForTrackedVariables(operation);
 
             base.VisitInvocationExpression(operation);
+        }
+
+        public override void VisitAssignmentStatement(IAssignmentStatement operation)
+        {
+            // Detect whole-record assignment where a tracked variable is the source (RHS):
+            // TempMyTable := MyTable
+            // This reads all fields from MyTable, so adding SetLoadFields before a
+            // preceding read would cause only partial fields to be copied.
+            var sourceVarName = GetVariableNameFromOperation(operation.Value);
+            if (sourceVarName != null &&
+                _trackedVariables.TryGetValue(sourceVarName, out var state) &&
+                _flowState.TryGetValue(sourceVarName, out var flowFlags))
+            {
+                flowFlags.UncoveredReads.Clear();
+                flowFlags.HasFullRecordAccess = true;
+                state.EverHadFullRecordAccess = true;
+            }
+
+            base.VisitAssignmentStatement(operation);
         }
 
         #region Control flow overrides
@@ -474,7 +494,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             foreach (var kvp in _flowState)
             {
                 kvp.Value.HasLoadFields = branchStates.All(bs => bs[kvp.Key].HasLoadFields);
-                kvp.Value.HasWriteOp = branchStates.Any(bs => bs[kvp.Key].HasWriteOp);
+                kvp.Value.HasFullRecordAccess = branchStates.Any(bs => bs[kvp.Key].HasFullRecordAccess);
                 kvp.Value.PassedToFunction = branchStates.Any(bs => bs[kvp.Key].PassedToFunction);
                 kvp.Value.HasPartialRead = branchStates.Any(bs => bs[kvp.Key].HasPartialRead);
 
@@ -566,7 +586,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
             // Only flag reads where no suppression condition exists.
             // Write/pass AFTER read is handled by retroactive clearing of UncoveredReads.
-            if (!flowFlags.HasLoadFields && !flowFlags.HasWriteOp && !flowFlags.PassedToFunction)
+            if (!flowFlags.HasLoadFields && !flowFlags.HasFullRecordAccess && !flowFlags.PassedToFunction)
                 flowFlags.UncoveredReads.Add(new ReadInfo(operation.Syntax.GetLocation(), methodName));
         }
 
@@ -595,8 +615,8 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             // Retroactively suppress uncovered reads: a write after a read means
             // adding SetLoadFields before the read could break the write operation
             flowFlags.UncoveredReads.Clear();
-            flowFlags.HasWriteOp = true;
-            state.EverHadWriteOp = true;
+            flowFlags.HasFullRecordAccess = true;
+            state.EverHadFullRecordAccess = true;
 
             // PC0031: only record writes for JIT-load detection when a partial read
             // has occurred on this flow path.
@@ -635,10 +655,11 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
         #endregion
 
-        private static string? GetVariableNameFromArgument(IArgument argument)
-        {
-            var value = argument.Value;
+        private static string? GetVariableNameFromArgument(IArgument argument) =>
+            GetVariableNameFromOperation(argument.Value);
 
+        private static string? GetVariableNameFromOperation(IOperation? value)
+        {
             if (value is IConversionExpression conversion)
             {
                 if (conversion.Syntax is IdentifierNameSyntax convIdent)

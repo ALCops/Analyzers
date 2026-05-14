@@ -37,6 +37,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("IfBranchWithoutSetLoadFields")]
         [TestCase("ClearResetsWriteOp")]
         [TestCase("ClearResetsPassedToFunction")]
+        [TestCase("ClearResetsRecordAssignment")]
         [TestCase("LoopNoSetLoadFields")]
         public async Task HasDiagnostic(string testCase)
         {
@@ -76,6 +77,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("FindSetWithModifyInLoop")]
         [TestCase("FindSetWithPassedToFunctionInLoop")]
         [TestCase("GetWithConditionalModify")]
+        [TestCase("RecordAssignedToOther")]
+        [TestCase("RecordAssignedBeforeRead")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

@@ -37,9 +37,9 @@ These decisions were made during the initial design and should be preserved unle
 | RecordRef.SetTable(Record, Boolean) | Out of scope | ShareTable overload not handled; revisit if users report false positives |
 | RecordRef.GetTable | Out of scope | Reverse direction; only SetTable for now |
 | Flow-sensitive analysis | Forward dataflow with fork/merge at branches | Fixes false negatives where SetLoadFields after read, Clear between SetLoadFields and read, or SetLoadFields in one branch suppressed diagnostics elsewhere |
-| All three flags flow-aware | Yes (HasLoadFields, HasWriteOp, PassedToFunction) | Clear/Reset should reset all state; all flags have the same positional bug class |
+| All three flags flow-aware | Yes (HasLoadFields, HasFullRecordAccess, PassedToFunction) | Clear/Reset should reset all state; all flags have the same positional bug class |
 | HasLoadFields merge rule | AND (intersection) | If any code path lacks SetLoadFields, the read might execute without it |
-| HasWriteOp/PassedToFunction merge rule | OR (union) | Conservative: if any path writes/passes, suggesting SetLoadFields could interfere |
+| HasFullRecordAccess/PassedToFunction merge rule | OR (union) | Conservative: if any path writes/assigns/passes, suggesting SetLoadFields could interfere |
 | Clear(var) resets all flags | Yes | Clear completely reinitializes the variable, invalidating prior state |
 | Reset() resets all flags | Yes | Reset clears all filters and state on the record |
 | SetLoadFields() no args | Resets HasLoadFields only | Only affects the partial records state, not write/pass flags |
@@ -51,6 +51,8 @@ These decisions were made during the initial design and should be preserved unle
 | RecordRef flow analysis | Kept method-level (EverHad* flags) | RecordRef SetTable linkage is already complex; bug fixes focus on Record variables |
 | Pre-fork read merge rule | Intersection (must be in ALL branches) | Reads before a fork that are retroactively cleared by write/pass in any branch should stay cleared; prevents false positives on `if FindSet then repeat Modify` pattern |
 | In-branch read merge rule | Union (in ANY branch) | Reads added inside a branch are genuinely uncovered on their specific path and should be reported |
+| Record-as-source assignment | Treat same as write op (suppress forward + backward) | `TempMyTable := MyTable` reads all fields; adding SetLoadFields before a preceding read would cause partial copy. Only bare variable references on RHS, not field access. |
+| HasWriteOp renamed | `HasFullRecordAccess` | Flag now covers writes AND whole-record assignments; name reflects expanded semantics |
 
 ## Architecture
 
@@ -64,11 +66,12 @@ Uses `RegisterCodeBlockAction` (not `RegisterOperationAction`) to analyze entire
 2. Get `IOperation` tree from the code block via `SemanticModel.GetOperation(body)`
 3. Walk with `SetLoadFieldsWalker` (extends `OperationWalker`), maintaining per-variable `FlowFlags`:
    - `HasLoadFields`: bool, true when SetLoadFields/AddLoadFields/SetBaseLoadFields encountered on current path
-   - `HasWriteOp`: bool, true when Insert/Modify/ModifyAll/Delete/DeleteAll/Rename/TransferFields/Init/Copy encountered
+   - `HasFullRecordAccess`: bool, true when Insert/Modify/ModifyAll/Delete/DeleteAll/Rename/TransferFields/Init/Copy encountered, or when variable is RHS of a whole-record assignment
    - `PassedToFunction`: bool, true when variable passed as argument to any invocation or non-built-in method called on it
    - `UncoveredReads`: List of read locations where none of the above flags were true at the time of the read
-4. **Read evaluation is immediate**: When a read (Get/Find/FindFirst/FindLast/FindSet) is encountered, the current flow state determines whether to flag it. If `!HasLoadFields && !HasWriteOp && !PassedToFunction`, the read is added to `UncoveredReads`.
-5. **Retroactive clearing**: When a write/pass operation is encountered, `UncoveredReads` is cleared (reads before the write are retroactively suppressed). This handles the pattern `Get(); Modify()` where the write comes after the read.
+4. **Read evaluation is immediate**: When a read (Get/Find/FindFirst/FindLast/FindSet) is encountered, the current flow state determines whether to flag it. If `!HasLoadFields && !HasFullRecordAccess && !PassedToFunction`, the read is added to `UncoveredReads`.
+5. **Retroactive clearing**: When a write/pass/record-assignment operation is encountered, `UncoveredReads` is cleared (reads before the operation are retroactively suppressed). This handles patterns like `Get(); Modify()` or `FindSet(); TempRec := Rec` where the full-record operation comes after the read.
+6. **Assignment detection**: `VisitAssignmentStatement` checks if the RHS of an assignment is a tracked record variable (unwrapping `IConversionExpression` if present). When matched, sets `HasFullRecordAccess` and clears `UncoveredReads`, same as write methods.
 6. **Control flow**: Override `VisitIfStatement`, `VisitCaseStatement`, and loop visit methods with fork/merge semantics.
 7. **Reset detection**: `Clear(var)`, `var.Reset()`, and `var.SetLoadFields()` with no arguments reset flow flags.
 8. Post-walk: `FinalizeResults()` deduplicates uncovered reads and copies them to `VariableState.UncoveredReadLocations`.
@@ -89,7 +92,7 @@ Uses `RegisterCodeBlockAction` (not `RegisterOperationAction`) to analyze entire
 | Flag | Merge rule | Rationale |
 |---|---|---|
 | `HasLoadFields` | AND (all branches must have it) | If any path lacks SetLoadFields, the read might execute without it |
-| `HasWriteOp` | OR (any branch having it) | If any path writes, suggesting SetLoadFields could interfere |
+| `HasFullRecordAccess` | OR (any branch having it) | If any path writes or does a whole-record assignment, suggesting SetLoadFields could interfere |
 | `PassedToFunction` | OR (any branch having it) | If any path passes the variable, callee might access any field |
 | `UncoveredReads` | Pre-fork: intersection; in-branch: union | Pre-fork reads retroactively cleared in any branch stay cleared; in-branch reads on specific paths should be reported |
 
@@ -113,7 +116,7 @@ The walker checks ALL invocations (both built-in and user-defined) for tracked v
 
 ### Dual-direction suppression
 
-Write/pass operations suppress reads in both directions:
+Write/pass/record-assignment operations suppress reads in both directions:
 - **Forward**: Write/pass BEFORE a read causes the flag check at read time to suppress it
 - **Backward**: Write/pass AFTER a read retroactively clears `UncoveredReads` (handles `Get(); Modify()` pattern)
 
@@ -122,7 +125,7 @@ Write/pass operations suppress reads in both directions:
 ```
 FlowFlags (per-variable, forked/merged at branches):
   - HasLoadFields: bool
-  - HasWriteOp: bool
+  - HasFullRecordAccess: bool (writes + whole-record assignments)
   - PassedToFunction: bool
   - UncoveredReads: List<ReadInfo>
 
@@ -130,7 +133,7 @@ VariableState (per-variable, method-level accumulated):
   - UncoveredReadLocations: List<ReadInfo> (populated by FinalizeResults after walk)
   - IsRecordRef: bool
   - SetTableTargets: List<string?>
-  - EverHadLoadFields/EverHadWriteOp/EverPassedToFunction: bool (for RecordRef SetTable check)
+  - EverHadLoadFields/EverHadFullRecordAccess/EverPassedToFunction: bool (for RecordRef SetTable check)
 ```
 
 ## Known issues and workarounds
@@ -180,11 +183,11 @@ AA0242 (CodeCop's `Rule0242PartialRecordsDetectJitLoads`) is the **complement** 
 
 ## Test coverage
 
-58 test cases total:
+61 test cases total:
 
-**HasDiagnostic (17 cases):** LocalRecordGet, LocalRecordGetBySystemId, LocalRecordFindFirst, LocalRecordFindSet, LocalRecordFindLast, LocalRecordFind, LocalRecordMultipleReads, LocalRecordRefFindFirst, SetLoadFieldsAfterGet, ClearBetweenSetLoadFieldsAndGet, ResetBetweenSetLoadFieldsAndGet, SetLoadFieldsNoArgsBetween, CaseBranchWithoutSetLoadFields, IfBranchWithoutSetLoadFields, ClearResetsWriteOp, ClearResetsPassedToFunction, LoopNoSetLoadFields.
+**HasDiagnostic (18 cases):** LocalRecordGet, LocalRecordGetBySystemId, LocalRecordFindFirst, LocalRecordFindSet, LocalRecordFindLast, LocalRecordFind, LocalRecordMultipleReads, LocalRecordRefFindFirst, SetLoadFieldsAfterGet, ClearBetweenSetLoadFieldsAndGet, ResetBetweenSetLoadFieldsAndGet, SetLoadFieldsNoArgsBetween, CaseBranchWithoutSetLoadFields, IfBranchWithoutSetLoadFields, ClearResetsWriteOp, ClearResetsPassedToFunction, ClearResetsRecordAssignment, LoopNoSetLoadFields.
 
-**NoDiagnostic (29 cases):** HasSetLoadFields, HasSetLoadFieldsGetBySystemId, HasAddLoadFields, HasSetBaseLoadFields, HasModify, HasInsert, HasDelete, HasDeleteAll, HasModifyAll, HasRename, HasTransferFields, HasInit, HasCopy, PassedToFunction, PassedToEvent, PassedToPageRun, TemporaryTable, GlobalVariable, ParameterVariable, IsEmptyOnly, CDSTable, RecordRefSetTableWithModify, RecordRefSetTablePassedToFunction, DatabaseObjectReference, IfBothBranchesSetLoadFields, LoopSetLoadFieldsBefore, FindSetWithModifyInLoop, FindSetWithPassedToFunctionInLoop, GetWithConditionalModify.
+**NoDiagnostic (31 cases):** HasSetLoadFields, HasSetLoadFieldsGetBySystemId, HasAddLoadFields, HasSetBaseLoadFields, HasModify, HasInsert, HasDelete, HasDeleteAll, HasModifyAll, HasRename, HasTransferFields, HasInit, HasCopy, PassedToFunction, PassedToEvent, PassedToPageRun, TemporaryTable, GlobalVariable, ParameterVariable, IsEmptyOnly, CDSTable, RecordRefSetTableWithModify, RecordRefSetTablePassedToFunction, DatabaseObjectReference, IfBothBranchesSetLoadFields, LoopSetLoadFieldsBefore, FindSetWithModifyInLoop, FindSetWithPassedToFunctionInLoop, GetWithConditionalModify, RecordAssignedToOther, RecordAssignedBeforeRead.
 
 **HasFix (11 cases):** SingleField, MultipleFields, QuotedFieldName, NoFieldAccess, SetRangeFieldExcluded, SetFilterFieldExcluded, SetRangeValueArgIncluded, AllFieldsInFilters, TestFieldIncluded, SetCurrentKeyExcluded, MixedFilterAndConsume.
 
