@@ -1,13 +1,13 @@
 codeunit 50100 MyCodeunit
 {
-    procedure MyProcedure(Condition: Boolean)
+    procedure MyProcedure()
     var
         MyTable: Record MyTable;
     begin
         [|MyTable.SetLoadFields(MyTable."No.")|];
         MyTable.Get('001');
-        if Condition then
-            MyTable.Modify();
+        MyTable.Description := 'Updated';
+        MyTable.Delete();
     end;
 }
 

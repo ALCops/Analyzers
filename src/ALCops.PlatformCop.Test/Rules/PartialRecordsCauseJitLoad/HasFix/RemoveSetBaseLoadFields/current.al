@@ -4,10 +4,10 @@ codeunit 50100 MyCodeunit
     var
         MyTable: Record MyTable;
     begin
-        [|MyTable.SetLoadFields(MyTable."No.")|];
-        MyTable.FindFirst();
+        [|MyTable.SetBaseLoadFields()|];
+        MyTable.Get('001');
         MyTable.Description := 'Updated';
-        MyTable.Modify();
+        MyTable.Delete();
     end;
 }
 

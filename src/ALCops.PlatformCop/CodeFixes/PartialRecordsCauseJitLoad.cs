@@ -8,17 +8,17 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
 
 namespace ALCops.PlatformCop.CodeFixes;
 
-[CodeFixProvider(nameof(PartialRecordsBeforeWriteOperationCodeFixProvider))]
-public sealed class PartialRecordsBeforeWriteOperationCodeFixProvider : CodeFixProvider
+[CodeFixProvider(nameof(PartialRecordsCauseJitLoadCodeFixProvider))]
+public sealed class PartialRecordsCauseJitLoadCodeFixProvider : CodeFixProvider
 {
-    private class PartialRecordsBeforeWriteOperationCodeAction : CodeAction.DocumentChangeAction
+    private class PartialRecordsCauseJitLoadCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
         public override string? FixAllSingleInstanceTitle => string.Empty;
         public override string? FixAllTitle => Title;
 
-        public PartialRecordsBeforeWriteOperationCodeAction(string title,
+        public PartialRecordsCauseJitLoadCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument,
             string equivalenceKey, bool generateFixAll)
             : base(title, createChangedDocument, equivalenceKey)
@@ -28,7 +28,7 @@ public sealed class PartialRecordsBeforeWriteOperationCodeFixProvider : CodeFixP
     }
 
     public sealed override ImmutableArray<string> FixableDiagnosticIds =>
-        ImmutableArray.Create(DiagnosticDescriptors.PartialRecordsBeforeWriteOperation.Id);
+        ImmutableArray.Create(DiagnosticDescriptors.PartialRecordsCauseJitLoad.Id);
 
     public sealed override FixAllProvider GetFixAllProvider() =>
         WellKnownFixAllProviders.BatchFixer;
@@ -59,13 +59,13 @@ public sealed class PartialRecordsBeforeWriteOperationCodeFixProvider : CodeFixP
             ctx.Diagnostics[0]);
     }
 
-    private static PartialRecordsBeforeWriteOperationCodeAction CreateCodeAction(
+    private static PartialRecordsCauseJitLoadCodeAction CreateCodeAction(
         ExpressionStatementSyntax statement, Document document, bool generateFixAll)
     {
-        return new PartialRecordsBeforeWriteOperationCodeAction(
-            PlatformCopAnalyzers.PartialRecordsBeforeWriteOperationCodeAction,
+        return new PartialRecordsCauseJitLoadCodeAction(
+            PlatformCopAnalyzers.PartialRecordsCauseJitLoadCodeAction,
             ct => RemoveStatement(document, statement, ct),
-            nameof(PartialRecordsBeforeWriteOperationCodeFixProvider),
+            nameof(PartialRecordsCauseJitLoadCodeFixProvider),
             generateFixAll);
     }
 

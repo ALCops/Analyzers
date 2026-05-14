@@ -285,15 +285,15 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.UsePartialRecordsOnReadDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UsePartialRecordsOnRead));
 
-    public static readonly DiagnosticDescriptor PartialRecordsBeforeWriteOperation = new(
-        id: DiagnosticIds.PartialRecordsBeforeWriteOperation,
-        title: PlatformCopAnalyzers.PartialRecordsBeforeWriteOperationTitle,
-        messageFormat: PlatformCopAnalyzers.PartialRecordsBeforeWriteOperationMessageFormat,
+    public static readonly DiagnosticDescriptor PartialRecordsCauseJitLoad = new(
+        id: DiagnosticIds.PartialRecordsCauseJitLoad,
+        title: PlatformCopAnalyzers.PartialRecordsCauseJitLoadTitle,
+        messageFormat: PlatformCopAnalyzers.PartialRecordsCauseJitLoadMessageFormat,
         category: Category.Performance,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: PlatformCopAnalyzers.PartialRecordsBeforeWriteOperationDescription,
-        helpLinkUri: GetHelpUri(DiagnosticIds.PartialRecordsBeforeWriteOperation));
+        description: PlatformCopAnalyzers.PartialRecordsCauseJitLoadDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PartialRecordsCauseJitLoad));
 
     public static readonly DiagnosticDescriptor UseSequentialGuid = new(
         id: DiagnosticIds.UseSequentialGuid,

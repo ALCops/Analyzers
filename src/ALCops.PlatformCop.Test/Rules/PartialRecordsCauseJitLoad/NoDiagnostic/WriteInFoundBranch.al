@@ -4,9 +4,10 @@ codeunit 50100 MyCodeunit
     var
         MyTable: Record MyTable;
     begin
-        MyTable.Get('001');
-        MyTable.Description := 'Updated';
-        MyTable.Modify();
+        [|MyTable.SetLoadFields(MyTable."No.")|];
+        MyTable.SetRange("No.", '001');
+        if MyTable.FindFirst() then
+            MyTable.Delete();
     end;
 }
 

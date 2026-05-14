@@ -76,12 +76,15 @@ public static class RecordMethodClassification
 
     /// <summary>
     /// Subset of write methods that trigger JIT field loads when partial records are active.
+    /// Per MS Docs, these operations require all fields to be loaded: inserts, deletes, renames,
+    /// field transfers, or copies to temporary records. Modify is excluded because it only writes
+    /// changed fields without requiring all fields to be loaded.
     /// Excludes ModifyAll (set-based, no record load), DeleteAll (same), Init (no SQL).
     /// </summary>
     public static ImmutableHashSet<string> JitLoadWriteMethods { get; } =
         ImmutableHashSet.Create(
             StringComparer.OrdinalIgnoreCase,
-            "Insert", "Modify", "Delete", "Rename", "TransferFields", "Copy");
+            "Insert", "Delete", "Rename", "TransferFields", "Copy");
 
     /// <summary>
     /// Methods that can execute table triggers or field validation.

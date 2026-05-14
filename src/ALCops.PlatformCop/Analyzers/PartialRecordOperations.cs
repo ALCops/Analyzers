@@ -23,14 +23,17 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
     /// <summary>
     /// Subset of WriteMethods that trigger JIT loads when partial records are active.
+    /// Per MS Docs: inserts, deletes, renames, field transfers, or copies to temporary records.
+    /// Modify is excluded because it only writes changed fields without needing all fields loaded.
     /// Excludes ModifyAll (set-based, no record load), DeleteAll (same), Init (no SQL).
     /// </summary>
     private static readonly ImmutableHashSet<string> JitLoadWriteMethods = RecordMethodClassification.JitLoadWriteMethods;
 
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
             DiagnosticDescriptors.UsePartialRecordsOnRead,
-            DiagnosticDescriptors.PartialRecordsBeforeWriteOperation);
+            DiagnosticDescriptors.PartialRecordsCauseJitLoad);
 
     // SetLoadFields was introduced in runtime 6.0 (BC17, Fall 2020).
     // Fall2020OrGreater would be ideal but is not available it seems
@@ -85,7 +88,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             }
         }
 
-        // PC0031: SetLoadFields used on a variable that also has write operations
+        // PC0031: SetLoadFields used on a variable that also has full-field operations
         foreach (var kvp in trackedVariables)
         {
             var state = kvp.Value;
@@ -93,22 +96,22 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             if (state.LoadFieldsLocations.Count == 0)
                 continue;
 
-            var jitWriteMethods = state.WriteMethodNames
-                .Where(JitLoadWriteMethods.Contains)
+            var jitOperations = state.WriteMethodNames
+                .Where(m => JitLoadWriteMethods.Contains(m))
                 .OrderBy(m => m, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            if (jitWriteMethods.Count == 0)
+            if (jitOperations.Count == 0)
                 continue;
 
-            var writeMethodsText = string.Join(", ", jitWriteMethods);
+            var operationsText = string.Join(", ", jitOperations);
 
             foreach (var info in state.LoadFieldsLocations)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.PartialRecordsBeforeWriteOperation,
+                    DiagnosticDescriptors.PartialRecordsCauseJitLoad,
                     info.Location,
-                    info.MethodName, writeMethodsText, kvp.Key));
+                    info.MethodName, operationsText, kvp.Key));
             }
         }
     }
@@ -351,6 +354,14 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
         #region Control flow overrides
 
+        /// <summary>
+        /// Tracks nesting depth inside conditional branches (if/case/while/for/foreach bodies).
+        /// When depth > 0, JIT-load writes are suppressed for PC0031 because the write
+        /// may not execute on the same path as the partial read (avoiding false positives).
+        /// Repeat-until body does NOT increment depth (it always executes at least once).
+        /// </summary>
+        private int _branchDepth;
+
         public override void VisitIfStatement(IIfStatement operation)
         {
             Visit(operation.Condition);
@@ -358,11 +369,16 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             var preForkReads = CapturePreForkReadPositions();
             var preBranchState = SaveFlowState();
 
+            _branchDepth++;
             Visit(operation.IfTrueStatement);
+            _branchDepth--;
             var trueBranchState = SaveFlowState();
 
             RestoreFlowState(preBranchState);
+
+            _branchDepth++;
             Visit(operation.IfFalseStatement);
+            _branchDepth--;
             var falseBranchState = SaveFlowState();
 
             MergeFlowStates([trueBranchState, falseBranchState], preForkReads);
@@ -379,14 +395,18 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             foreach (var caseLine in operation.CaseLines)
             {
                 RestoreFlowState(preCaseState);
+                _branchDepth++;
                 Visit(caseLine);
+                _branchDepth--;
                 branchStates.Add(SaveFlowState());
             }
 
             if (operation.ElseStatement != null)
             {
                 RestoreFlowState(preCaseState);
+                _branchDepth++;
                 Visit(operation.ElseStatement);
+                _branchDepth--;
                 branchStates.Add(SaveFlowState());
             }
             else
@@ -402,7 +422,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         {
             if (operation.LoopKind == EnumProvider.LoopKind.Repeat)
             {
-                // repeat-until: body always executes at least once
+                // repeat-until: body always executes at least once (no branch depth increment)
                 Visit(operation.Body);
                 Visit(operation.Condition);
             }
@@ -413,7 +433,9 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
                 var preForkReads = CapturePreForkReadPositions();
                 var preLoopState = SaveFlowState();
+                _branchDepth++;
                 Visit(operation.Body);
+                _branchDepth--;
                 var postBodyState = SaveFlowState();
 
                 MergeFlowStates([preLoopState, postBodyState], preForkReads);
@@ -427,7 +449,9 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
             var preForkReads = CapturePreForkReadPositions();
             var preLoopState = SaveFlowState();
+            _branchDepth++;
             Visit(operation.Body);
+            _branchDepth--;
             var postBodyState = SaveFlowState();
 
             MergeFlowStates([preLoopState, postBodyState], preForkReads);
@@ -439,7 +463,9 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
             var preForkReads = CapturePreForkReadPositions();
             var preLoopState = SaveFlowState();
+            _branchDepth++;
             Visit(operation.Body);
+            _branchDepth--;
             var postBodyState = SaveFlowState();
 
             MergeFlowStates([preLoopState, postBodyState], preForkReads);
@@ -550,7 +576,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
         #region Method classification
 
-        private static void ClassifyInstanceMethodCall(IInvocationExpression operation,
+        private void ClassifyInstanceMethodCall(IInvocationExpression operation,
             VariableState state, FlowFlags flowFlags)
         {
             var methodName = operation.TargetMethod.Name;
@@ -611,7 +637,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             state.EverHadLoadFields = true;
         }
 
-        private static void HandleWriteMethod(VariableState state, FlowFlags flowFlags, string methodName)
+        private void HandleWriteMethod(VariableState state, FlowFlags flowFlags, string methodName)
         {
             // Retroactively suppress uncovered reads: a write after a read means
             // adding SetLoadFields before the read could break the write operation
@@ -619,9 +645,13 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             flowFlags.HasFullRecordAccess = true;
             state.EverHadFullRecordAccess = true;
 
-            // PC0031: only record writes for JIT-load detection when a partial read
-            // has occurred on this flow path.
-            if (flowFlags.HasPartialRead && JitLoadWriteMethods.Contains(methodName))
+            // PC0031: only record writes for JIT-load detection when:
+            // 1. A partial read has occurred on this flow path
+            // 2. The method is a JIT-load trigger (Insert, Delete, Rename, TransferFields, Copy)
+            // 3. The write is at the top level (not inside a conditional branch)
+            //    This avoids false positives where the write only executes on a path
+            //    where the record wasn't actually loaded (e.g., if not Find then Insert).
+            if (flowFlags.HasPartialRead && JitLoadWriteMethods.Contains(methodName) && _branchDepth == 0)
                 flowFlags.AddWriteAfterPartialRead(methodName);
         }
 

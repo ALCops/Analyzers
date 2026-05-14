@@ -98,7 +98,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `lc0096-unnecessary-record-parameter` | rule-scoped | LC0096 rule |
 | `pc0029-use-sequential-guid` | rule-scoped | PC0029 rule |
 | `pc0030-use-partial-records-on-read` | rule-scoped | PC0030 rule |
-| `pc0031-partial-records-before-write-operation` | rule-scoped | PC0031 rule |
+| `pc0031-partial-records-cause-jit-load` | rule-scoped | PC0031 rule |
 | `pc0032-report-layout-property-length` | rule-scoped | PC0032 rule |
 | `pc0033-duplicate-odata-entity-name` | rule-scoped | PC0033 rule |
 | `pc0034-placeholder-argument-count-mismatch` | rule-scoped | PC0034 rule |
