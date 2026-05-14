@@ -78,6 +78,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("FindSetWithPassedToFunctionInLoop")]
         [TestCase("GetWithConditionalModify")]
         [TestCase("RecordAssignedToOther")]
+        [TestCase("RecordAssignedToOtherQuotedName")]
         [TestCase("RecordAssignedBeforeRead")]
         public async Task NoDiagnostic(string testCase)
         {

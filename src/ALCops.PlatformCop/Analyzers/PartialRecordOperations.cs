@@ -7,6 +7,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Semantics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 
 namespace ALCops.PlatformCop.Analyzers;
 
@@ -663,13 +664,13 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             if (value is IConversionExpression conversion)
             {
                 if (conversion.Syntax is IdentifierNameSyntax convIdent)
-                    return convIdent.Identifier.ValueText;
+                    return convIdent.Identifier.ValueText?.UnquoteIdentifier();
 
                 value = conversion.Operand;
             }
 
             if (value?.Syntax is IdentifierNameSyntax directIdent)
-                return directIdent.Identifier.ValueText;
+                return directIdent.Identifier.ValueText?.UnquoteIdentifier();
 
             return null;
         }
