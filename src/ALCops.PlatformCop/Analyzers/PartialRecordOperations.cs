@@ -411,8 +411,10 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             }
             else
             {
-                // No else clause: implicit empty branch with pre-case state
-                branchStates.Add(CloneState(preCaseState));
+                // No else clause: implicit empty branch with pre-case state.
+                // preCaseState is already a clone from SaveFlowState() and is not
+                // restored again after this point, so it's safe to use directly.
+                branchStates.Add(preCaseState);
             }
 
             MergeFlowStates(branchStates, preForkReads);
@@ -430,15 +432,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             {
                 // while-do: body might not execute
                 Visit(operation.Condition);
-
-                var preForkReads = CapturePreForkReadPositions();
-                var preLoopState = SaveFlowState();
-                _branchDepth++;
-                Visit(operation.Body);
-                _branchDepth--;
-                var postBodyState = SaveFlowState();
-
-                MergeFlowStates([preLoopState, postBodyState], preForkReads);
+                VisitConditionalLoopBody(operation.Body);
             }
         }
 
@@ -446,25 +440,25 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         {
             Visit(operation.InitialValue);
             Visit(operation.EndValue);
-
-            var preForkReads = CapturePreForkReadPositions();
-            var preLoopState = SaveFlowState();
-            _branchDepth++;
-            Visit(operation.Body);
-            _branchDepth--;
-            var postBodyState = SaveFlowState();
-
-            MergeFlowStates([preLoopState, postBodyState], preForkReads);
+            VisitConditionalLoopBody(operation.Body);
         }
 
         public override void VisitForEachLoopStatement(IForEachLoopStatement operation)
         {
             Visit(operation.Expression);
+            VisitConditionalLoopBody(operation.Body);
+        }
 
+        /// <summary>
+        /// Shared logic for loop bodies that may not execute (while-do, for, foreach).
+        /// Forks state, visits body at incremented branch depth, then merges.
+        /// </summary>
+        private void VisitConditionalLoopBody(IOperation loopBody)
+        {
             var preForkReads = CapturePreForkReadPositions();
             var preLoopState = SaveFlowState();
             _branchDepth++;
-            Visit(operation.Body);
+            Visit(loopBody);
             _branchDepth--;
             var postBodyState = SaveFlowState();
 
@@ -487,14 +481,6 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         {
             foreach (var kvp in saved)
                 _flowState[kvp.Key] = kvp.Value.Clone();
-        }
-
-        private static Dictionary<string, FlowFlags> CloneState(Dictionary<string, FlowFlags> source)
-        {
-            var clone = new Dictionary<string, FlowFlags>(StringComparer.OrdinalIgnoreCase);
-            foreach (var kvp in source)
-                clone[kvp.Key] = kvp.Value.Clone();
-            return clone;
         }
 
         /// <summary>
