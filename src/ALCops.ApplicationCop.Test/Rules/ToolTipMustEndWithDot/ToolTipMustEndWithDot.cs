@@ -1,3 +1,4 @@
+using Microsoft.Dynamics.Nav.CodeAnalysis;
 using RoslynTestKit;
 
 namespace ALCops.ApplicationCop.Test
@@ -5,12 +6,17 @@ namespace ALCops.ApplicationCop.Test
     public class ToolTipMustEndWithDot : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
+        private AnalyzerTestFixture _analysisViewFixture;
         private string _testCasePath;
+
+        private static readonly string[] AnalysisViewTestCases = ["PageAnalysisView"];
 
         [SetUp]
         public void Setup()
         {
             _fixture = RoslynFixtureFactory.Create<Analyzers.ToolTipPunctuation>();
+            _analysisViewFixture = RoslynFixtureFactory.Create<Analyzers.ToolTipPunctuation>(
+                TestHelper.CreateAnalysisViewConfig());
 
             _testCasePath = Path.Combine(
                 Directory.GetParent(
@@ -20,6 +26,7 @@ namespace ALCops.ApplicationCop.Test
 
         [Test]
         [TestCase("PageAction")]
+        [TestCase("PageAnalysisView")]
         [TestCase("PageField")]
         [TestCase("TableField")]
         public async Task HasDiagnostic(string testCase)
@@ -30,15 +37,23 @@ namespace ALCops.ApplicationCop.Test
                 "13.0",
                 "ToolTips on fields in a table object are not supported in versions lower than 13.0."
             );
+            SkipTestIfVersionIsTooLow(
+                AnalysisViewTestCases,
+                testCase,
+                "16.0",
+                "PageAnalysisView requires net10.0 SDK."
+            );
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
-            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.ToolTipMustEndWithDot);
+            var fixture = AnalysisViewTestCases.Contains(testCase) ? _analysisViewFixture : _fixture;
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.ToolTipMustEndWithDot);
         }
 
         [Test]
         [TestCase("PageAction")]
+        [TestCase("PageAnalysisView")]
         [TestCase("PageField")]
         [TestCase("TableField")]
         public async Task NoDiagnostic(string testCase)
@@ -49,11 +64,18 @@ namespace ALCops.ApplicationCop.Test
                 "13.0",
                 "ToolTips on fields in a table object are not supported in versions lower than 13.0."
             );
+            SkipTestIfVersionIsTooLow(
+                AnalysisViewTestCases,
+                testCase,
+                "16.0",
+                "PageAnalysisView requires net10.0 SDK."
+            );
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
-            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ToolTipMustEndWithDot);
+            var fixture = AnalysisViewTestCases.Contains(testCase) ? _analysisViewFixture : _fixture;
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ToolTipMustEndWithDot);
         }
     }
 }

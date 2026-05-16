@@ -27,7 +27,8 @@ public sealed class CaptionRequired : DiagnosticAnalyzer
             EnumProvider.SymbolKind.Action,
             EnumProvider.SymbolKind.EnumValue,
             EnumProvider.SymbolKind.Control,
-            EnumProvider.SymbolKind.PermissionSet
+            EnumProvider.SymbolKind.PermissionSet,
+            EnumProvider.SymbolKind.AnalysisView
         );
 
     private void CheckForMissingCaptions(SymbolAnalysisContext context)
@@ -144,6 +145,11 @@ public sealed class CaptionRequired : DiagnosticAnalyzer
             if (assignableProperty is null || (bool)assignableProperty.Value)
                 if (CaptionIsMissing(context.Symbol, context))
                     RaiseDiagnostic(context);
+        }
+        else if (context.Symbol.Kind == EnumProvider.SymbolKind.AnalysisView)
+        {
+            if (CaptionIsMissing(context.Symbol, context))
+                RaiseDiagnostic(context);
         }
         else
         {

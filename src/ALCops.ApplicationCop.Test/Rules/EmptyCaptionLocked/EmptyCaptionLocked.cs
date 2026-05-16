@@ -1,4 +1,5 @@
 using ALCops.ApplicationCop.CodeFixes;
+using Microsoft.Dynamics.Nav.CodeAnalysis;
 using RoslynTestKit;
 
 namespace ALCops.ApplicationCop.Test
@@ -6,13 +7,18 @@ namespace ALCops.ApplicationCop.Test
     public class EmptyCaptionLocked : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
+        private AnalyzerTestFixture _analysisViewFixture;
         private static readonly Analyzers.PermissionSetCaptionLength _analyzer = new();
         private string _testCasePath;
+
+        private static readonly string[] AnalysisViewTestCases = ["PageAnalysisView"];
 
         [SetUp]
         public void Setup()
         {
             _fixture = RoslynFixtureFactory.Create<Analyzers.EmptyCaptionLocked>();
+            _analysisViewFixture = RoslynFixtureFactory.Create<Analyzers.EmptyCaptionLocked>(
+                TestHelper.CreateAnalysisViewConfig());
 
             _testCasePath = Path.Combine(
                 Directory.GetParent(
@@ -24,26 +30,44 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("Enum")]
         [TestCase("LockedIsFalse")]
         [TestCase("Page")]
+        [TestCase("PageAnalysisView")]
         [TestCase("PermissionSet")]
         [TestCase("Query")]
         [TestCase("Report")]
         [TestCase("Table")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                AnalysisViewTestCases,
+                testCase,
+                "16.0",
+                "PageAnalysisView requires net10.0 SDK."
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
-            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.EmptyCaptionLocked);
+            var fixture = AnalysisViewTestCases.Contains(testCase) ? _analysisViewFixture : _fixture;
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.EmptyCaptionLocked);
         }
 
         [Test]
         [TestCase("Enum")]
+        [TestCase("PageAnalysisView")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                AnalysisViewTestCases,
+                testCase,
+                "16.0",
+                "PageAnalysisView requires net10.0 SDK."
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
-            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.EmptyCaptionLocked);
+            var fixture = AnalysisViewTestCases.Contains(testCase) ? _analysisViewFixture : _fixture;
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.EmptyCaptionLocked);
         }
 
         [Test]

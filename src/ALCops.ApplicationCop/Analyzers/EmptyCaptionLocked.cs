@@ -43,6 +43,7 @@ public sealed class EmptyCaptionLocked : DiagnosticAnalyzer
             EnumProvider.SyntaxKind.PageCustomAction,
             EnumProvider.SyntaxKind.PageSystemAction,
             EnumProvider.SyntaxKind.PageView,
+            EnumProvider.SyntaxKind.PageAnalysisView,
             EnumProvider.SyntaxKind.ReportLayout,
             EnumProvider.SyntaxKind.ProfileObject,
             EnumProvider.SyntaxKind.EnumType,
