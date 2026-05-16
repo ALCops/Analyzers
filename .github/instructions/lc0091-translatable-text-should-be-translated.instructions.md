@@ -40,6 +40,7 @@ These decisions were made during the initial design and should be preserved unle
 | Obsolete symbols | Skip (no diagnostic) | Standard ALCops convention |
 | Empty/needs-translation targets | Treated as missing | A trans-unit with empty target or `state="needs-translation"` means no usable translation |
 | Scope | All translatable elements in one analyzer | Single XLIFF parse pass serves all symbol types |
+| AnalysisView access | Reflection via `FlattenedAnalysisViews` / `AddedAnalysisViewsFlattened` | Properties only exist in net10.0+ SDK; reflection avoids compile-time dependency |
 | netstandard2.1 | Rule is inert (empty stub) | `ExtensionObjectFoldingUtilities` and `GetLabelTextConstLanguageSymbolId` don't exist in the netstandard2.1 SDK; `GetLanguageSymbolId` has a different internal-only signature. Reflection not viable since the classes/methods are absent, not just internal. |
 
 ## Platform availability
@@ -105,7 +106,7 @@ The SDK's `OperationExtensions.GetSymbol()` can throw `InvalidCastException` for
 |---|---|
 | Table, TableExtension, XmlPort, Enum, EnumValue, Report, Profile, PermissionSet | Caption |
 | Field | Caption, ToolTip |
-| Page, PageExtension, RequestPage, RequestPageExtension, Query | Caption + flattened controls (Caption, ToolTip, OptionCaption) + flattened actions (Caption, ToolTip) |
+| Page, PageExtension, RequestPage, RequestPageExtension, Query | Caption + flattened controls (Caption, ToolTip, OptionCaption) + flattened actions (Caption, ToolTip) + flattened analysis views (Caption, ToolTip) |
 | LocalVariable, GlobalVariable | Label type only (skip non-Label, skip Locked) |
 | ReportLabel | The label itself (skip Locked) |
 
@@ -123,10 +124,10 @@ This matches the AL compiler's XLIFF generation behavior exactly.
 
 ## Test coverage
 
-**HasDiagnostic (6 cases):** LocalLabel, GlobalLabel, TableFieldCaption, EnumValueCaption, PageControlToolTip, ReportLabel.
+**HasDiagnostic (7 cases):** LocalLabel, GlobalLabel, TableFieldCaption, EnumValueCaption, PageControlToolTip, PageAnalysisViewCaption, ReportLabel.
 **HasDiagnosticWithLanguagesToTranslateNoXliff (1 case):** LocalLabel with LanguagesToTranslate=["da-DK"], no XLIFF files.
 **HasDiagnosticWithLanguagesToTranslatePartialXliff (1 case):** LocalLabel with LanguagesToTranslate=["da-DK","de-DE"], only da-DK XLIFF.
-**NoDiagnostic (2 cases):** LockedLabel, LockedReportLabel.
+**NoDiagnostic (3 cases):** LockedLabel, LockedReportLabel, PageAnalysisViewLockedCaption.
 **NoDiagnosticNoXliff (1 case):** No XLIFF files present, no LanguagesToTranslate setting.
 
 ## Test infrastructure
