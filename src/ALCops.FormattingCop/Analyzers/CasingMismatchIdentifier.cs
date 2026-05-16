@@ -290,6 +290,11 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
             PageExtensionActionListSyntax pageExtActList => pageExtActList.Changes.Count == 0,
             PageViewListSyntax pageViewList => pageViewList.Views.Count == 0,
             PageExtensionViewListSyntax pageExtViewList => pageExtViewList.Changes.Count == 0,
+            // COMPAT: PageAnalysisViewListSyntax/PageExtensionAnalysisViewListSyntax only exist in net10.0+ SDK.
+            // Use SyntaxKind matching + ChildNodes() to avoid compile-time dependency.
+            _ when node.Kind == EnumProvider.SyntaxKind.PageAnalysisViewList
+                || node.Kind == EnumProvider.SyntaxKind.PageExtensionAnalysisViewList
+                => !node.ChildNodes().Any(),
             ParameterListSyntax paramList => paramList.Parameters.Count == 0,
             PropertyListSyntax propList => propList.Properties.Count == 0,
             _ => false
