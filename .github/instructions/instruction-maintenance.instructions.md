@@ -103,3 +103,4 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `pc0033-duplicate-odata-entity-name` | rule-scoped | PC0033 rule |
 | `pc0034-placeholder-argument-count-mismatch` | rule-scoped | PC0034 rule |
 | `lc0095-parameter-not-referenced` | rule-scoped | LC0095 rule |
+| `ac0006-run-page-implement-page-management` | rule-scoped | AC0006 rule |

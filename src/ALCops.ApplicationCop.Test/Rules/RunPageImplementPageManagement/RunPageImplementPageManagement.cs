@@ -50,6 +50,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("PageRunPageIdentifierAndRecord")]
         [TestCase("PageRunPageIdentifierAndRecordWithPageField")]
         [TestCase("PageRunZeroIdentifierAndRecord")]
+        [TestCase("PageRunZeroIdentifierAndRecordWithNamespace")]
+        [TestCase("PageRunPageIdentifierAndRecordWithNamespaceAndUsing")]
         public async Task HasFix(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
