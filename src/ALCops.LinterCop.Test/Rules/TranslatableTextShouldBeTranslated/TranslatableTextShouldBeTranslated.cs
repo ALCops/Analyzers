@@ -35,11 +35,22 @@ namespace ALCops.LinterCop.Test
                     Path.Combine("Rules", nameof(TranslatableTextShouldBeTranslated)));
         }
 
+        private static readonly byte[] AnalysisViewDefinitionContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            {
+                "Id": "00000000-0000-0000-0000-000000000001",
+                "Name": "MyAnalysisView",
+                "TargetObjectId": 50100,
+                "TargetObjectType": "Page"
+            }
+            """);
+
         private static AnalyzerTestFixture CreateFixtureWithEmptyXliff()
         {
             var files = new Dictionary<string, byte[]>
             {
-                { "Translations/TestApp.da-DK.xlf", EmptyXliffContent }
+                { "Translations/TestApp.da-DK.xlf", EmptyXliffContent },
+                { "MyAnalysisView.analysis.json", AnalysisViewDefinitionContent }
             };
             var fileSystem = new MemoryFileSystem(files);
 
@@ -99,6 +110,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("TableFieldCaption")]
         [TestCase("EnumValueCaption")]
         [TestCase("PageControlToolTip")]
+        [TestCase("PageAnalysisViewCaption")]
         [TestCase("ReportLabel")]
         public async Task HasDiagnostic(string testCase)
         {
@@ -116,6 +128,7 @@ namespace ALCops.LinterCop.Test
         [Test]
         [TestCase("LockedLabel")]
         [TestCase("LockedReportLabel")]
+        [TestCase("PageAnalysisViewLockedCaption")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireMinimumVersion("16.0",

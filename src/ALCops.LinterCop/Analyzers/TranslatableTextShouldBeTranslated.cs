@@ -3,6 +3,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 
 #if !NETSTANDARD2_1
+using System.Reflection;
 using System.Xml.Linq;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
@@ -186,6 +187,19 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
                 ReportTranslatableProperty(ctx, action, EnumProvider.PropertyKind.ToolTip, translationIndex);
             }
         }
+
+        IEnumerable<ISymbol>? analysisViews = GetFlattenedAnalysisViews(symbol);
+        if (analysisViews is not null)
+        {
+            foreach (ISymbol analysisView in analysisViews)
+            {
+                if (analysisView.IsObsolete())
+                    continue;
+
+                ReportTranslatableProperty(ctx, analysisView, EnumProvider.PropertyKind.Caption, translationIndex);
+                ReportTranslatableProperty(ctx, analysisView, EnumProvider.PropertyKind.ToolTip, translationIndex);
+            }
+        }
     }
 
     private static void ReportTranslatableProperty(SymbolAnalysisContext ctx, ISymbol symbol, PropertyKind propertyKind, TranslationIndex translationIndex)
@@ -358,6 +372,29 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             IPageExtensionBaseTypeSymbol pageExtension => pageExtension.AddedActionsFlattened,
             _ => null
         };
+
+    // COMPAT: FlattenedAnalysisViews/AddedAnalysisViewsFlattened only exist in net10.0+ SDK.
+    // Use reflection to avoid compile-time dependency on the newest SDK.
+    private static readonly Lazy<PropertyInfo?> _flattenedAnalysisViewsProperty =
+        new(() => typeof(IPageBaseTypeSymbol).GetProperty("FlattenedAnalysisViews", BindingFlags.Public | BindingFlags.Instance));
+
+    private static readonly Lazy<PropertyInfo?> _addedAnalysisViewsFlattenedProperty =
+        new(() => typeof(IPageExtensionBaseTypeSymbol).GetProperty("AddedAnalysisViewsFlattened", BindingFlags.Public | BindingFlags.Instance));
+
+    private static IEnumerable<ISymbol>? GetFlattenedAnalysisViews(ISymbol symbol)
+    {
+        if (symbol is IPageBaseTypeSymbol page)
+        {
+            return _flattenedAnalysisViewsProperty.Value?.GetValue(page) as IEnumerable<ISymbol>;
+        }
+
+        if (symbol is IPageExtensionBaseTypeSymbol pageExtension)
+        {
+            return _addedAnalysisViewsFlattenedProperty.Value?.GetValue(pageExtension) as IEnumerable<ISymbol>;
+        }
+
+        return null;
+    }
 
     #endregion
 
