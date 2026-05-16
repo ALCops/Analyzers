@@ -64,4 +64,7 @@ nunit-*.xml
 ALCops.*Analyzers.cs
 
 # Microsoft.Dynamics.BusinessCentral.Development.Tools
-**/*Microsoft.Dynamics.BusinessCentral.Development.Tools**.lscache
+**/*Microsoft.Dynamics.BusinessCentral.Development.Tools
+
+# These file caches language service data to improve the performance of C# Dev Kit
+**.lscache
