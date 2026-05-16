@@ -135,8 +135,10 @@ public sealed class RunPageImplementPageManagementCodeFixProvider : CodeFixProvi
                 newRoot = AddLocalVariable(newRoot, updatedMethodOrTrigger, variableName);
         }
 
+#if NET8_0_OR_GREATER
         // If the file uses namespaces, ensure "using Microsoft.Utilities;" is present
         newRoot = AddUsingDirectiveIfNeeded(newRoot, PageManagementNamespace);
+#endif
 
         return document.WithSyntaxRoot(newRoot);
     }
@@ -376,7 +378,7 @@ public sealed class RunPageImplementPageManagementCodeFixProvider : CodeFixProvi
 
     #region Using Directive Helpers
 
-#if !NETSTANDARD2_1
+#if NET8_0_OR_GREATER
     private static SyntaxNode AddUsingDirectiveIfNeeded(SyntaxNode root, string namespaceName)
     {
         if (root is not CompilationUnitSyntax compilationUnit)
@@ -434,8 +436,6 @@ public sealed class RunPageImplementPageManagementCodeFixProvider : CodeFixProvi
 
         return compilationUnit.WithUsings(newList);
     }
-#else
-    private static SyntaxNode AddUsingDirectiveIfNeeded(SyntaxNode root, string namespaceName) => root;
 #endif
 
     #endregion
