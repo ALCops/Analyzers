@@ -1,5 +1,7 @@
 namespace ALCops;
+
 using Microsoft.Utilities;
+
 codeunit 50100 MyCodeunit
 {
     procedure MyProcedure()

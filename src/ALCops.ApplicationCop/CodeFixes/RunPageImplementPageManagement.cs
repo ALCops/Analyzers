@@ -403,8 +403,14 @@ public sealed class RunPageImplementPageManagementCodeFixProvider : CodeFixProvi
         var usings = compilationUnit.Usings;
 
         if (usings.Count == 0)
-            return compilationUnit.AddUsings(
-                newUsing.WithTrailingTrivia(SyntaxFactory.EndOfLine(Environment.NewLine)));
+        {
+            var eol = SyntaxFactory.EndOfLine(Environment.NewLine, elastic: false);
+            var usingWithTrivia = newUsing
+                .WithLeadingTrivia(eol)
+                .WithTrailingTrivia(eol);
+            return compilationUnit.WithUsings(
+                new SyntaxList<UsingDirectiveSyntax>().Add(usingWithTrivia));
+        }
 
         var newUsingName = newUsing.Name!.ToString();
         var newList = new SyntaxList<UsingDirectiveSyntax>();
