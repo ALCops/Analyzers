@@ -376,6 +376,7 @@ public sealed class RunPageImplementPageManagementCodeFixProvider : CodeFixProvi
 
     #region Using Directive Helpers
 
+#if !NETSTANDARD2_1
     private static SyntaxNode AddUsingDirectiveIfNeeded(SyntaxNode root, string namespaceName)
     {
         if (root is not CompilationUnitSyntax compilationUnit)
@@ -433,6 +434,9 @@ public sealed class RunPageImplementPageManagementCodeFixProvider : CodeFixProvi
 
         return compilationUnit.WithUsings(newList);
     }
+#else
+    private static SyntaxNode AddUsingDirectiveIfNeeded(SyntaxNode root, string namespaceName) => root;
+#endif
 
     #endregion
 }

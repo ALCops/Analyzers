@@ -64,4 +64,4 @@ nunit-*.xml
 ALCops.*Analyzers.cs
 
 # Microsoft.Dynamics.BusinessCentral.Development.Tools
-**/*Microsoft.Dynamics.BusinessCentral.Development.Tools*
+**/*Microsoft.Dynamics.BusinessCentral.Development.Tools**.lscache
