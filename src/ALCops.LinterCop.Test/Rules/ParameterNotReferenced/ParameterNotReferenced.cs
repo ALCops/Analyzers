@@ -26,6 +26,8 @@ namespace ALCops.LinterCop.Test
         [TestCase("EventSubscriber")]
         [TestCase("MultipleParamsOneUnused")]
         [TestCase("VarParameterUnused")]
+        [TestCase("ErrorInfoInPage")]
+        [TestCase("ErrorInfoMultipleParams")]
         public async Task HasDiagnostic(string testCase)
         {
             RequireMinimumVersion("13.0",
@@ -45,6 +47,8 @@ namespace ALCops.LinterCop.Test
         [TestCase("ObsoleteProcedure")]
         [TestCase("AllParametersUsed")]
         [TestCase("ParameterUsedInExpression")]
+        [TestCase("ErrorInfoCallbackInCodeunit")]
+        [TestCase("NotificationCallbackInCodeunit")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireMinimumVersion("13.0",

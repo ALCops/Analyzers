@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
+using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
@@ -77,6 +78,10 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
 
     private static bool ShouldAnalyzeMethod(IMethodSymbol method)
     {
+        // ErrorInfo/Notification AddAction callbacks have a contractually required parameter
+        if (IsActionCallbackMethod(method))
+            return false;
+
         // Event subscribers are local but explicitly excluded by AA0137,
         // so we handle them here
         if (method.IsEventSubscriber())
@@ -103,5 +108,19 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
             return false;
 
         return true;
+    }
+
+    private static bool IsActionCallbackMethod(IMethodSymbol method)
+    {
+        if (method.Parameters.Length != 1)
+            return false;
+
+        IApplicationObjectTypeSymbol? containingObject = method.GetContainingApplicationObjectTypeSymbol();
+        if (containingObject is null || containingObject.NavTypeKind != EnumProvider.NavTypeKind.Codeunit)
+            return false;
+
+        NavTypeKind paramTypeKind = method.Parameters[0].ParameterType.GetNavTypeKindSafe();
+        return paramTypeKind == EnumProvider.NavTypeKind.ErrorInfo
+            || paramTypeKind == EnumProvider.NavTypeKind.Notification;
     }
 }
