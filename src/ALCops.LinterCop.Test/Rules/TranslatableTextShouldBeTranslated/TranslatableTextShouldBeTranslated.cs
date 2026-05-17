@@ -117,6 +117,13 @@ namespace ALCops.LinterCop.Test
             RequireMinimumVersion("16.0",
                 "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
 
+            SkipTestIfVersionIsTooLow(
+                ["PageAnalysisViewCaption"],
+                testCase,
+                "18.0.36",
+                "PageAnalysisView requires net10.0 SDK."
+            );
+
             var code = await File.ReadAllTextAsync(
                 Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
@@ -133,6 +140,13 @@ namespace ALCops.LinterCop.Test
         {
             RequireMinimumVersion("16.0",
                 "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
+
+            SkipTestIfVersionIsTooLow(
+                ["PageAnalysisViewLockedCaption"],
+                testCase,
+                "18.0.36",
+                "PageAnalysisView requires net10.0 SDK."
+            );
 
             var code = await File.ReadAllTextAsync(
                 Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
