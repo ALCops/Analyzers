@@ -53,7 +53,7 @@ When a new .NET major version appears in BC DevTools assemblies:
 1. Add a `tfm-net{major*10}0-version-lowest` output to `action.yml` (e.g. `tfm-net100-version-lowest` for net10.0)
 2. Propagate the new output through `build-test.yml` workflow_call outputs and setup job outputs
 3. Add conditional "Setup BC DevTools" steps for the new TFM in Build (`build-test.yml`) and Release (`build-and-release.yml`) jobs
-4. Add the new TFM path to `$nugetTfmPaths` in `Get-BC-DevTools.ps1` for NuGet package analysis
+4. **Prepend** the new TFM path to `$nugetTfmPaths` in `Get-BC-DevTools.ps1` (highest TFM first, so the first successful extraction determines the reported TFM)
 5. The `System.Reflection.Metadata`-based TFM detection and TFM parsing require no changes (they handle any .NET version automatically)
 
 ## net10.0 pipeline support
