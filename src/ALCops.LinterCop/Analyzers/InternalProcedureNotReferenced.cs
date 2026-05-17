@@ -20,8 +20,6 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
         private readonly PooledDictionary<IMethodSymbol, string> internalMethodsUnused = PooledDictionary<IMethodSymbol, string>.GetInstance();
         private readonly PooledDictionary<IMethodSymbol, string> internalMethodsUsedInCurrentObject = PooledDictionary<IMethodSymbol, string>.GetInstance();
         private readonly PooledDictionary<IMethodSymbol, string> internalMethodsUsedInOtherObjects = PooledDictionary<IMethodSymbol, string>.GetInstance();
-        private readonly AttributeKind[] attributeKindsOfMethodsToSkip = new AttributeKind[] { EnumProvider.AttributeKind.ConfirmHandler, EnumProvider.AttributeKind.FilterPageHandler, EnumProvider.AttributeKind.HyperlinkHandler, EnumProvider.AttributeKind.MessageHandler, EnumProvider.AttributeKind.ModalPageHandler, EnumProvider.AttributeKind.PageHandler, EnumProvider.AttributeKind.RecallNotificationHandler, EnumProvider.AttributeKind.ReportHandler, EnumProvider.AttributeKind.RequestPageHandler, EnumProvider.AttributeKind.SendNotificationHandler, EnumProvider.AttributeKind.SessionSettingsHandler, EnumProvider.AttributeKind.StrMenuHandler, EnumProvider.AttributeKind.Test };
-
         public MethodSymbolAnalyzer(CompilationAnalysisContext compilationAnalysisContext)
         {
             NavAppManifest? manifest = ManifestHelper.GetManifest(compilationAnalysisContext.Compilation);
@@ -60,7 +58,11 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
             {
                 return false;
             }
-            if (methodSymbol.Attributes.Any(attr => attributeKindsOfMethodsToSkip.Contains(attr.AttributeKind)))
+            if (methodSymbol.IsHandler())
+            {
+                return false;
+            }
+            if (methodSymbol.Attributes.Any(attr => attr.AttributeKind == EnumProvider.AttributeKind.Test))
             {
                 return false;
             }
