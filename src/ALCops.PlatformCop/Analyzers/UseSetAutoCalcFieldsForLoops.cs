@@ -62,7 +62,7 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
     /// </summary>
     private static string? GetImplicitLoopVariable(IMethodSymbol methodSymbol)
     {
-        if (methodSymbol.MethodKind != MethodKind.Trigger)
+        if (methodSymbol.MethodKind != EnumProvider.MethodKind.Trigger)
             return null;
 
         if (!SemanticFacts.IsSameName(methodSymbol.Name, "OnAfterGetRecord"))

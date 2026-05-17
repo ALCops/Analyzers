@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
+using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
@@ -87,7 +88,7 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
             return false;
 
         // Triggers have platform-defined signatures
-        if (method.MethodKind == MethodKind.Trigger)
+        if (method.MethodKind == EnumProvider.MethodKind.Trigger)
             return false;
 
         // Event declarations define the subscriber contract
