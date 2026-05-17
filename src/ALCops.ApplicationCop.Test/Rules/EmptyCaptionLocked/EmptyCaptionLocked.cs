@@ -40,7 +40,7 @@ namespace ALCops.ApplicationCop.Test
             SkipTestIfVersionIsTooLow(
                 AnalysisViewTestCases,
                 testCase,
-                "16.0",
+                "18.0.36",
                 "PageAnalysisView requires net10.0 SDK."
             );
 
@@ -59,7 +59,7 @@ namespace ALCops.ApplicationCop.Test
             SkipTestIfVersionIsTooLow(
                 AnalysisViewTestCases,
                 testCase,
-                "16.0",
+                "18.0.36",
                 "PageAnalysisView requires net10.0 SDK."
             );
 
