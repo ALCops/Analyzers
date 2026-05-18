@@ -4,7 +4,7 @@ codeunit 50100 MyCodeunit
     var
         MyTable: Record MyTable;
     begin
-        MyTable.SetLoadFields(MyTable."My Field Name");
+        MyTable.SetLoadFields("My Field Name");
         MyTable.Get();
         exit(MyTable."My Field Name");
     end;

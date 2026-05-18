@@ -4,7 +4,7 @@ codeunit 50100 MyCodeunit
     var
         MyTable: Record MyTable;
     begin
-        MyTable.SetLoadFields(MyTable."Primary Key");
+        MyTable.SetLoadFields("Primary Key");
         exit(MyTable.Get());
     end;
 }
