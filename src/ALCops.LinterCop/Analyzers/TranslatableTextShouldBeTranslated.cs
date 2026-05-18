@@ -151,7 +151,7 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             return;
 
         IRootTypeSymbol? rootSymbol = ExtensionObjectFoldingUtilities.GetTranslationRootSymbol(symbol);
-        string translationId = LanguageFileUtilities.GetLabelTextConstLanguageSymbolId(symbol, rootSymbol);
+        string translationId = LanguageFileUtilities.GetLanguageSymbolId(symbol, rootSymbol);
 
         ReportMissingTranslation(ctx, symbol, translationId, translationIndex);
     }
