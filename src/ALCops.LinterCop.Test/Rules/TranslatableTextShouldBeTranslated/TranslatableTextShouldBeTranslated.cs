@@ -20,6 +20,24 @@ namespace ALCops.LinterCop.Test
             </xliff>
             """);
 
+        private static readonly byte[] TranslatedReportLabelXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="da-DK" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="Report 2858589782 - ReportLabel 973805576" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>Report Label Text</source>
+                      <target>Berichtsbezeichnungstext</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - ReportLabel MyReportLabel</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
         private static readonly byte[] SettingsWithDaDK = System.Text.Encoding.UTF8.GetBytes(
             """{"LanguagesToTranslate": ["da-DK"]}""");
 
@@ -93,6 +111,21 @@ namespace ALCops.LinterCop.Test
                 });
         }
 
+        private static AnalyzerTestFixture CreateFixtureWithTranslatedReportLabelXliff()
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "Translations/TestApp.da-DK.xlf", TranslatedReportLabelXliffContent }
+            };
+            var fileSystem = new MemoryFileSystem(files);
+
+            return RoslynFixtureFactory.Create<Analyzers.TranslatableTextShouldBeTranslated>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = fileSystem
+                });
+        }
+
         [Test]
         [TestCase("LocalLabel")]
         [TestCase("GlobalLabel")]
@@ -126,6 +159,21 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false);
 
             var fixture = CreateFixtureWithEmptyXliff();
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
+        [TestCase("TranslatedReportLabel")]
+        public async Task NoDiagnosticTranslated(string testCase)
+        {
+            RequireMinimumVersion("16.0",
+                "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithTranslatedReportLabelXliff();
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
         }
 

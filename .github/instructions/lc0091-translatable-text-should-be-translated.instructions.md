@@ -127,6 +127,7 @@ This matches the AL compiler's XLIFF generation behavior exactly.
 **HasDiagnosticWithLanguagesToTranslateNoXliff (1 case):** LocalLabel with LanguagesToTranslate=["da-DK"], no XLIFF files.
 **HasDiagnosticWithLanguagesToTranslatePartialXliff (1 case):** LocalLabel with LanguagesToTranslate=["da-DK","de-DE"], only da-DK XLIFF.
 **NoDiagnostic (2 cases):** LockedLabel, LockedReportLabel.
+**NoDiagnosticTranslated (1 case):** TranslatedReportLabel (XLIFF contains proper translation with matching trans-unit ID).
 **NoDiagnosticNoXliff (1 case):** No XLIFF files present, no LanguagesToTranslate setting.
 
 ## Test infrastructure

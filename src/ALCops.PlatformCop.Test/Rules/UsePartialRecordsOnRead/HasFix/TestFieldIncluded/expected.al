@@ -4,7 +4,7 @@ codeunit 50100 MyCodeunit
     var
         MyTable: Record MyTable;
     begin
-        MyTable.SetLoadFields(MyTable.MyField1, MyTable.MyField2);
+        MyTable.SetLoadFields(MyField1, MyField2);
         MyTable.FindFirst();
         MyTable.TestField(MyField1, 'Expected');
         exit(MyTable.MyField2);

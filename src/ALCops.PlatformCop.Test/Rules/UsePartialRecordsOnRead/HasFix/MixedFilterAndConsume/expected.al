@@ -5,7 +5,7 @@ codeunit 50100 MyCodeunit
         MyTable: Record MyTable;
     begin
         MyTable.SetRange(MyField1, 'A');
-        MyTable.SetLoadFields(MyTable.MyField1, MyTable.MyField2);
+        MyTable.SetLoadFields(MyField1, MyField2);
         MyTable.FindFirst();
         exit(MyTable.MyField1 + MyTable.MyField2);
     end;

@@ -5,7 +5,7 @@ codeunit 50100 MyCodeunit
         MyTable: Record MyTable;
     begin
         MyTable.SetFilter(MyField1, '%1', 'A');
-        MyTable.SetLoadFields(MyTable.MyField2);
+        MyTable.SetLoadFields(MyField2);
         MyTable.FindFirst();
         exit(MyTable.MyField2);
     end;
