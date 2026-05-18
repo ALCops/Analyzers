@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using ALCops.Common;
 using ALCops.Common.Extensions;
+using ALCops.Common.Helpers;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -125,7 +126,10 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             if (IsEligibleVariable(local))
                 result[local.Name] = new VariableState
                 {
-                    IsRecordRef = local.Type?.NavTypeKind == EnumProvider.NavTypeKind.RecordRef
+                    IsRecordRef = local.Type?.NavTypeKind == EnumProvider.NavTypeKind.RecordRef,
+                    IsSetupTable = local.Type is IRecordTypeSymbol recordType
+                        && recordType.OriginalDefinition is ITableTypeSymbol tableType
+                        && TableHelper.IsSetupTable(tableType)
                 };
         }
 
@@ -182,6 +186,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         public List<LoadFieldsInfo> LoadFieldsLocations { get; } = new();
         public HashSet<string> WriteMethodNames { get; } = new(StringComparer.OrdinalIgnoreCase);
         public bool IsRecordRef { get; set; }
+        public bool IsSetupTable { get; set; }
         public List<string?> SetTableTargets { get; } = new();
 
         public bool EverHadLoadFields { get; set; }
@@ -578,7 +583,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             }
 
             if (ReadMethods.Contains(methodName))
-                HandleReadMethod(operation, flowFlags, methodName);
+                HandleReadMethod(operation, state, flowFlags, methodName);
             else if (LoadFieldsMethods.Contains(methodName))
                 HandleLoadFieldsMethod(operation, state, flowFlags, methodName);
             else if (WriteMethods.Contains(methodName))
@@ -591,11 +596,17 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                 state.SetTableTargets.Add(GetVariableNameFromArgument(operation.Arguments[0]));
         }
 
-        private static void HandleReadMethod(IInvocationExpression operation, FlowFlags flowFlags, string methodName)
+        private static void HandleReadMethod(IInvocationExpression operation, VariableState state, FlowFlags flowFlags, string methodName)
         {
             // PC0031: a read while HasLoadFields means the record buffer is now partial
             if (flowFlags.HasLoadFields)
                 flowFlags.HasPartialRead = true;
+
+            // Suppress on setup table parameterless Get() - near-zero performance benefit
+            if (state.IsSetupTable
+                && string.Equals(methodName, "Get", StringComparison.OrdinalIgnoreCase)
+                && operation.Arguments.IsEmpty)
+                return;
 
             // Only flag reads where no suppression condition exists.
             // Write/pass AFTER read is handled by retroactive clearing of UncoveredReads.

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
+using ALCops.Common.Helpers;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -58,19 +59,8 @@ public sealed class FieldGroupsRequired : DiagnosticAnalyzer
         }
     }
 
-    private static bool IsTableOfTypeSetupTable(ITableTypeSymbol table)
-    {
-        // Expect Primary Key to contains only one field
-        if (table.PrimaryKey is null || table.PrimaryKey.Fields.Length != 1)
-            return false;
-
-        // The field should be of type Code
-        if (table.PrimaryKey.Fields[0].GetTypeSymbol().GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Code)
-            return false;
-
-        // The field should be exactly (case sensitive) called 'Primary Key'
-        return string.Equals(table.PrimaryKey.Fields[0].Name, "Primary Key", StringComparison.Ordinal);
-    }
+    private static bool IsTableOfTypeSetupTable(ITableTypeSymbol table) =>
+        TableHelper.IsSetupTable(table);
 
     private static bool IsTemporaryTable(ITableTypeSymbol table)
         => table.TableType == EnumProvider.TableTypeKind.Temporary;
