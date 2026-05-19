@@ -96,28 +96,41 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
         if (root is null)
             return document;
 
-        // Remove CalcFields statement first, then insert SetAutoCalcFields
-        // We do remove first because after insert, spans shift
+        // Remove CalcFields statement first, then insert SetAutoCalcFields.
+        // The insertion target is before the CalcFields in the file, so its span
+        // is not affected by the removal.
         var newRoot = root.RemoveNode(calcFieldsStatement, SyntaxRemoveOptions.KeepNoTrivia);
         if (newRoot is null)
             return document;
 
-        // After removing, we need to find the insertion target again in the modified tree
-        // Since we removed a node INSIDE the loop body, the insertion target (before the loop)
-        // should still be findable by span (it's earlier in the file, so its span didn't change)
-        var updatedTarget = newRoot.FindNode(insertionTarget.Span);
+        // After removing, find the insertion target in the modified tree.
+        // Use FullSpan.Start to locate the node since its start position is stable.
+        var updatedTarget = FindNodeByStartPosition(newRoot, insertionTarget.FullSpan.Start);
         if (updatedTarget is null)
             return document;
 
-        // Find the statement node for insertion
-        var targetStatement = updatedTarget as StatementSyntax
-            ?? updatedTarget.FirstAncestorOrSelf<StatementSyntax>();
-        if (targetStatement is null)
-            return document;
-
-        newRoot = newRoot.InsertNodesBefore(targetStatement, new[] { setAutoCalcFieldsStatement });
+        newRoot = newRoot.InsertNodesBefore(updatedTarget, new[] { setAutoCalcFieldsStatement });
 
         return document.WithSyntaxRoot(newRoot);
+    }
+
+    /// <summary>
+    /// Finds a statement node at the given start position in the syntax tree.
+    /// More robust than FindNode(span) when the node's end position may have shifted.
+    /// </summary>
+    private static StatementSyntax? FindNodeByStartPosition(SyntaxNode root, int startPosition)
+    {
+        var token = root.FindToken(startPosition);
+        var node = token.Parent;
+
+        while (node is not null)
+        {
+            if (node is StatementSyntax statement && node.FullSpan.Start == startPosition)
+                return statement;
+            node = node.Parent;
+        }
+
+        return null;
     }
 
     private static ExpressionStatementSyntax BuildSetAutoCalcFieldsStatement(
@@ -139,9 +152,10 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
 
     /// <summary>
     /// Finds the statement before which to insert SetAutoCalcFields.
-    /// For repeat-until: finds the FindSet/Find call before the repeat.
-    /// For while loops: finds the while statement itself.
-    /// For report triggers: uses the first statement in the trigger body.
+    /// For repeat-until inside begin...end: finds the FindSet/Find call before the repeat.
+    /// For repeat-until as body of if-FindSet: the if statement itself.
+    /// For while loops: the while statement itself.
+    /// For report triggers: returns null (SetAutoCalcFields belongs in OnPreDataItem).
     /// </summary>
     private static StatementSyntax? FindInsertionTarget(InvocationExpressionSyntax calcFieldsInvocation)
     {
@@ -152,7 +166,16 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
             {
                 case RepeatStatementSyntax repeatStatement:
                     // For repeat-until, try to find the FindSet/Find statement before the repeat
-                    return FindPrecedingFindStatement(repeatStatement) ?? repeatStatement;
+                    var precedingFind = FindPrecedingFindStatement(repeatStatement);
+                    if (precedingFind is not null)
+                        return precedingFind;
+
+                    // Check if repeat is the body of "if Rec.FindSet() then repeat"
+                    var parentIfStatement = FindParentIfWithFindCondition(repeatStatement);
+                    if (parentIfStatement is not null)
+                        return parentIfStatement;
+
+                    return repeatStatement;
 
                 case WhileStatementSyntax whileStatement:
                     return whileStatement;
@@ -168,6 +191,21 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
             }
             current = current.Parent;
         }
+        return null;
+    }
+
+    /// <summary>
+    /// Checks if the repeat statement is the direct body of an "if Rec.FindSet() then"
+    /// and returns that if statement as the insertion target.
+    /// </summary>
+    private static IfStatementSyntax? FindParentIfWithFindCondition(RepeatStatementSyntax repeatStatement)
+    {
+        // Walk up: repeat might be wrapped in a block (begin...end) or be direct child of if
+        var parent = repeatStatement.Parent;
+
+        if (parent is IfStatementSyntax ifStatement)
+            return ifStatement;
+
         return null;
     }
 
