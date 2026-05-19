@@ -316,9 +316,13 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.MethodKind>(nameof(NavCodeAnalysis.MethodKind.BuiltInMethod)));
         private static readonly Lazy<NavCodeAnalysis.MethodKind> _method =
             new(() => ParseEnum<NavCodeAnalysis.MethodKind>(nameof(NavCodeAnalysis.MethodKind.Method)));
+       private static readonly Lazy<NavCodeAnalysis.MethodKind> _trigger =
+            new(() => ParseEnum<NavCodeAnalysis.MethodKind>(nameof(NavCodeAnalysis.MethodKind.Trigger)));
 
-        public static NavCodeAnalysis.MethodKind Method => _method.Value;
+
         public static NavCodeAnalysis.MethodKind BuiltInMethod => _builtInMethod.Value;
+        public static NavCodeAnalysis.MethodKind Method => _method.Value;
+        public static NavCodeAnalysis.MethodKind Trigger => _trigger.Value;
     }
     /// <summary>
     /// NavTypeKind enum values

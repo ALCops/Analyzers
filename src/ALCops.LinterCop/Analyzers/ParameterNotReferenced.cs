@@ -78,6 +78,10 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
 
     private static bool ShouldAnalyzeMethod(IMethodSymbol method)
     {
+        // Handler functions (MessageHandler, ConfirmHandler, etc.) have platform-enforced signatures
+        if (method.IsHandler())
+            return false;
+
         // ErrorInfo/Notification AddAction callbacks have a contractually required parameter
         if (IsActionCallbackMethod(method))
             return false;
@@ -92,7 +96,7 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
             return false;
 
         // Triggers have platform-defined signatures
-        if (method.MethodKind == MethodKind.Trigger)
+        if (method.MethodKind == EnumProvider.MethodKind.Trigger)
             return false;
 
         // Event declarations define the subscriber contract

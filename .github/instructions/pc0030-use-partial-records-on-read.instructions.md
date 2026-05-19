@@ -53,6 +53,7 @@ These decisions were made during the initial design and should be preserved unle
 | In-branch read merge rule | Union (in ANY branch) | Reads added inside a branch are genuinely uncovered on their specific path and should be reported |
 | Record-as-source assignment | Treat same as write op (suppress forward + backward) | `TempMyTable := MyTable` reads all fields; adding SetLoadFields before a preceding read would cause partial copy. Only bare variable references on RHS, not field access. |
 | HasWriteOp renamed | `HasFullRecordAccess` | Flag now covers writes AND whole-record assignments; name reflects expanded semantics |
+| Setup table suppression | Suppress on parameterless `Get()` when table is a setup table | Near-zero SQL benefit for single-record cached tables; MS BaseApp uses SetLoadFields on setup tables in only 1.8% of cases. Heuristic: single PK field, Code type, name matches "Primary Key"/"PrimaryKey" case-insensitive. Uses `TableHelper.IsSetupTable()` from ALCops.Common. Only `Get()` with no arguments suppressed; FindFirst/FindSet on setup tables still fire. See [#283](https://github.com/ALCops/Analyzers/issues/283). |
 
 ## Architecture
 
@@ -183,11 +184,11 @@ AA0242 (CodeCop's `Rule0242PartialRecordsDetectJitLoads`) is the **complement** 
 
 ## Test coverage
 
-62 test cases total:
+65 test cases total:
 
-**HasDiagnostic (18 cases):** LocalRecordGet, LocalRecordGetBySystemId, LocalRecordFindFirst, LocalRecordFindSet, LocalRecordFindLast, LocalRecordFind, LocalRecordMultipleReads, LocalRecordRefFindFirst, SetLoadFieldsAfterGet, ClearBetweenSetLoadFieldsAndGet, ResetBetweenSetLoadFieldsAndGet, SetLoadFieldsNoArgsBetween, CaseBranchWithoutSetLoadFields, IfBranchWithoutSetLoadFields, ClearResetsWriteOp, ClearResetsPassedToFunction, ClearResetsRecordAssignment, LoopNoSetLoadFields.
+**HasDiagnostic (20 cases):** LocalRecordGet, LocalRecordGetBySystemId, LocalRecordFindFirst, LocalRecordFindSet, LocalRecordFindLast, LocalRecordFind, LocalRecordMultipleReads, LocalRecordRefFindFirst, SetLoadFieldsAfterGet, ClearBetweenSetLoadFieldsAndGet, ResetBetweenSetLoadFieldsAndGet, SetLoadFieldsNoArgsBetween, CaseBranchWithoutSetLoadFields, IfBranchWithoutSetLoadFields, ClearResetsWriteOp, ClearResetsPassedToFunction, ClearResetsRecordAssignment, LoopNoSetLoadFields, SetupTableGetWithArgs, SetupTableFindFirst.
 
-**NoDiagnostic (32 cases):** HasSetLoadFields, HasSetLoadFieldsGetBySystemId, HasAddLoadFields, HasSetBaseLoadFields, HasModify, HasInsert, HasDelete, HasDeleteAll, HasModifyAll, HasRename, HasTransferFields, HasInit, HasCopy, PassedToFunction, PassedToEvent, PassedToPageRun, TemporaryTable, GlobalVariable, ParameterVariable, IsEmptyOnly, CDSTable, RecordRefSetTableWithModify, RecordRefSetTablePassedToFunction, DatabaseObjectReference, IfBothBranchesSetLoadFields, LoopSetLoadFieldsBefore, FindSetWithModifyInLoop, FindSetWithPassedToFunctionInLoop, GetWithConditionalModify, RecordAssignedToOther, RecordAssignedToOtherQuotedName, RecordAssignedBeforeRead.
+**NoDiagnostic (34 cases):** HasSetLoadFields, HasSetLoadFieldsGetBySystemId, HasAddLoadFields, HasSetBaseLoadFields, HasModify, HasInsert, HasDelete, HasDeleteAll, HasModifyAll, HasRename, HasTransferFields, HasInit, HasCopy, PassedToFunction, PassedToEvent, PassedToPageRun, TemporaryTable, GlobalVariable, ParameterVariable, IsEmptyOnly, CDSTable, RecordRefSetTableWithModify, RecordRefSetTablePassedToFunction, DatabaseObjectReference, IfBothBranchesSetLoadFields, LoopSetLoadFieldsBefore, FindSetWithModifyInLoop, FindSetWithPassedToFunctionInLoop, GetWithConditionalModify, RecordAssignedToOther, RecordAssignedToOtherQuotedName, RecordAssignedBeforeRead, SetupTableGet, SetupTableGetNoSpace.
 
 **HasFix (11 cases):** SingleField, MultipleFields, QuotedFieldName, NoFieldAccess, SetRangeFieldExcluded, SetFilterFieldExcluded, SetRangeValueArgIncluded, AllFieldsInFilters, TestFieldIncluded, SetCurrentKeyExcluded, MixedFilterAndConsume.
 

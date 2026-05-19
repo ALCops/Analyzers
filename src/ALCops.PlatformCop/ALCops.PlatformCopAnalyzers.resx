@@ -462,4 +462,16 @@
   <data name="PlaceholderArgumentCountMismatchDescription" xml:space="preserve">
     <value>When calling StrSubstNo, Error, Message, or Confirm with a format string containing placeholders (%1, %2, #1, etc.), the number of substitution arguments must match the number of unique placeholders. A mismatch means either placeholders will remain unsubstituted at runtime or arguments will be silently ignored. This rule extends CodeCop AA0131 to cover cases it misses: the zero-arguments gap and the Confirm method.</value>
   </data>
+  <data name="UseSetAutoCalcFieldsForLoopsTitle" xml:space="preserve">
+    <value>Use SetAutoCalcFields instead of CalcFields inside loops</value>
+  </data>
+  <data name="UseSetAutoCalcFieldsForLoopsMessageFormat" xml:space="preserve">
+    <value>Move CalcFields to SetAutoCalcFields before the loop on '{0}'. Each CalcFields call inside a loop generates a separate SQL query per iteration.</value>
+  </data>
+  <data name="UseSetAutoCalcFieldsForLoopsDescription" xml:space="preserve">
+    <value>Calling CalcFields inside a loop (repeat-until, while, foreach, or report DataItem) causes a separate SQL query for each FlowField on every iteration. For a table with N records and M FlowFields, this results in N×M additional queries. Using SetAutoCalcFields before the loop allows the runtime to join FlowField calculations into the main SELECT query, reducing the total number of database round-trips to one.</value>
+  </data>
+  <data name="UseSetAutoCalcFieldsForLoopsCodeAction" xml:space="preserve">
+    <value>ALCops: Use SetAutoCalcFields before loop</value>
+  </data>
 </root>

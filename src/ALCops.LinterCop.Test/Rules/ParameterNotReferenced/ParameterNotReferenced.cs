@@ -49,6 +49,8 @@ namespace ALCops.LinterCop.Test
         [TestCase("ParameterUsedInExpression")]
         [TestCase("ErrorInfoCallbackInCodeunit")]
         [TestCase("NotificationCallbackInCodeunit")]
+        [TestCase("MessageHandlerInCodeunit")]
+        [TestCase("ConfirmHandlerInCodeunit")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireMinimumVersion("13.0",

@@ -14,6 +14,14 @@ public static class MethodSymbolInterfaceExtensions
                            .MethodImplementsInterfaceMethod(methodSymbol);
     }
 
+    /// <summary>
+    /// Checks whether the method is a handler function (e.g. MessageHandler, ConfirmHandler, etc.)
+    /// by reflecting on the internal MethodSymbol.IsHandler property.
+    /// Returns false if the property is not available (fails open: diagnostic fires).
+    /// </summary>
+    public static bool IsHandler(this IMethodSymbol method)
+        => method.GetPropertyIfExists<bool>("IsHandler");
+
     public static bool MethodImplementsInterfaceMethod(this IMethodSymbol methodSymbol, IMethodSymbol interfaceMethodSymbol)
     {
         if (methodSymbol is null || interfaceMethodSymbol is null)

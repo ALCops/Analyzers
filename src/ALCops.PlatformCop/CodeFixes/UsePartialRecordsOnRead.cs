@@ -182,13 +182,10 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         var arguments = new SeparatedSyntaxList<CodeExpressionSyntax>();
         foreach (var fieldName in fieldNames)
         {
-            var fieldAccess = SyntaxFactory.MemberAccessExpression(
-                SyntaxFactory.IdentifierName(variableName),
-                SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
-                SyntaxFactory.IdentifierName(
-                    SyntaxFactory.Identifier(fieldName.QuoteIdentifierIfNeededWithReflection())));
+            var fieldIdentifier = SyntaxFactory.IdentifierName(
+                SyntaxFactory.Identifier(fieldName.QuoteIdentifierIfNeededWithReflection()));
 
-            arguments = arguments.Add(fieldAccess);
+            arguments = arguments.Add(fieldIdentifier);
         }
 
         var argumentList = SyntaxFactory.ArgumentList(arguments);

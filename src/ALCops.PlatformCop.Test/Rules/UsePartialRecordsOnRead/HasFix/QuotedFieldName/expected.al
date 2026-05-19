@@ -4,7 +4,7 @@ codeunit 50100 MyCodeunit
     var
         MyTable: Record MyTable;
     begin
-        MyTable.SetLoadFields(MyTable."My Field Name");
+        MyTable.SetLoadFields("My Field Name");
         MyTable.Get();
         exit(MyTable."My Field Name");
     end;
@@ -14,12 +14,12 @@ table 50100 MyTable
 {
     fields
     {
-        field(1; "Primary Key"; Code[20]) { }
+        field(1; "No."; Code[20]) { }
         field(2; "My Field Name"; Text[100]) { }
     }
 
     keys
     {
-        key(PK; "Primary Key") { }
+        key(PK; "No.") { }
     }
 }

@@ -36,8 +36,25 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
             Kind = kind;
         }
     }
+
+    private readonly struct MismatchResult
+    {
+        public bool HasTypeMismatch { get; }
+        public bool HasNameMismatch { get; }
+        public int MinTypeId { get; }
+        public int MinNameId { get; }
+
+        public MismatchResult(bool hasTypeMismatch, bool hasNameMismatch, int minTypeId, int minNameId)
+        {
+            HasTypeMismatch = hasTypeMismatch;
+            HasNameMismatch = hasNameMismatch;
+            MinTypeId = minTypeId;
+            MinNameId = minNameId;
+        }
+    }
 #else
     private readonly record struct FieldMismatch(int FieldId, IFieldSymbol Source, IFieldSymbol Target, MismatchKind Kind);
+    private readonly record struct MismatchResult(bool HasTypeMismatch, bool HasNameMismatch, int MinTypeId, int MinNameId);
 #endif
 
     // Cache TableExtensionTypeSymbols per Compilation (to avoid repeated expensive queries)
@@ -134,75 +151,48 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
 
         var hasTableRelationEntry = HasTableRelation(sourceTable);
 
-        var hasTypeMismatch = false;
-        var hasNameMismatch = false;
-
-        var minTypeMismatchId = int.MaxValue;
-        var minNameMismatchId = int.MaxValue;
-
-        var mismatches = FindFieldMismatches(sourceById, targetById);
-
-        foreach (var mismatch in mismatches)
-        {
-            if (mismatch.Kind.HasFlag(MismatchKind.Type)
-                && !IsEitherFieldSuppressed(DiagnosticDescriptors.TransferFieldsTypeMismatch.Id, mismatch.Source, mismatch.Target))
-            {
-                hasTypeMismatch = true;
-                if (mismatch.FieldId < minTypeMismatchId)
-                    minTypeMismatchId = mismatch.FieldId;
-
-                if (!hasTableRelationEntry)
-                {
-                    ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, locationField: mismatch.Source, mismatch.Source, mismatch.Target, mismatch.FieldId, sourceTable, targetTable);
-                    ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, locationField: mismatch.Target, mismatch.Source, mismatch.Target, mismatch.FieldId, sourceTable, targetTable);
-                }
-            }
-
-            if (mismatch.Kind.HasFlag(MismatchKind.Name)
-                && !IsEitherFieldSuppressed(DiagnosticDescriptors.TransferFieldsNameMismatch.Id, mismatch.Source, mismatch.Target))
-            {
-                hasNameMismatch = true;
-                if (mismatch.FieldId < minNameMismatchId)
-                    minNameMismatchId = mismatch.FieldId;
-
-                if (!hasTableRelationEntry)
-                {
-                    ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, locationField: mismatch.Source, mismatch.Source, mismatch.Target, mismatch.FieldId, sourceTable, targetTable);
-                    ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, locationField: mismatch.Target, mismatch.Source, mismatch.Target, mismatch.FieldId, sourceTable, targetTable);
-                }
-            }
-        }
-
-        if (!hasTypeMismatch && !hasNameMismatch)
-            return;
-
         var targetDisplay = targetTable.GetFullyQualifiedObjectName(quoteIdentifierIfNeeded: true);
         var sourceDisplay = sourceTable.GetFullyQualifiedObjectName(quoteIdentifierIfNeeded: true);
 
-        if (hasNameMismatch)
+        var mismatches = FindFieldMismatches(sourceById, targetById);
+
+        var result = ReportMismatches(
+            mismatches,
+            ctx.Compilation,
+            sourceDisplay,
+            targetDisplay,
+            reportAtFieldLevel: !hasTableRelationEntry,
+            swapDisplayForTarget: false,
+            getLocation: static field => field.Location,
+            reportDiagnostic: ctx.ReportDiagnostic);
+
+        if (!result.HasTypeMismatch && !result.HasNameMismatch)
+            return;
+
+        if (result.HasNameMismatch)
         {
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.TransferFieldsNameMismatch,
                 ctx.Operation.Syntax.GetLocation(),
-                minNameMismatchId,
+                result.MinNameId,
                 sourceDisplay,
                 targetDisplay,
-                sourceById[minNameMismatchId].Name.QuoteIdentifierIfNeededWithReflection(),
-                targetById[minNameMismatchId].Name.QuoteIdentifierIfNeededWithReflection()));
+                sourceById[result.MinNameId].Name.QuoteIdentifierIfNeededWithReflection(),
+                targetById[result.MinNameId].Name.QuoteIdentifierIfNeededWithReflection()));
         }
 
-        if (hasTypeMismatch)
+        if (result.HasTypeMismatch)
         {
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.TransferFieldsTypeMismatch,
                 ctx.Operation.Syntax.GetLocation(),
-                minTypeMismatchId,
+                result.MinTypeId,
                 sourceDisplay,
                 targetDisplay,
-                GetToDisplayStringSafe(sourceById[minTypeMismatchId]),
-                GetToDisplayStringSafe(targetById[minTypeMismatchId]),
-                sourceById[minTypeMismatchId].Name.QuoteIdentifierIfNeededWithReflection(),
-                targetById[minTypeMismatchId].Name.QuoteIdentifierIfNeededWithReflection()));
+                GetToDisplayStringSafe(sourceById[result.MinTypeId]),
+                GetToDisplayStringSafe(targetById[result.MinTypeId]),
+                sourceById[result.MinTypeId].Name.QuoteIdentifierIfNeededWithReflection(),
+                targetById[result.MinTypeId].Name.QuoteIdentifierIfNeededWithReflection()));
         }
     }
 
@@ -238,32 +228,23 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 .Where(te => te.Target is not null && te.Target.Name.Equals(relation.Target.Name))
                 .SelectMany(x => x.AddedFields);
 
-        if (!sourceTableExtensions.Any() || !targetTableExtensions.Any())
-            return;
-
         var sourceById = BuildFieldMapById(sourceTableExtensions);
         var targetById = BuildFieldMapById(targetTableExtensions);
 
-        foreach (var mismatch in FindFieldMismatches(sourceById, targetById))
-        {
-            if (mismatch.Kind.HasFlag(MismatchKind.Type))
-            {
-                if (IsEitherFieldSuppressed(DiagnosticDescriptors.TransferFieldsTypeMismatch.Id, mismatch.Source, mismatch.Target))
-                    continue;
+        if (sourceById.Count == 0 || targetById.Count == 0)
+            return;
 
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, mismatch.Source, mismatch.Source, mismatch.Target, mismatch.FieldId, relation.Source.Name, relation.Target.Name);
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsTypeMismatch, mismatch.Target, mismatch.Source, mismatch.Target, mismatch.FieldId, relation.Target.Name, relation.Source.Name);
-            }
+        var mismatches = FindFieldMismatches(sourceById, targetById);
 
-            if (mismatch.Kind.HasFlag(MismatchKind.Name))
-            {
-                if (IsEitherFieldSuppressed(DiagnosticDescriptors.TransferFieldsNameMismatch.Id, mismatch.Source, mismatch.Target))
-                    continue;
-
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, mismatch.Source, mismatch.Source, mismatch.Target, mismatch.FieldId, relation.Source.Name, relation.Target.Name);
-                ReportField(ctx, DiagnosticDescriptors.TransferFieldsNameMismatch, mismatch.Target, mismatch.Source, mismatch.Target, mismatch.FieldId, relation.Target.Name, relation.Source.Name);
-            }
-        }
+        ReportMismatches(
+            mismatches,
+            ctx.Compilation,
+            relation.Source.Name,
+            relation.Target.Name,
+            reportAtFieldLevel: true,
+            swapDisplayForTarget: true,
+            getLocation: static field => field.DeclaringSyntaxReference?.GetSyntax().GetLocation(),
+            reportDiagnostic: ctx.ReportDiagnostic);
     }
 
     private static List<FieldMismatch> FindFieldMismatches(
@@ -369,14 +350,12 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
 
         var builder = ImmutableArray.CreateBuilder<IFieldSymbol>();
 
+        // Note: IsRemoved() filtering is handled by BuildFieldMapById
         foreach (var field in allFields)
         {
             var id = field.Id;
 
             if (id == 0 || id >= 2_000_000_000)
-                continue;
-
-            if (field.IsRemoved())
                 continue;
 
             builder.Add(field);
@@ -487,88 +466,107 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         return string.Equals(sourceName, targetName, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void ReportField(
-        SymbolAnalysisContext ctx,
-        DiagnosticDescriptor descriptor,
-        IFieldSymbol locationField,
-        IFieldSymbol sourceField,
-        IFieldSymbol targetField,
-        int fieldId,
-        string sourceDisplay,
-        string targetDisplay)
-    {
-        var location = locationField.DeclaringSyntaxReference?.GetSyntax().GetLocation();
-        if (location is null)
-            return;
-
-        var diagnostic = CreateFieldDiagnostic(descriptor, location, ctx.Compilation, sourceField, targetField, fieldId, sourceDisplay, targetDisplay);
-        if (diagnostic is not null)
-            ctx.ReportDiagnostic(diagnostic);
-    }
-
-    private static void ReportField(
-        OperationAnalysisContext ctx,
-        DiagnosticDescriptor descriptor,
-        IFieldSymbol locationField,
-        IFieldSymbol sourceField,
-        IFieldSymbol targetField,
-        int fieldId,
-        ITableTypeSymbol sourceTable,
-        ITableTypeSymbol targetTable)
-    {
-        var location = locationField.Location;
-        if (location is null)
-            return;
-
-        var diagnostic = CreateFieldDiagnostic(
-            descriptor, location, ctx.Compilation, sourceField, targetField, fieldId,
-            sourceTable.GetFullyQualifiedObjectName(quoteIdentifierIfNeeded: true),
-            targetTable.GetFullyQualifiedObjectName(quoteIdentifierIfNeeded: true));
-
-        if (diagnostic is not null)
-            ctx.ReportDiagnostic(diagnostic);
-    }
-
-    private static Diagnostic? CreateFieldDiagnostic(
-        DiagnosticDescriptor descriptor,
-        Location location,
+    private static MismatchResult ReportMismatches(
+        List<FieldMismatch> mismatches,
         Compilation compilation,
+        string sourceDisplay,
+        string targetDisplay,
+        bool reportAtFieldLevel,
+        bool swapDisplayForTarget,
+        Func<IFieldSymbol, Location?> getLocation,
+        Action<Diagnostic> reportDiagnostic)
+    {
+        var hasTypeMismatch = false;
+        var hasNameMismatch = false;
+        var minTypeId = int.MaxValue;
+        var minNameId = int.MaxValue;
+
+        foreach (var mismatch in mismatches)
+        {
+            if (mismatch.Kind.HasFlag(MismatchKind.Type)
+                && !IsEitherFieldSuppressed(DiagnosticDescriptors.TransferFieldsTypeMismatch.Id, mismatch.Source, mismatch.Target))
+            {
+                hasTypeMismatch = true;
+                if (mismatch.FieldId < minTypeId)
+                    minTypeId = mismatch.FieldId;
+
+                if (reportAtFieldLevel)
+                {
+                    ReportFieldTypeMismatch(compilation, getLocation(mismatch.Source), mismatch.Source, mismatch.Target, mismatch.FieldId, sourceDisplay, targetDisplay, reportDiagnostic);
+                    ReportFieldTypeMismatch(compilation, getLocation(mismatch.Target), mismatch.Source, mismatch.Target, mismatch.FieldId,
+                        swapDisplayForTarget ? targetDisplay : sourceDisplay,
+                        swapDisplayForTarget ? sourceDisplay : targetDisplay,
+                        reportDiagnostic);
+                }
+            }
+
+            if (mismatch.Kind.HasFlag(MismatchKind.Name)
+                && !IsEitherFieldSuppressed(DiagnosticDescriptors.TransferFieldsNameMismatch.Id, mismatch.Source, mismatch.Target))
+            {
+                hasNameMismatch = true;
+                if (mismatch.FieldId < minNameId)
+                    minNameId = mismatch.FieldId;
+
+                if (reportAtFieldLevel)
+                {
+                    ReportFieldNameMismatch(compilation, getLocation(mismatch.Source), mismatch.Source, mismatch.Target, mismatch.FieldId, sourceDisplay, targetDisplay, reportDiagnostic);
+                    ReportFieldNameMismatch(compilation, getLocation(mismatch.Target), mismatch.Source, mismatch.Target, mismatch.FieldId,
+                        swapDisplayForTarget ? targetDisplay : sourceDisplay,
+                        swapDisplayForTarget ? sourceDisplay : targetDisplay,
+                        reportDiagnostic);
+                }
+            }
+        }
+
+        return new MismatchResult(hasTypeMismatch, hasNameMismatch, minTypeId, minNameId);
+    }
+
+    private static void ReportFieldTypeMismatch(
+        Compilation compilation,
+        Location? location,
         IFieldSymbol sourceField,
         IFieldSymbol targetField,
         int fieldId,
         string sourceDisplay,
-        string targetDisplay)
+        string targetDisplay,
+        Action<Diagnostic> reportDiagnostic)
     {
-        if (!location.IsInSource || !IsLocationInCompilation(location, compilation))
-            return null;
+        if (location is null || !location.IsInSource || !IsLocationInCompilation(location, compilation))
+            return;
 
-        if (descriptor.Id == DiagnosticDescriptors.TransferFieldsNameMismatch.Id)
-        {
-            return Diagnostic.Create(
-                descriptor,
-                location,
-                fieldId,
-                sourceDisplay,
-                targetDisplay,
-                sourceField.Name.QuoteIdentifierIfNeededWithReflection(),
-                targetField.Name.QuoteIdentifierIfNeededWithReflection());
-        }
+        reportDiagnostic(Diagnostic.Create(
+            DiagnosticDescriptors.TransferFieldsTypeMismatch,
+            location,
+            fieldId,
+            sourceDisplay,
+            targetDisplay,
+            GetToDisplayStringSafe(sourceField),
+            GetToDisplayStringSafe(targetField),
+            sourceField.Name.QuoteIdentifierIfNeededWithReflection(),
+            targetField.Name.QuoteIdentifierIfNeededWithReflection()));
+    }
 
-        if (descriptor.Id == DiagnosticDescriptors.TransferFieldsTypeMismatch.Id)
-        {
-            return Diagnostic.Create(
-                descriptor,
-                location,
-                fieldId,
-                sourceDisplay,
-                targetDisplay,
-                GetToDisplayStringSafe(sourceField),
-                GetToDisplayStringSafe(targetField),
-                sourceField.Name.QuoteIdentifierIfNeededWithReflection(),
-                targetField.Name.QuoteIdentifierIfNeededWithReflection());
-        }
+    private static void ReportFieldNameMismatch(
+        Compilation compilation,
+        Location? location,
+        IFieldSymbol sourceField,
+        IFieldSymbol targetField,
+        int fieldId,
+        string sourceDisplay,
+        string targetDisplay,
+        Action<Diagnostic> reportDiagnostic)
+    {
+        if (location is null || !location.IsInSource || !IsLocationInCompilation(location, compilation))
+            return;
 
-        return null;
+        reportDiagnostic(Diagnostic.Create(
+            DiagnosticDescriptors.TransferFieldsNameMismatch,
+            location,
+            fieldId,
+            sourceDisplay,
+            targetDisplay,
+            sourceField.Name.QuoteIdentifierIfNeededWithReflection(),
+            targetField.Name.QuoteIdentifierIfNeededWithReflection()));
     }
 
     private static string GetToDisplayStringSafe(IFieldSymbol fieldSymbol)

@@ -39,6 +39,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ClearResetsPassedToFunction")]
         [TestCase("ClearResetsRecordAssignment")]
         [TestCase("LoopNoSetLoadFields")]
+        [TestCase("SetupTableGetWithArgs")]
+        [TestCase("SetupTableFindFirst")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -80,6 +82,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("RecordAssignedToOther")]
         [TestCase("RecordAssignedToOtherQuotedName")]
         [TestCase("RecordAssignedBeforeRead")]
+        [TestCase("SetupTableGet")]
+        [TestCase("SetupTableGetNoSpace")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

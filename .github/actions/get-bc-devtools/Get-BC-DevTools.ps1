@@ -250,8 +250,9 @@ function Get-AssetInfo {
     }
 
     # Determine the archive-internal folder and the full entry path for the target DLL.
-    # For NuGet, try net8.0 first; fall back to net10.0 if the entry isn't found.
-    $nugetTfmPaths = @('tools/net8.0/any', 'tools/net10.0/any')
+    # For NuGet packages that ship multiple TFMs, we want the highest.
+    # Order highest-first so the first successful extraction wins.
+    $nugetTfmPaths = @('tools/net10.0/any', 'tools/net8.0/any')
     $pathInArchive = switch ($PackageType) {
         'VSIX' { 'extension/bin/Analyzers' }
         'NuGet' { $nugetTfmPaths[0] }
