@@ -152,9 +152,8 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
 
     /// <summary>
     /// Finds the statement before which to insert SetAutoCalcFields.
-    /// For repeat-until inside begin...end: finds the FindSet/Find call before the repeat.
-    /// For repeat-until as body of if-FindSet: the if statement itself.
-    /// For while loops: the while statement itself.
+    /// For repeat-until: walks up to find the enclosing if-FindSet or while statement.
+    /// SetAutoCalcFields must be placed BEFORE the FindSet/Find call for it to take effect.
     /// For report triggers: returns null (SetAutoCalcFields belongs in OnPreDataItem).
     /// </summary>
     private static StatementSyntax? FindInsertionTarget(InvocationExpressionSyntax calcFieldsInvocation)
@@ -165,15 +164,15 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
             switch (current)
             {
                 case RepeatStatementSyntax repeatStatement:
-                    // For repeat-until, try to find the FindSet/Find statement before the repeat
+                    // Check if an ancestor if-statement contains the FindSet condition
+                    var enclosingIf = FindEnclosingIfWithFind(repeatStatement);
+                    if (enclosingIf is not null)
+                        return enclosingIf;
+
+                    // Otherwise look for a standalone FindSet statement before the repeat
                     var precedingFind = FindPrecedingFindStatement(repeatStatement);
                     if (precedingFind is not null)
                         return precedingFind;
-
-                    // Check if repeat is the body of "if Rec.FindSet() then repeat"
-                    var parentIfStatement = FindParentIfWithFindCondition(repeatStatement);
-                    if (parentIfStatement is not null)
-                        return parentIfStatement;
 
                     return repeatStatement;
 
@@ -195,13 +194,18 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
     }
 
     /// <summary>
-    /// Checks if the repeat statement is the direct body of an "if Rec.FindSet() then"
-    /// and returns that if statement as the insertion target.
+    /// Walks up from the repeat statement to find an enclosing if-statement whose condition
+    /// contains a FindSet/Find call. Handles both:
+    ///   if Rec.FindSet() then repeat...
+    ///   if Rec.FindSet() then begin repeat... end;
     /// </summary>
-    private static IfStatementSyntax? FindParentIfWithFindCondition(RepeatStatementSyntax repeatStatement)
+    private static IfStatementSyntax? FindEnclosingIfWithFind(RepeatStatementSyntax repeatStatement)
     {
-        // Walk up: repeat might be wrapped in a block (begin...end) or be direct child of if
-        var parent = repeatStatement.Parent;
+        SyntaxNode? parent = repeatStatement.Parent;
+
+        // If repeat is inside begin...end, go one level up
+        if (parent is BlockSyntax)
+            parent = parent.Parent;
 
         if (parent is IfStatementSyntax ifStatement)
             return ifStatement;

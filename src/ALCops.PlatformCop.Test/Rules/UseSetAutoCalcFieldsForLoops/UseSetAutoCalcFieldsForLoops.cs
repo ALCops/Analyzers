@@ -56,6 +56,7 @@ public class UseSetAutoCalcFieldsForLoops : NavCodeAnalysisBase
     [TestCase("FindSetRepeatUntil")]
     [TestCase("MultipleFields")]
     [TestCase("IfFindSetRepeatUntil")]
+    [TestCase("IfFindSetBeginRepeatUntil")]
     public async Task HasFix(string testCase)
     {
         var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
