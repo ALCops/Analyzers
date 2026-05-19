@@ -474,4 +474,13 @@
   <data name="UseSetAutoCalcFieldsForLoopsCodeAction" xml:space="preserve">
     <value>ALCops: Use SetAutoCalcFields before loop</value>
   </data>
+  <data name="PageVariableSetRecordTemporaryRecordTitle" xml:space="preserve">
+    <value>SetRecord() does not support temporary records</value>
+  </data>
+  <data name="PageVariableSetRecordTemporaryRecordMessageFormat" xml:space="preserve">
+    <value>{0}.SetRecord(): You cannot use a temporary record for the Record parameter.</value>
+  </data>
+  <data name="PageVariableSetRecordTemporaryRecordDescription" xml:space="preserve">
+    <value>The SetRecord method on a Page variable does not support temporary records. Passing a temporary record to SetRecord will cause a runtime error because Business Central cannot bind a page to a temporary record instance via this method.</value>
+  </data>
 </root>

@@ -345,6 +345,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.UseSetAutoCalcFieldsForLoopsDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UseSetAutoCalcFieldsForLoops));
 
+    public static readonly DiagnosticDescriptor PageVariableSetRecordTemporaryRecord = new(
+        id: DiagnosticIds.PageVariableSetRecordTemporaryRecord,
+        title: PlatformCopAnalyzers.PageVariableSetRecordTemporaryRecordTitle,
+        messageFormat: PlatformCopAnalyzers.PageVariableSetRecordTemporaryRecordMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.PageVariableSetRecordTemporaryRecordDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PageVariableSetRecordTemporaryRecord));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLower());

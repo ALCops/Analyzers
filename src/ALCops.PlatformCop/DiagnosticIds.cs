@@ -36,4 +36,5 @@ public static class DiagnosticIds
     public static readonly string DuplicateODataEntityName = "PC0033";
     public static readonly string PlaceholderArgumentCountMismatch = "PC0034";
     public static readonly string UseSetAutoCalcFieldsForLoops = "PC0035";
+    public static readonly string PageVariableSetRecordTemporaryRecord = "PC0036";
 }
