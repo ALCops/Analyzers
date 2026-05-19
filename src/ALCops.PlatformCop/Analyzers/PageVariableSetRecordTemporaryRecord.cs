@@ -27,7 +27,7 @@ public sealed class PageVariableSetRecordTemporaryRecord : DiagnosticAnalyzer
         if (targetMethod is null || targetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
             return;
 
-        if (!string.Equals(targetMethod.Name, "SetRecord", StringComparison.OrdinalIgnoreCase))
+        if (!SemanticFacts.IsSameName(targetMethod.Name, "SetRecord"))
             return;
 
         if (targetMethod.ContainingType?.GetTypeSymbol().GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Page)

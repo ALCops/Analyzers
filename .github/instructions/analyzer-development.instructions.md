@@ -270,7 +270,7 @@ private void AnalyzeInvocation(OperationAnalysisContext ctx)
         return;
 
     if (invocation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod ||
-        invocation.TargetMethod.Name != "Commit")
+        !SemanticFacts.IsSameName(invocation.TargetMethod.Name, "Commit"))
         return;
 
     ctx.ReportDiagnostic(Diagnostic.Create(
@@ -670,6 +670,14 @@ private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
 - **Never compare raw syntax text to identify symbols.** Do not use `syntax.ToString()`, `node.Identifier.ValueText`, or similar text-based checks to determine what a variable, method, or expression refers to. These are fragile (case-sensitive, whitespace-dependent, miss implicit conversions) and produce incorrect results when the source text doesn't match the canonical symbol name. Instead, resolve the symbol via `IOperation.GetSymbolSafe()`, `SemanticModel.GetSymbolInfo()`, or `SemanticModel.GetDeclaredSymbol()`, then compare using symbol identity (`symbol.Equals(other)`) or symbol properties (`symbol.Kind`, `symbol.Name`). Checking `ISymbol.Name` after resolution is acceptable because it's the compiler-resolved canonical form, not raw source text.
   - **Exception: when you must fall back to syntax text** (e.g., extracting a variable name from `IConversionExpression.Syntax` where `GetSymbol()` returns null), always call `.UnquoteIdentifier()` on the `ValueText` before comparing against symbol names. AL identifiers can be quoted (`"My Table"`), and `ValueText` preserves quotes while `ISymbol.Name` strips them. Missing `UnquoteIdentifier()` causes silent failures on any quoted identifier. The extension is in `Microsoft.Dynamics.Nav.CodeAnalysis.Utilities`.
 - **Use `CancellationToken`** via `ctx.CancellationToken.ThrowIfCancellationRequested()` in loops over large collections (e.g., iterating all fields in a table).
+- **Always use `SemanticFacts.IsSameName()` for AL identifier comparison.** AL is case-insensitive. When comparing method names, field names, object names, or any AL identifiers, use `SemanticFacts.IsSameName(a, b)` from `Microsoft.Dynamics.Nav.CodeAnalysis` instead of `string.Equals(a, b, StringComparison.OrdinalIgnoreCase)`. This makes the intent explicit (AL name comparison) and keeps the codebase consistent. Example:
+  ```csharp
+  // WRONG - generic string comparison
+  if (string.Equals(targetMethod.Name, "SetRecord", StringComparison.OrdinalIgnoreCase))
+
+  // CORRECT - AL-specific name comparison
+  if (SemanticFacts.IsSameName(targetMethod.Name, "SetRecord"))
+  ```
 - **Mark analyzer classes `sealed`** unless there is a specific reason for inheritance.
 - **One analyzer class per rule or tightly related rule group.** The `AnalyzeCountMethod` analyzer handles both `LC0081` (IsEmpty) and `LC0082` (FindWithNext) because they share the same analysis logic.
 - **Use `ImmutableArray.Create()`** for `SupportedDiagnostics`, listing all descriptors the analyzer may report.
