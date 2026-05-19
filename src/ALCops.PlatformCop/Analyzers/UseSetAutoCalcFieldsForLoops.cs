@@ -90,6 +90,11 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
         // variable(s) driving the current loop scope.
         private readonly Stack<ImmutableHashSet<string>> _loopVariables = new();
 
+        // Tracks nesting depth inside conditional branches (if/case) relative to
+        // the current loop. Reset to 0 when entering a new loop body.
+        private int _conditionalDepth;
+        private readonly Stack<int> _savedConditionalDepths = new();
+
         public IReadOnlyList<CalcFieldsDiagnosticInfo> Diagnostics => _diagnostics;
 
         public CalcFieldsInLoopWalker(string? implicitLoopVariable, CancellationToken cancellationToken)
@@ -109,7 +114,7 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
         {
             _cancellationToken.ThrowIfCancellationRequested();
 
-            if (IsInLoop() && IsCalcFieldsCall(operation))
+            if (IsInLoop() && _conditionalDepth == 0 && IsCalcFieldsCall(operation))
             {
                 var instanceName = GetInstanceVariableName(operation);
                 if (instanceName is not null && IsLoopVariable(instanceName))
@@ -135,10 +140,10 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
                     ? ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, loopVar)
                     : ImmutableHashSet<string>.Empty;
 
-                _loopVariables.Push(loopVars);
+                PushLoop(loopVars);
                 Visit(operation.Body);
                 Visit(operation.Condition);
-                _loopVariables.Pop();
+                PopLoop();
             }
             else
             {
@@ -148,10 +153,10 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
                     ? ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, loopVar)
                     : ImmutableHashSet<string>.Empty;
 
-                _loopVariables.Push(loopVars);
+                PushLoop(loopVars);
                 Visit(operation.Condition);
                 Visit(operation.Body);
-                _loopVariables.Pop();
+                PopLoop();
             }
         }
 
@@ -164,10 +169,10 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
                 ? ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, iterVarName)
                 : ImmutableHashSet<string>.Empty;
 
-            _loopVariables.Push(loopVars);
+            PushLoop(loopVars);
             Visit(operation.Expression);
             Visit(operation.Body);
-            _loopVariables.Pop();
+            PopLoop();
         }
 
         public override void VisitForLoopStatement(IForLoopStatement operation)
@@ -176,14 +181,68 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
 
             // For loops don't typically loop over records, but we still walk the body
             // with an empty loop variable set (CalcFields won't match any loop var)
-            _loopVariables.Push(ImmutableHashSet<string>.Empty);
+            PushLoop(ImmutableHashSet<string>.Empty);
             Visit(operation.InitialValue);
             Visit(operation.EndValue);
             Visit(operation.Body);
-            _loopVariables.Pop();
+            PopLoop();
+        }
+
+        public override void VisitIfStatement(IIfStatement operation)
+        {
+            _cancellationToken.ThrowIfCancellationRequested();
+
+            if (!IsInLoop())
+            {
+                base.VisitIfStatement(operation);
+                return;
+            }
+
+            // Inside a loop: walk branches with incremented conditional depth.
+            // This suppresses direct CalcFields detection but still discovers nested loops.
+            _conditionalDepth++;
+            Visit(operation.Condition);
+            Visit(operation.IfTrueStatement);
+            Visit(operation.IfFalseStatement);
+            _conditionalDepth--;
+        }
+
+        public override void VisitCaseStatement(ICaseStatement operation)
+        {
+            _cancellationToken.ThrowIfCancellationRequested();
+
+            if (!IsInLoop())
+            {
+                base.VisitCaseStatement(operation);
+                return;
+            }
+
+            // Inside a loop: walk case lines with incremented conditional depth.
+            _conditionalDepth++;
+            Visit(operation.Value);
+            foreach (var caseLine in operation.CaseLines)
+                Visit(caseLine);
+            if (operation.ElseStatement is not null)
+                Visit(operation.ElseStatement);
+            _conditionalDepth--;
         }
 
         private bool IsInLoop() => _loopVariables.Count > 0;
+
+        private void PushLoop(ImmutableHashSet<string> loopVars)
+        {
+            // Save current conditional depth on the stack (encoded with the loop vars)
+            // and reset to 0: inside a new loop, code is unconditional relative to that loop.
+            _savedConditionalDepths.Push(_conditionalDepth);
+            _conditionalDepth = 0;
+            _loopVariables.Push(loopVars);
+        }
+
+        private void PopLoop()
+        {
+            _loopVariables.Pop();
+            _conditionalDepth = _savedConditionalDepths.Pop();
+        }
 
         private bool IsLoopVariable(string variableName)
         {

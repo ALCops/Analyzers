@@ -25,6 +25,7 @@ Version gate: None (SetAutoCalcFields available since runtime 1.0)
 |---|---|---|
 | Loop types | FindSet/Find + repeat-until, while-do, report OnAfterGetRecord | All patterns that iterate over records |
 | Variable matching | Only flag CalcFields on the variable driving the loop | Avoids false positives (Example #2 from spec) |
+| Conditional paths | Skip entirely (if/case) | Cannot guarantee conditional CalcFields always executes; avoids false positives |
 | Cross-method tracking | Out of scope v1 | Complex, may lack source code for dependencies |
 | RecordRef | N/A | RecordRef does not have a CalcFields method in the SDK |
 | ForEach loop | N/A | AL foreach only works with List/Array, not Record |
@@ -48,9 +49,15 @@ Uses `RegisterCodeBlockAction` to analyze entire method/trigger bodies. A custom
 
 A `Stack<ImmutableHashSet<string>>` tracks loop variables at each nesting level. When entering a loop, the set of active loop variables is pushed. When exiting, it's popped. This correctly handles nested loops.
 
+### Conditional path skipping
+
+`VisitIfStatement` and `VisitCaseStatement` are overridden to increment a `_conditionalDepth` counter when inside a loop. CalcFields is only flagged when `_conditionalDepth == 0`. When entering a new loop (`PushLoop`), `_conditionalDepth` is saved and reset to 0, so CalcFields inside a nested loop (even one inside a conditional branch) is correctly flagged as unconditional relative to that inner loop. On `PopLoop`, the saved depth is restored.
+
+This follows the same `_branchDepth` pattern used in `PartialRecordOperations` (PC0030/PC0031), adapted with save/restore semantics for loop nesting.
+
 ### CalcFields detection
 
-`VisitInvocationExpression` checks if the method name is `CalcFields` and if the instance variable is in the current set of loop variables (at any nesting level).
+`VisitInvocationExpression` checks: `IsInLoop() && _conditionalDepth == 0 && IsCalcFieldsCall(...)` and verifies the instance variable is in the current set of loop variables (at any nesting level).
 
 ### CodeFix strategy
 
@@ -62,8 +69,8 @@ A `Stack<ImmutableHashSet<string>>` tracks loop variables at each nesting level.
 
 ## Test coverage
 
-**HasDiagnostic (6 cases):** FindSetRepeatUntil, FindRepeatUntil, WhileLoop, ReportOnAfterGetRecord, MultipleCalcFields, NestedLoop.
-**NoDiagnostic (4 cases):** DifferentVariable, CalcFieldsOutsideLoop, CrossMethodCall, SingleRecord.
+**HasDiagnostic (7 cases):** FindSetRepeatUntil, FindRepeatUntil, WhileLoop, ReportOnAfterGetRecord, MultipleCalcFields, NestedLoop, NestedLoopInConditional.
+**NoDiagnostic (7 cases):** DifferentVariable, CalcFieldsOutsideLoop, CrossMethodCall, SingleRecord, CalcFieldsInIfBlock, CalcFieldsInCaseBlock, CalcFieldsInIfElseBlock.
 **HasFix (2 cases):** FindSetRepeatUntil, MultipleFields.
 
 ## Known limitations
@@ -71,3 +78,4 @@ A `Stack<ImmutableHashSet<string>>` tracks loop variables at each nesting level.
 - Cross-method CalcFields calls (passed record variable) are not detected
 - Multiple CalcFields in the same loop are reported individually (not merged by the analyzer)
 - The CodeFix handles one CalcFields at a time; use Fix All for multiple occurrences
+- CalcFields inside conditional branches (if/case) within loops are intentionally not flagged, even if all branches call CalcFields (accepted false negative for zero false positives)

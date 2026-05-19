@@ -27,6 +27,7 @@ public class UseSetAutoCalcFieldsForLoops : NavCodeAnalysisBase
     [TestCase("ReportOnAfterGetRecord")]
     [TestCase("MultipleCalcFields")]
     [TestCase("NestedLoop")]
+    [TestCase("NestedLoopInConditional")]
     public async Task HasDiagnostic(string testCase)
     {
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -40,6 +41,9 @@ public class UseSetAutoCalcFieldsForLoops : NavCodeAnalysisBase
     [TestCase("CalcFieldsOutsideLoop")]
     [TestCase("CrossMethodCall")]
     [TestCase("SingleRecord")]
+    [TestCase("CalcFieldsInIfBlock")]
+    [TestCase("CalcFieldsInCaseBlock")]
+    [TestCase("CalcFieldsInIfElseBlock")]
     public async Task NoDiagnostic(string testCase)
     {
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
