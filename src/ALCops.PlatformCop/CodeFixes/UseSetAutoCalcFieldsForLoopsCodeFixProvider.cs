@@ -44,7 +44,12 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
             .ConfigureAwait(false);
 
         SyntaxNode node = syntaxRoot.FindNode(span);
-        if (node is not InvocationExpressionSyntax)
+        if (node is not InvocationExpressionSyntax invocation)
+            return;
+
+        // Don't offer CodeFix when there's no valid insertion target
+        // (e.g., report OnAfterGetRecord where SetAutoCalcFields belongs in OnPreDataItem)
+        if (FindInsertionTarget(invocation) is null)
             return;
 
         ctx.RegisterCodeFix(
