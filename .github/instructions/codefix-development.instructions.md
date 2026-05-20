@@ -494,6 +494,20 @@ See `testing.instructions.md` for the full testing guide. CodeFix-specific detai
 - `fixture.TestCodeFix()` verifies the transformation from current to expected code
 - Test cases live in `HasFix/<TestCaseName>/` with `current.al` (with `[|...|]` marker) and `expected.al`
 
+## AL name comparisons in CodeFixes
+
+When comparing AL identifiers (method names, property names, object names, variable names, namespaces) in CodeFix code, use the `SemanticFacts` API family. See `analyzer-development.instructions.md` for the full reference table. Quick summary:
+
+```csharp
+// Direct equality
+if (SemanticFacts.IsSameName(expression.GetNameStringValue(), "RunModal"))
+
+// Collection of AL names
+private static readonly HashSet<string> Methods = new(SemanticFacts.NameEqualityComparer) { "Get", "Set" };
+```
+
+Do NOT use `SemanticFacts` for property value text, file paths, or non-AL strings.
+
 ## Reference implementations by pattern
 
 When writing a new CodeFix, find an existing one that uses the same technique. Use `ls src/*/CodeFixes/` to discover all CodeFix files.

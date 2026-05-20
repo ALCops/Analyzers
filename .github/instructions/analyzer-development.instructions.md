@@ -670,13 +670,37 @@ private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
 - **Never compare raw syntax text to identify symbols.** Do not use `syntax.ToString()`, `node.Identifier.ValueText`, or similar text-based checks to determine what a variable, method, or expression refers to. These are fragile (case-sensitive, whitespace-dependent, miss implicit conversions) and produce incorrect results when the source text doesn't match the canonical symbol name. Instead, resolve the symbol via `IOperation.GetSymbolSafe()`, `SemanticModel.GetSymbolInfo()`, or `SemanticModel.GetDeclaredSymbol()`, then compare using symbol identity (`symbol.Equals(other)`) or symbol properties (`symbol.Kind`, `symbol.Name`). Checking `ISymbol.Name` after resolution is acceptable because it's the compiler-resolved canonical form, not raw source text.
   - **Exception: when you must fall back to syntax text** (e.g., extracting a variable name from `IConversionExpression.Syntax` where `GetSymbol()` returns null), always call `.UnquoteIdentifier()` on the `ValueText` before comparing against symbol names. AL identifiers can be quoted (`"My Table"`), and `ValueText` preserves quotes while `ISymbol.Name` strips them. Missing `UnquoteIdentifier()` causes silent failures on any quoted identifier. The extension is in `Microsoft.Dynamics.Nav.CodeAnalysis.Utilities`.
 - **Use `CancellationToken`** via `ctx.CancellationToken.ThrowIfCancellationRequested()` in loops over large collections (e.g., iterating all fields in a table).
-- **Always use `SemanticFacts.IsSameName()` for AL identifier comparison.** AL is case-insensitive. When comparing method names, field names, object names, or any AL identifiers, use `SemanticFacts.IsSameName(a, b)` from `Microsoft.Dynamics.Nav.CodeAnalysis` instead of `string.Equals(a, b, StringComparison.OrdinalIgnoreCase)`. This makes the intent explicit (AL name comparison) and keeps the codebase consistent. Example:
-  ```csharp
-  // WRONG - generic string comparison
-  if (string.Equals(targetMethod.Name, "SetRecord", StringComparison.OrdinalIgnoreCase))
+- **Always use the `SemanticFacts` name comparison API for AL identifiers.** AL is case-insensitive. Use the appropriate `SemanticFacts` member from `Microsoft.Dynamics.Nav.CodeAnalysis` instead of raw `StringComparison.OrdinalIgnoreCase` / `StringComparer.OrdinalIgnoreCase`. This makes intent explicit (AL name comparison) and keeps the codebase consistent with Microsoft's own CodeCops.
 
-  // CORRECT - AL-specific name comparison
+  | Scenario | Use | Instead of |
+  |----------|-----|------------|
+  | Direct equality | `SemanticFacts.IsSameName(a, b)` | `string.Equals(a, b, StringComparison.OrdinalIgnoreCase)` or `a.Equals(b, StringComparison.OrdinalIgnoreCase)` |
+  | Collection comparer | `SemanticFacts.NameEqualityComparer` | `StringComparer.OrdinalIgnoreCase` in HashSet/Dictionary/ImmutableHashSet/GroupBy/ToLookup |
+  | Substring/prefix/suffix | `SemanticFacts.NameEqualityComparison` | `StringComparison.OrdinalIgnoreCase` in StartsWith/EndsWith/Contains/IndexOf |
+  | Sorting | `SemanticFacts.NameComparer` | `StringComparer.OrdinalIgnoreCase` in OrderBy/Sort |
+
+  **When NOT to use SemanticFacts (keep OrdinalIgnoreCase):**
+  - Property value comparisons (enum values like "Always", "Never", "#All")
+  - File path or assembly location comparisons
+  - Non-AL text (diagnostic IDs, translation keys, manifest metadata, punctuation)
+  - User-configured strings (affix lists from alcops.json settings)
+  - Permission character strings (e.g., searching "RIMD" for a permission char)
+
+  ```csharp
+  // Direct equality - comparing AL method name
   if (SemanticFacts.IsSameName(targetMethod.Name, "SetRecord"))
+
+  // Collection of AL method names
+  private static readonly HashSet<string> Methods = new(SemanticFacts.NameEqualityComparer)
+  {
+      "Find", "FindFirst", "FindLast", "FindSet"
+  };
+
+  // Substring check on AL identifier name
+  if (field.Name.Contains("no", SemanticFacts.NameEqualityComparison))
+
+  // Sorting AL identifier names
+  fields.Sort(SemanticFacts.NameComparer);
   ```
 - **Mark analyzer classes `sealed`** unless there is a specific reason for inheritance.
 - **One analyzer class per rule or tightly related rule group.** The `AnalyzeCountMethod` analyzer handles both `LC0081` (IsEmpty) and `LC0082` (FindWithNext) because they share the same analysis logic.
