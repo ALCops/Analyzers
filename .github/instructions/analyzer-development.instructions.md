@@ -674,10 +674,13 @@ private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
 
   | Scenario | Use | Instead of |
   |----------|-----|------------|
-  | Direct equality | `SemanticFacts.IsSameName(a, b)` | `string.Equals(a, b, StringComparison.OrdinalIgnoreCase)` or `a.Equals(b, StringComparison.OrdinalIgnoreCase)` |
+  | Direct equality (non-null) | `SemanticFacts.IsSameName(a, b)` | `string.Equals(a, b, StringComparison.OrdinalIgnoreCase)` or `a.Equals(b, StringComparison.OrdinalIgnoreCase)` |
+  | Direct equality (nullable) | `a.IsSameName(b)` (extension from `ALCops.Common.Extensions`) | `is { } x && SemanticFacts.IsSameName(x, ...)` null-guard pattern |
   | Collection comparer | `SemanticFacts.NameEqualityComparer` | `StringComparer.OrdinalIgnoreCase` in HashSet/Dictionary/ImmutableHashSet/GroupBy/ToLookup |
   | Substring/prefix/suffix | `SemanticFacts.NameEqualityComparison` | `StringComparison.OrdinalIgnoreCase` in StartsWith/EndsWith/Contains/IndexOf |
   | Sorting | `SemanticFacts.NameComparer` | `StringComparer.OrdinalIgnoreCase` in OrderBy/Sort |
+
+  **Nullable inputs:** When comparing values from `SyntaxToken.ValueText` (which is `string?`), use the `IsSameName` extension method from `ALCops.Common.Extensions.StringExtensions`. It returns `false` when either argument is null, avoiding the verbose `is { } varName &&` pattern.
 
   **When NOT to use SemanticFacts (keep OrdinalIgnoreCase):**
   - Property value comparisons (enum values like "Always", "Never", "#All")
@@ -687,8 +690,11 @@ private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
   - Permission character strings (e.g., searching "RIMD" for a permission char)
 
   ```csharp
-  // Direct equality - comparing AL method name
+  // Direct equality - comparing AL method name (both non-null)
   if (SemanticFacts.IsSameName(targetMethod.Name, "SetRecord"))
+
+  // Direct equality - nullable source (e.g. SyntaxToken.ValueText)
+  if (attr.Name.Identifier.ValueText.IsSameName("IntegrationEvent"))
 
   // Collection of AL method names
   private static readonly HashSet<string> Methods = new(SemanticFacts.NameEqualityComparer)

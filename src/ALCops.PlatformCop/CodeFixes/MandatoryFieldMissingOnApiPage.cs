@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ALCops.Common.Reflection;
+using ALCops.Common.Extensions;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
@@ -78,7 +79,7 @@ public sealed class MandatoryFieldMissingOnApiPageCodeFix : CodeFixProvider
             .Select(a =>
                 a.DescendantNodes()
                  .OfType<PageGroupSyntax>()
-                 .FirstOrDefault(g => g.ControlKeyword.ValueText is { } kwText && SemanticFacts.IsSameName(kwText, "repeater")))
+                 .FirstOrDefault(g => g.ControlKeyword.ValueText.IsSameName("repeater")))
             .Where(r => r is not null)
             .ToArray();
 
@@ -94,7 +95,7 @@ public sealed class MandatoryFieldMissingOnApiPageCodeFix : CodeFixProvider
         foreach (var mandatoryField in MandatoryFields)
         {
             bool exists = existingFields.Any(f =>
-                f.Name.Identifier.ValueText is { } fieldName && SemanticFacts.IsSameName(fieldName, mandatoryField.ControlName) &&
+                f.Name.Identifier.ValueText.IsSameName(mandatoryField.ControlName) &&
                 SemanticFacts.IsSameName(f.Expression.ToString(), $"Rec.{mandatoryField.RecField}"));
 
             if (!exists)

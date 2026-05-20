@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ALCops.Common.Permissions;
+using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
@@ -194,7 +195,7 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
             if (node is ObjectSyntax obj
                 && obj is not ApplicationObjectExtensionSyntax
                 && obj.Kind == identity.Kind
-                && obj.Name?.Identifier.ValueText is { } objName && identity.Name is { } idName && SemanticFacts.IsSameName(objName, idName))
+                && obj.Name?.Identifier.ValueText.IsSameName(identity.Name) == true)
             {
                 return obj;
             }

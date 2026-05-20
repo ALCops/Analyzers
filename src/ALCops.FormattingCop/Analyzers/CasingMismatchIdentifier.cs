@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Immutable;
 using System.Reflection;
 using ALCops.Common.Reflection;
+using ALCops.Common.Extensions;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
@@ -265,7 +266,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
             parentKind == EnumProvider.SyntaxKind.UnaryNotExpression)
             return false;
 
-        if (idName.Identifier.ValueText is { } valueText && SemanticFacts.IsSameName(valueText, "Rec"))
+        if (idName.Identifier.ValueText.IsSameName("Rec"))
             return false;
 
         if (idName.Parent?.Parent is PermissionSyntax permissionSyntax &&
@@ -325,9 +326,9 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 break;
 
             case CommaSeparatedPropertyValueSyntax when
-                 prop.Name.Identifier.ValueText is { } propNameAA && SemanticFacts.IsSameName(propNameAA, "ApplicationArea"):
+                 prop.Name.Identifier.ValueText.IsSameName("ApplicationArea"):
             case CommaSeparatedIdentifierOrLiteralPropertyValueSyntax when
-                 prop.Name.Identifier.ValueText is { } propNameVA && SemanticFacts.IsSameName(propNameVA, "ValuesAllowed"):
+                 prop.Name.Identifier.ValueText.IsSameName("ValuesAllowed"):
             case ImagePropertyValueSyntax:
             case StringPropertyValueSyntax:
             case OptionValuePropertyValueSyntax:

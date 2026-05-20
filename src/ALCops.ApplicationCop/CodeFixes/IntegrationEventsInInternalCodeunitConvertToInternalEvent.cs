@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common.Extensions;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeFixes;
@@ -72,7 +73,7 @@ public sealed class IntegrationEventInInternalCodeunitConvertToInternalEventFixP
         MemberAttributeSyntax? attribute =
             methodDeclaration.Attributes.FirstOrDefault(attr =>
                 attr.Name is IdentifierNameSyntax name &&
-                name.Identifier.ValueText is { } attrName && SemanticFacts.IsSameName(attrName, IntegrationEventAttributeName));
+                name.Identifier.ValueText.IsSameName(IntegrationEventAttributeName));
 
         if (attribute is null)
             return document;

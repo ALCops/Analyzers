@@ -6,6 +6,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using ALCops.Common.Reflection;
+using ALCops.Common.Extensions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 
 namespace ALCops.ApplicationCop.CodeFixes;
@@ -242,7 +243,7 @@ public sealed class GlobalLanguageImplementTranslationHelperCodeFixProvider : Co
             return false;
 
         // Check if matches "Translation Helper"
-        return GetSubtypeName(typeReference.DataType) is { } subtypeName && SemanticFacts.IsSameName(subtypeName, TranslationHelperCodeunitName);
+        return GetSubtypeName(typeReference.DataType).IsSameName(TranslationHelperCodeunitName);
     }
 
     private static string? GetSubtypeName(DataTypeSyntax dataType)

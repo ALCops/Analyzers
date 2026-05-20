@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Reflection;
 using ALCops.Common.Reflection;
+using ALCops.Common.Extensions;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
@@ -122,7 +123,7 @@ public sealed class ExtensiblePropertyExplicitlySetCodeFix : CodeFixProvider
                 continue;
 
             // If Name is tokenized differently in your syntax model, adapt this comparison.
-            if (p.Name?.ToString() is { } propName && SemanticFacts.IsSameName(propName, kind.ToString()))
+            if (p.Name?.ToString().IsSameName(kind.ToString()) == true)
                 return p;
         }
         return null;
