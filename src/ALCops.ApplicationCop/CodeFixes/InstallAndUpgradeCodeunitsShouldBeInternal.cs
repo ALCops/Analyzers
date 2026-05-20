@@ -82,10 +82,7 @@ public sealed class InstallAndUpgradeCodeunitsShouldBeInternalCodeFixProvider : 
 
         var existingAccessProperty = properties
                                         .OfType<PropertySyntax>()
-                                        .FirstOrDefault(p => string.Equals(
-                                                                p.Name?.Identifier.ValueText,
-                                                                AccessPropertyName,
-                                                                StringComparison.OrdinalIgnoreCase));
+                                        .FirstOrDefault(p => p.Name?.Identifier.ValueText is { } nameText && SemanticFacts.IsSameName(nameText, AccessPropertyName));
 
         PropertyListSyntax newPropertyList;
         if (existingAccessProperty is not null)

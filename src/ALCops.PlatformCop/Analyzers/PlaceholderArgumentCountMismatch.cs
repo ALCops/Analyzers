@@ -87,7 +87,7 @@ public sealed class PlaceholderArgumentCountMismatch : DiagnosticAnalyzer
     /// </summary>
     private static int GetSubstitutionArgumentCount(string methodName, int totalArguments)
     {
-        if (string.Equals(methodName, "Confirm", StringComparison.OrdinalIgnoreCase))
+        if (SemanticFacts.IsSameName(methodName, "Confirm"))
         {
             // Confirm: args[0]=format, args[1]=default button (Boolean, required if subs present)
             // If only 1 arg (format only) or 2 args (format + default): 0 subs

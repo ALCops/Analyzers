@@ -122,7 +122,7 @@ public sealed class ExtensiblePropertyExplicitlySetCodeFix : CodeFixProvider
                 continue;
 
             // If Name is tokenized differently in your syntax model, adapt this comparison.
-            if (string.Equals(p.Name?.ToString(), kind.ToString(), StringComparison.OrdinalIgnoreCase))
+            if (p.Name?.ToString() is { } propName && SemanticFacts.IsSameName(propName, kind.ToString()))
                 return p;
         }
         return null;

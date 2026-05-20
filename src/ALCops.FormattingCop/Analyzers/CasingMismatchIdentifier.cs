@@ -265,7 +265,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
             parentKind == EnumProvider.SyntaxKind.UnaryNotExpression)
             return false;
 
-        if (string.Equals(idName.Identifier.ValueText, "Rec", StringComparison.OrdinalIgnoreCase))
+        if (idName.Identifier.ValueText is { } valueText && SemanticFacts.IsSameName(valueText, "Rec"))
             return false;
 
         if (idName.Parent?.Parent is PermissionSyntax permissionSyntax &&
@@ -325,9 +325,9 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 break;
 
             case CommaSeparatedPropertyValueSyntax when
-                 string.Equals(prop.Name.Identifier.ValueText, "ApplicationArea", StringComparison.OrdinalIgnoreCase):
+                 prop.Name.Identifier.ValueText is { } propNameAA && SemanticFacts.IsSameName(propNameAA, "ApplicationArea"):
             case CommaSeparatedIdentifierOrLiteralPropertyValueSyntax when
-                 string.Equals(prop.Name.Identifier.ValueText, "ValuesAllowed", StringComparison.OrdinalIgnoreCase):
+                 prop.Name.Identifier.ValueText is { } propNameVA && SemanticFacts.IsSameName(propNameVA, "ValuesAllowed"):
             case ImagePropertyValueSyntax:
             case StringPropertyValueSyntax:
             case OptionValuePropertyValueSyntax:
@@ -414,7 +414,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
 
             if (symbolKindDict.ContainsKey(nameText))
             {
-                var memberDict = string.Equals(expressionText, "ObjectType", StringComparison.OrdinalIgnoreCase)
+                var memberDict = SemanticFacts.IsSameName(expressionText, "ObjectType")
                     ? _objectTypeMemberDictionary
                     : _symbolKindDictionary;
                 CompareAgainstDictionary(ctx, name.Identifier, memberDict);

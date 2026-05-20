@@ -588,10 +588,10 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                 HandleLoadFieldsMethod(operation, state, flowFlags, methodName);
             else if (WriteMethods.Contains(methodName))
                 HandleWriteMethod(state, flowFlags, methodName);
-            else if (string.Equals(methodName, "Reset", StringComparison.OrdinalIgnoreCase))
+            else if (SemanticFacts.IsSameName(methodName, "Reset"))
                 flowFlags.ResetFlags();
             else if (state.IsRecordRef
-                && string.Equals(methodName, "SetTable", StringComparison.OrdinalIgnoreCase)
+                && SemanticFacts.IsSameName(methodName, "SetTable")
                 && operation.Arguments.Length == 1)
                 state.SetTableTargets.Add(GetVariableNameFromArgument(operation.Arguments[0]));
         }
@@ -604,7 +604,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
             // Suppress on setup table parameterless Get() - near-zero performance benefit
             if (state.IsSetupTable
-                && string.Equals(methodName, "Get", StringComparison.OrdinalIgnoreCase)
+                && SemanticFacts.IsSameName(methodName, "Get")
                 && operation.Arguments.IsEmpty)
                 return;
 
@@ -617,7 +617,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         private static void HandleLoadFieldsMethod(IInvocationExpression operation,
             VariableState state, FlowFlags flowFlags, string methodName)
         {
-            if (string.Equals(methodName, "SetLoadFields", StringComparison.OrdinalIgnoreCase)
+            if (SemanticFacts.IsSameName(methodName, "SetLoadFields")
                 && operation.Arguments.IsEmpty)
             {
                 // SetLoadFields() with no arguments resets partial records to "load all"
@@ -656,7 +656,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         {
             // Clear(variable) resets flow state instead of marking passedToFunction
             if (operation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod
-                && string.Equals(operation.TargetMethod.Name, "Clear", StringComparison.OrdinalIgnoreCase)
+                && SemanticFacts.IsSameName(operation.TargetMethod.Name, "Clear")
                 && operation.Arguments.Length >= 1)
             {
                 var clearVarName = GetVariableNameFromArgument(operation.Arguments[0]);

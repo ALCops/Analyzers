@@ -119,7 +119,7 @@ public static class SyntaxNodeExtensions
     {
         foreach (var entry in list.ChildNodes().OfType<IdentifierEqualsLiteralSyntax>())
         {
-            if (string.Equals(entry.Identifier.ValueText, propertyName, StringComparison.OrdinalIgnoreCase))
+            if (entry.Identifier.ValueText is { } valueText && SemanticFacts.IsSameName(valueText, propertyName))
                 return entry;
         }
 

@@ -78,7 +78,7 @@ public sealed class MandatoryFieldMissingOnApiPageCodeFix : CodeFixProvider
             .Select(a =>
                 a.DescendantNodes()
                  .OfType<PageGroupSyntax>()
-                 .FirstOrDefault(g => string.Equals(g.ControlKeyword.ValueText, "repeater", StringComparison.OrdinalIgnoreCase)))
+                 .FirstOrDefault(g => g.ControlKeyword.ValueText is { } kwText && SemanticFacts.IsSameName(kwText, "repeater")))
             .Where(r => r is not null)
             .ToArray();
 
@@ -94,8 +94,8 @@ public sealed class MandatoryFieldMissingOnApiPageCodeFix : CodeFixProvider
         foreach (var mandatoryField in MandatoryFields)
         {
             bool exists = existingFields.Any(f =>
-                string.Equals(f.Name.Identifier.ValueText, mandatoryField.ControlName, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(f.Expression.ToString(), $"Rec.{mandatoryField.RecField}", StringComparison.OrdinalIgnoreCase));
+                f.Name.Identifier.ValueText is { } fieldName && SemanticFacts.IsSameName(fieldName, mandatoryField.ControlName) &&
+                SemanticFacts.IsSameName(f.Expression.ToString(), $"Rec.{mandatoryField.RecField}"));
 
             if (!exists)
                 missing.Add(mandatoryField);

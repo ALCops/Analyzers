@@ -463,7 +463,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     {
         var sourceName = (source.Name ?? string.Empty).UnquoteIdentifier();
         var targetName = (target.Name ?? string.Empty).UnquoteIdentifier();
-        return string.Equals(sourceName, targetName, StringComparison.OrdinalIgnoreCase);
+        return SemanticFacts.IsSameName(sourceName, targetName);
     }
 
     private static MismatchResult ReportMismatches(

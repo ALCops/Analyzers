@@ -153,9 +153,6 @@ public sealed class OperatorAndPlaceholderInFilterExpressionCodeFix : CodeFixPro
         if (identifierName is null)
             return false;
 
-        return string.Equals(
-            identifierName.Identifier.Text,
-            SetFilterMethodName,
-            StringComparison.OrdinalIgnoreCase);
+        return SemanticFacts.IsSameName(identifierName.Identifier.Text, SetFilterMethodName);
     }
 }

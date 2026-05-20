@@ -524,7 +524,7 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             var targetName = target.ToString();
             foreach (var kvp in overrides)
             {
-                if (string.Equals(kvp.Key, targetName, StringComparison.OrdinalIgnoreCase))
+                if (SemanticFacts.IsSameName(kvp.Key, targetName))
                 {
                     setting = kvp.Value;
                     return true;

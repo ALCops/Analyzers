@@ -242,7 +242,7 @@ public sealed class GlobalLanguageImplementTranslationHelperCodeFixProvider : Co
             return false;
 
         // Check if matches "Translation Helper"
-        return string.Equals(GetSubtypeName(typeReference.DataType), TranslationHelperCodeunitName, StringComparison.OrdinalIgnoreCase);
+        return GetSubtypeName(typeReference.DataType) is { } subtypeName && SemanticFacts.IsSameName(subtypeName, TranslationHelperCodeunitName);
     }
 
     private static string? GetSubtypeName(DataTypeSyntax dataType)

@@ -93,5 +93,5 @@ public sealed class ApplicationAreaOnApiPageCodeFix : CodeFixProvider
     }
 
     private static bool IsApplicationAreaProperty(PropertySyntax propertySyntax) =>
-        string.Equals(propertySyntax.Name?.Identifier.ValueText, ApplicationAreaPropertyName, StringComparison.OrdinalIgnoreCase);
+        propertySyntax.Name?.Identifier.ValueText is { } nameText && SemanticFacts.IsSameName(nameText, ApplicationAreaPropertyName);
 }

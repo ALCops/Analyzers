@@ -42,7 +42,7 @@ public sealed class ExplicitlySetRunTrigger : DiagnosticAnalyzer
 
         foreach (var arg in invocation.Arguments)
         {
-            if (string.Equals(arg.Parameter.Name, RunTriggerParameterName, StringComparison.OrdinalIgnoreCase))
+            if (SemanticFacts.IsSameName(arg.Parameter.Name, RunTriggerParameterName))
                 return;
         }
 

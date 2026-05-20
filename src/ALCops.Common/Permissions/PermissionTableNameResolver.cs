@@ -1,4 +1,5 @@
 using ALCops.Common.Extensions;
+using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
 namespace ALCops.Common.Permissions;
@@ -20,10 +21,10 @@ public static class PermissionTableNameResolver
         if (string.IsNullOrEmpty(tableNamespace))
             return tableName.QuoteIdentifierIfNeededWithReflection();
 
-        if (string.Equals(tableNamespace, containingNamespace, StringComparison.OrdinalIgnoreCase))
+        if (containingNamespace is not null && SemanticFacts.IsSameName(tableNamespace, containingNamespace))
             return tableName.QuoteIdentifierIfNeededWithReflection();
 
-        if (importedNamespaces.Any(ns => string.Equals(ns, tableNamespace, StringComparison.OrdinalIgnoreCase)))
+        if (importedNamespaces.Any(ns => SemanticFacts.IsSameName(ns, tableNamespace)))
             return tableName.QuoteIdentifierIfNeededWithReflection();
 
         return $"{tableNamespace}.{tableName.QuoteIdentifierIfNeededWithReflection()}";

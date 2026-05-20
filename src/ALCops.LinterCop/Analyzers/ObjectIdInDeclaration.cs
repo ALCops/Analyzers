@@ -120,12 +120,12 @@ public sealed class ObjectIdInDeclaration : DiagnosticAnalyzer
 
         var symbolKindText = symbolKindAsText.ToString();
         // Special treatment for RecordRef where we only want to analyze Open method calls
-        if (string.Equals(symbolKindText, "RecordRef", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(targetMethod.Name, "Open", StringComparison.OrdinalIgnoreCase))
+        if (SemanticFacts.IsSameName(symbolKindText, "RecordRef") &&
+            !SemanticFacts.IsSameName(targetMethod.Name, "Open"))
             return;
 
         // Map RecordRef to Table Data Type
-        if (string.Equals(symbolKindText, "RecordRef", StringComparison.OrdinalIgnoreCase))
+        if (SemanticFacts.IsSameName(symbolKindText, "RecordRef"))
             symbolKindText = "Table";
 
         if (!Enum.TryParse(symbolKindText, ignoreCase: true, out SymbolKind symbolKind))

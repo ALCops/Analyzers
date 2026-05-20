@@ -24,7 +24,7 @@ public static class TableHelper
             return false;
 
         var name = pkField.Name;
-        return string.Equals(name, "Primary Key", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(name, "PrimaryKey", StringComparison.OrdinalIgnoreCase);
+        return SemanticFacts.IsSameName(name, "Primary Key")
+            || SemanticFacts.IsSameName(name, "PrimaryKey");
     }
 }

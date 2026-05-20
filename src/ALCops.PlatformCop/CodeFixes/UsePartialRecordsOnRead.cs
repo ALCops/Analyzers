@@ -268,7 +268,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
 
             ISymbol? instanceSymbol = operation.Instance?.GetSymbol();
             return instanceSymbol != null
-                && string.Equals(instanceSymbol.Name, _variableName, StringComparison.OrdinalIgnoreCase);
+                && SemanticFacts.IsSameName(instanceSymbol.Name, _variableName);
         }
 
         public override void VisitFieldAccess(IFieldAccess operation)
@@ -291,7 +291,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
 
             ISymbol? instanceSymbol = operation.Instance?.GetSymbol();
             if (instanceSymbol is null ||
-                !string.Equals(instanceSymbol.Name, _variableName, StringComparison.OrdinalIgnoreCase))
+                !SemanticFacts.IsSameName(instanceSymbol.Name, _variableName))
                 return;
 
             AccessedFields.Add(fieldSymbol.Name);

@@ -199,7 +199,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         {
             if (operation is IInvocationExpression inv &&
                 inv.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod &&
-                string.Equals(inv.TargetMethod.Name, "CreateGuid", StringComparison.OrdinalIgnoreCase) &&
+                SemanticFacts.IsSameName(inv.TargetMethod.Name, "CreateGuid") &&
                 inv.Arguments.IsEmpty)
             {
                 invocation = inv;
@@ -342,7 +342,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
     private static bool IsValidateCall(IInvocationExpression invocation) =>
         invocation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod &&
-        string.Equals(invocation.TargetMethod.Name, "Validate", StringComparison.OrdinalIgnoreCase);
+        SemanticFacts.IsSameName(invocation.TargetMethod.Name, "Validate");
 
     private static KeyFieldResult? CheckFieldInKey(IFieldAccess fieldAccess)
     {
@@ -393,7 +393,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         {
             foreach (var keyField in key.Fields)
             {
-                if (string.Equals(keyField.Name, field.Name, StringComparison.OrdinalIgnoreCase))
+                if (SemanticFacts.IsSameName(keyField.Name, field.Name))
                     return true;
             }
         }

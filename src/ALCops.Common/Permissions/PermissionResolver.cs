@@ -151,16 +151,16 @@ public static class PermissionResolver
     private static bool IsTableNameMatch(string declaredName, ITypeSymbol variableType)
     {
         // Match by simple name
-        if (declaredName.Equals(variableType.Name, StringComparison.OrdinalIgnoreCase))
+        if (SemanticFacts.IsSameName(declaredName, variableType.Name))
             return true;
 
         // Match by unquoted simple name
-        if (declaredName.UnquoteIdentifier().Equals(variableType.Name, StringComparison.OrdinalIgnoreCase))
+        if (SemanticFacts.IsSameName(declaredName.UnquoteIdentifier(), variableType.Name))
             return true;
 
         // Match by fully qualified name (namespace.name)
         var qualifiedName = variableType.GetFullyQualifiedObjectName();
-        if (declaredName.UnquoteIdentifier().Equals(qualifiedName, StringComparison.OrdinalIgnoreCase))
+        if (SemanticFacts.IsSameName(declaredName.UnquoteIdentifier(), qualifiedName))
             return true;
 
         return false;
@@ -208,7 +208,7 @@ public static class PermissionResolver
         if (identifier.Kind == EnumProvider.SyntaxKind.IdentifierName)
         {
             var name = ((IdentifierNameSyntax)identifier).Identifier.ValueText?.UnquoteIdentifier();
-            return name is not null && name.Equals(variableType.Name, StringComparison.OrdinalIgnoreCase);
+            return name is not null && SemanticFacts.IsSameName(name, variableType.Name);
         }
 
         if (identifier.Kind == EnumProvider.SyntaxKind.ObjectId)
@@ -229,8 +229,8 @@ public static class PermissionResolver
 
             // Match namespace.name against the variable's fully qualified name
             var variableNamespace = variableType.OriginalDefinition.GetContainingNamespaceQualifiedNameWithReflection();
-            return qualifier.Equals(variableNamespace, StringComparison.OrdinalIgnoreCase)
-                && name.Equals(variableType.Name, StringComparison.OrdinalIgnoreCase);
+            return variableNamespace is not null && SemanticFacts.IsSameName(qualifier, variableNamespace)
+                && SemanticFacts.IsSameName(name, variableType.Name);
         }
 
         return false;

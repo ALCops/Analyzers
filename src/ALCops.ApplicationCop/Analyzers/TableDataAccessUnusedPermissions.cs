@@ -417,7 +417,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (identifier.Kind == EnumProvider.SyntaxKind.IdentifierName)
         {
             var name = ((IdentifierNameSyntax)identifier).Identifier.ValueText?.UnquoteIdentifier();
-            return name is not null && name.Equals(table.Name, StringComparison.OrdinalIgnoreCase);
+            return name is not null && SemanticFacts.IsSameName(name, table.Name);
         }
 
         if (identifier.Kind == EnumProvider.SyntaxKind.ObjectId)
@@ -437,8 +437,8 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 return false;
 
             var tableNamespace = table.OriginalDefinition.GetContainingNamespaceQualifiedNameWithReflection();
-            return qualifier.Equals(tableNamespace, StringComparison.OrdinalIgnoreCase)
-                && name.Equals(table.Name, StringComparison.OrdinalIgnoreCase);
+            return tableNamespace is not null && SemanticFacts.IsSameName(qualifier, tableNamespace)
+                && SemanticFacts.IsSameName(name, table.Name);
         }
 
         return false;

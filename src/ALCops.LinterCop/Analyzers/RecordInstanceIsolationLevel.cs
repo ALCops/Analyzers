@@ -26,7 +26,7 @@ public sealed class RecordInstanceIsolationLevel : DiagnosticAnalyzer
             return;
 
         if (operation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod ||
-            !string.Equals(operation.TargetMethod.Name, "LockTable", StringComparison.OrdinalIgnoreCase))
+            !SemanticFacts.IsSameName(operation.TargetMethod.Name, "LockTable"))
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(

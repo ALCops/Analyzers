@@ -48,7 +48,7 @@ public sealed class EventSubscriberVarKeyword : DiagnosticAnalyzer
 
             var publisherParameter = publisherParameters
                 .FirstOrDefault(p =>
-                    string.Equals(p.Name, subscriberParameter.Name, StringComparison.OrdinalIgnoreCase));
+                    SemanticFacts.IsSameName(p.Name, subscriberParameter.Name));
 
             if (publisherParameter is null)
                 continue;

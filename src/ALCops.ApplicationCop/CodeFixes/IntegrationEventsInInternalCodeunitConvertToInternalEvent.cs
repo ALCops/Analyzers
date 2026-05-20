@@ -72,7 +72,7 @@ public sealed class IntegrationEventInInternalCodeunitConvertToInternalEventFixP
         MemberAttributeSyntax? attribute =
             methodDeclaration.Attributes.FirstOrDefault(attr =>
                 attr.Name is IdentifierNameSyntax name &&
-                string.Equals(name.Identifier.ValueText, IntegrationEventAttributeName, StringComparison.OrdinalIgnoreCase));
+                name.Identifier.ValueText is { } attrName && SemanticFacts.IsSameName(attrName, IntegrationEventAttributeName));
 
         if (attribute is null)
             return document;

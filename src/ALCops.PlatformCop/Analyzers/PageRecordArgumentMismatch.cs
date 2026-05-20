@@ -287,6 +287,6 @@ public sealed class PageRecordArgumentMismatch : DiagnosticAnalyzer
         if (!string.Equals(eNs, aNs, StringComparison.Ordinal))
             return false;
 
-        return string.Equals(expected.Name, actual.Name, StringComparison.OrdinalIgnoreCase);
+        return SemanticFacts.IsSameName(expected.Name, actual.Name);
     }
 }

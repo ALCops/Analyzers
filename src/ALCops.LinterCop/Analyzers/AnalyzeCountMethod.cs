@@ -128,7 +128,7 @@ public class AnalyzeCountMethod : DiagnosticAnalyzer
 
         // Tables with a field "Entry No." could possible have a large amount of records
         if (record.OriginalDefinition is ITableTypeSymbol table)
-            return table.PrimaryKey.Fields.Any(field => string.Equals(field.Name, "Entry No.", StringComparison.OrdinalIgnoreCase));
+            return table.PrimaryKey.Fields.Any(field => SemanticFacts.IsSameName(field.Name, "Entry No."));
 
         return false;
     }

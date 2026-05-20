@@ -194,7 +194,7 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
             if (node is ObjectSyntax obj
                 && obj is not ApplicationObjectExtensionSyntax
                 && obj.Kind == identity.Kind
-                && string.Equals(obj.Name?.Identifier.ValueText, identity.Name, StringComparison.OrdinalIgnoreCase))
+                && obj.Name?.Identifier.ValueText is { } objName && identity.Name is { } idName && SemanticFacts.IsSameName(objName, idName))
             {
                 return obj;
             }
@@ -294,7 +294,7 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         return propertyList.Properties
             .OfType<PropertySyntax>()
             .FirstOrDefault(p => p.Name is { Identifier.ValueText: { } valueText } &&
-                valueText.Equals(nameof(PropertyKind.Permissions), StringComparison.OrdinalIgnoreCase));
+                SemanticFacts.IsSameName(valueText, nameof(PropertyKind.Permissions)));
     }
 
     private static string ResolveTableNameForFix(string tableName, string tableNamespace,
