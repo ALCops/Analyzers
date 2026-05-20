@@ -96,7 +96,7 @@ public sealed class InterfaceObjectNameGuide : DiagnosticAnalyzer
     {
         foreach (var affix in Affixes ?? Enumerable.Empty<string>())
         {
-            if (typeSymbolName.StartsWith(affix, StringComparison.OrdinalIgnoreCase))
+            if (typeSymbolName.StartsWith(affix, SemanticFacts.NameEqualityComparison))
             {
                 int affixLength = affix.Length;
                 if (typeSymbolName.Length > affixLength)

@@ -374,13 +374,13 @@ public sealed class NamingPattern : DiagnosticAnalyzer
 
         foreach (var affix in affixes)
         {
-            if (name.StartsWith(affix, StringComparison.OrdinalIgnoreCase) &&
+            if (name.StartsWith(affix, SemanticFacts.NameEqualityComparison) &&
                 name.Length > affix.Length)
             {
                 return name.Substring(affix.Length).TrimStart();
             }
 
-            if (name.EndsWith(affix, StringComparison.OrdinalIgnoreCase) &&
+            if (name.EndsWith(affix, SemanticFacts.NameEqualityComparison) &&
                 name.Length > affix.Length)
             {
                 return name.Substring(0, name.Length - affix.Length).TrimEnd();

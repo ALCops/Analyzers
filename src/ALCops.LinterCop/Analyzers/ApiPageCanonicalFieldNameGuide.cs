@@ -62,8 +62,8 @@ public sealed class ApiPageCanonicalFieldNameGuide : DiagnosticAnalyzer
             return DescriptiveNames[field.RelatedFieldSymbol.Name];
 
         if (field.RelatedFieldSymbol.Name.Contains("No.")
-                && field.Name.Contains("no", StringComparison.OrdinalIgnoreCase)
-                && !field.Name.Contains("number", StringComparison.OrdinalIgnoreCase))
+                && field.Name.Contains("no", SemanticFacts.NameEqualityComparison)
+                && !field.Name.Contains("number", SemanticFacts.NameEqualityComparison))
             return ReplaceNoWithNumber(field.Name);
 
         return null;
