@@ -57,6 +57,9 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("ReportDataItemModify")]
         [TestCase("ReportDataItemAliasModify")]
         [TestCase("XmlPortTableElementModify")]
+        [TestCase("ReturnParameterRead")]
+        [TestCase("ReportNestedDataItemRead")]
+        [TestCase("QueryNestedDataItemRead")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

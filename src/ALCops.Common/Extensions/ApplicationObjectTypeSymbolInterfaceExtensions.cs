@@ -43,4 +43,33 @@ public static class ApplicationObjectTypeSymbolInterfaceExtensions
 
         return false;
     }
+
+    /// <summary>
+    /// Gets the flattened list of all data items (including nested) for report and query objects.
+    /// For reports on net8.0+, uses the public <see cref="IReportTypeSymbol.FlattenedDataItems"/> property.
+    /// For queries (and reports on netstandard2.1), uses reflection to access the internal FlattenedDataItems.
+    /// Returns an empty enumerable for non-report/query objects or if the property is unavailable.
+    /// </summary>
+    public static IEnumerable<ISymbol> GetFlattenedDataItems(this IApplicationObjectTypeSymbol containingObject)
+    {
+#if !NETSTANDARD2_1
+        if (containingObject is IReportTypeSymbol reportType)
+        {
+            foreach (var dataItem in reportType.FlattenedDataItems)
+                yield return (ISymbol)dataItem;
+            yield break;
+        }
+#endif
+
+        // Queries (all TFMs) and reports (netstandard2.1): FlattenedDataItems accessed via reflection
+        var flattenedItems = ((object)containingObject).GetPropertyIfExists<System.Collections.IEnumerable>("FlattenedDataItems");
+        if (flattenedItems is null)
+            yield break;
+
+        foreach (var item in flattenedItems)
+        {
+            if (item is ISymbol symbol)
+                yield return symbol;
+        }
+    }
 }

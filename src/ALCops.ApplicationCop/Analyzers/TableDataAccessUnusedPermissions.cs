@@ -100,6 +100,16 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 continue;
             }
 
+            // Query data items act as implicit record variables in trigger code
+            if (member.Kind == EnumProvider.SymbolKind.QueryDataItem
+                && member.GetTypeSymbol() is IRecordTypeSymbol queryDataItemRecordType
+                && !queryDataItemRecordType.Temporary)
+            {
+                objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
+                objectScopeRecordMap.TryAdd(member.Name, queryDataItemRecordType);
+                continue;
+            }
+
             // XmlPort table elements act as implicit record variables in trigger code
             if (member.Kind == EnumProvider.SymbolKind.XmlPortNode
                 && member is IXmlPortNodeSymbol xmlPortNode)
@@ -111,6 +121,18 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     AddXmlPortNodeToVarMap(nestedNode, ref objectScopeRecordMap);
 
                 continue;
+            }
+        }
+
+        // Add all nested data items (report and query) to the object-scope record map
+        foreach (var dataItem in containingObject.GetFlattenedDataItems())
+        {
+            if (dataItem.GetBooleanPropertyValue(EnumProvider.PropertyKind.UseTemporary) is not true
+                && dataItem.GetTypeSymbol() is IRecordTypeSymbol nestedRecordType
+                && !nestedRecordType.Temporary)
+            {
+                objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
+                objectScopeRecordMap.TryAdd(dataItem.Name, nestedRecordType);
             }
         }
 
@@ -151,6 +173,15 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     localRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
                     localRecordVarMap.TryAdd(param.Name, recordType);
                 }
+            }
+
+            // Named return value acts as an implicit local variable in AL
+            if (methodSymbol.ReturnValueSymbol is { IsNamed: true } returnValue
+                && returnValue.ReturnType is IRecordTypeSymbol returnRecordType
+                && !returnRecordType.Temporary)
+            {
+                localRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
+                localRecordVarMap.TryAdd(returnValue.Name, returnRecordType);
             }
 
             // Walk method body for DB invocations
@@ -286,21 +317,27 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         IApplicationObjectTypeSymbol containingObject,
         List<RequiredPermission> requiredPermissions)
     {
+        // Reports and queries: use GetFlattenedDataItems to include all nested data items
+        foreach (var dataItem in containingObject.GetFlattenedDataItems())
+        {
+            if (dataItem.Kind == EnumProvider.SymbolKind.ReportDataItem)
+            {
+                var required = RequiredPermissionDetector.TryGetFromReportDataItem(dataItem, includeSystemTables: true);
+                if (required is not null)
+                    requiredPermissions.Add(required.Value);
+            }
+            else if (dataItem.Kind == EnumProvider.SymbolKind.QueryDataItem)
+            {
+                var required = RequiredPermissionDetector.TryGetFromQueryDataItem(dataItem, includeSystemTables: true);
+                if (required is not null)
+                    requiredPermissions.Add(required.Value);
+            }
+        }
+
+        // XmlPort nodes
         foreach (var member in containingObject.GetMembers())
         {
-            if (member.Kind == EnumProvider.SymbolKind.ReportDataItem)
-            {
-                var required = RequiredPermissionDetector.TryGetFromReportDataItem(member, includeSystemTables: true);
-                if (required is not null)
-                    requiredPermissions.Add(required.Value);
-            }
-            else if (member.Kind == EnumProvider.SymbolKind.QueryDataItem)
-            {
-                var required = RequiredPermissionDetector.TryGetFromQueryDataItem(member, includeSystemTables: true);
-                if (required is not null)
-                    requiredPermissions.Add(required.Value);
-            }
-            else if (member.Kind == EnumProvider.SymbolKind.XmlPortNode)
+            if (member.Kind == EnumProvider.SymbolKind.XmlPortNode)
             {
                 foreach (var r in RequiredPermissionDetector.GetFromXmlPortNode(member, includeSystemTables: true))
                     requiredPermissions.Add(r);

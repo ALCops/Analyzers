@@ -68,7 +68,9 @@ src/ALCops.Common/
 | `CollectFromInvocations` | Builds object-scope record map (vars + data items), walks method bodies, resolves DB calls via syntax + symbol lookup |
 | `TryGetPermissionFromInvocation` | Resolves a single invocation: fast path via variable map, fallback via GetSymbolInfo |
 | `TryGetPermissionViaSymbolInfo` | Fallback for complex receivers: uses GetSymbolInfo to resolve method and receiver type |
-| `CollectFromDataItems` | Iterates object members for report/query/xmlport data items (incl. nested xmlport nodes via FlattenedNodes) |
+| `CollectFromDataItems` | Iterates report FlattenedDataItems, query FlattenedDataItems (via reflection), and xmlport nodes |
+| `CollectFromQueryDataItems` | Uses reflection to access internal `FlattenedDataItems` on QueryTypeSymbol |
+| `AddNestedQueryDataItemsToVarMap` | Adds nested query data items to the object-scope record map via reflection |
 | `AddXmlPortNodeToVarMap` | Adds an xmlport table element to the object-scope record map if it references a non-temporary table |
 | `HasPossibleDbInvocation` | Syntax pre-filter: checks if body has any invocation name matching a DB operation |
 | `AnalyzePermissionEntry` | Compares one declared entry against collected required permissions |
@@ -94,6 +96,9 @@ Each `SyntaxNodeAction` callback is self-contained with no shared mutable state.
 | Skip obsolete methods via symbol | `GetDeclaredSymbol` + `IsObsolete()` on the method symbol |
 | Syntax pre-filter per method body | `HasPossibleDbInvocation` checks method names against MethodOperationMap before expensive analysis |
 | Data items via `GetMembers()` | Direct member iteration replaces separate `RegisterSymbolAction` callbacks |
+| Report nested data items via `FlattenedDataItems` | `IReportTypeSymbol.FlattenedDataItems` (public API) recursively includes all nested data items; fixes false positives on nested report structures |
+| Query nested data items via reflection | `IQueryTypeSymbol` doesn't expose `FlattenedDataItems`; access the internal `QueryTypeSymbol.FlattenedDataItems` via `PropertyAccessor.GetPropertyIfExists` (consistent with project reflection patterns) |
+| Named return values included in localRecordVarMap | AL named return values act as implicit local variables; only added when `ReturnValueSymbol.IsNamed == true` to avoid issues with unnamed returns |
 | No CompilationEnd needed | Eliminates the fragile two-phase pattern that caused false positives |
 | Page SourceTable exemption unchanged | Same logic, just moved into per-object callback |
 | System tables included in collection | AC0032 passes `includeSystemTables: true` to `RequiredPermissionDetector` so that declared permissions on system tables are matched against actual accesses |
@@ -137,7 +142,7 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 ## Test coverage
 
 **HasDiagnostic (10 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord, ParameterPartialUnused, ReportDataItemPartialUnused.
-**NoDiagnostic (13 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, XmlPortTableElementModify.
+**NoDiagnostic (20 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, ReportDataItemAliasModify, XmlPortTableElementModify, ReturnParameterRead, ReportNestedDataItemRead, QueryNestedDataItemRead.
 **HasFix (4 cases):** RemoveEntireEntry, ReduceChars, RemoveEntireProperty, ReplaceChars.
 
 ## Known limitations
