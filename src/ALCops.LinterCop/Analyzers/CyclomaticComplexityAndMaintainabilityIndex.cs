@@ -11,7 +11,7 @@ namespace ALCops.LinterCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class CyclomaticComplexityAndMaintainabilityIndex : DiagnosticAnalyzer
 {
-    private static readonly HashSet<string> EventPublisherDecoratorNames = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> EventPublisherDecoratorNames = new(SemanticFacts.NameEqualityComparer)
     {
         "BusinessEvent",
         "IntegrationEvent",

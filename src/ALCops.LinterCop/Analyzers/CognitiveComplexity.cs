@@ -45,7 +45,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
     // This HashSet defines specific identifiers that, in certain cases, restrict whether a statement qualifies as a guard clause.
     // Some exit commands (e.g., "Break", "Skip", "Quit") are only considered guard clauses if they are called on these identifiers.
-    private static readonly HashSet<string> guardClauseIdentifiers = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> guardClauseIdentifiers = new(SemanticFacts.NameEqualityComparer)
     {
         "CurrReport",
         "CurrXMLport"
@@ -54,7 +54,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     // This HashSet defines commands that act as guard clause exits, meaning they immediately alter the flow of execution.
     // These commands are typically used in scenarios where a function, loop, or process needs to be stopped or skipped under certain conditions.
     // However, "Exit" is not included in this set, as we can get the ExitStatementSyntax type directly on the Statement of the IfStatementSyntax
-    private static readonly HashSet<string> guardClauseExitCommands = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> guardClauseExitCommands = new(SemanticFacts.NameEqualityComparer)
     {
         "Break",
         "Continue",
@@ -63,7 +63,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         "Skip"
     };
 
-    private static readonly HashSet<string> eventPublisherDecoratorNames = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> eventPublisherDecoratorNames = new(SemanticFacts.NameEqualityComparer)
     {
         "BusinessEvent",
         "IntegrationEvent",

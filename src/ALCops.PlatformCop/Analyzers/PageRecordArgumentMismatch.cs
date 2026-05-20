@@ -15,14 +15,14 @@ public sealed class PageRecordArgumentMismatch : DiagnosticAnalyzer
             DiagnosticDescriptors.PageRecordArgumentMismatch);
 
     private static readonly ImmutableHashSet<string> PageProcedureNames =
-        ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase,
+        ImmutableHashSet.Create(SemanticFacts.NameEqualityComparer,
             "GetRecord",
             "SetRecord",
             "SetSelectionFilter",
             "SetTableView");
 
     private static readonly ImmutableHashSet<string> PageRunProcedureNames =
-        ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase,
+        ImmutableHashSet.Create(SemanticFacts.NameEqualityComparer,
             "Run",
             "RunModal");
 

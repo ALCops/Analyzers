@@ -20,14 +20,14 @@ public sealed class PlaceholderArgumentCountMismatch : DiagnosticAnalyzer
 {
     private static readonly Regex PlaceholderPattern = new("[#%](\\d+)", RegexOptions.Compiled);
 
-    private static readonly HashSet<string> MethodsCoveredByAA0131 = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> MethodsCoveredByAA0131 = new(SemanticFacts.NameEqualityComparer)
     {
         "StrSubstNo",
         "Message",
         "Error"
     };
 
-    private static readonly HashSet<string> AllTargetMethods = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> AllTargetMethods = new(SemanticFacts.NameEqualityComparer)
     {
         "StrSubstNo",
         "Message",

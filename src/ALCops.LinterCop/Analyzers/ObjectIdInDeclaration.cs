@@ -286,7 +286,7 @@ public sealed class ObjectIdInDeclaration : DiagnosticAnalyzer
 
     private static ImmutableDictionary<string, string> GenerateSymbolKindDictionary()
     {
-        var builder = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.OrdinalIgnoreCase);
+        var builder = ImmutableDictionary.CreateBuilder<string, string>(SemanticFacts.NameEqualityComparer);
 
         foreach (var kind in Enum.GetNames(typeof(SymbolKind)))
         {

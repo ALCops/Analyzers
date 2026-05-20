@@ -13,7 +13,7 @@ public sealed class UseSecretTextForSensitiveText : DiagnosticAnalyzer
     private const string AuthorizationHeaderName = "Authorization";
 
     private static readonly HashSet<string> HttpHeadersMethodNames =
-        new(StringComparer.OrdinalIgnoreCase)
+        new(SemanticFacts.NameEqualityComparer)
         {
             "Add",
             "GetValues",

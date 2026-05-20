@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Microsoft.Dynamics.Nav.CodeAnalysis;
 
 namespace ALCops.Common.Permissions;
 
@@ -9,7 +10,7 @@ public static class MethodOperationMap
 {
     private static readonly ImmutableDictionary<string, DatabaseOperation> Map =
         ImmutableDictionary.CreateRange(
-            StringComparer.OrdinalIgnoreCase,
+            SemanticFacts.NameEqualityComparer,
             [
                 // Read operations
                 new KeyValuePair<string, DatabaseOperation>("Find", DatabaseOperation.Read),

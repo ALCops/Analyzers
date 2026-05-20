@@ -14,7 +14,7 @@ public sealed class PageRecordMethodRequiresSourceTable : DiagnosticAnalyzer
         ImmutableArray.Create(DiagnosticDescriptors.PageRecordMethodRequiresSourceTable);
 
     private static readonly ImmutableHashSet<string> PageRecordMethodNames =
-        ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase,
+        ImmutableHashSet.Create(SemanticFacts.NameEqualityComparer,
             "GetRecord",
             "SetRecord",
             "SetSelectionFilter",

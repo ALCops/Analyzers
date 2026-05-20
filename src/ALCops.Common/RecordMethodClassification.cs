@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ALCops.Common.Permissions;
+using Microsoft.Dynamics.Nav.CodeAnalysis;
 
 namespace ALCops.Common;
 
@@ -17,7 +18,7 @@ public static class RecordMethodClassification
     /// </summary>
     public static ImmutableHashSet<string> ReadMethods { get; } =
         ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
+            SemanticFacts.NameEqualityComparer,
             "Find", "FindFirst", "FindLast", "FindSet",
             "Get", "GetBySystemId",
             "IsEmpty", "Count");
@@ -28,7 +29,7 @@ public static class RecordMethodClassification
     /// </summary>
     public static ImmutableHashSet<string> SingleRecordReadMethods { get; } =
         ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
+            SemanticFacts.NameEqualityComparer,
             "Find", "FindFirst", "FindLast",
             "Get", "GetBySystemId");
 
@@ -37,7 +38,7 @@ public static class RecordMethodClassification
     /// </summary>
     public static ImmutableHashSet<string> InsertMethods { get; } =
         ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
+            SemanticFacts.NameEqualityComparer,
             "Insert");
 
     /// <summary>
@@ -45,7 +46,7 @@ public static class RecordMethodClassification
     /// </summary>
     public static ImmutableHashSet<string> ModifyMethods { get; } =
         ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
+            SemanticFacts.NameEqualityComparer,
             "Modify", "ModifyAll", "Rename");
 
     /// <summary>
@@ -53,7 +54,7 @@ public static class RecordMethodClassification
     /// </summary>
     public static ImmutableHashSet<string> DeleteMethods { get; } =
         ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
+            SemanticFacts.NameEqualityComparer,
             "Delete", "DeleteAll");
 
     /// <summary>
@@ -62,7 +63,7 @@ public static class RecordMethodClassification
     /// </summary>
     public static ImmutableHashSet<string> WriteMethods { get; } =
         ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
+            SemanticFacts.NameEqualityComparer,
             "Insert", "Modify", "ModifyAll", "Delete", "DeleteAll",
             "Rename", "TransferFields", "Init", "Copy");
 
@@ -71,7 +72,7 @@ public static class RecordMethodClassification
     /// </summary>
     public static ImmutableHashSet<string> LoadFieldsMethods { get; } =
         ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
+            SemanticFacts.NameEqualityComparer,
             "SetLoadFields", "AddLoadFields", "SetBaseLoadFields");
 
     /// <summary>
@@ -83,7 +84,7 @@ public static class RecordMethodClassification
     /// </summary>
     public static ImmutableHashSet<string> JitLoadWriteMethods { get; } =
         ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
+            SemanticFacts.NameEqualityComparer,
             "Insert", "Delete", "Rename", "TransferFields", "Copy");
 
     /// <summary>
@@ -91,7 +92,7 @@ public static class RecordMethodClassification
     /// </summary>
     public static ImmutableHashSet<string> TriggerMethods { get; } =
         ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
+            SemanticFacts.NameEqualityComparer,
             "Insert", "Modify", "Delete", "DeleteAll", "Validate", "ModifyAll");
 
     /// <summary>
@@ -99,6 +100,6 @@ public static class RecordMethodClassification
     /// </summary>
     public static ImmutableHashSet<string> RunTriggerParameterMethods { get; } =
         ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
+            SemanticFacts.NameEqualityComparer,
             "Insert", "Modify", "ModifyAll", "Delete", "DeleteAll");
 }

@@ -251,7 +251,7 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
         Func<ODataNameEntry, bool>? reportableFilter)
     {
         var groups = entries
-            .GroupBy(e => e.ODataName, StringComparer.OrdinalIgnoreCase)
+            .GroupBy(e => e.ODataName, SemanticFacts.NameEqualityComparer)
             .Where(g => g.Count() > 1);
 
         foreach (var group in groups)

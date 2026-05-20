@@ -16,7 +16,7 @@ namespace ALCops.PlatformCop.Analyzers;
 public sealed class PartialRecordOperations : DiagnosticAnalyzer
 {
     private static readonly ImmutableHashSet<string> ReadMethods = RecordMethodClassification.SingleRecordReadMethods
-        .Union(ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, "FindSet"));
+        .Union(ImmutableHashSet.Create(SemanticFacts.NameEqualityComparer, "FindSet"));
 
     private static readonly ImmutableHashSet<string> LoadFieldsMethods = RecordMethodClassification.LoadFieldsMethods;
 
@@ -99,7 +99,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
             var jitOperations = state.WriteMethodNames
                 .Where(m => JitLoadWriteMethods.Contains(m))
-                .OrderBy(m => m, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(m => m, SemanticFacts.NameComparer)
                 .ToList();
 
             if (jitOperations.Count == 0)
@@ -119,7 +119,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
     private static Dictionary<string, VariableState> CollectEligibleLocalVariables(IMethodSymbol methodSymbol)
     {
-        var result = new Dictionary<string, VariableState>(StringComparer.OrdinalIgnoreCase);
+        var result = new Dictionary<string, VariableState>(SemanticFacts.NameEqualityComparer);
 
         foreach (var local in methodSymbol.LocalVariables)
         {
@@ -184,7 +184,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
     {
         public List<ReadInfo> UncoveredReadLocations { get; } = new();
         public List<LoadFieldsInfo> LoadFieldsLocations { get; } = new();
-        public HashSet<string> WriteMethodNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public HashSet<string> WriteMethodNames { get; } = new(SemanticFacts.NameEqualityComparer);
         public bool IsRecordRef { get; set; }
         public bool IsSetupTable { get; set; }
         public List<string?> SetTableTargets { get; } = new();
@@ -220,7 +220,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             UncoveredReads = new List<ReadInfo>(UncoveredReads),
             LoadFieldsLocations = new List<LoadFieldsInfo>(LoadFieldsLocations),
             WriteMethodNamesAfterPartialRead = WriteMethodNamesAfterPartialRead is not null
-                ? new HashSet<string>(WriteMethodNamesAfterPartialRead, StringComparer.OrdinalIgnoreCase)
+                ? new HashSet<string>(WriteMethodNamesAfterPartialRead, SemanticFacts.NameEqualityComparer)
                 : null
         };
 
@@ -240,7 +240,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
         public void AddWriteAfterPartialRead(string methodName)
         {
-            WriteMethodNamesAfterPartialRead ??= new(StringComparer.OrdinalIgnoreCase);
+            WriteMethodNamesAfterPartialRead ??= new(SemanticFacts.NameEqualityComparer);
             WriteMethodNamesAfterPartialRead.Add(methodName);
         }
     }
@@ -285,7 +285,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         {
             _trackedVariables = trackedVariables;
             _cancellationToken = cancellationToken;
-            _flowState = new Dictionary<string, FlowFlags>(StringComparer.OrdinalIgnoreCase);
+            _flowState = new Dictionary<string, FlowFlags>(SemanticFacts.NameEqualityComparer);
             foreach (var key in trackedVariables.Keys)
                 _flowState[key] = new FlowFlags();
         }
@@ -476,7 +476,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
 
         private Dictionary<string, FlowFlags> SaveFlowState()
         {
-            var saved = new Dictionary<string, FlowFlags>(StringComparer.OrdinalIgnoreCase);
+            var saved = new Dictionary<string, FlowFlags>(SemanticFacts.NameEqualityComparer);
             foreach (var kvp in _flowState)
                 saved[kvp.Key] = kvp.Value.Clone();
             return saved;
@@ -494,7 +494,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         /// </summary>
         private Dictionary<string, HashSet<int>> CapturePreForkReadPositions()
         {
-            var result = new Dictionary<string, HashSet<int>>(StringComparer.OrdinalIgnoreCase);
+            var result = new Dictionary<string, HashSet<int>>(SemanticFacts.NameEqualityComparer);
             foreach (var kvp in _flowState)
             {
                 if (kvp.Value.UncoveredReads.Count > 0)
@@ -557,7 +557,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             foreach (var set in sets)
             {
                 if (set is null) continue;
-                merged ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                merged ??= new HashSet<string>(SemanticFacts.NameEqualityComparer);
                 merged.UnionWith(set);
             }
             target.WriteMethodNamesAfterPartialRead = merged;

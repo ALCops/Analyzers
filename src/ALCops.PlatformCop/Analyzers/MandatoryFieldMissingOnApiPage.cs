@@ -10,11 +10,11 @@ namespace ALCops.PlatformCop.Analyzers;
 public sealed class MandatoryFieldMissingOnApiPage : DiagnosticAnalyzer
 {
     private static readonly ImmutableDictionary<string, string> MandatoryFields =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        new Dictionary<string, string>(SemanticFacts.NameEqualityComparer)
         {
             ["SystemId"] = "id",
             ["SystemModifiedAt"] = "lastModifiedDateTime",
-        }.ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
+        }.ToImmutableDictionary(SemanticFacts.NameEqualityComparer);
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

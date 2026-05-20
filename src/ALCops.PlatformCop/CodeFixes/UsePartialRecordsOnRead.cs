@@ -148,7 +148,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
             return GetPrimaryKeyFieldNames(recordType);
 
         var fields = collector.AccessedFields.ToList();
-        fields.Sort(StringComparer.OrdinalIgnoreCase);
+        fields.Sort(SemanticFacts.NameComparer);
         return fields;
     }
 
@@ -213,7 +213,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         /// Built-in Record methods where the first argument is a field selector (not a consumed value).
         /// Remaining arguments (if any) may contain consumed field accesses and are still visited.
         /// </summary>
-        private static readonly HashSet<string> FirstArgFieldSelectorMethods = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> FirstArgFieldSelectorMethods = new(SemanticFacts.NameEqualityComparer)
         {
             "SetRange", "SetFilter",
             "GetRangeMin", "GetRangeMax", "GetFilter",
@@ -225,7 +225,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         /// <summary>
         /// Built-in Record methods where ALL arguments are field selectors (none are consumed values).
         /// </summary>
-        private static readonly HashSet<string> AllArgsFieldSelectorMethods = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> AllArgsFieldSelectorMethods = new(SemanticFacts.NameEqualityComparer)
         {
             "SetCurrentKey",
             "AddLoadFields", "LoadFields", "AreFieldsLoaded"
@@ -233,7 +233,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
 
         private readonly string _variableName;
 
-        public HashSet<string> AccessedFields { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public HashSet<string> AccessedFields { get; } = new(SemanticFacts.NameEqualityComparer);
 
         public FieldAccessCollector(string variableName)
         {

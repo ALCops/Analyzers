@@ -13,10 +13,10 @@ namespace ALCops.PlatformCop.Analyzers;
 public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
 {
     private static readonly ImmutableHashSet<string> FindSetMethods =
-        ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, "FindSet", "Find");
+        ImmutableHashSet.Create(SemanticFacts.NameEqualityComparer, "FindSet", "Find");
 
     private static readonly ImmutableHashSet<string> NextMethods =
-        ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, "Next");
+        ImmutableHashSet.Create(SemanticFacts.NameEqualityComparer, "Next");
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.UseSetAutoCalcFieldsForLoops);
@@ -106,7 +106,7 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
             if (implicitLoopVariable is not null)
             {
                 _loopVariables.Push(
-                    ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, implicitLoopVariable));
+                    ImmutableHashSet.Create(SemanticFacts.NameEqualityComparer, implicitLoopVariable));
             }
         }
 
@@ -137,7 +137,7 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
                 // repeat-until: loop variable is the one that calls Next() in the condition
                 var loopVar = ExtractNextVariableFromCondition(operation.Condition);
                 var loopVars = loopVar is not null
-                    ? ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, loopVar)
+                    ? ImmutableHashSet.Create(SemanticFacts.NameEqualityComparer, loopVar)
                     : ImmutableHashSet<string>.Empty;
 
                 PushLoop(loopVars);
@@ -150,7 +150,7 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
                 // while-do: loop variable could be in the condition (FindSet/Find)
                 var loopVar = ExtractFindSetVariableFromCondition(operation.Condition);
                 var loopVars = loopVar is not null
-                    ? ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, loopVar)
+                    ? ImmutableHashSet.Create(SemanticFacts.NameEqualityComparer, loopVar)
                     : ImmutableHashSet<string>.Empty;
 
                 PushLoop(loopVars);
@@ -166,7 +166,7 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
 
             var iterVarName = GetIterationVariableName(operation);
             var loopVars = iterVarName is not null
-                ? ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, iterVarName)
+                ? ImmutableHashSet.Create(SemanticFacts.NameEqualityComparer, iterVarName)
                 : ImmutableHashSet<string>.Empty;
 
             PushLoop(loopVars);

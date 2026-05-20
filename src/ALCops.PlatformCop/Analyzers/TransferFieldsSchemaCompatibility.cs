@@ -81,7 +81,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         public Lazy<HashSet<string>> Paths { get; } = new Lazy<HashSet<string>>(
                 () =>
                 {
-                    var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    var set = new HashSet<string>(SemanticFacts.NameEqualityComparer);
 
                     foreach (var tree in compilation.SyntaxTrees)
                     {
