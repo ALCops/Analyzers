@@ -45,6 +45,25 @@ public static class ApplicationObjectTypeSymbolInterfaceExtensions
     }
 
     /// <summary>
+    /// Gets the flattened list of all xmlport nodes (including deeply nested) for xmlport objects.
+    /// Uses reflection to access the internal <c>SourceXmlPortTypeSymbol.FlattenedNodes</c> property,
+    /// which recursively includes all nested tableelement/textelement/fieldelement nodes at any depth.
+    /// Returns an empty enumerable for non-xmlport objects or if the property is unavailable.
+    /// </summary>
+    public static IEnumerable<IXmlPortNodeSymbol> GetFlattenedXmlPortNodes(this IApplicationObjectTypeSymbol containingObject)
+    {
+        var flattenedNodes = ((object)containingObject).GetPropertyIfExists<System.Collections.IEnumerable>("FlattenedNodes");
+        if (flattenedNodes is null)
+            yield break;
+
+        foreach (var item in flattenedNodes)
+        {
+            if (item is IXmlPortNodeSymbol node)
+                yield return node;
+        }
+    }
+
+    /// <summary>
     /// Gets the flattened list of all data items (including nested) for report and query objects.
     /// For reports on net8.0+, uses the public <see cref="IReportTypeSymbol.FlattenedDataItems"/> property.
     /// For queries (and reports on netstandard2.1), uses reflection to access the internal FlattenedDataItems.

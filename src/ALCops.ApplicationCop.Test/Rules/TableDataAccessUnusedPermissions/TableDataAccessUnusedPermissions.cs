@@ -57,6 +57,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("ReportDataItemModify")]
         [TestCase("ReportDataItemAliasModify")]
         [TestCase("XmlPortTableElementModify")]
+        [TestCase("XmlPortNestedTableElementModify")]
         [TestCase("ReturnParameterRead")]
         [TestCase("ReportNestedDataItemRead")]
         [TestCase("QueryNestedDataItemRead")]

@@ -68,7 +68,7 @@ src/ALCops.Common/
 | `CollectFromInvocations` | Builds object-scope record map (vars + data items), walks method bodies, resolves DB calls via syntax + symbol lookup |
 | `TryGetPermissionFromInvocation` | Resolves a single invocation: fast path via variable map, fallback via GetSymbolInfo |
 | `TryGetPermissionViaSymbolInfo` | Fallback for complex receivers: uses GetSymbolInfo to resolve method and receiver type |
-| `CollectFromDataItems` | Iterates report FlattenedDataItems, query FlattenedDataItems (via reflection), and xmlport nodes |
+| `CollectFromDataItems` | Iterates report/query FlattenedDataItems and xmlport FlattenedXmlPortNodes (all via reflection) for implicit read permissions |
 | `CollectFromQueryDataItems` | Uses reflection to access internal `FlattenedDataItems` on QueryTypeSymbol |
 | `AddNestedQueryDataItemsToVarMap` | Adds nested query data items to the object-scope record map via reflection |
 | `AddXmlPortNodeToVarMap` | Adds an xmlport table element to the object-scope record map if it references a non-temporary table |
@@ -88,7 +88,7 @@ Each `SyntaxNodeAction` callback is self-contained with no shared mutable state.
 | Variable map + syntax resolution | Resolves ~66% of DB calls via dictionary lookup from `IMethodSymbol.LocalVariables`/`.Parameters`; avoids expensive `GetOperation` calls entirely |
 | Global variable map from `GetMembers()` | Captures object-level Record variables that account for ~34% of invocations not resolvable from locals/params |
 | Data items in object-scope record map | Report data items and xmlport table elements act as implicit record variables in trigger code; added to the same map for fast-path resolution via `GetTypeSymbol()` |
-| XmlPort nested nodes via `FlattenedNodes` | `GetMembers()` returns only top-level schema nodes; nested table elements (inside textelement) require iterating `IXmlPortNodeSymbol.FlattenedNodes` |
+| XmlPort nested nodes via `GetFlattenedXmlPortNodes` | `GetMembers()` returns only top-level schema nodes; `IXmlPortNodeSymbol.FlattenedNodes` only returns immediate children (not recursive). Uses reflection on the internal `SourceXmlPortTypeSymbol.FlattenedNodes` property which truly flattens all depths |
 | `GetSymbolInfo` fallback for complex receivers | Handles function return values, array indexing, property access; only ~1% of invocations need this path |
 | No `GetOperation` / `OperationWalker` | `GetOperation` in `SyntaxNodeAction` costs ~0.3ms/call (no pre-computed cache); variable map approach is 4.5x faster |
 | No cross-callback shared state | Eliminates the fragile two-phase accumulator pattern that caused false positives during incremental compilation |
@@ -142,7 +142,7 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 ## Test coverage
 
 **HasDiagnostic (10 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord, ParameterPartialUnused, ReportDataItemPartialUnused.
-**NoDiagnostic (20 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, ReportDataItemAliasModify, XmlPortTableElementModify, ReturnParameterRead, ReportNestedDataItemRead, QueryNestedDataItemRead.
+**NoDiagnostic (21 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, ReportDataItemAliasModify, XmlPortTableElementModify, XmlPortNestedTableElementModify, ReturnParameterRead, ReportNestedDataItemRead, QueryNestedDataItemRead.
 **HasFix (4 cases):** RemoveEntireEntry, ReduceChars, RemoveEntireProperty, ReplaceChars.
 
 ## Known limitations
