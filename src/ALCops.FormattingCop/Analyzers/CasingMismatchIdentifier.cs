@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using ALCops.Common.Reflection;
 using ALCops.Common.Extensions;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -48,8 +49,8 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
             return;
 
         var semanticModel = ctx.Compilation.GetSemanticModel(root.SyntaxTree);
-        var identifiers = new List<IdentifierNameSyntax>();
-        var qualifiedNames = new List<QualifiedNameSyntax>();
+        var identifiers = new List<(IdentifierNameSyntax Node, SyntaxNode? Scope)>();
+        var qualifiedNames = new List<(QualifiedNameSyntax Node, SyntaxNode? Scope)>();
         var triggers = new List<TriggerDeclarationSyntax>();
 
         WalkNode(ctx, root, identifiers, qualifiedNames, triggers);
@@ -69,17 +70,17 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
     private static void WalkNode(
         SymbolAnalysisContext ctx,
         SyntaxNode root,
-        List<IdentifierNameSyntax> identifiers,
-        List<QualifiedNameSyntax> qualifiedNames,
+        List<(IdentifierNameSyntax Node, SyntaxNode? Scope)> identifiers,
+        List<(QualifiedNameSyntax Node, SyntaxNode? Scope)> qualifiedNames,
         List<TriggerDeclarationSyntax> triggers,
         bool skipChildIdentifiers = false)
     {
-        var stack = new Stack<(SyntaxNode node, bool skipIds)>();
-        stack.Push((root, skipChildIdentifiers));
+        var stack = new Stack<(SyntaxNode node, bool skipIds, SyntaxNode? scope)>();
+        stack.Push((root, skipChildIdentifiers, null));
 
         while (stack.Count > 0)
         {
-            var (node, currentSkipIds) = stack.Pop();
+            var (node, currentSkipIds, currentScope) = stack.Pop();
 
             foreach (var child in node.ChildNodes())
             {
@@ -106,7 +107,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                     CompareAgainstDictionary(ctx, dataType.TypeName, _navTypeKindDictionary);
                     if (kind == EnumProvider.SyntaxKind.EnumDataType ||
                         kind == EnumProvider.SyntaxKind.LabelDataType)
-                        stack.Push((child, false));
+                        stack.Push((child, false, currentScope));
                     continue;
                 }
 
@@ -114,7 +115,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
 
                 if (child is PropertySyntax prop)
                 {
-                    HandleProperty(ctx, prop, identifiers, qualifiedNames, triggers, stack);
+                    HandleProperty(ctx, prop, identifiers, qualifiedNames, triggers, stack, currentScope);
                     continue;
                 }
 
@@ -133,7 +134,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                         if (attrChild is IdentifierNameSyntax attrName)
                             CompareAgainstDictionary(ctx, attrName.Identifier, EnumProvider.AttributeKind.CanonicalNames);
                         else
-                            stack.Push((attrChild, false));
+                            stack.Push((attrChild, false, currentScope));
                     }
                     continue;
                 }
@@ -151,14 +152,14 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 if (kind == EnumProvider.SyntaxKind.PageArea)
                 {
                     AnalyzeChildNodeIdentifiers(ctx, child, EnumProvider.AreaKind.CanonicalNames);
-                    stack.Push((child, false));
+                    stack.Push((child, false, currentScope));
                     continue;
                 }
 
                 if (kind == EnumProvider.SyntaxKind.PageActionArea)
                 {
                     AnalyzeChildNodeIdentifiers(ctx, child, EnumProvider.ActionAreaKind.CanonicalNames);
-                    stack.Push((child, false));
+                    stack.Push((child, false, currentScope));
                     continue;
                 }
 
@@ -175,13 +176,13 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 if (child is TriggerDeclarationSyntax trigger)
                 {
                     triggers.Add(trigger);
-                    stack.Push((child, true));
+                    stack.Push((child, true, child));
                     continue;
                 }
 
                 if (child is QualifiedNameSyntax qname)
                 {
-                    qualifiedNames.Add(qname);
+                    qualifiedNames.Add((qname, currentScope));
                     continue;
                 }
 
@@ -192,21 +193,21 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                     var children = child.ChildNodes().ToArray();
                     int start = (children.Length > 0 && children[0] is IdentifierNameSyntax) ? 1 : 0;
                     for (int i = start; i < children.Length; i++)
-                        EnqueueNode(children[i], identifiers, qualifiedNames, stack);
+                        EnqueueNode(children[i], identifiers, qualifiedNames, stack, currentScope);
                     continue;
                 }
 
                 if (child is KeySyntax keySyntax)
                 {
                     foreach (var field in keySyntax.Fields)
-                        EnqueueNode(field, identifiers, qualifiedNames, stack);
+                        EnqueueNode(field, identifiers, qualifiedNames, stack, currentScope);
                     continue;
                 }
 
                 if (kind == EnumProvider.SyntaxKind.ObjectNameReference)
                 {
                     if (child.Parent?.Kind != EnumProvider.SyntaxKind.Interface)
-                        stack.Push((child, false));
+                        stack.Push((child, false, currentScope));
                     continue;
                 }
 
@@ -215,7 +216,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 if (child is IdentifierNameSyntax idName)
                 {
                     if (!currentSkipIds && ShouldCollectIdentifier(idName))
-                        identifiers.Add(idName);
+                        identifiers.Add((idName, currentScope));
                     continue;
                 }
 
@@ -225,7 +226,9 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                     continue;
 
                 bool skipIds = _skipIdentifierParentKinds.Contains(kind);
-                stack.Push((child, skipIds));
+                // Method declarations introduce a new scope
+                var childScope = kind == EnumProvider.SyntaxKind.MethodDeclaration ? child : currentScope;
+                stack.Push((child, skipIds, childScope));
             }
         }
     }
@@ -236,22 +239,23 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
     /// </summary>
     private static void EnqueueNode(
         SyntaxNode node,
-        List<IdentifierNameSyntax> identifiers,
-        List<QualifiedNameSyntax> qualifiedNames,
-        Stack<(SyntaxNode node, bool skipIds)> stack)
+        List<(IdentifierNameSyntax Node, SyntaxNode? Scope)> identifiers,
+        List<(QualifiedNameSyntax Node, SyntaxNode? Scope)> qualifiedNames,
+        Stack<(SyntaxNode node, bool skipIds, SyntaxNode? scope)> stack,
+        SyntaxNode? currentScope)
     {
         if (node is IdentifierNameSyntax idName)
         {
             if (ShouldCollectIdentifier(idName))
-                identifiers.Add(idName);
+                identifiers.Add((idName, currentScope));
         }
         else if (node is QualifiedNameSyntax qname)
         {
-            qualifiedNames.Add(qname);
+            qualifiedNames.Add((qname, currentScope));
         }
         else
         {
-            stack.Push((node, false));
+            stack.Push((node, false, currentScope));
         }
     }
 
@@ -312,10 +316,11 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
     private static void HandleProperty(
         SymbolAnalysisContext ctx,
         PropertySyntax prop,
-        List<IdentifierNameSyntax> identifiers,
-        List<QualifiedNameSyntax> qualifiedNames,
+        List<(IdentifierNameSyntax Node, SyntaxNode? Scope)> identifiers,
+        List<(QualifiedNameSyntax Node, SyntaxNode? Scope)> qualifiedNames,
         List<TriggerDeclarationSyntax> triggers,
-        Stack<(SyntaxNode node, bool skipIds)> stack)
+        Stack<(SyntaxNode node, bool skipIds, SyntaxNode? scope)> stack,
+        SyntaxNode? currentScope)
     {
         ResolvePropertyName(ctx, prop.Name);
 
@@ -339,7 +344,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 foreach (var propChild in prop.ChildNodes())
                 {
                     if (propChild is not PropertyNameSyntax)
-                        stack.Push((propChild, false));
+                        stack.Push((propChild, false, currentScope));
                 }
                 break;
         }
@@ -430,18 +435,18 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
     private static void ResolveIdentifiers(
         SymbolAnalysisContext ctx,
         SemanticModel semanticModel,
-        List<IdentifierNameSyntax> identifiers)
+        List<(IdentifierNameSyntax Node, SyntaxNode? Scope)> identifiers)
     {
         var groupNodes = identifiers
-            .ToLookup(node => node.Identifier.ValueText, StringComparer.Ordinal);
+            .ToLookup(item => (item.Node.Identifier.ValueText, item.Scope));
 
         foreach (var groupNode in groupNodes)
         {
             IdentifierNameSyntax? representative = null;
-            foreach (var n in groupNode)
+            foreach (var item in groupNode)
             {
-                if (representative is null || n.Position > representative.Position)
-                    representative = n;
+                if (representative is null || item.Node.Position > representative.Position)
+                    representative = item.Node;
             }
 
             if (representative is null)
@@ -454,10 +459,10 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
             if (semanticModel.GetSymbolInfo(representative, ctx.CancellationToken).Symbol is not ISymbol symbol)
                 continue;
 
-            foreach (var node in groupNode)
+            foreach (var item in groupNode)
             {
                 ctx.CancellationToken.ThrowIfCancellationRequested();
-                CompareIdentifier(ctx, node.Identifier, symbol.Name);
+                CompareIdentifier(ctx, item.Node.Identifier, symbol.Name);
             }
         }
     }
@@ -465,18 +470,19 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
     private static void ResolveQualifiedNames(
         SymbolAnalysisContext ctx,
         SemanticModel semanticModel,
-        List<QualifiedNameSyntax> qualifiedNames)
+        List<(QualifiedNameSyntax Node, SyntaxNode? Scope)> qualifiedNames)
     {
         var groupNodes = qualifiedNames
-            .ToLookup(node => node.ToString(), StringComparer.OrdinalIgnoreCase);
+            .ToLookup(item => (Text: item.Node.ToString(), item.Scope),
+                      new ScopedTextComparer(StringComparer.OrdinalIgnoreCase));
 
         foreach (var groupNode in groupNodes)
         {
             QualifiedNameSyntax? representative = null;
-            foreach (var n in groupNode)
+            foreach (var item in groupNode)
             {
-                if (representative is null || n.Position > representative.Position)
-                    representative = n;
+                if (representative is null || item.Node.Position > representative.Position)
+                    representative = item.Node;
             }
 
             if (representative is null)
@@ -487,7 +493,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
             if (symbol is null)
                 continue;
 
-            foreach (var node in groupNode)
+            foreach (var item in groupNode)
             {
                 if (representative.Left.Kind == EnumProvider.SyntaxKind.IdentifierName)
                 {
@@ -502,17 +508,17 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                         objectTypeSymbol = tableExtensionTypeSymbol;
                     }
 
-                    if (node.Left is IdentifierNameSyntax leftNode)
+                    if (item.Node.Left is IdentifierNameSyntax leftNode)
                         CompareIdentifier(ctx, leftNode.Identifier, objectTypeSymbol.Name);
 
-                    if (node.Right is SimpleNameSyntax rightNode)
+                    if (item.Node.Right is SimpleNameSyntax rightNode)
                         CompareIdentifier(ctx, rightNode.Identifier, symbol.Name);
 
                     break;
                 }
                 else
                 {
-                    CompareIdentifier(ctx, node.Right.Identifier, symbol.Name);
+                    CompareIdentifier(ctx, item.Node.Right.Identifier, symbol.Name);
                 }
             }
         }
@@ -731,6 +737,23 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
     }, LazyThreadSafetyMode.PublicationOnly);
 
     // Declaration nodes whose child identifiers should be skipped (user-defined names).
+    /// <summary>
+    /// Equality comparer for (Text, Scope) tuples used in qualified name grouping.
+    /// Uses a configurable string comparer for the text part and reference equality for scope.
+    /// </summary>
+    private sealed class ScopedTextComparer : IEqualityComparer<(string Text, SyntaxNode? Scope)>
+    {
+        private readonly StringComparer _textComparer;
+
+        public ScopedTextComparer(StringComparer textComparer) => _textComparer = textComparer;
+
+        public bool Equals((string Text, SyntaxNode? Scope) x, (string Text, SyntaxNode? Scope) y) =>
+            ReferenceEquals(x.Scope, y.Scope) && _textComparer.Equals(x.Text, y.Text);
+
+        public int GetHashCode((string Text, SyntaxNode? Scope) obj) =>
+            HashCode.Combine(_textComparer.GetHashCode(obj.Text), RuntimeHelpers.GetHashCode(obj.Scope!));
+    }
+
     private static readonly HashSet<SyntaxKind> _skipIdentifierParentKinds = new HashSet<SyntaxKind>
     {
         EnumProvider.SyntaxKind.CodeunitObject,

@@ -34,6 +34,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("TestType")]
         [TestCase("TriggerDeclaration")]
         [TestCase("ObjectTypeOptionAccess")]
+        [TestCase("CrossScopeIdentifierGrouping")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -72,6 +73,8 @@ namespace ALCops.FormattingCop.Test
         [TestCase("VariableNamedAfterKeyword")]
         [TestCase("ObjectTypeOptionAccess")]
         [TestCase("DeeplyNestedExpression")]
+        [TestCase("CrossScopeIdentifierGrouping")]
+        [TestCase("CrossScopeQualifiedNameGrouping")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
