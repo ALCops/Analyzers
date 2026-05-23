@@ -53,6 +53,12 @@ namespace ALCops.FormattingCop.Test
                 "16.0"
             );
 
+            SkipTestIfVersionIsTooLow(
+                ["GlobalVarAndParamThisPrefix"],
+                testCase,
+                "14.0"
+            );
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -95,6 +101,12 @@ namespace ALCops.FormattingCop.Test
                 ["TestType"],
                 testCase,
                 "16.0"
+            );
+
+            SkipTestIfVersionIsTooLow(
+                ["GlobalVarAndParamThisPrefix"],
+                testCase,
+                "14.0"
             );
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
