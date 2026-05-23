@@ -35,6 +35,10 @@ namespace ALCops.FormattingCop.Test
         [TestCase("TriggerDeclaration")]
         [TestCase("ObjectTypeOptionAccess")]
         [TestCase("CrossScopeIdentifierGrouping")]
+        [TestCase("GlobalVarAndParam")]
+        [TestCase("GlobalVarAndParamThisPrefix")]
+        [TestCase("GlobalVarAndReturnValue")]
+        [TestCase("GlobalVarAndLocalVar")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -75,6 +79,10 @@ namespace ALCops.FormattingCop.Test
         [TestCase("DeeplyNestedExpression")]
         [TestCase("CrossScopeIdentifierGrouping")]
         [TestCase("CrossScopeQualifiedNameGrouping")]
+        [TestCase("GlobalVarAndParam")]
+        [TestCase("GlobalVarAndParamThisPrefix")]
+        [TestCase("GlobalVarAndReturnValue")]
+        [TestCase("GlobalVarAndLocalVar")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
