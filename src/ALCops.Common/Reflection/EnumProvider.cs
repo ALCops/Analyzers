@@ -953,8 +953,12 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EqualsToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _greaterThanToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.GreaterThanToken)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _greaterThanEqualsToken =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.GreaterThanEqualsToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _lessThanToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LessThanToken)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _lessThanEqualsToken =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.LessThanEqualsToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _endOfLineTrivia =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EndOfLineTrivia)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _enumExtensionType =
@@ -1251,7 +1255,9 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind EmptyProperty => _emptyProperty.Value;
         public static NavCodeAnalysis.SyntaxKind EqualsToken => _equalsToken.Value;
         public static NavCodeAnalysis.SyntaxKind GreaterThanToken => _greaterThanToken.Value;
+        public static NavCodeAnalysis.SyntaxKind GreaterThanEqualsToken => _greaterThanEqualsToken.Value;
         public static NavCodeAnalysis.SyntaxKind LessThanToken => _lessThanToken.Value;
+        public static NavCodeAnalysis.SyntaxKind LessThanEqualsToken => _lessThanEqualsToken.Value;
         public static NavCodeAnalysis.SyntaxKind EndOfLineTrivia => _endOfLineTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind EnumExtensionType => _enumExtensionType.Value;
         public static NavCodeAnalysis.SyntaxKind EnumDataType => _enumDataType.Value;

@@ -36,6 +36,7 @@ namespace ALCops.LinterCop.Test
 
         [Test]
         [TestCase("RecordCountEqualsTwo")]
+        [TestCase("RecordCountMathOperator")]
         [TestCase("RecordTemporaryCountEqualsOne")]
         public async Task NoDiagnostic(string testCase)
         {

@@ -75,7 +75,7 @@ public class AnalyzeCountMethod : DiagnosticAnalyzer
 
         if (IsEligibleUseQueryOrFindWithNext(recordTypeSymbol))
         {
-            if (IsOneComparison(leftValue, rightValue))
+            if (IsOneComparison(binaryExpression, leftValue, rightValue))
             {
                 ReportUseFindWithNextDiagnostic(ctx, invocation, GetOperatorKind(binaryExpression.OperatorToken.Kind));
                 return;
@@ -112,8 +112,17 @@ public class AnalyzeCountMethod : DiagnosticAnalyzer
     private static bool IsGreaterThanOneComparison(BinaryExpressionSyntax expr, int left) =>
         expr.OperatorToken.Kind == EnumProvider.SyntaxKind.GreaterThanToken && left == One;
 
-    private static bool IsOneComparison(int left, int right) =>
-        left == One || right == One;
+    private static bool IsComparisonOperator(SyntaxKind kind) =>
+        kind is var k &&
+        (k == EnumProvider.SyntaxKind.EqualsToken ||
+         k == EnumProvider.SyntaxKind.NotEqualsToken ||
+         k == EnumProvider.SyntaxKind.LessThanToken ||
+         k == EnumProvider.SyntaxKind.GreaterThanToken ||
+         k == EnumProvider.SyntaxKind.LessThanEqualsToken ||
+         k == EnumProvider.SyntaxKind.GreaterThanEqualsToken);
+
+    private static bool IsOneComparison(BinaryExpressionSyntax expr, int left, int right) =>
+        IsComparisonOperator(expr.OperatorToken.Kind) && (left == One || right == One);
 
     private static bool IsLessThanTwoComparison(BinaryExpressionSyntax expr, int right) =>
         expr.OperatorToken.Kind == EnumProvider.SyntaxKind.LessThanToken && right == Two;
