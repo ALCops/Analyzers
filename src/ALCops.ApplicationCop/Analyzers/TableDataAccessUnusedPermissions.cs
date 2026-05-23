@@ -76,7 +76,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         IApplicationObjectTypeSymbol containingObject,
         List<RequiredPermission> requiredPermissions)
     {
-        // Build object-scope record map (global vars, report data items, xmlport table elements)
+        // Build object-scope record map (global vars, data items, xmlport table elements)
         Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap = null;
         foreach (var member in containingObject.GetMembers())
         {
@@ -86,33 +86,10 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             {
                 objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
                 objectScopeRecordMap.TryAdd(globalVar.Name, globalRecordType);
-                continue;
             }
-
-            // Report data items act as implicit record variables in trigger code
-            if (member.Kind == EnumProvider.SymbolKind.ReportDataItem
-                && member.GetBooleanPropertyValue(EnumProvider.PropertyKind.UseTemporary) is not true
-                && member.GetTypeSymbol() is IRecordTypeSymbol dataItemRecordType
-                && !dataItemRecordType.Temporary)
-            {
-                objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
-                objectScopeRecordMap.TryAdd(member.Name, dataItemRecordType);
-                continue;
-            }
-
-            // Query data items act as implicit record variables in trigger code
-            if (member.Kind == EnumProvider.SymbolKind.QueryDataItem
-                && member.GetTypeSymbol() is IRecordTypeSymbol queryDataItemRecordType
-                && !queryDataItemRecordType.Temporary)
-            {
-                objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
-                objectScopeRecordMap.TryAdd(member.Name, queryDataItemRecordType);
-                continue;
-            }
-
         }
 
-        // Add all nested data items (report and query) to the object-scope record map
+        // Add all nested data items (report and query, unlimited depth) to the object-scope record map
         foreach (var dataItem in containingObject.GetFlattenedDataItems())
         {
             if (dataItem.GetBooleanPropertyValue(EnumProvider.PropertyKind.UseTemporary) is not true
