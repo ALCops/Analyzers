@@ -385,6 +385,7 @@ public sealed class PossibleOverflowAssigning : DiagnosticAnalyzer
             case var _ when kind == EnumProvider.OperationKind.ReturnValueReferenceExpression:
             case var _ when kind == EnumProvider.OperationKind.ParameterReferenceExpression:
             case var _ when kind == EnumProvider.OperationKind.FieldAccess:
+            case var _ when kind == EnumProvider.OperationKind.XmlPortDataItemAccess:
                 return expression.Type.GetTypeLength(ref isError);
             case var _ when kind == EnumProvider.OperationKind.BinaryOperatorExpression:
                 IBinaryOperatorExpression operatorExpression = (IBinaryOperatorExpression)expression;

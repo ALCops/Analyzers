@@ -25,8 +25,11 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ExitStatementLabel")]
         [TestCase("GetMethodStringLiteral")]
         [TestCase("GetMethodStrSubstNo")]
+        [TestCase("GetMethodXmlPortTextElement")]
         [TestCase("SetFilterFieldCode")]
+        [TestCase("SetFilterFieldCodeXmlPortTextElement")]
         [TestCase("ValidateFieldCode")]
+        [TestCase("ValidateFieldCodeXmlPortTextElement")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
