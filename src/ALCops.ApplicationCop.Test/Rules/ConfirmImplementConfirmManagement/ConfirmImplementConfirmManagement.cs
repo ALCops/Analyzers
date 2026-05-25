@@ -34,6 +34,7 @@ namespace ALCops.ApplicationCop.Test
         [Test]
         [TestCase("ObsoletePending")]
         [TestCase("Page")]
+        [TestCase("PageExtension")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

@@ -41,6 +41,11 @@ public sealed class BuiltInMethodImplementThroughCodeunit : DiagnosticAnalyzer
                     return;
                 }
 
+                if (containingType.NavTypeKind == EnumProvider.NavTypeKind.PageExtension)
+                {
+                    return;
+                }
+
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.ConfirmImplementConfirmManagement,
                     ctx.Operation.Syntax.GetLocation()));
