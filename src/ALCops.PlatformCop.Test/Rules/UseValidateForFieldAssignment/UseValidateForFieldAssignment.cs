@@ -23,7 +23,6 @@ namespace ALCops.PlatformCop.Test
         [Test]
         [TestCase("SimpleAssignment")]
         [TestCase("CompoundAssignment")]
-        [TestCase("InsideOnValidateTrigger")]
         [TestCase("AfterInit")]
         [TestCase("PrimaryKeyField")]
         public async Task HasDiagnostic(string testCase)
@@ -38,6 +37,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("TemporaryVariable")]
         [TestCase("ValidateCall")]
         [TestCase("NonRecordVariable")]
+        [TestCase("InsideOnValidateTrigger")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
