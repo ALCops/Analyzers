@@ -483,4 +483,16 @@
   <data name="PageVariableSetRecordTemporaryRecordDescription" xml:space="preserve">
     <value>The SetRecord method on a Page variable does not support temporary records. Passing a temporary record to SetRecord will cause a runtime error because Business Central cannot bind a page to a temporary record instance via this method.</value>
   </data>
+  <data name="UseValidateForFieldAssignmentTitle" xml:space="preserve">
+    <value>Use Validate() instead of direct field assignment</value>
+  </data>
+  <data name="UseValidateForFieldAssignmentMessageFormat" xml:space="preserve">
+    <value>Use Validate() instead of direct field assignment on '{0}'.</value>
+  </data>
+  <data name="UseValidateForFieldAssignmentDescription" xml:space="preserve">
+    <value>Direct field assignment bypasses the OnValidate trigger and any event subscribers on the field. Other extensions, Microsoft updates, or customer customizations may subscribe to field validation to enforce business rules, calculate derived values, or perform compliance checks. Skipping Validate() silently prevents these subscribers from executing, which can lead to data integrity issues that are difficult to trace. Use Validate() to ensure all field validation logic is executed.</value>
+  </data>
+  <data name="UseValidateForFieldAssignmentCodeAction" xml:space="preserve">
+    <value>ALCops: Use Validate() for field assignment</value>
+  </data>
 </root>

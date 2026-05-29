@@ -355,6 +355,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.PageVariableSetRecordTemporaryRecordDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.PageVariableSetRecordTemporaryRecord));
 
+    public static readonly DiagnosticDescriptor UseValidateForFieldAssignment = new(
+        id: DiagnosticIds.UseValidateForFieldAssignment,
+        title: PlatformCopAnalyzers.UseValidateForFieldAssignmentTitle,
+        messageFormat: PlatformCopAnalyzers.UseValidateForFieldAssignmentMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.UseValidateForFieldAssignmentDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UseValidateForFieldAssignment));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLower());

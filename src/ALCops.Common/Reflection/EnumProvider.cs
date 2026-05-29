@@ -508,6 +508,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.ReturnValueReferenceExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _xmlPortDataItemAccess =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.XmlPortDataItemAccess)));
+        private static readonly Lazy<NavCodeAnalysis.OperationKind> _compoundAssignmentStatement =
+            new(() => ParseEnum<NavCodeAnalysis.OperationKind>("CompoundAssignmentStatement"));
 
         public static NavCodeAnalysis.OperationKind AssignmentStatement => _assignmentStatement.Value;
         public static NavCodeAnalysis.OperationKind BinaryOperatorExpression => _binaryOperatorExpression.Value;
@@ -523,6 +525,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.OperationKind ParameterReferenceExpression => _parameterReferenceExpression.Value;
         public static NavCodeAnalysis.OperationKind ReturnValueReferenceExpression => _returnValueReferenceExpression.Value;
         public static NavCodeAnalysis.OperationKind XmlPortDataItemAccess => _xmlPortDataItemAccess.Value;
+        public static NavCodeAnalysis.OperationKind CompoundAssignmentStatement => _compoundAssignmentStatement.Value;
     }
 
     /// <summary>
