@@ -34,6 +34,8 @@ No version gate · Full netstandard2.1 support
 | Skip event subscriber params | Yes | Subscriber parameters must match publisher signature (AL0828); platform trigger params (`xRec`, `BelowxRec`, `RunTrigger`, etc.) can't be renamed |
 | Skip API object controls | Yes | API page/query controls require camelCase per AA0102; the default PascalCase pattern would always conflict |
 | Skip whitespace-only names | Yes | `value(0; " ")` is a common "empty" enum value pattern; not a naming issue |
+| EnumValue has no built-in default | Opt-in only via alcops.json | Issue #321: enum values starting with digits are common in AL and not prohibited by MS guidelines |
+| Settings loading uses IFileSystem | `GetSettings(fileSystem)` aligns with TranslatableTextShouldBeTranslated pattern | Respects SDK file abstraction; enables testing with MemoryFileSystem |
 | Strip `&` accelerator for Action/Control | Yes | `&` before a character in action/control/group names is a Windows UI keyboard accelerator prefix (Alt+key shortcut), inherited from classic NAV/C/SIDE. Not stripped for other targets so fields/variables still flag `&` via their disallow pattern. |
 | Skip obsolete | Yes | Standard ALCops convention |
 | netstandard2.1 | Full support | No net8.0-only APIs used |
@@ -131,7 +133,7 @@ Pattern-specific name transformations:
 | Object | `^[A-Z]` | (none) |
 | Field | `^[A-Za-z]` | `[%&!?]` |
 | Action | `^[A-Z]` | (none) |
-| EnumValue | `^[A-Z]` | (none) |
+| EnumValue | (none, opt-in only) | (none) |
 | Control | `^[A-Z]` | (none) |
 
 ### Settings schema (alcops.json)
@@ -161,8 +163,9 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 
 ## Test coverage
 
-**HasDiagnostic (10 cases):** ProcedureLowerCaseStart, VariableLowerCaseStart, VariableWithSpecialChars, ParameterLowerCaseStart, ReturnValueLowerCaseStart, ObjectLowerCaseStart, FieldWithSpecialChars, EnumValueLowerCaseStart, ActionLowerCaseStart, ControlLowerCaseStart.
-**NoDiagnostic (17 cases):** ProcedurePascalCase, VariablePascalCase, FieldWithLettersAndDigits, ObsoleteProcedure, TriggerMethod, InterfaceImplementingMethod, EventSubscriberPascalCase, EventSubscriberPlatformParams, EventSubscriberUserParams, ApiPageControlCamelCase, ActionAcceleratorKey, EnumValueBlankSpace, SingleLetterVariable, SingleLetterParameter, UnderscorePrefix, XRecVariable, XRecParameter, ParameterPascalCase.
+**HasDiagnostic (9 cases):** ProcedureLowerCaseStart, VariableLowerCaseStart, VariableWithSpecialChars, ParameterLowerCaseStart, ReturnValueLowerCaseStart, ObjectLowerCaseStart, FieldWithSpecialChars, ActionLowerCaseStart, ControlLowerCaseStart.
+**NoDiagnostic (18 cases):** ProcedurePascalCase, VariablePascalCase, FieldWithLettersAndDigits, ObsoleteProcedure, TriggerMethod, InterfaceImplementingMethod, EventSubscriberPascalCase, EventSubscriberPlatformParams, EventSubscriberUserParams, ApiPageControlCamelCase, ActionAcceleratorKey, EnumValueBlankSpace, EnumValueLowerCaseStart, SingleLetterVariable, SingleLetterParameter, UnderscorePrefix, XRecVariable, XRecParameter, ParameterPascalCase.
+**HasDiagnosticWithCustomSettings (1 case):** EnumValueLowerCaseStartCustomSettings.
 
 ## Phase 2 roadmap (not yet implemented)
 

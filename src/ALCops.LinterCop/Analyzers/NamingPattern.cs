@@ -23,8 +23,7 @@ public sealed class NamingPattern : DiagnosticAnalyzer
 
     private void CompilationStart(CompilationStartAnalysisContext ctx)
     {
-        var workspacePath = ctx.Compilation.FileSystem?.GetDirectoryPath();
-        var settings = ALCopsSettingsProvider.GetSettings(workspacePath);
+        var settings = ALCopsSettingsProvider.GetSettings(ctx.Compilation.FileSystem);
 
         List<string>? affixes = null;
         try
@@ -444,7 +443,6 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             [NamingTarget.Object] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
             [NamingTarget.Field] = (@"^[A-Za-z]", @"[%&!?]", "should start with a letter", "should not contain special characters (%, &, !, ?)"),
             [NamingTarget.Action] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
-            [NamingTarget.EnumValue] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
             [NamingTarget.Control] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
         };
 

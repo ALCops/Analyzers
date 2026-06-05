@@ -46,10 +46,13 @@ public static class ALCopsSettingsProvider
     /// <summary>
     /// Gets the settings from the compilation's file system.
     /// Not cached, since each compilation may have different files.
-    /// Falls back to default settings when no alcops.json is found.
+    /// Falls back to default settings when no alcops.json is found or fileSystem is null.
     /// </summary>
-    public static ALCopsSettings GetSettings(IFileSystem fileSystem)
+    public static ALCopsSettings GetSettings(IFileSystem? fileSystem)
     {
+        if (fileSystem is null)
+            return new ALCopsSettings();
+
         try
         {
             using Stream stream = fileSystem.OpenRead(SettingsFileName);

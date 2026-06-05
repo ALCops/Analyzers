@@ -1,3 +1,4 @@
+using Microsoft.Dynamics.Nav.CodeAnalysis;
 using RoslynTestKit;
 
 namespace ALCops.LinterCop.Test
@@ -6,6 +7,9 @@ namespace ALCops.LinterCop.Test
     {
         private AnalyzerTestFixture _fixture;
         private string _testCasePath;
+
+        private static readonly byte[] EnumValueNamingSettings = System.Text.Encoding.UTF8.GetBytes(
+            """{"NamingPatterns": {"EnumValue": {"AllowPattern": "^[A-Z]", "AllowDescription": "should start with an uppercase letter"}}}""");
 
         [SetUp]
         public void Setup()
@@ -26,7 +30,6 @@ namespace ALCops.LinterCop.Test
         [TestCase("ReturnValueLowerCaseStart")]
         [TestCase("ObjectLowerCaseStart")]
         [TestCase("FieldWithSpecialChars")]
-        [TestCase("EnumValueLowerCaseStart")]
         [TestCase("ActionLowerCaseStart")]
         [TestCase("ControlLowerCaseStart")]
         public async Task HasDiagnostic(string testCase)
@@ -55,6 +58,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("XRecVariable")]
         [TestCase("XRecParameter")]
         [TestCase("EnumValueBlankSpace")]
+        [TestCase("EnumValueLowerCaseStart")]
         [TestCase("ParameterPascalCase")]
         public async Task NoDiagnostic(string testCase)
         {
@@ -62,6 +66,28 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.NamingPattern);
+        }
+
+        [Test]
+        [TestCase("EnumValueLowerCaseStartCustomSettings")]
+        public async Task HasDiagnosticWithCustomSettings(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var files = new Dictionary<string, byte[]>
+            {
+                { "alcops.json", EnumValueNamingSettings }
+            };
+            var fileSystem = new MemoryFileSystem(files);
+
+            var fixture = RoslynFixtureFactory.Create<Analyzers.NamingPattern>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = fileSystem
+                });
+
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.NamingPattern);
         }
     }
 }
