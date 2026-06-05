@@ -61,6 +61,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("ReturnParameterRead")]
         [TestCase("ReportNestedDataItemRead")]
         [TestCase("QueryNestedDataItemRead")]
+        [TestCase("MethodWithoutParenthesesCount")]
+        [TestCase("MethodWithoutParenthesesFindFirst")]
+        [TestCase("MethodWithoutParenthesesIsEmpty")]
+        [TestCase("MethodWithoutParenthesesChained")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

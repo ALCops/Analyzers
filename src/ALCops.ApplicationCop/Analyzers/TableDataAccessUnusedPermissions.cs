@@ -158,11 +158,20 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             // Walk method body for DB invocations
             foreach (var descendant in body.DescendantNodes())
             {
-                if (descendant is not InvocationExpressionSyntax invocation)
-                    continue;
+                RequiredPermission? permission = null;
 
-                var permission = TryGetPermissionFromInvocation(
-                    invocation, containingObject, localRecordVarMap, objectScopeRecordMap, ctx);
+                if (descendant is InvocationExpressionSyntax invocation)
+                {
+                    permission = TryGetPermissionFromInvocation(
+                        invocation, containingObject, localRecordVarMap, objectScopeRecordMap, ctx);
+                }
+                else if (descendant is MemberAccessExpressionSyntax memberAccess
+                    && memberAccess.Parent is not InvocationExpressionSyntax)
+                {
+                    // Method call without parentheses (e.g., MyTable.Count instead of MyTable.Count())
+                    permission = TryGetPermissionFromMemberAccess(
+                        memberAccess, containingObject, localRecordVarMap, objectScopeRecordMap, ctx);
+                }
 
                 if (permission is not null)
                     requiredPermissions.Add(permission.Value);
@@ -284,6 +293,83 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         return new RequiredPermission(tableType, recordType, operation, invocation.GetLocation());
     }
 
+    /// <summary>
+    /// Handles method calls without parentheses (e.g., MyTable.Count instead of MyTable.Count()).
+    /// AL allows omitting parentheses on method calls; the parser produces a MemberAccessExpressionSyntax
+    /// rather than wrapping it in an InvocationExpressionSyntax.
+    /// </summary>
+    private static RequiredPermission? TryGetPermissionFromMemberAccess(
+        MemberAccessExpressionSyntax memberAccess,
+        IApplicationObjectTypeSymbol containingObject,
+        Dictionary<string, IRecordTypeSymbol>? localRecordVarMap,
+        Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap,
+        SyntaxNodeAnalysisContext ctx)
+    {
+        string? methodName = memberAccess.Name.Identifier.ValueText;
+        if (methodName is null)
+            return null;
+
+        var operation = MethodOperationMap.GetOperation(methodName);
+        if (operation == DatabaseOperation.None)
+            return null;
+
+        // Fast path: resolve receiver via variable map lookup
+        if (memberAccess.Expression is IdentifierNameSyntax identifierName)
+        {
+            var receiverName = identifierName.Identifier.ValueText?.UnquoteIdentifier();
+            if (receiverName is not null)
+            {
+                IRecordTypeSymbol? recordType = null;
+
+                if (localRecordVarMap is not null)
+                    localRecordVarMap.TryGetValue(receiverName, out recordType);
+
+                if (recordType is null && objectScopeRecordMap is not null)
+                    objectScopeRecordMap.TryGetValue(receiverName, out recordType);
+
+                if (recordType is not null)
+                {
+                    var tableType = recordType.OriginalDefinition as ITableTypeSymbol;
+                    if (tableType is not null)
+                        return new RequiredPermission(tableType, recordType, operation, memberAccess.GetLocation());
+                    return null;
+                }
+            }
+        }
+
+        // Fallback: complex receiver — use GetSymbolInfo on the member access itself
+        var symbolInfo = ctx.SemanticModel.GetSymbolInfo(memberAccess, ctx.CancellationToken);
+        if (symbolInfo.Symbol is not IMethodSymbol targetMethod)
+            return null;
+
+        if (targetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
+            return null;
+
+        var resolvedOperation = MethodOperationMap.GetOperation(targetMethod.Name);
+        if (resolvedOperation == DatabaseOperation.None)
+            return null;
+
+        // Get receiver type from the expression part
+        var receiverSymbolInfo = ctx.SemanticModel.GetSymbolInfo(memberAccess.Expression, ctx.CancellationToken);
+        ITypeSymbol? receiverType = receiverSymbolInfo.Symbol switch
+        {
+            IVariableSymbol v => v.Type,
+            IParameterSymbol p => p.ParameterType,
+            IMethodSymbol m => m.ReturnValueSymbol?.ReturnType,
+            _ => null
+        };
+
+        var resolvedRecordType = receiverType as IRecordTypeSymbol;
+        if (resolvedRecordType is null || resolvedRecordType.Temporary)
+            return null;
+
+        var resolvedTableType = resolvedRecordType.OriginalDefinition as ITableTypeSymbol;
+        if (resolvedTableType is null)
+            return null;
+
+        return new RequiredPermission(resolvedTableType, resolvedRecordType, resolvedOperation, memberAccess.GetLocation());
+    }
+
     private static void CollectFromDataItems(
         IApplicationObjectTypeSymbol containingObject,
         List<RequiredPermission> requiredPermissions)
@@ -328,24 +414,32 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
     /// <summary>
     /// Syntax-level check: does the body contain any invocation with a name that maps to a DB operation?
+    /// Checks both InvocationExpressionSyntax (with parens) and standalone MemberAccessExpressionSyntax (without parens).
     /// </summary>
     private static bool HasPossibleDbInvocation(BlockSyntax body)
     {
         foreach (var node in body.DescendantNodes())
         {
-            if (!node.IsKind(EnumProvider.SyntaxKind.InvocationExpression))
-                continue;
-
-            var invocationSyntax = (InvocationExpressionSyntax)node;
-            string? methodName = invocationSyntax.Expression switch
+            if (node.IsKind(EnumProvider.SyntaxKind.InvocationExpression))
             {
-                MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.ValueText,
-                IdentifierNameSyntax identifierName => identifierName.Identifier.ValueText,
-                _ => null
-            };
+                var invocationSyntax = (InvocationExpressionSyntax)node;
+                string? methodName = invocationSyntax.Expression switch
+                {
+                    MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.ValueText,
+                    IdentifierNameSyntax identifierName => identifierName.Identifier.ValueText,
+                    _ => null
+                };
 
-            if (methodName is not null && MethodOperationMap.GetOperation(methodName) != DatabaseOperation.None)
-                return true;
+                if (methodName is not null && MethodOperationMap.GetOperation(methodName) != DatabaseOperation.None)
+                    return true;
+            }
+            else if (node is MemberAccessExpressionSyntax memberAccessNode
+                && memberAccessNode.Parent is not InvocationExpressionSyntax)
+            {
+                string? methodName = memberAccessNode.Name.Identifier.ValueText;
+                if (methodName is not null && MethodOperationMap.GetOperation(methodName) != DatabaseOperation.None)
+                    return true;
+            }
         }
 
         return false;

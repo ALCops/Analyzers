@@ -211,3 +211,44 @@ It is NOT safe when used to accumulate mutable state across `CodeBlockAction` ca
 | `SemanticModel.cs:43-45` | `GetSymbolInfo(SyntaxNode)` public API |
 | `SemanticModel.cs:302` | `GetSymbolInfo(ExpressionSyntax)` public API |
 | `SemanticModel.cs:1130` | `GetOperation(SyntaxNode)` public API |
+
+## Common pitfalls
+
+### AL method calls without parentheses
+
+**CRITICAL:** AL allows calling methods without parentheses (e.g., `MyTable.Count` instead of `MyTable.Count()`). When parentheses are omitted, the parser produces a `MemberAccessExpressionSyntax` instead of wrapping it in an `InvocationExpressionSyntax`.
+
+**Impact on analyzers:**
+
+1. **Manual syntax walks** that filter on `InvocationExpressionSyntax` will miss these calls entirely.
+2. **Operation-based analyzers** that cast `operation.Syntax` to `InvocationExpressionSyntax` will get a null/failed cast (the operation is still delivered as `IInvocationExpression`, but `.Syntax` points to `MemberAccessExpressionSyntax`).
+
+**Recommended patterns:**
+
+```csharp
+// Pattern 1: Manual syntax walk — handle both forms
+foreach (var descendant in body.DescendantNodes())
+{
+    if (descendant is InvocationExpressionSyntax invocation)
+    {
+        // Handle invocation with parentheses
+    }
+    else if (descendant is MemberAccessExpressionSyntax memberAccess
+        && memberAccess.Parent is not InvocationExpressionSyntax)
+    {
+        // Handle method call without parentheses
+    }
+}
+
+// Pattern 2: Operation-based — handle both syntax forms
+if (operation.Syntax is InvocationExpressionSyntax invocationSyntax)
+{
+    // Extract from InvocationExpressionSyntax
+}
+else if (operation.Syntax is MemberAccessExpressionSyntax memberAccessSyntax)
+{
+    // Extract from MemberAccessExpressionSyntax (no-parens form)
+}
+```
+
+**Best practice:** Prefer `RegisterOperationAction` which normalizes both forms into `IInvocationExpression`. Only use manual syntax walks when performance requires avoiding `GetOperation()` costs. When you do walk syntax, always handle both `InvocationExpressionSyntax` and parentheses-free `MemberAccessExpressionSyntax`.
