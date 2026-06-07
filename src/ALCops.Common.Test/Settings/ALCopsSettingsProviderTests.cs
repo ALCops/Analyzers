@@ -1,14 +1,14 @@
 using ALCops.Common.Settings;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 
-namespace ALCops.LinterCop.Test;
+namespace ALCops.Common.Test;
 
 /// <summary>
 /// Tests for the ALCopsSettingsProvider parent directory traversal behavior.
 /// Verifies that alcops.json is found when placed in parent directories.
 /// </summary>
 [NonParallelizable]
-public class SettingsHierarchy
+public class ALCopsSettingsProviderTests
 {
     private string _tempRoot = null!;
 

@@ -125,6 +125,12 @@ jobs:
       - name: Build ALCops.Common
         run: dotnet build ./src/ALCops.Common/ALCops.Common.csproj --configuration Release --no-restore
 
+      - name: Upload ALCops.Common artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ALCops.Common
+          path: ./src/ALCops.Common/bin/Release/
+
       # ALCops.ApplicationCop
       - name: Restore ALCops.ApplicationCop
         run: dotnet restore ./src/ALCops.ApplicationCop/ALCops.ApplicationCop.csproj
@@ -227,6 +233,29 @@ jobs:
           version-number: ${{ matrix.version }}
           target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/${{ matrix.tfm == 'netstandard2.0' && 'net10.0' || matrix.tfm }}
           tfm: ${{ matrix.tfm }}
+
+      # ALCops.Common
+      - name: Download ALCops.Common biniaries
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: ALCops.Common
+          path: ./src/ALCops.Common/bin/Release/
+
+      - name: Restore ALCops.Common.Test
+        continue-on-error: true
+        run: dotnet restore ./src/ALCops.Common.Test/ALCops.Common.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
+
+      - name: Run ALCops.Common.Test
+        continue-on-error: true
+        run: >
+          dotnet test ./src/ALCops.Common.Test/ALCops.Common.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+          --results-directory ./TestResults
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=Common_AL_${{ matrix.version }}.trx"
 
       # ALCops.ApplicationCop
       - name: Download ALCops.ApplicationCop biniaries
