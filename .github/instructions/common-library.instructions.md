@@ -65,8 +65,8 @@ Per-project analyzer configuration.
 
 | File | Purpose |
 |------|---------|
-| `ALCopsSettings.cs` | POCO with three properties: `CognitiveComplexityThreshold` (default 15), `CyclomaticComplexityThreshold` (default 8), `MaintainabilityIndexThreshold` (default 20). |
-| `ALCopsSettingsProvider.cs` | Static provider with `ConcurrentDictionary` cache keyed by workspace path. Loads `alcops.json` from workspace directory, then falls back to assembly directory. JSON parsing is case-insensitive, allows comments and trailing commas. Use `GetSettings(workspacePath)` from analyzers. |
+| `ALCopsSettings.cs` | POCO with properties: `CognitiveComplexityThreshold` (default 15), `CyclomaticComplexityThreshold` (default 8), `MaintainabilityIndexThreshold` (default 20), `LanguagesToTranslate`, `NamingPatterns`, `UseSequentialGuidScope`. |
+| `ALCopsSettingsProvider.cs` | Static provider with `ConcurrentDictionary` cache keyed by directory path. Loads `alcops.json` using hierarchical lookup (see Settings System below). JSON parsing is case-insensitive, allows comments and trailing commas. Preferred API: `GetSettings(compilation.FileSystem)`. |
 
 ### Constants.cs
 Three constants: `PermissionNodeXPath` (XPath for permission set XML), `Comment`, `Locked`, `MaxLength` (label property name strings matching the SDK's `LabelPropertyHelper`).
@@ -85,14 +85,46 @@ The `Microsoft.Dynamics.Nav.CodeAnalysis` SDK treats many types, properties, and
 
 ## Settings System
 
-Analyzers access settings via:
+Analyzers access settings via the `IFileSystem` overload (preferred):
 ```csharp
-var workspacePath = context.SemanticModel.Compilation.FileSystem?.GetDirectoryPath();
-var settings = ALCopsSettingsProvider.GetSettings(workspacePath);
+var settings = ALCopsSettingsProvider.GetSettings(context.SemanticModel.Compilation.FileSystem);
 int threshold = settings.CognitiveComplexityThreshold;
 ```
 
-Users configure settings by placing an `alcops.json` file in their AL project root:
+### Lookup hierarchy
+
+Settings are resolved using `.editorconfig`-style upward traversal. The first `alcops.json` found wins (no merging):
+
+1. **App folder** (where `app.json` lives) — checked via `IFileSystem.OpenRead("alcops.json")`
+2. **Parent directories** — walks up the physical filesystem indefinitely until root or an inaccessible directory
+3. **Assembly location** — directory where `ALCops.Common.dll` is located
+4. **Defaults** — built-in default values from `ALCopsSettings`
+
+This allows a multi-root workspace to share a single `alcops.json` at the workspace root:
+```
+/workspace/
+├── alcops.json           ← shared settings (found by parent traversal)
+├── App1/
+│   ├── app.json
+│   └── alcops.json       ← app-specific override (wins for App1)
+└── App2/
+    └── app.json          ← inherits from workspace-level
+```
+
+### Two overloads
+
+| Overload | Use when | Behavior |
+|---|---|---|
+| `GetSettings(IFileSystem?)` | **Preferred.** All analyzer code. | Virtual FS check → parent traversal → assembly fallback. Cached by `GetDirectoryPath()`. |
+| `GetSettings(string?)` | Legacy. Avoid in new code. | Physical FS check → parent traversal → assembly fallback. Cached by path. |
+
+### Error handling
+
+- Inaccessible directory during parent traversal: stops traversal (treats as boundary)
+- Unreadable/malformed `alcops.json`: silently returns defaults (see #328 for planned improvement)
+- `MemoryFileSystem` (in tests, `GetDirectoryPath()` returns `""`): only checks virtual FS, no parent traversal
+
+Users configure settings by placing an `alcops.json` file in their AL project root or any parent directory:
 ```json
 {
     "CognitiveComplexityThreshold": 20,
@@ -101,7 +133,7 @@ Users configure settings by placing an `alcops.json` file in their AL project ro
 }
 ```
 
-Settings are cached per workspace path for the analyzer session lifetime. Call `ALCopsSettingsProvider.ClearCache()` only in tests.
+Settings are cached per directory path for the analyzer session lifetime. Call `ALCopsSettingsProvider.ClearCache()` only in tests.
 
 ## Coding Standards
 

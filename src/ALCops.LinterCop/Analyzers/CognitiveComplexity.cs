@@ -331,8 +331,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
     private static int LoadCognitiveComplexityThreshold(Compilation compilation)
     {
-        var settings = ALCopsSettingsProvider.GetSettings(
-            compilation.FileSystem?.GetDirectoryPath());
+        var settings = ALCopsSettingsProvider.GetSettings(compilation.FileSystem);
 
         return settings.CognitiveComplexityThreshold;
     }

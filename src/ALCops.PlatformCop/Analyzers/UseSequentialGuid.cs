@@ -32,8 +32,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         if (body is null)
             return;
 
-        var workspacePath = context.SemanticModel.Compilation.FileSystem?.GetDirectoryPath();
-        var settings = ALCopsSettingsProvider.GetSettings(workspacePath);
+        var settings = ALCopsSettingsProvider.GetSettings(context.SemanticModel.Compilation.FileSystem);
         bool flagAllGuidFields = string.Equals(
             settings.UseSequentialGuidScope, "AllGuidFields", StringComparison.OrdinalIgnoreCase);
 

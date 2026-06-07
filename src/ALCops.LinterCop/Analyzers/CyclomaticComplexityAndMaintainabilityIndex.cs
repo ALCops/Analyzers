@@ -72,7 +72,7 @@ public sealed class CyclomaticComplexityAndMaintainabilityIndex : DiagnosticAnal
         }
 
         var settings = ALCopsSettingsProvider.GetSettings(
-            context.SemanticModel.Compilation.FileSystem?.GetDirectoryPath());
+            context.SemanticModel.Compilation.FileSystem);
 
         var descendantNodesAndTokens = methodOrTrigger.Body.DescendantNodesAndTokens(static _ => true);
         var cyclomaticComplexity = CalculateCyclomaticComplexityMetric(context, body, descendantNodesAndTokens);
