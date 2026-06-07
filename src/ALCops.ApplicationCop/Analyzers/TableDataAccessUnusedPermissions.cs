@@ -155,53 +155,66 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 localRecordVarMap.TryAdd(returnValue.Name, returnRecordType);
             }
 
-            // Walk method body for DB invocations
+            // Walk method body for DB invocations (handles both with and without parentheses)
             foreach (var descendant in body.DescendantNodes())
             {
-                RequiredPermission? permission = null;
-
-                if (descendant is InvocationExpressionSyntax invocation)
+                if (descendant is InvocationExpressionSyntax
+                    || (descendant is MemberAccessExpressionSyntax ma && ma.Parent is not InvocationExpressionSyntax))
                 {
-                    permission = TryGetPermissionFromInvocation(
-                        invocation, containingObject, localRecordVarMap, objectScopeRecordMap, ctx);
-                }
-                else if (descendant is MemberAccessExpressionSyntax memberAccess
-                    && memberAccess.Parent is not InvocationExpressionSyntax)
-                {
-                    // Method call without parentheses (e.g., MyTable.Count instead of MyTable.Count())
-                    permission = TryGetPermissionFromMemberAccess(
-                        memberAccess, containingObject, localRecordVarMap, objectScopeRecordMap, ctx);
-                }
+                    var permission = TryGetPermissionFromDbAccess(
+                        descendant, containingObject, localRecordVarMap, objectScopeRecordMap, ctx);
 
-                if (permission is not null)
-                    requiredPermissions.Add(permission.Value);
+                    if (permission is not null)
+                        requiredPermissions.Add(permission.Value);
+                }
             }
         }
     }
 
-    private static RequiredPermission? TryGetPermissionFromInvocation(
-        InvocationExpressionSyntax invocation,
+    /// <summary>
+    /// Resolves a DB access from either syntax form:
+    /// - InvocationExpressionSyntax (with parentheses: MyTable.Find())
+    /// - MemberAccessExpressionSyntax without parent InvocationExpressionSyntax (no parens: MyTable.Count)
+    /// Uses variable-map fast path when possible, falls back to GetSymbolInfo for complex receivers.
+    /// </summary>
+    private static RequiredPermission? TryGetPermissionFromDbAccess(
+        SyntaxNode node,
         IApplicationObjectTypeSymbol containingObject,
         Dictionary<string, IRecordTypeSymbol>? localRecordVarMap,
         Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap,
         SyntaxNodeAnalysisContext ctx)
     {
-        // Extract method name and receiver from syntax
-        string? methodName = null;
-        string? receiverName = null;
-        bool hasComplexReceiver = false;
+        // Extract method name, receiver expression, and location from either syntax form
+        string? methodName;
+        ExpressionSyntax? receiverExpression;
+        bool hasImplicitSelf = false;
 
-        if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+        if (node is InvocationExpressionSyntax invocation)
+        {
+            if (invocation.Expression is MemberAccessExpressionSyntax invMemberAccess)
+            {
+                methodName = invMemberAccess.Name.Identifier.ValueText;
+                receiverExpression = invMemberAccess.Expression;
+            }
+            else if (invocation.Expression is IdentifierNameSyntax simpleName)
+            {
+                methodName = simpleName.Identifier.ValueText;
+                receiverExpression = null;
+                hasImplicitSelf = true;
+            }
+            else
+            {
+                return null;
+            }
+        }
+        else if (node is MemberAccessExpressionSyntax memberAccess)
         {
             methodName = memberAccess.Name.Identifier.ValueText;
-            if (memberAccess.Expression is IdentifierNameSyntax identifierName)
-                receiverName = identifierName.Identifier.ValueText?.UnquoteIdentifier();
-            else
-                hasComplexReceiver = true;
+            receiverExpression = memberAccess.Expression;
         }
-        else if (invocation.Expression is IdentifierNameSyntax simpleName)
+        else
         {
-            methodName = simpleName.Identifier.ValueText;
+            return null;
         }
 
         if (methodName is null)
@@ -211,48 +224,53 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (operation == DatabaseOperation.None)
             return null;
 
-        // Fast path: resolve receiver via variable map lookup
-        if (receiverName is not null)
-        {
-            IRecordTypeSymbol? recordType = null;
-
-            if (localRecordVarMap is not null)
-                localRecordVarMap.TryGetValue(receiverName, out recordType);
-
-            if (recordType is null && objectScopeRecordMap is not null)
-                objectScopeRecordMap.TryGetValue(receiverName, out recordType);
-
-            if (recordType is not null)
-            {
-                var tableType = recordType.OriginalDefinition as ITableTypeSymbol;
-                if (tableType is not null)
-                    return new RequiredPermission(tableType, recordType, operation, invocation.GetLocation());
-                return null;
-            }
-        }
-
         // Implicit self (no receiver, inside table/tableext)
-        if (receiverName is null && !hasComplexReceiver)
+        if (hasImplicitSelf)
         {
             if (containingObject is IRecordTypeSymbol selfRecord && !selfRecord.Temporary)
             {
                 var tableType = selfRecord.OriginalDefinition as ITableTypeSymbol;
                 if (tableType is not null)
-                    return new RequiredPermission(tableType, selfRecord, operation, invocation.GetLocation());
+                    return new RequiredPermission(tableType, selfRecord, operation, node.GetLocation());
             }
             return null;
         }
 
-        // Fallback: complex receiver or unresolved simple name (use GetSymbolInfo)
-        return TryGetPermissionViaSymbolInfo(invocation, containingObject, ctx);
+        // Fast path: resolve receiver via variable map lookup
+        if (receiverExpression is IdentifierNameSyntax identifierName)
+        {
+            var receiverName = identifierName.Identifier.ValueText?.UnquoteIdentifier();
+            if (receiverName is not null)
+            {
+                IRecordTypeSymbol? recordType = null;
+
+                if (localRecordVarMap is not null)
+                    localRecordVarMap.TryGetValue(receiverName, out recordType);
+
+                if (recordType is null && objectScopeRecordMap is not null)
+                    objectScopeRecordMap.TryGetValue(receiverName, out recordType);
+
+                if (recordType is not null)
+                {
+                    var tableType = recordType.OriginalDefinition as ITableTypeSymbol;
+                    if (tableType is not null)
+                        return new RequiredPermission(tableType, recordType, operation, node.GetLocation());
+                    return null;
+                }
+            }
+        }
+
+        // Fallback: complex receiver or unresolved name (use GetSymbolInfo)
+        return TryGetPermissionViaSymbolInfo(node, receiverExpression, containingObject, ctx);
     }
 
     private static RequiredPermission? TryGetPermissionViaSymbolInfo(
-        InvocationExpressionSyntax invocation,
+        SyntaxNode node,
+        ExpressionSyntax? receiverExpression,
         IApplicationObjectTypeSymbol containingObject,
         SyntaxNodeAnalysisContext ctx)
     {
-        var symbolInfo = ctx.SemanticModel.GetSymbolInfo(invocation, ctx.CancellationToken);
+        var symbolInfo = ctx.SemanticModel.GetSymbolInfo(node, ctx.CancellationToken);
         if (symbolInfo.Symbol is not IMethodSymbol targetMethod)
             return null;
 
@@ -263,12 +281,11 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (operation == DatabaseOperation.None)
             return null;
 
-        // Get receiver type via GetSymbolInfo on the receiver expression
         IRecordTypeSymbol? recordType = null;
 
-        if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+        if (receiverExpression is not null)
         {
-            var receiverSymbolInfo = ctx.SemanticModel.GetSymbolInfo(memberAccess.Expression, ctx.CancellationToken);
+            var receiverSymbolInfo = ctx.SemanticModel.GetSymbolInfo(receiverExpression, ctx.CancellationToken);
             ITypeSymbol? receiverType = receiverSymbolInfo.Symbol switch
             {
                 IVariableSymbol v => v.Type,
@@ -290,84 +307,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (tableType is null)
             return null;
 
-        return new RequiredPermission(tableType, recordType, operation, invocation.GetLocation());
-    }
-
-    /// <summary>
-    /// Handles method calls without parentheses (e.g., MyTable.Count instead of MyTable.Count()).
-    /// AL allows omitting parentheses on method calls; the parser produces a MemberAccessExpressionSyntax
-    /// rather than wrapping it in an InvocationExpressionSyntax.
-    /// </summary>
-    private static RequiredPermission? TryGetPermissionFromMemberAccess(
-        MemberAccessExpressionSyntax memberAccess,
-        IApplicationObjectTypeSymbol containingObject,
-        Dictionary<string, IRecordTypeSymbol>? localRecordVarMap,
-        Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap,
-        SyntaxNodeAnalysisContext ctx)
-    {
-        string? methodName = memberAccess.Name.Identifier.ValueText;
-        if (methodName is null)
-            return null;
-
-        var operation = MethodOperationMap.GetOperation(methodName);
-        if (operation == DatabaseOperation.None)
-            return null;
-
-        // Fast path: resolve receiver via variable map lookup
-        if (memberAccess.Expression is IdentifierNameSyntax identifierName)
-        {
-            var receiverName = identifierName.Identifier.ValueText?.UnquoteIdentifier();
-            if (receiverName is not null)
-            {
-                IRecordTypeSymbol? recordType = null;
-
-                if (localRecordVarMap is not null)
-                    localRecordVarMap.TryGetValue(receiverName, out recordType);
-
-                if (recordType is null && objectScopeRecordMap is not null)
-                    objectScopeRecordMap.TryGetValue(receiverName, out recordType);
-
-                if (recordType is not null)
-                {
-                    var tableType = recordType.OriginalDefinition as ITableTypeSymbol;
-                    if (tableType is not null)
-                        return new RequiredPermission(tableType, recordType, operation, memberAccess.GetLocation());
-                    return null;
-                }
-            }
-        }
-
-        // Fallback: complex receiver — use GetSymbolInfo on the member access itself
-        var symbolInfo = ctx.SemanticModel.GetSymbolInfo(memberAccess, ctx.CancellationToken);
-        if (symbolInfo.Symbol is not IMethodSymbol targetMethod)
-            return null;
-
-        if (targetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
-            return null;
-
-        var resolvedOperation = MethodOperationMap.GetOperation(targetMethod.Name);
-        if (resolvedOperation == DatabaseOperation.None)
-            return null;
-
-        // Get receiver type from the expression part
-        var receiverSymbolInfo = ctx.SemanticModel.GetSymbolInfo(memberAccess.Expression, ctx.CancellationToken);
-        ITypeSymbol? receiverType = receiverSymbolInfo.Symbol switch
-        {
-            IVariableSymbol v => v.Type,
-            IParameterSymbol p => p.ParameterType,
-            IMethodSymbol m => m.ReturnValueSymbol?.ReturnType,
-            _ => null
-        };
-
-        var resolvedRecordType = receiverType as IRecordTypeSymbol;
-        if (resolvedRecordType is null || resolvedRecordType.Temporary)
-            return null;
-
-        var resolvedTableType = resolvedRecordType.OriginalDefinition as ITableTypeSymbol;
-        if (resolvedTableType is null)
-            return null;
-
-        return new RequiredPermission(resolvedTableType, resolvedRecordType, resolvedOperation, memberAccess.GetLocation());
+        return new RequiredPermission(tableType, recordType, operation, node.GetLocation());
     }
 
     private static void CollectFromDataItems(
