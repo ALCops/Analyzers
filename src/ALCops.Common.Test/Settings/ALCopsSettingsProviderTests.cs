@@ -15,7 +15,6 @@ public class ALCopsSettingsProviderTests
     [SetUp]
     public void Setup()
     {
-        ALCopsSettingsProvider.ClearCache();
         _tempRoot = Path.Combine(Path.GetTempPath(), $"alcops_test_{Guid.NewGuid():N}");
         Directory.CreateDirectory(_tempRoot);
     }

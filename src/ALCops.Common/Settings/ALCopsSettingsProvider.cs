@@ -16,11 +16,6 @@ namespace ALCops.Common.Settings;
 public static class ALCopsSettingsProvider
 {
     private static readonly ConcurrentDictionary<string, ALCopsSettings> _cache = new();
-
-    /// <summary>
-    /// Clears the settings cache. Intended for use in tests only.
-    /// </summary>
-    public static void ClearCache() => _cache.Clear();
 #if !NETSTANDARD2_1
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -46,27 +41,13 @@ public static class ALCopsSettingsProvider
         string directoryPath = fileSystem.GetDirectoryPath();
 
         if (string.IsNullOrEmpty(directoryPath))
-        {
-            // MemoryFileSystem in tests returns "" — only check virtual FS
-            try
-            {
-                using Stream stream = fileSystem.OpenRead(SettingsFileName);
-                using StreamReader reader = new(stream);
-                string json = reader.ReadToEnd();
-                return DeserializeSettings(json);
-            }
-            catch
-            {
-                return new ALCopsSettings();
-            }
-        }
+            return LoadSettingsFromFileSystem(fileSystem, directoryPath);
 
         return _cache.GetOrAdd(directoryPath, _ => LoadSettingsFromFileSystem(fileSystem, directoryPath));
     }
 
     private static ALCopsSettings LoadSettingsFromFileSystem(IFileSystem fileSystem, string directoryPath)
     {
-        // First, try the app folder via the virtual file system
         try
         {
             using Stream stream = fileSystem.OpenRead(SettingsFileName);
@@ -74,14 +55,21 @@ public static class ALCopsSettingsProvider
             string json = reader.ReadToEnd();
             return DeserializeSettings(json);
         }
-        catch
+        catch (IOException)
         {
-            // Not found in app folder, fall through to parent traversal
+            // File not found on physical file system (RelativeFileSystem)
+        }
+        catch (KeyNotFoundException)
+        {
+            // File not found in virtual file system (MemoryFileSystem)
         }
 
-        var settingsFilePath = FindSettingsFileInParentOrAssemblyDirectory(directoryPath);
-        if (settingsFilePath != null)
-            return DeserializeSettings(File.ReadAllText(settingsFilePath));
+        if (!string.IsNullOrEmpty(directoryPath))
+        {
+            var settingsFilePath = FindSettingsFileInParentOrAssemblyDirectory(directoryPath);
+            if (settingsFilePath != null)
+                return DeserializeSettings(File.ReadAllText(settingsFilePath));
+        }
 
         return new ALCopsSettings();
     }
