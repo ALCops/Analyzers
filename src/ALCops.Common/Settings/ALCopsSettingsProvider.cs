@@ -48,21 +48,9 @@ public static class ALCopsSettingsProvider
 
     private static ALCopsSettings LoadSettingsFromFileSystem(IFileSystem fileSystem, string directoryPath)
     {
-        try
-        {
-            using Stream stream = fileSystem.OpenRead(SettingsFileName);
-            using StreamReader reader = new(stream);
-            string json = reader.ReadToEnd();
+        var json = TryReadFromVirtualFileSystem(fileSystem);
+        if (json != null)
             return DeserializeSettings(json);
-        }
-        catch (IOException)
-        {
-            // File not found on physical file system (RelativeFileSystem)
-        }
-        catch (KeyNotFoundException)
-        {
-            // File not found in virtual file system (MemoryFileSystem)
-        }
 
         if (!string.IsNullOrEmpty(directoryPath))
         {
@@ -72,6 +60,22 @@ public static class ALCopsSettingsProvider
         }
 
         return new ALCopsSettings();
+    }
+
+    private static string? TryReadFromVirtualFileSystem(IFileSystem fileSystem)
+    {
+        try
+        {
+            using Stream stream = fileSystem.OpenRead(SettingsFileName);
+            using StreamReader reader = new(stream);
+            return reader.ReadToEnd();
+        }
+        catch (Exception)
+        {
+            // IFileSystem.OpenRead has no defined exception contract —
+            // implementations throw IOException, KeyNotFoundException, or other types
+            return null;
+        }
     }
 
     private static ALCopsSettings DeserializeSettings(string json)
