@@ -138,7 +138,7 @@ public static class ALCopsSettingsProvider
         if (!Directory.Exists(directoryPath))
             return null;
 
-        return Directory.EnumerateFiles(directoryPath)
+        return Directory.EnumerateFiles(directoryPath, "*.json")
             .FirstOrDefault(f => string.Equals(
                 Path.GetFileName(f), SettingsFileName, StringComparison.OrdinalIgnoreCase));
     }
