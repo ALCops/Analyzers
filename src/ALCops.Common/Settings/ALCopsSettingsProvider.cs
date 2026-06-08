@@ -138,5 +138,4 @@ public static class ALCopsSettingsProvider
             .FirstOrDefault(f => string.Equals(
                 Path.GetFileName(f), SettingsFileName, StringComparison.OrdinalIgnoreCase));
     }
-
 }
