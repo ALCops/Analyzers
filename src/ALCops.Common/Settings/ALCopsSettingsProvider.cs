@@ -96,10 +96,6 @@ public static class ALCopsSettingsProvider
         return null;
     }
 
-    /// <summary>
-    /// Walks up parent directories from the given starting path, looking for alcops.json.
-    /// Stops at the filesystem root or when a directory is inaccessible.
-    /// </summary>
     private static string? FindSettingsFileInParentDirectories(string startingPath)
     {
         try
