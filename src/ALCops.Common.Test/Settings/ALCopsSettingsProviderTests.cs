@@ -45,7 +45,7 @@ public class ALCopsSettingsProviderTests
             """{"CyclomaticComplexityThreshold": 42}""");
 
         // Act
-        var settings = ALCopsSettingsProvider.GetSettings(appFolder);
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
 
         // Assert
         Assert.That(settings.CyclomaticComplexityThreshold, Is.EqualTo(42));
@@ -63,7 +63,7 @@ public class ALCopsSettingsProviderTests
         Directory.CreateDirectory(appFolder);
 
         // Act
-        var settings = ALCopsSettingsProvider.GetSettings(appFolder);
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
 
         // Assert
         Assert.That(settings.CyclomaticComplexityThreshold, Is.EqualTo(99));
@@ -81,7 +81,7 @@ public class ALCopsSettingsProviderTests
         Directory.CreateDirectory(nestedApp);
 
         // Act
-        var settings = ALCopsSettingsProvider.GetSettings(nestedApp);
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(nestedApp));
 
         // Assert
         Assert.That(settings.CognitiveComplexityThreshold, Is.EqualTo(50));
@@ -102,7 +102,7 @@ public class ALCopsSettingsProviderTests
             """{"CyclomaticComplexityThreshold": 5}""");
 
         // Act
-        var settings = ALCopsSettingsProvider.GetSettings(appFolder);
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
 
         // Assert: app-level setting wins over parent
         Assert.That(settings.CyclomaticComplexityThreshold, Is.EqualTo(5));
@@ -116,7 +116,7 @@ public class ALCopsSettingsProviderTests
         Directory.CreateDirectory(appFolder);
 
         // Act
-        var settings = ALCopsSettingsProvider.GetSettings(appFolder);
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
 
         // Assert: defaults are used
         Assert.That(settings.CyclomaticComplexityThreshold, Is.EqualTo(8));

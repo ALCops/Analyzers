@@ -33,22 +33,6 @@ public static class ALCopsSettingsProvider
     private const string SettingsFileName = "alcops.json";
 
     /// <summary>
-    /// Gets the settings for the specified workspace path.
-    /// Returns cached settings if already loaded, otherwise loads from file or returns defaults.
-    /// </summary>
-    /// <param name="workspacePath">
-    /// The workspace directory path, typically from context.SemanticModel.Compilation.FileSystem?.GetDirectoryPath()
-    /// </param>
-    /// <returns>The settings instance (never null)</returns>
-    public static ALCopsSettings GetSettings(string? workspacePath)
-    {
-        if (string.IsNullOrEmpty(workspacePath))
-            return new ALCopsSettings();
-
-        return _cache.GetOrAdd(workspacePath, LoadSettings);
-    }
-
-    /// <summary>
     /// Gets the settings from the compilation's file system.
     /// First checks the app folder via the virtual file system, then walks up parent directories
     /// on the physical file system, and finally falls back to the assembly location.
@@ -95,38 +79,11 @@ public static class ALCopsSettingsProvider
             // Not found in app folder, fall through to parent traversal
         }
 
-        // Walk up parent directories on the physical file system
-        var settingsFilePath = FindSettingsFileInParentDirectories(directoryPath);
+        var settingsFilePath = FindSettingsFileInParentOrAssemblyDirectory(directoryPath);
         if (settingsFilePath != null)
-        {
-            var json = File.ReadAllText(settingsFilePath);
-            return DeserializeSettings(json);
-        }
-
-        // Fall back to assembly location
-        var assemblyLocation = Path.GetDirectoryName(typeof(ALCopsSettings).Assembly.Location);
-        if (!string.IsNullOrEmpty(assemblyLocation) && !string.Equals(assemblyLocation, directoryPath, StringComparison.OrdinalIgnoreCase))
-        {
-            var assemblySettingsFile = FindSettingsFileInDirectory(assemblyLocation);
-            if (assemblySettingsFile != null)
-            {
-                var json = File.ReadAllText(assemblySettingsFile);
-                return DeserializeSettings(json);
-            }
-        }
+            return DeserializeSettings(File.ReadAllText(settingsFilePath));
 
         return new ALCopsSettings();
-    }
-
-    private static ALCopsSettings LoadSettings(string workspacePath)
-    {
-        var settingsFilePath = FindSettingsFile(workspacePath);
-
-        if (settingsFilePath == null)
-            return new ALCopsSettings();
-
-        var json = File.ReadAllText(settingsFilePath);
-        return DeserializeSettings(json);
     }
 
     private static ALCopsSettings DeserializeSettings(string json)
@@ -138,26 +95,15 @@ public static class ALCopsSettingsProvider
 #endif
     }
 
-    private static string? FindSettingsFile(string workspacePath)
+    private static string? FindSettingsFileInParentOrAssemblyDirectory(string directoryPath)
     {
-        // First, try to find in workspace path
-        var settingsFile = FindSettingsFileInDirectory(workspacePath);
+        var settingsFile = FindSettingsFileInParentDirectories(directoryPath);
         if (settingsFile != null)
             return settingsFile;
 
-        // Second, walk up parent directories
-        settingsFile = FindSettingsFileInParentDirectories(workspacePath);
-        if (settingsFile != null)
-            return settingsFile;
-
-        // Third, look in the directory where assembly (ALCops.Common.dll) is located
         var assemblyLocation = Path.GetDirectoryName(typeof(ALCopsSettings).Assembly.Location);
-        if (!string.IsNullOrEmpty(assemblyLocation) && !string.Equals(assemblyLocation, workspacePath, StringComparison.OrdinalIgnoreCase))
-        {
-            settingsFile = FindSettingsFileInDirectory(assemblyLocation);
-            if (settingsFile != null)
-                return settingsFile;
-        }
+        if (!string.IsNullOrEmpty(assemblyLocation) && !string.Equals(assemblyLocation, directoryPath, StringComparison.OrdinalIgnoreCase))
+            return FindSettingsFileInDirectory(assemblyLocation);
 
         return null;
     }
