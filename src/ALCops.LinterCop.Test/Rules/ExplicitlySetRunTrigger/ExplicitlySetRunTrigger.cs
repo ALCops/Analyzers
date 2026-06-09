@@ -24,6 +24,10 @@ namespace ALCops.LinterCop.Test
         [TestCase("Insert")]
         [TestCase("Modify")]
         [TestCase("ModifyAll")]
+        [TestCase("DeleteWithoutParentheses")]
+        [TestCase("DeleteAllWithoutParentheses")]
+        [TestCase("InsertWithoutParentheses")]
+        [TestCase("ModifyWithoutParentheses")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
