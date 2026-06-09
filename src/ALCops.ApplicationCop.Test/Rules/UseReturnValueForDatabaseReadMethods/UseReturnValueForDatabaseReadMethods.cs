@@ -21,6 +21,8 @@ namespace ALCops.ApplicationCop.Test
         [Test]
         [TestCase("GetMethod")]
         [TestCase("GetBySystemIdMethod")]
+        [TestCase("GetMethodWithoutParentheses")]
+        [TestCase("FindFirstMethodWithoutParentheses")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -32,6 +34,8 @@ namespace ALCops.ApplicationCop.Test
         [Test]
         [TestCase("GetMethod")]
         [TestCase("GetBySystemIdMethod")]
+        [TestCase("GetMethodWithoutParentheses")]
+        [TestCase("FindFirstMethodWithoutParentheses")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

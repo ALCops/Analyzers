@@ -41,10 +41,9 @@ public class UseReturnValueForDatabaseReadMethods : DiagnosticAnalyzer
         if (ctx.Operation.Syntax.Parent.Kind == EnumProvider.SyntaxKind.ExpressionStatement)
         {
             var methodName = invocation.TargetMethod.Name;
-            if (invocation.Syntax is not InvocationExpressionSyntax invocationSyntax)
-                return;
-
-            var location = invocationSyntax.Expression.GetLocation();
+            var location = invocation.Syntax is InvocationExpressionSyntax invocationSyntax
+                ? invocationSyntax.Expression.GetLocation()
+                : invocation.Syntax.GetLocation();
 
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.UseReturnValueForDatabaseReadMethods,
