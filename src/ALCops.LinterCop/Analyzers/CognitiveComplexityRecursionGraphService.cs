@@ -58,10 +58,19 @@ internal sealed class CognitiveComplexityRecursionGraphService
 
         foreach (var node in body.DescendantNodes())
         {
-            if (node is not InvocationExpressionSyntax invocation)
+            SyntaxNode? target = null;
+
+            if (node is InvocationExpressionSyntax)
+                target = node;
+            else if (node is MemberAccessExpressionSyntax && node.Parent is not InvocationExpressionSyntax)
+                target = node;
+            else if (node is IdentifierNameSyntax && node.Parent is not InvocationExpressionSyntax && node.Parent is not MemberAccessExpressionSyntax)
+                target = node;
+
+            if (target is null)
                 continue;
 
-            var symbolInfo = semanticModel.GetSymbolInfo(invocation);
+            var symbolInfo = semanticModel.GetSymbolInfo(target);
             if (symbolInfo.Symbol is IMethodSymbol invokedSymbol)
             {
                 builder.Add(invokedSymbol.Id);

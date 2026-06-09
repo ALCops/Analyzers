@@ -24,6 +24,8 @@ namespace ALCops.LinterCop.Test
         [TestCase("IfStatementNested")]
         [TestCase("RecursionDirect")]
         [TestCase("RecursionIndirect")]
+        [TestCase("RecursionDirectWithoutParentheses")]
+        [TestCase("RecursionIndirectWithoutParentheses")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -33,7 +35,7 @@ namespace ALCops.LinterCop.Test
                 "This test requires .NET 8 or higher due to the use of Conditional Expressions.");
 
             SkipTestIfVersionIsTooLow(
-                ["RecursionDirect", "RecursionIndirect"],
+                ["RecursionDirect", "RecursionIndirect", "RecursionDirectWithoutParentheses", "RecursionIndirectWithoutParentheses"],
                 testCase,
                 "14.0",
                 "The this keyword is not supported in versions prior to 14.0.");

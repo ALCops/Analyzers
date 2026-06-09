@@ -289,9 +289,21 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
         var visited = new HashSet<int>();
 
-        foreach (var invocation in root.DescendantNodes().OfType<InvocationExpressionSyntax>())
+        foreach (var node in root.DescendantNodes())
         {
-            var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation, context.CancellationToken);
+            SyntaxNode? target = null;
+
+            if (node is InvocationExpressionSyntax)
+                target = node;
+            else if (node is MemberAccessExpressionSyntax && node.Parent is not InvocationExpressionSyntax)
+                target = node;
+            else if (node is IdentifierNameSyntax && node.Parent is not InvocationExpressionSyntax && node.Parent is not MemberAccessExpressionSyntax)
+                target = node;
+
+            if (target is null)
+                continue;
+
+            var symbolInfo = context.SemanticModel.GetSymbolInfo(target, context.CancellationToken);
             if (symbolInfo.Symbol is not IMethodSymbol invokedMethod)
                 continue;
 
@@ -299,7 +311,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             if (IsPathTo(recursion, invokedMethod.Id, currentId, visited))
             {
                 increment++;
-                RaiseIncrementDiagnostic(context, GetKeywordLocation(invocation, invocation.SpanStart), "RecursionCycle", 0);
+                RaiseIncrementDiagnostic(context, GetKeywordLocation(target, target.SpanStart), "RecursionCycle", 0);
             }
         }
 
@@ -389,6 +401,12 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
                     MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.GetLocation(),
                     _ => invocationExpression.GetLocation()
                 },
+
+            MemberAccessExpressionSyntax memberAccessExpression =>
+                memberAccessExpression.Name.Identifier.GetLocation(),
+
+            IdentifierNameSyntax identifierName =>
+                identifierName.Identifier.GetLocation(),
 
             _ => node.GetLocation().SourceTree!.GetLocation(new TextSpan(spanStart, 1))
         };
