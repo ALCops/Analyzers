@@ -29,6 +29,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("XmlPorts")]
         [TestCase("Queries")]
         [TestCase("Reports")]
+        [TestCase("DottedTableName")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -60,6 +61,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("GetBySystemIdWithPermissions")]
         [TestCase("CountWithPermissions")]
         [TestCase("ImplicitSelfCallWithInherentPermissions")]
+        [TestCase("DottedTableNameWithPermissions")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -84,6 +86,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("AddEntryAlphabetical")]
         [TestCase("AddEntryAlphabeticalFirst")]
         [TestCase("AddEntryAppend")]
+        [TestCase("AddNewPermissionsPropertyDottedName")]
+        [TestCase("MergePermissionCharDottedName")]
         public async Task HasFix(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(
