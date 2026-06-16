@@ -2,7 +2,7 @@ codeunit 50000 MyCodeunit
 {
     Permissions = tabledata "ABC Example Header.Line" = r;
 
-    procedure Test()
+    procedure MyProcedure()
     var
         MyTable: Record "ABC Example Header.Line";
     begin
@@ -12,14 +12,8 @@ codeunit 50000 MyCodeunit
 
 table 50000 "ABC Example Header.Line"
 {
-    Caption = '', Locked = true;
-
     fields
     {
-        field(1; MyField; Integer)
-        {
-            Caption = '', Locked = true;
-            DataClassification = ToBeClassified;
-        }
+        field(1; MyField; Integer) { }
     }
 }
