@@ -60,7 +60,7 @@
 
     <!-- RoslynTestKit -->
     <ItemGroup Condition="'$(IsLegacyNavTfm)'!='true'">
-        <PackageReference Include="ALCops.RoslynTestKit" Version="1.1.1" />
+        <PackageReference Include="ALCops.RoslynTestKit" Version="1.3.0" />
     </ItemGroup>
 
     <!-- On legacy NAV TFMs, suppress package assets and directly reference the netstandard2.1 DLL -->
