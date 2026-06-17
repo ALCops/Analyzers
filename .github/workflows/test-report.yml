@@ -1,0 +1,43 @@
+name: Test Report
+
+on:
+  workflow_run:
+    workflows: ['Pull Request', 'Build and Release']
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    name: Report
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      || github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - name: Download test result artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+          path: TestResults
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Publish unified test report
+        uses: dorny/test-reporter@v3
+        with:
+          name: Test results
+          report-title: 'ALCops Test Results'
+          path: 'TestResults/**/*.trx'
+          reporter: dotnet-trx
+          use-actions-summary: 'false'
+          list-suites: 'failed'
+          list-tests: 'failed'
+          collapsed: 'never'
+          fail-on-error: true
+          fail-on-empty: true
