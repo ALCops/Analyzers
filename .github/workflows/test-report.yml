@@ -19,6 +19,11 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
       || github.event.workflow_run.conclusion == 'failure'
     steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
       - name: Download test result artifacts
         uses: actions/download-artifact@v8
         with:
