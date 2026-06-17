@@ -28,7 +28,8 @@ public sealed class IntegrationEventInInternalCodeunit : DiagnosticAnalyzer
             return;
 
         IApplicationObjectTypeSymbol? applicationObject = methodSymbol.GetContainingApplicationObjectTypeSymbol();
-        if (applicationObject is null || !IsInternalCodeunit(applicationObject) || applicationObject.IsObsolete())
+
+        if (applicationObject is null || !applicationObject.IsInternalCodeunit())
             return;
 
         if (!IsIntegrationEvent(methodSymbol))
@@ -40,10 +41,6 @@ public sealed class IntegrationEventInInternalCodeunit : DiagnosticAnalyzer
             methodSymbol.Name,
             applicationObject.Name));
     }
-
-    private static bool IsInternalCodeunit(IApplicationObjectTypeSymbol applicationObject) =>
-        applicationObject.Kind == EnumProvider.SymbolKind.Codeunit &&
-        applicationObject.DeclaredAccessibility == EnumProvider.Accessibility.Internal;
 
     private static bool IsIntegrationEvent(IMethodSymbol methodSymbol) =>
         methodSymbol.Attributes.Any(attr => attr.AttributeKind == EnumProvider.AttributeKind.IntegrationEvent);

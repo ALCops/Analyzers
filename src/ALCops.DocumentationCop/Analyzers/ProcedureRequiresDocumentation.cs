@@ -13,7 +13,9 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
 	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
 		ImmutableArray.Create(
 			DiagnosticDescriptors.PublicProcedureRequiresDocumentation,
-			DiagnosticDescriptors.InternalProcedureRequiresDocumentation);
+			DiagnosticDescriptors.InternalProcedureRequiresDocumentation,
+			DiagnosticDescriptors.EventRequiresDocumentation,
+			DiagnosticDescriptors.InternalEventRequiresDocumentation);
 
 	public override void Initialize(AnalysisContext context) =>
 		context.RegisterSyntaxNodeAction(
@@ -31,28 +33,52 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
 		if (IsTestCodeunit(containingObject))
 			return;
 
-		var accessibilityToken = method.ProcedureKeyword.GetPreviousToken();
-
-		if (accessibilityToken.Kind == EnumProvider.SyntaxKind.LocalKeyword)
-			return;
-
 		if (HasXmlDocumentation(method))
 			return;
 
-		if ((accessibilityToken.Kind == EnumProvider.SyntaxKind.InternalKeyword) ||
-			(containingObject.DeclaredAccessibility == EnumProvider.Accessibility.Internal))
+		var accessibilityToken = method.ProcedureKeyword.GetPreviousToken();
+
+		if (method.IsIntegrationOrBusinessEvent())
+		{
+			var loc = method.Name.GetLocation();
+			var id = method.Name.Identifier.ToString();
+
+			ctx.ReportDiagnostic(Diagnostic.Create(
+				DiagnosticDescriptors.EventRequiresDocumentation,
+				loc,
+				id));
+		}
+
+		else if (method.IsInternalEvent())
 		{
 			ctx.ReportDiagnostic(Diagnostic.Create(
-				DiagnosticDescriptors.InternalProcedureRequiresDocumentation,
+				DiagnosticDescriptors.InternalEventRequiresDocumentation,
 				method.Name.GetLocation(),
 				method.Name.Identifier.ToString()));
 		}
+
 		else
 		{
-			ctx.ReportDiagnostic(Diagnostic.Create(
-				DiagnosticDescriptors.PublicProcedureRequiresDocumentation,
-				method.Name.GetLocation(),
-				method.Name.Identifier.ToString()));
+			if (accessibilityToken.Kind == EnumProvider.SyntaxKind.LocalKeyword)
+			{
+				return;
+			}
+
+			if ((accessibilityToken.Kind == EnumProvider.SyntaxKind.InternalKeyword) ||
+				(containingObject.DeclaredAccessibility == EnumProvider.Accessibility.Internal))
+			{
+				ctx.ReportDiagnostic(Diagnostic.Create(
+					DiagnosticDescriptors.InternalProcedureRequiresDocumentation,
+					method.Name.GetLocation(),
+					method.Name.Identifier.ToString()));
+			}
+			else
+			{
+				ctx.ReportDiagnostic(Diagnostic.Create(
+					DiagnosticDescriptors.PublicProcedureRequiresDocumentation,
+					method.Name.GetLocation(),
+					method.Name.Identifier.ToString()));
+			}
 		}
 	}
 
@@ -68,6 +94,7 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
 	private static bool IsTestCodeunit(IObjectTypeSymbol symbol)
 	{
 		var subtype = symbol.GetEnumPropertyValue<CodeunitSubtypeKind>(EnumProvider.PropertyKind.Subtype);
+
 		return subtype is not null && subtype == EnumProvider.CodeunitSubtypeKind.Test;
 	}
 }

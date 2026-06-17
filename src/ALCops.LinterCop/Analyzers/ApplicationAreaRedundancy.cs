@@ -26,7 +26,7 @@ public sealed class ApplicationAreaRedundancy : DiagnosticAnalyzer
             return;
 
         IApplicationObjectTypeSymbol? applicationObject = control.GetContainingApplicationObjectTypeSymbol();
-        if (applicationObject is not IPageTypeSymbol page || applicationObject.IsObsolete())
+        if (applicationObject is not IPageTypeSymbol page)
             return;
 
         IPropertySymbol? controlApplicationArea = control.GetProperty(EnumProvider.PropertyKind.ApplicationArea);

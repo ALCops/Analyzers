@@ -45,6 +45,43 @@ public static class ApplicationObjectTypeSymbolInterfaceExtensions
     }
 
     /// <summary>
+    /// Returns true if the object is a test codeunit with TestPermissions = Disabled.
+    /// </summary>
+    public static bool IsTestCodeunitWithPermissionsDisabled(this IApplicationObjectTypeSymbol? containingObject)
+    {
+		if (!containingObject.IsTestCodeunit())
+		{
+			return false;
+		}
+
+        var testPermissions = (containingObject as ICodeunitTypeSymbol)?.GetEnumPropertyValue<TestPermissionsKind>(EnumProvider.PropertyKind.TestPermissions);
+
+        return testPermissions is not null && testPermissions == EnumProvider.TestPermissionsKind.Disabled;
+    }
+
+    /// <summary>
+    /// Returns true if the object is a test codeunit.
+    /// </summary>
+	public static bool IsTestCodeunit(this IApplicationObjectTypeSymbol? objectSymbol)
+	{
+        if (objectSymbol is not ICodeunitTypeSymbol codeunit)
+		{
+            return false;
+		}
+
+        var subtype = codeunit.GetEnumPropertyValue<CodeunitSubtypeKind>(EnumProvider.PropertyKind.Subtype);
+
+        return (subtype is not null) && (subtype == EnumProvider.CodeunitSubtypeKind.Test);
+	}
+
+    /// <summary>
+    /// Returns true if the object is a codeunit with accessability internal.
+    /// </summary>
+    public static bool IsInternalCodeunit(this IApplicationObjectTypeSymbol applicationObject) =>
+        applicationObject.Kind == EnumProvider.SymbolKind.Codeunit &&
+        applicationObject.DeclaredAccessibility == EnumProvider.Accessibility.Internal;
+
+    /// <summary>
     /// Gets the flattened list of all xmlport nodes (including deeply nested) for xmlport objects.
     /// Uses reflection to access the internal <c>SourceXmlPortTypeSymbol.FlattenedNodes</c> property,
     /// which recursively includes all nested tableelement/textelement/fieldelement nodes at any depth.

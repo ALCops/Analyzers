@@ -22,6 +22,19 @@ public static class MethodSymbolInterfaceExtensions
     public static bool IsHandler(this IMethodSymbol method)
         => method.GetPropertyIfExists<bool>("IsHandler");
 
+	/// <summary>
+	/// Checks whether the method is an IntegrationEvent or BusinessEvent.
+	/// </summary>
+    public static bool IsIntegrationOrBusinessEvent(this IMethodSymbol methodSymbol) =>
+        methodSymbol.Attributes.Any(attr => (attr.AttributeKind == EnumProvider.AttributeKind.IntegrationEvent) || (attr.AttributeKind == EnumProvider.AttributeKind.BusinessEvent));
+
+	/// <summary>
+	/// Checks whether the method is an InternalEvent.
+	/// </summary>
+    public static bool IsInternalEvent(this IMethodSymbol methodSymbol) =>
+        methodSymbol.Attributes.Any(attr => attr.AttributeKind == EnumProvider.AttributeKind.InternalEvent);
+
+
     public static bool MethodImplementsInterfaceMethod(this IMethodSymbol methodSymbol, IMethodSymbol interfaceMethodSymbol)
     {
         if (methodSymbol is null || interfaceMethodSymbol is null)

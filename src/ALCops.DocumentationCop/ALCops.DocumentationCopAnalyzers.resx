@@ -136,10 +136,10 @@
     <value>Empty statements (standalone ;) reduce readability and are commonly introduced by mistake. This rule flags empty statement expressions (excess semicolons) so they can be removed.</value>
   </data>
   <data name="PublicProcedureRequiresDocumentationTitle" xml:space="preserve">
-    <value>Public procedures must have XML documentation</value>
+    <value>Public procedures must include XML documentation comments</value>
   </data>
   <data name="PublicProcedureRequiresDocumentationMessageFormat" xml:space="preserve">
-    <value>Public procedure '{0}' must have XML documentation (or be restricted to local or internal scope).</value>
+    <value>Public procedure '{0}' must include XML documentation comments (or be restricted to local or internal scope).</value>
   </data>
   <data name="PublicProcedureRequiresDocumentationDescription" xml:space="preserve">
     <value>Public procedures are part of the exposed API and must be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
@@ -163,12 +163,48 @@
     <value>The XML documentation for a procedure must accurately reflect its signature.</value>
   </data>
   <data name="InternalProcedureRequiresDocumentationTitle" xml:space="preserve">
-    <value>Internal procedures must have XML documentation</value>
+    <value>Internal procedures must include XML documentation comments</value>
   </data>
   <data name="InternalProcedureRequiresDocumentationMessageFormat" xml:space="preserve">
-    <value>Internal procedure '{0}' must have XML documentation (or be restricted to local scope).</value>
+    <value>Internal procedure '{0}' must include XML documentation comments (or be restricted to local scope).</value>
   </data>
   <data name="InternalProcedureRequiresDocumentationDescription" xml:space="preserve">
     <value>Internal procedures can be part of the exposed API (internalsVisibleTo) and should be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
+  </data>
+  <data name="PublicObjectRequiresDocumentationTitle" xml:space="preserve">
+    <value>Public objects must include XML documentation comments</value>
+  </data>
+  <data name="PublicObjectRequiresDocumentationMessageFormat" xml:space="preserve">
+    <value>Public object '{0}' must include XML documentation comments.</value>
+  </data>
+  <data name="PublicObjectRequiresDocumentationDescription" xml:space="preserve">
+    <value>Public objects are part of the exposed API and must be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
+  </data>
+  <data name="InternalObjectRequiresDocumentationTitle" xml:space="preserve">
+    <value>Internal objects must include XML documentation comments</value>
+  </data>
+  <data name="InternalObjectRequiresDocumentationMessageFormat" xml:space="preserve">
+    <value>Internal object '{0}' must include XML documentation comments.</value>
+  </data>
+  <data name="InternalObjectRequiresDocumentationDescription" xml:space="preserve">
+    <value>Internal objects can be part of the exposed API (internalsVisibleTo) and should be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
+  </data>
+  <data name="EventRequiresDocumentationTitle" xml:space="preserve">
+    <value>An integration or business event must include XML documentation comments</value>
+  </data>
+  <data name="EventRequiresDocumentationMessageFormat" xml:space="preserve">
+    <value>Event '{0}' must include XML documentation comments.</value>
+  </data>
+  <data name="EventRequiresDocumentationDescription" xml:space="preserve">
+    <value>Integration events and business events are part of the exposed API and must be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
+  </data>
+  <data name="InternalEventRequiresDocumentationTitle" xml:space="preserve">
+    <value>Internal event must include XML documentation comments</value>
+  </data>
+  <data name="InternalEventRequiresDocumentationMessageFormat" xml:space="preserve">
+    <value>Internal event '{0}' must include XML documentation comments.</value>
+  </data>
+  <data name="InternalEventRequiresDocumentationDescription" xml:space="preserve">
+    <value>Internal events can be part of the exposed API (internalsVisibleTo) and should be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
   </data>
 </root>

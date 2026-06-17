@@ -60,10 +60,50 @@ public static class DiagnosticDescriptors
         title: DocumentationCopAnalyzers.InternalProcedureRequiresDocumentationTitle,
         messageFormat: DocumentationCopAnalyzers.InternalProcedureRequiresDocumentationMessageFormat,
         category: Category.Design,
-        defaultSeverity: DiagnosticSeverity.Info,
+        defaultSeverity: DiagnosticSeverity.Hidden,
         isEnabledByDefault: true,
         description: DocumentationCopAnalyzers.InternalProcedureRequiresDocumentationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.InternalProcedureRequiresDocumentation));
+
+    public static readonly DiagnosticDescriptor PublicObjectRequiresDocumentation = new(
+        id: DiagnosticIds.PublicObjectRequiresDocumentation,
+        title: DocumentationCopAnalyzers.PublicObjectRequiresDocumentationTitle,
+        messageFormat: DocumentationCopAnalyzers.PublicObjectRequiresDocumentationMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: DocumentationCopAnalyzers.PublicObjectRequiresDocumentationDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PublicObjectRequiresDocumentation));
+
+    public static readonly DiagnosticDescriptor InternalObjectRequiresDocumentation = new(
+        id: DiagnosticIds.InternalObjectRequiresDocumentation,
+        title: DocumentationCopAnalyzers.InternalObjectRequiresDocumentationTitle,
+        messageFormat: DocumentationCopAnalyzers.InternalObjectRequiresDocumentationMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Hidden,
+        isEnabledByDefault: true,
+        description: DocumentationCopAnalyzers.InternalObjectRequiresDocumentationDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.InternalObjectRequiresDocumentation));
+
+    public static readonly DiagnosticDescriptor EventRequiresDocumentation = new(
+        id: DiagnosticIds.EventRequiresDocumentation,
+        title: DocumentationCopAnalyzers.EventRequiresDocumentationTitle,
+        messageFormat: DocumentationCopAnalyzers.EventRequiresDocumentationMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Hidden,
+        isEnabledByDefault: true,
+        description: DocumentationCopAnalyzers.EventRequiresDocumentationDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.EventRequiresDocumentation));
+
+    public static readonly DiagnosticDescriptor InternalEventRequiresDocumentation = new(
+        id: DiagnosticIds.InternalEventRequiresDocumentation,
+        title: DocumentationCopAnalyzers.InternalEventRequiresDocumentationTitle,
+        messageFormat: DocumentationCopAnalyzers.InternalEventRequiresDocumentationMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Hidden,
+        isEnabledByDefault: true,
+        description: DocumentationCopAnalyzers.InternalEventRequiresDocumentationDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.InternalEventRequiresDocumentation));
 
     public static string GetHelpUri(string identifier)
     {

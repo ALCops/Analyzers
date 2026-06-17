@@ -42,7 +42,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (containingObject.Kind == EnumProvider.SymbolKind.PermissionSet
             || containingObject.Kind == EnumProvider.SymbolKind.PermissionSetExtension
             || containingObject.IsObsolete()
-            || RequiredPermissionDetector.IsTestCodeunitWithPermissionsDisabled(containingObject))
+            || containingObject.IsTestCodeunitWithPermissionsDisabled())
             return;
 
         var permissionsProperty = containingObject.GetProperty(EnumProvider.PropertyKind.Permissions);

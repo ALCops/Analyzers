@@ -796,6 +796,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Codeunit)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _control =
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Control)));
+        private static readonly Lazy<NavCodeAnalysis.SymbolKind> _controlAddIn =
+            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.ControlAddIn)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _entitlement =
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Entitlement)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _enum =
@@ -864,6 +866,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SymbolKind Action => _action.Value;
         public static NavCodeAnalysis.SymbolKind Class => _class.Value;
         public static NavCodeAnalysis.SymbolKind Codeunit => _codeunit.Value;
+		public static NavCodeAnalysis.SymbolKind ControlAddIn => _controlAddIn.Value;
         public static NavCodeAnalysis.SymbolKind Control => _control.Value;
         public static NavCodeAnalysis.SymbolKind Entitlement => _entitlement.Value;
         public static NavCodeAnalysis.SymbolKind Enum => _enum.Value;

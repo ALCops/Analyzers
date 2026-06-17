@@ -125,21 +125,6 @@ public static class RequiredPermissionDetector
     /// </summary>
     public static bool IsSystemTable(ITableTypeSymbol table) => table.Id > 2000000000;
 
-    /// <summary>
-    /// Returns true if the object is a test codeunit with TestPermissions = Disabled.
-    /// </summary>
-    public static bool IsTestCodeunitWithPermissionsDisabled(IApplicationObjectTypeSymbol? containingObject)
-    {
-        if (containingObject is not ICodeunitTypeSymbol codeunit)
-            return false;
-
-        var subtype = codeunit.GetEnumPropertyValue<CodeunitSubtypeKind>(EnumProvider.PropertyKind.Subtype);
-        if (subtype is null || subtype != EnumProvider.CodeunitSubtypeKind.Test)
-            return false;
-
-        var testPermissions = codeunit.GetEnumPropertyValue<TestPermissionsKind>(EnumProvider.PropertyKind.TestPermissions);
-        return testPermissions is not null && testPermissions == EnumProvider.TestPermissionsKind.Disabled;
-    }
 
     private static DirectionKind ResolveXmlPortDirection(IXmlPortTypeSymbol xmlPort)
     {

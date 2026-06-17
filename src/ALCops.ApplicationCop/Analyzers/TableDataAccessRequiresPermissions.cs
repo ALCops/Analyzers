@@ -48,7 +48,7 @@ public class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         if (required is null)
             return;
 
-        if (RequiredPermissionDetector.IsTestCodeunitWithPermissionsDisabled(containingObject))
+        if (containingObject.IsTestCodeunitWithPermissionsDisabled())
             return;
 
         var pageContext = PermissionResolver.GetPageContext(containingObject);
