@@ -1,6 +1,6 @@
 codeunit 50100 MyCodeunit
 {
-    [BusinessEvent(false, false)]
+    [BusinessEvent(false)]
     local procedure [|OnBeforeTheWorldGoesLight|]()
     begin
     end;
