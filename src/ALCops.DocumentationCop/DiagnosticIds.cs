@@ -7,4 +7,5 @@ public static class DiagnosticIds
     public static readonly string EmptyStatementRequiresComment = "DC0003";
     public static readonly string PublicProcedureRequiresDocumentation = "DC0004";
     public static readonly string XmlDocumentationProcedureConsistency = "DC0005";
+	public static readonly string InternalProcedureRequiresDocumentation = "DC0006";
 }

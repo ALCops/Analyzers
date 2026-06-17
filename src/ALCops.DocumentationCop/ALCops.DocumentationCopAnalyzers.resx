@@ -162,4 +162,13 @@
   <data name="XmlDocumentationProcedureConsistencyDescription" xml:space="preserve">
     <value>The XML documentation for a procedure must accurately reflect its signature.</value>
   </data>
+  <data name="InternalProcedureRequiresDocumentationTitle" xml:space="preserve">
+    <value>Internal procedures must have XML documentation</value>
+  </data>
+  <data name="InternalProcedureRequiresDocumentationMessageFormat" xml:space="preserve">
+    <value>Internal procedure '{0}' must have XML documentation (or be restricted to local scope).</value>
+  </data>
+  <data name="InternalProcedureRequiresDocumentationDescription" xml:space="preserve">
+    <value>Internal procedures can be part of the exposed API (internalsVisibleTo) and should be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
+  </data>
 </root>

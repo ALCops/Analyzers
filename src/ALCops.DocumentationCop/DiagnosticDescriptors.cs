@@ -55,6 +55,16 @@ public static class DiagnosticDescriptors
         description: DocumentationCopAnalyzers.XmlDocumentationProcedureConsistencyDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.XmlDocumentationProcedureConsistency));
 
+    public static readonly DiagnosticDescriptor InternalProcedureRequiresDocumentation = new(
+        id: DiagnosticIds.InternalProcedureRequiresDocumentation,
+        title: DocumentationCopAnalyzers.InternalProcedureRequiresDocumentationTitle,
+        messageFormat: DocumentationCopAnalyzers.InternalProcedureRequiresDocumentationMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: DocumentationCopAnalyzers.InternalProcedureRequiresDocumentationDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.InternalProcedureRequiresDocumentation));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/documentationcop/{0}/", identifier.ToLower());
