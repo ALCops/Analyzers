@@ -125,32 +125,37 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
 
         // Resolve table name using C#-like namespace resolution
         var compilationUnit = objectSyntax.FirstAncestorOrSelf<CompilationUnitSyntax>();
-        var resolvedTableName = ResolveTableNameForFix(props.TableName, props.TableNamespace, compilationUnit);
+        var resolved = ResolveTableNameForFix(props.TableName, props.TableNamespace, compilationUnit);
 
         ctx.RegisterCodeFix(
-            CreateCodeAction(objectIdentity, resolvedTableName, props.PermissionChar, document, generateFixAll: true),
+            CreateCodeAction(objectIdentity, resolved, props.TableName, props.PermissionChar, document, generateFixAll: true),
             diagnostic);
     }
 
     private static TableDataAccessRequiresPermissionsCodeAction CreateCodeAction(
-        (SyntaxKind Kind, string? Name) objectIdentity, string tableName, char permissionChar,
-        Document document, bool generateFixAll)
+        (SyntaxKind Kind, string? Name) objectIdentity, ResolvedTableName resolved,
+        string rawTableName, char permissionChar, Document document, bool generateFixAll)
     {
+        var displayName = resolved.QualifyingNamespace is not null
+            ? $"{resolved.QualifyingNamespace}.{resolved.TableName}"
+            : resolved.TableName;
+
         var title = string.Format(
             ApplicationCopAnalyzers.TableDataAccessRequiresPermissionsCodeAction,
             permissionChar,
-            tableName);
+            displayName);
 
         return new TableDataAccessRequiresPermissionsCodeAction(
             title,
-            ct => ApplyFix(document, objectIdentity, tableName, permissionChar, ct),
+            ct => ApplyFix(document, objectIdentity, resolved, rawTableName, permissionChar, ct),
             nameof(TableDataAccessRequiresPermissionsCodeFixProvider),
             generateFixAll);
     }
 
     private static async Task<Document> ApplyFix(Document document,
         (SyntaxKind Kind, string? Name) objectIdentity,
-        string tableName, char permissionChar, CancellationToken cancellationToken)
+        ResolvedTableName resolved, string rawTableName,
+        char permissionChar, CancellationToken cancellationToken)
     {
         var root = await document.GetSyntaxRootAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -170,11 +175,11 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
 
         if (permissionsProperty is null)
         {
-            newPropertyList = AddNewPermissionsProperty(propertyList, tableName, permissionChar);
+            newPropertyList = AddNewPermissionsProperty(propertyList, resolved, permissionChar);
         }
         else
         {
-            newPropertyList = UpdateExistingPermissionsProperty(propertyList, permissionsProperty, tableName, permissionChar);
+            newPropertyList = UpdateExistingPermissionsProperty(propertyList, permissionsProperty, resolved, rawTableName, permissionChar);
         }
 
         var newRoot = root.ReplaceNode(propertyList, newPropertyList);
@@ -205,10 +210,10 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
     }
 
     private static PropertyListSyntax AddNewPermissionsProperty(
-        PropertyListSyntax propertyList, string tableName, char permissionChar)
+        PropertyListSyntax propertyList, ResolvedTableName resolved, char permissionChar)
     {
         var permissionEntry = PermissionSyntaxHelper.CreatePermissionSyntax(
-            tableName, permissionChar.ToString());
+            resolved.TableName, resolved.QualifyingNamespace, permissionChar.ToString());
         var permissionValue = SyntaxFactory.PermissionPropertyValue()
             .AddPermissionProperties(permissionEntry);
         var property = SyntaxFactory.Property(
@@ -220,12 +225,18 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
 
     private static PropertyListSyntax UpdateExistingPermissionsProperty(
         PropertyListSyntax propertyList, PropertySyntax permissionsProperty,
-        string tableName, char permissionChar)
+        ResolvedTableName resolved, string rawTableName, char permissionChar)
     {
         if (permissionsProperty.Value is not PermissionPropertyValueSyntax permissionValue)
             return propertyList;
 
-        var existingEntry = PermissionSyntaxHelper.FindExistingEntry(permissionValue, tableName);
+        // FindExistingEntry compares against GetObjectNameFromPermission output (always unquoted).
+        // Construct the search name in the same format: raw name for simple, namespace.raw for qualified.
+        var searchName = resolved.QualifyingNamespace is not null
+            ? $"{resolved.QualifyingNamespace}.{rawTableName}"
+            : rawTableName;
+
+        var existingEntry = PermissionSyntaxHelper.FindExistingEntry(permissionValue, searchName);
         PermissionPropertyValueSyntax newPermissionValue;
 
         if (existingEntry is not null)
@@ -236,7 +247,7 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         else
         {
             // Table not listed: add a new entry
-            newPermissionValue = AddNewEntry(permissionValue, tableName, permissionChar);
+            newPermissionValue = AddNewEntry(permissionValue, resolved, rawTableName, permissionChar);
         }
 
         var newProperty = permissionsProperty.WithValue(newPermissionValue);
@@ -257,15 +268,21 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
     }
 
     private static PermissionPropertyValueSyntax AddNewEntry(
-        PermissionPropertyValueSyntax permissionValue, string tableName, char permissionChar)
+        PermissionPropertyValueSyntax permissionValue, ResolvedTableName resolved,
+        string rawTableName, char permissionChar)
     {
         var permissions = permissionValue.PermissionProperties;
         var isSorted = PermissionSyntaxHelper.ArePermissionsSorted(permissions);
         var isMultiLine = PermissionSyntaxHelper.IsMultiLineFormat(permissionValue);
-        var insertIndex = PermissionSyntaxHelper.FindInsertionIndex(permissions, tableName, isSorted);
+
+        // FindInsertionIndex compares against GetObjectNameFromPermission output (unquoted).
+        var sortName = resolved.QualifyingNamespace is not null
+            ? $"{resolved.QualifyingNamespace}.{rawTableName}"
+            : rawTableName;
+        var insertIndex = PermissionSyntaxHelper.FindInsertionIndex(permissions, sortName, isSorted);
 
         var newEntry = PermissionSyntaxHelper.CreatePermissionSyntax(
-            tableName, permissionChar.ToString());
+            resolved.TableName, resolved.QualifyingNamespace, permissionChar.ToString());
 
         SeparatedSyntaxList<PermissionSyntax> newPermissions;
         if (isMultiLine)
@@ -298,16 +315,16 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
                 SemanticFacts.IsSameName(valueText, nameof(PropertyKind.Permissions)));
     }
 
-    private static string ResolveTableNameForFix(string tableName, string tableNamespace,
+    private static ResolvedTableName ResolveTableNameForFix(string tableName, string tableNamespace,
         CompilationUnitSyntax? compilationUnit)
     {
         if (compilationUnit is null || string.IsNullOrEmpty(tableNamespace))
-            return tableName;
+            return new ResolvedTableName(tableName.QuoteIdentifierIfNeededWithReflection(), null);
 
         var fileNamespace = PermissionTableNameResolver.GetFileNamespace(compilationUnit);
         var importedNamespaces = PermissionTableNameResolver.GetImportedNamespaces(compilationUnit);
 
-        return PermissionTableNameResolver.ResolveTableName(
+        return PermissionTableNameResolver.ResolveTableNameParts(
             tableName, tableNamespace, fileNamespace, importedNamespaces);
     }
 }

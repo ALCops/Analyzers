@@ -114,12 +114,13 @@ public static class PermissionSyntaxHelper
 
     /// <summary>
     /// Creates a new PermissionSyntax node for the given table name and permission string.
-    /// Handles both simple names ("Customer") and qualified names ("MyNamespace.Customer").
+    /// When <paramref name="qualifyingNamespace"/> is non-null, creates a qualified name
+    /// (e.g., <c>MyNamespace."Customer"</c>); otherwise creates a simple identifier.
     /// </summary>
-    public static PermissionSyntax CreatePermissionSyntax(string tableName, string permissions)
+    public static PermissionSyntax CreatePermissionSyntax(string tableName, string? qualifyingNamespace, string permissions)
     {
         var objectType = SyntaxFactory.Token(EnumProvider.SyntaxKind.TableDataKeyword);
-        var objectReference = CreateObjectReference(tableName);
+        var objectReference = CreateObjectReference(tableName, qualifyingNamespace);
         var permissionsToken = SyntaxFactory.Identifier(permissions);
 
         return SyntaxFactory.Permission(objectType, objectReference, permissionsToken);
@@ -240,20 +241,30 @@ public static class PermissionSyntaxHelper
         return null;
     }
 
-    private static ObjectNameOrIdSyntax CreateObjectReference(string tableName)
+    private static ObjectNameOrIdSyntax CreateObjectReference(string tableName, string? qualifyingNamespace)
     {
-        var dotIndex = tableName.LastIndexOf('.');
-        if (dotIndex >= 0)
+        if (qualifyingNamespace is not null)
         {
-            var namespacePart = tableName.Substring(0, dotIndex);
-            var namePart = tableName.Substring(dotIndex + 1);
             var qualifiedName = SyntaxFactory.QualifiedName(
-                SyntaxFactory.IdentifierName(namespacePart),
-                SyntaxFactory.IdentifierName(namePart));
+                ParseNamespaceName(qualifyingNamespace),
+                SyntaxFactory.IdentifierName(tableName));
             return SyntaxFactory.ObjectNameOrId(qualifiedName);
         }
 
         return SyntaxFactory.ObjectNameOrId(SyntaxFactory.IdentifierName(tableName));
+    }
+
+    /// <summary>
+    /// Builds a <see cref="NameSyntax"/> from a namespace string that may contain dots
+    /// (e.g., "MyPTE.Sales" becomes <c>QualifiedName(IdentifierName("MyPTE"), IdentifierName("Sales"))</c>).
+    /// </summary>
+    private static NameSyntax ParseNamespaceName(string namespaceName)
+    {
+        var segments = namespaceName.Split('.');
+        NameSyntax result = SyntaxFactory.IdentifierName(segments[0]);
+        for (int i = 1; i < segments.Length; i++)
+            result = SyntaxFactory.QualifiedName(result, SyntaxFactory.IdentifierName(segments[i]));
+        return result;
     }
 
     /// <summary>
