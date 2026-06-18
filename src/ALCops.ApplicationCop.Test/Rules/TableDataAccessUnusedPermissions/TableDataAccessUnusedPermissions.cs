@@ -86,7 +86,7 @@ namespace ALCops.ApplicationCop.Test
                 ["ThisKeywordSelfAccess"],
                 testCase,
                 "16.0",
-                "Resolving 'this' to the record type inside a table requires runtime version 16.0 (BC 2025 wave 2); on 14.0-15.2 the SDK does not bind table 'this' to a record, so self-access cannot be detected.");
+                "this. self-access is only detected by the net8.0/net10.0 analyzer builds; AL 14.0-15.2 ship a netstandard2.0 SDK and run ALCops's netstandard2.1 binary, where ThisExpressionSyntax is absent at the 12.0.13 compile floor and the 'this' branch is excluded.");
 
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

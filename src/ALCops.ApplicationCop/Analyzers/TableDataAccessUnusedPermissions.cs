@@ -229,8 +229,13 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         // equivalent to a bare `Method()` call. Resolve its type via the semantic model;
         // in non-record objects (e.g. codeunits, where `this` is the codeunit instance)
         // the type is not a record and is correctly ignored.
-        // Guarded out on netstandard2.1: the 'this' keyword (Fall 2024 feature) and
-        // ThisExpressionSyntax do not exist in that older SDK, so it can never be parsed.
+        //
+        // Guarded out on netstandard2.1: the public ThisExpressionSyntax type is absent
+        // from the netstandard2.1 compile floor (AL 12.0.13, which predates the Fall 2024
+        // 'this' feature; the type was added in AL 14.0), so it cannot be referenced there.
+        // Consequence: AL 14.0-15.2 ship a netstandard2.0 SDK and therefore run ALCops's
+        // netstandard2.1 binary, which has no 'this' handling -- the self-access false
+        // positive (#343) is only fixed on the net8.0/net10.0 binaries (AL 16.0+).
 #if !NETSTANDARD2_1
         if (receiverExpression is ThisExpressionSyntax thisExpression)
         {

@@ -349,6 +349,15 @@ for the object/bare-self and `is IRecordTypeSymbol` for variable/`this` receiver
 Tests that exercise the `this` form must guard on runtime version 14.0 (e.g.
 `SkipTestIfVersionIsTooLow([...], testCase, "14.0", ...)`), since `this` is a Fall 2024 feature.
 
+`ThisExpressionSyntax` requires a `#if !NETSTANDARD2_1` guard: the public type is **absent**
+from the netstandard2.1 compile floor (AL 12.0.13, which predates the Fall 2024 `this` feature;
+the type, the `SyntaxKind.ThisExpression` enum member, and `IInstanceReferenceOperation` were all
+added in AL 14.0). There is therefore no type-free or `EnumProvider`-reflection fallback. The
+netstandard2.1 binary serves AL 14.0-15.2 (those ship a netstandard2.0 SDK), so any analyzer that
+relies on `ThisExpressionSyntax` cannot detect `this.` on 14.0-15.2 -- only on the net8.0/net10.0
+binaries (AL 16.0+). Guard the corresponding test to 16.0, not 14.0. Operation-tree based detection
+(e.g. `IInvocationOperation.Instance`) has the same floor limitation and cannot work around it.
+
 ## EnumProvider (Critical Pattern)
 Never reference `Microsoft.Dynamics.Nav.CodeAnalysis` enum values directly. Always use `EnumProvider` from `ALCops.Common.Reflection`. This provides backward compatibility across SDK versions via reflection-based caching.
 

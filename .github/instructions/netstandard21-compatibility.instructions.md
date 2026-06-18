@@ -21,7 +21,7 @@ Some `Microsoft.Dynamics.Nav.CodeAnalysis` APIs only exist in newer SDK versions
 | API | Available in | netstandard2.1 workaround |
 |---|---|---|
 | `IFieldSymbol.Type` | net8.0 only | `fieldSymbol.OriginalDefinition.GetTypeSymbol()` (requires `using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols`) |
-| `ThisExpressionSyntax` (AL `this` keyword) | net8.0+ only | Feature is Fall 2024 (runtime 14.0); the type is absent in the Sep-2023 netstandard2.1 SDK. Wrap usages in `#if !NETSTANDARD2_1` (the older SDK can never parse `this`, so skipping its handling is correct). See AC0032 `TableDataAccessUnusedPermissions`. |
+| `ThisExpressionSyntax` (AL `this` keyword) | net8.0+ only | The public type is absent from the netstandard2.1 compile floor (AL 12.0.13, predating the Fall 2024 `this` feature; the type was added in AL 14.0). `SyntaxKind.ThisExpression` and `IInstanceReferenceOperation` are likewise absent at the floor, so there is **no** `EnumProvider`/reflection or operation-tree fallback. Wrap usages in `#if !NETSTANDARD2_1`. Note: the netstandard2.1 binary serves AL 14.0-15.2 at runtime, so guarding it out means `this.` detection (and any fix depending on it) is unavailable there -- guard the corresponding tests to **16.0**, not 14.0. See AC0032 `TableDataAccessUnusedPermissions`. |
 
 ### Pattern for `IFieldSymbol.Type`
 
