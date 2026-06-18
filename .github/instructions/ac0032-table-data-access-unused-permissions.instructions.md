@@ -53,7 +53,7 @@ src/ALCops.Common/
    - For each method body: syntax pre-filter (`HasPossibleDbInvocation`)
    - Build per-method record variable map from `IMethodSymbol.LocalVariables` + `.Parameters`
    - Walk method body for both `InvocationExpressionSyntax` and standalone `MemberAccessExpressionSyntax` (method calls without parentheses)
-   - Unified `TryGetPermissionFromDbAccess` extracts method name + receiver from either form, resolves via variable map (fast path), falls back to `GetSymbolInfo` for complex receivers
+   - Unified `TryGetPermissionFromDbAccess` extracts method name + receiver from either form, resolves via variable map (fast path), then via the receiver's `IOperation.Type` for non-identifier receivers (`this.`, expression receivers), and falls back to `GetSymbolInfo` for anything unresolved
 5. **Collect data items** (`CollectFromDataItems`):
    - Iterate `containingObject.GetMembers()` for ReportDataItem, QueryDataItem, XmlPortNode symbols
    - For XmlPortNode: also iterate `FlattenedNodes` to reach nested table elements
@@ -66,7 +66,8 @@ src/ALCops.Common/
 |---|---|
 | `AnalyzeApplicationObject` | Entry point; checks Permissions, orchestrates collection and reporting |
 | `CollectFromInvocations` | Builds object-scope record map (vars + data items), walks method bodies, resolves DB calls via unified handler |
-| `TryGetPermissionFromDbAccess` | Unified resolution for both syntax forms (with/without parentheses): pattern-matches to extract method name + receiver, uses variable-map fast path, falls back to `TryGetPermissionViaSymbolInfo` |
+| `TryGetPermissionFromDbAccess` | Unified resolution for both syntax forms (with/without parentheses). Handles all four receiver forms: `MyTable.Modify()` / `Rec.Modify()` (variable-map fast path), `Modify()` (bare implicit self), `this.Modify()` (AL `this` self-reference, resolved via `IOperation.Type`). Falls back to `TryGetPermissionViaSymbolInfo` for unresolved receivers |
+| `TryGetPermissionForType` | Builds a required permission from a resolved receiver/self type (record resolved to its backing table, or a table type directly); returns null for non-record/table types (e.g. `this` inside a codeunit) |
 | `TryGetPermissionViaSymbolInfo` | Fallback for complex receivers: uses GetSymbolInfo on the node and receiver expression to resolve method and receiver type |
 | `CollectFromDataItems` | Iterates report/query FlattenedDataItems and xmlport FlattenedXmlPortNodes (all via reflection) for implicit read permissions |
 | `AddXmlPortNodeToVarMap` | Adds an xmlport table element to the object-scope record map if it references a non-temporary table |
@@ -88,7 +89,9 @@ Each `SyntaxNodeAction` callback is self-contained with no shared mutable state.
 | Data items in object-scope record map | Report data items and xmlport table elements act as implicit record variables in trigger code; added to the same map for fast-path resolution via `GetTypeSymbol()` |
 | XmlPort nested nodes via `GetFlattenedXmlPortNodes` | `GetMembers()` returns only top-level schema nodes; `IXmlPortNodeSymbol.FlattenedNodes` only returns immediate children (not recursive). Uses reflection on the internal `SourceXmlPortTypeSymbol.FlattenedNodes` property which truly flattens all depths |
 | `GetSymbolInfo` fallback for complex receivers | Handles function return values, array indexing, property access; only ~1% of invocations need this path |
-| No `GetOperation` / `OperationWalker` | `GetOperation` in `SyntaxNodeAction` costs ~0.3ms/call (no pre-computed cache); variable map approach is 4.5x faster |
+| Hot path avoids `GetOperation` / `OperationWalker` | `GetOperation` in `SyntaxNodeAction` costs ~0.3ms/call (no pre-computed cache); the variable-map fast path is 4.5x faster and handles the common identifier receivers. `GetOperation` is used only for the rare non-identifier receivers (`this.`, expression receivers), reading the receiver type off the base `IOperation.Type` |
+| Four receiver forms handled explicitly | Database access can target a record via four syntactic forms: `MyTable.Modify()`, `Rec.Modify()`, bare `Modify()` (implicit self), and `this.Modify()` (AL `this` keyword). Variable receivers use the fast path; bare self resolves the containing `ITableTypeSymbol`; `this` (and other expression receivers) resolve via `IOperation.Type` -- the same operation-tree mechanism AC0031 uses, which works on all TFMs (it never references the `ThisExpressionSyntax` type, absent at the netstandard2.1 floor). Missing the `this` form caused the AC0032 false positive in issue #343 |
+| Self-table symbol shapes | The table object's declared symbol is an `ITableTypeSymbol` (not an `IRecordTypeSymbol`); `this`/`Rec` resolve to a separate `IRecordTypeSymbol` wrapper. `TryGetPermissionForType` accepts both: record types via `OriginalDefinition`, table types directly |
 | No cross-callback shared state | Eliminates the fragile two-phase accumulator pattern that caused false positives during incremental compilation |
 | Iterate `DescendantNodes()` for methods | Finds all MethodOrTriggerDeclarationSyntax in the object, skip obsolete ones |
 | Skip obsolete methods via symbol | `GetDeclaredSymbol` + `IsObsolete()` on the method symbol |
@@ -139,8 +142,8 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 
 ## Test coverage
 
-**HasDiagnostic (10 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord, ParameterPartialUnused, ReportDataItemPartialUnused.
-**NoDiagnostic (25 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, ReportDataItemAliasModify, XmlPortTableElementModify, XmlPortNestedTableElementModify, ReturnParameterRead, ReportNestedDataItemRead, QueryNestedDataItemRead, MethodWithoutParenthesesCount, MethodWithoutParenthesesFindFirst, MethodWithoutParenthesesIsEmpty, MethodWithoutParenthesesChained.
+**HasDiagnostic (11 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord, ParameterPartialUnused, ReportDataItemPartialUnused, ThisKeywordPartialUnused.
+**NoDiagnostic (27 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, ReportDataItemAliasModify, XmlPortTableElementModify, XmlPortNestedTableElementModify, ReturnParameterRead, ReportNestedDataItemRead, QueryNestedDataItemRead, MethodWithoutParenthesesCount, MethodWithoutParenthesesFindFirst, MethodWithoutParenthesesIsEmpty, MethodWithoutParenthesesChained, ThisKeywordSelfAccess, ImplicitSelfBareCall.
 **HasFix (4 cases):** RemoveEntireEntry, ReduceChars, RemoveEntireProperty, ReplaceChars.
 
 ## Known limitations

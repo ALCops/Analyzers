@@ -224,17 +224,11 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (operation == DatabaseOperation.None)
             return null;
 
-        // Implicit self (no receiver, inside table/tableext)
+        // Implicit self: bare `Method()` inside a table. The accessed table is the
+        // containing object itself (an ITableTypeSymbol). The operation model reports a
+        // null instance for bare self calls, so resolve directly from the object symbol.
         if (hasImplicitSelf)
-        {
-            if (containingObject is IRecordTypeSymbol selfRecord && !selfRecord.Temporary)
-            {
-                var tableType = selfRecord.OriginalDefinition as ITableTypeSymbol;
-                if (tableType is not null)
-                    return new RequiredPermission(tableType, selfRecord, operation, node.GetLocation());
-            }
-            return null;
-        }
+            return TryGetPermissionForType(containingObject as ITypeSymbol, operation, node);
 
         // Fast path: resolve receiver via variable map lookup
         if (receiverExpression is IdentifierNameSyntax identifierName)
@@ -260,8 +254,49 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             }
         }
 
+        // Non-identifier receiver (e.g. `this.Method()`, or an expression receiver such as
+        // `GetRec().Method()`). Resolve the receiver's type off the base IOperation. This
+        // mirrors AC0031 (RequiredPermissionDetector) and deliberately avoids referencing
+        // ThisExpressionSyntax, which is absent from the netstandard2.1 compile floor
+        // (AL 12.0.13, predating the Fall 2024 `this` feature). IOperation/GetOperation and
+        // IOperation.Type all exist at that floor, so this works on every TFM and AL version:
+        // in a table `this` binds to the record; in non-record objects (e.g. a codeunit,
+        // where `this` is the codeunit instance) the type is not a record and is ignored.
+        if (receiverExpression is not null && receiverExpression is not IdentifierNameSyntax)
+        {
+            var receiverType = ctx.SemanticModel.GetOperation(receiverExpression, ctx.CancellationToken)?.Type;
+            var permission = TryGetPermissionForType(receiverType, operation, node);
+            if (permission is not null)
+                return permission;
+        }
+
         // Fallback: complex receiver or unresolved name (use GetSymbolInfo)
         return TryGetPermissionViaSymbolInfo(node, receiverExpression, containingObject, ctx);
+    }
+
+    /// <summary>
+    /// Builds a required permission from a resolved receiver/self type (bare `Method()`,
+    /// `this.Method()`, or an expression receiver). Accepts either a record type (resolved to
+    /// its backing table) or a table type directly. Returns null when the type is not a
+    /// non-temporary record/table (e.g. inside a codeunit, where `this` is the codeunit instance).
+    /// </summary>
+    private static RequiredPermission? TryGetPermissionForType(
+        ITypeSymbol? selfType,
+        DatabaseOperation operation,
+        SyntaxNode node)
+    {
+        switch (selfType)
+        {
+            case IRecordTypeSymbol record when !record.Temporary
+                && record.OriginalDefinition is ITableTypeSymbol recordTable:
+                return new RequiredPermission(recordTable, record, operation, node.GetLocation());
+
+            case ITableTypeSymbol table:
+                return new RequiredPermission(table, table, operation, node.GetLocation());
+
+            default:
+                return null;
+        }
     }
 
     private static RequiredPermission? TryGetPermissionViaSymbolInfo(
