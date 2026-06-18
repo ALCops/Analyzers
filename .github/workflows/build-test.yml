@@ -413,35 +413,3 @@ jobs:
           path: |
             **/TestResults_${{ matrix.version }}.trx
 
-  report:
-    if: ${{ always() && (!inputs.draft-check || github.event.pull_request.draft == false) }}
-    needs: [setup, build, test]
-    runs-on: ubuntu-latest
-    name: Report
-    permissions:
-      contents: read
-      actions: read
-      checks: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Download all test artifacts
-        uses: actions/download-artifact@v8
-        with:
-          pattern: test-*
-          merge-multiple: true
-
-      - name: Publish unified test report
-        uses: dorny/test-reporter@v3
-        with:
-          name: Test results
-          report-title: 'ALCops Test Results'
-          path: "**/*.trx"
-          reporter: dotnet-trx
-          use-actions-summary: 'false'
-          list-suites: 'failed'
-          list-tests: 'failed'
-          collapsed: 'never'
-          fail-on-error: true
-          fail-on-empty: true
