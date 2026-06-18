@@ -224,17 +224,26 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (operation == DatabaseOperation.None)
             return null;
 
-        // Implicit self (no receiver, inside table/tableext)
-        if (hasImplicitSelf)
+        // `this.Method()` self-reference (AL 'this' keyword, represented as
+        // ThisExpressionSyntax). In a table/tableextension `this` is the record itself,
+        // equivalent to a bare `Method()` call. Resolve its type via the semantic model;
+        // in non-record objects (e.g. codeunits, where `this` is the codeunit instance)
+        // the type is not a record and is correctly ignored.
+        // Guarded out on netstandard2.1: the 'this' keyword (Fall 2024 feature) and
+        // ThisExpressionSyntax do not exist in that older SDK, so it can never be parsed.
+#if !NETSTANDARD2_1
+        if (receiverExpression is ThisExpressionSyntax thisExpression)
         {
-            if (containingObject is IRecordTypeSymbol selfRecord && !selfRecord.Temporary)
-            {
-                var tableType = selfRecord.OriginalDefinition as ITableTypeSymbol;
-                if (tableType is not null)
-                    return new RequiredPermission(tableType, selfRecord, operation, node.GetLocation());
-            }
-            return null;
+            var thisType = ctx.SemanticModel.GetOperation(thisExpression, ctx.CancellationToken)?.Type;
+            return TryGetSelfPermission(thisType, operation, node);
         }
+#endif
+
+        // Implicit self: bare `Method()` inside a table. The accessed table is the
+        // containing object itself (an ITableTypeSymbol). The operation model reports a
+        // null instance for bare self calls, so resolve directly from the object symbol.
+        if (hasImplicitSelf)
+            return TryGetSelfPermission(containingObject as ITypeSymbol, operation, node);
 
         // Fast path: resolve receiver via variable map lookup
         if (receiverExpression is IdentifierNameSyntax identifierName)
@@ -262,6 +271,31 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
         // Fallback: complex receiver or unresolved name (use GetSymbolInfo)
         return TryGetPermissionViaSymbolInfo(node, receiverExpression, containingObject, ctx);
+    }
+
+    /// <summary>
+    /// Builds a required permission for a self-access (bare `Method()` or `this.Method()`).
+    /// Accepts either a record type (resolved to its backing table) or a table type directly.
+    /// Returns null when the self type is not a non-temporary record/table (e.g. inside a
+    /// codeunit, where `this` is the codeunit instance).
+    /// </summary>
+    private static RequiredPermission? TryGetSelfPermission(
+        ITypeSymbol? selfType,
+        DatabaseOperation operation,
+        SyntaxNode node)
+    {
+        switch (selfType)
+        {
+            case IRecordTypeSymbol record when !record.Temporary
+                && record.OriginalDefinition is ITableTypeSymbol recordTable:
+                return new RequiredPermission(recordTable, record, operation, node.GetLocation());
+
+            case ITableTypeSymbol table:
+                return new RequiredPermission(table, table, operation, node.GetLocation());
+
+            default:
+                return null;
+        }
     }
 
     private static RequiredPermission? TryGetPermissionViaSymbolInfo(

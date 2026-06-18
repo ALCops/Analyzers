@@ -117,7 +117,7 @@ Uses C#-like namespace resolution (`PermissionTableNameResolver`):
 
 ## Test coverage
 
-**HasDiagnostic (8 cases):** ProcedureCalls, ProcedureCallsExtended, GetBySystemId, Count, ImplicitSelfCallInTable, XmlPorts, Queries, Reports.
+**HasDiagnostic (10 cases):** ProcedureCalls, ProcedureCallsExtended, GetBySystemId, Count, ImplicitSelfCallInTable, ThisKeywordSelfCallInTable, XmlPorts, Queries, Reports, DottedTableName.
 **NoDiagnostic (21 cases):** ProcedureCallsPermissionsProperty, ProcedureCallsPermissionsPropertyFullyQualified, ProcedureCallsInherentPermissionsProperty, ProcedureCallsInherentPermissionsAttribute, PageSourceTable, PageExtensionSourceTable, XmlPortPermissionsProperty, XmlPortInherentPermissions, QueryPermissionsProperty, QueryInherentPermissions, ReportPermissionsProperty, ReportInherentPermissions, XMLPortWithTableElementProps, PermissionsAsObjectId, PermissionPropertyWithPragma, PermissionPropertyWithComment, MultiplePermissionsDifferentType, TestPermissionsDisabled, GetBySystemIdWithPermissions, CountWithPermissions, ImplicitSelfCallWithInherentPermissions.
 **HasFix (9 cases):** AddNewPermissionsProperty, AddNewTableEntry, MergePermissionChar, MergeCanonicalOrder, AddEntryMultiLine, AddEntrySingleLine, AddEntryAlphabetical, AddEntryAppend, AddEntryAlphabeticalFirst.
 

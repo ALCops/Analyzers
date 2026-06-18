@@ -21,6 +21,7 @@ Some `Microsoft.Dynamics.Nav.CodeAnalysis` APIs only exist in newer SDK versions
 | API | Available in | netstandard2.1 workaround |
 |---|---|---|
 | `IFieldSymbol.Type` | net8.0 only | `fieldSymbol.OriginalDefinition.GetTypeSymbol()` (requires `using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols`) |
+| `ThisExpressionSyntax` (AL `this` keyword) | net8.0+ only | Feature is Fall 2024 (runtime 14.0); the type is absent in the Sep-2023 netstandard2.1 SDK. Wrap usages in `#if !NETSTANDARD2_1` (the older SDK can never parse `this`, so skipping its handling is correct). See AC0032 `TableDataAccessUnusedPermissions`. |
 
 ### Pattern for `IFieldSymbol.Type`
 
