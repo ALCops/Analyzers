@@ -339,7 +339,7 @@ only some of them produce false positives/negatives (see issue #343, AC0032):
 | Named variable | `MyTable.Modify()` | `MemberAccessExpressionSyntax` with `IdentifierNameSyntax` receiver | Variable map (locals/params/globals) or `GetSymbolInfo` on the receiver |
 | Implicit `Rec` | `Rec.Modify()` | same as above (`Rec` is a normal identifier) | same as named variable |
 | Bare implicit self | `Modify()` | `InvocationExpressionSyntax` whose `Expression` is `IdentifierNameSyntax` (no receiver) | The containing object: a table object's declared symbol is an `ITableTypeSymbol` |
-| `this` self-reference | `this.Modify()` | `MemberAccessExpressionSyntax` with a `ThisExpressionSyntax` receiver (AL `this` keyword, runtime 14.0+) | `SemanticModel.GetOperation(thisNode)?.Type` (binds to a `BoundThisReference`/`IInstanceReferenceOperation`) |
+| `this` self-reference | `this.Modify()` | `MemberAccessExpressionSyntax` whose receiver is the AL `this` keyword (runtime 14.0+) | `SemanticModel.GetOperation(receiverNode)?.Type` (in a table, `this` binds to the record). Detect it as "any non-`IdentifierNameSyntax` receiver" -- do **not** pattern-match `ThisExpressionSyntax` (absent at the netstandard2.1 floor) |
 
 Key symbol-shape gotcha: a **table object's declared symbol is `ITableTypeSymbol`, which is
 NOT an `IRecordTypeSymbol`**. The record (`Rec`/`this`) is a separate `IRecordTypeSymbol`
@@ -349,14 +349,26 @@ for the object/bare-self and `is IRecordTypeSymbol` for variable/`this` receiver
 Tests that exercise the `this` form must guard on runtime version 14.0 (e.g.
 `SkipTestIfVersionIsTooLow([...], testCase, "14.0", ...)`), since `this` is a Fall 2024 feature.
 
-`ThisExpressionSyntax` requires a `#if !NETSTANDARD2_1` guard: the public type is **absent**
-from the netstandard2.1 compile floor (AL 12.0.13, which predates the Fall 2024 `this` feature;
-the type, the `SyntaxKind.ThisExpression` enum member, and `IInstanceReferenceOperation` were all
-added in AL 14.0). There is therefore no type-free or `EnumProvider`-reflection fallback. The
-netstandard2.1 binary serves AL 14.0-15.2 (those ship a netstandard2.0 SDK), so any analyzer that
-relies on `ThisExpressionSyntax` cannot detect `this.` on 14.0-15.2 -- only on the net8.0/net10.0
-binaries (AL 16.0+). Guard the corresponding test to 16.0, not 14.0. Operation-tree based detection
-(e.g. `IInvocationOperation.Instance`) has the same floor limitation and cannot work around it.
+**Do not** reference `ThisExpressionSyntax` directly (and therefore do not `#if !NETSTANDARD2_1`-guard
+`this` handling). The public `ThisExpressionSyntax` type, the `SyntaxKind.ThisExpression` enum member,
+and `IInstanceReferenceOperation` are all **absent** from the netstandard2.1 compile floor (AL 12.0.13,
+predating the Fall 2024 `this` feature), so a `ThisExpressionSyntax` pattern-match forces a guard that
+silently drops `this` detection on the netstandard2.1 binary -- which is exactly what serves AL 14.0-15.2
+(they ship a netstandard2.0 SDK). Instead, resolve the receiver via the **operation tree**, which is
+fully available at the floor (`GetOperation`, `IOperation`, `IOperation.Type`, `IInvocationExpression.Instance`):
+
+```csharp
+// Works on every TFM and AL version; never names ThisExpressionSyntax.
+if (receiverExpression is not null && receiverExpression is not IdentifierNameSyntax)
+{
+    var receiverType = ctx.SemanticModel.GetOperation(receiverExpression, ct)?.Type;  // `this` binds to the record
+    // ... build the permission from receiverType
+}
+```
+
+This is the same mechanism AC0031 (`RequiredPermissionDetector.TryGetFromInvocation`) uses via
+`invocation.Instance.Type`. Keep the variable-map fast path first so `GetOperation` (the ~0.3ms call)
+only runs for the rare non-identifier receivers.
 
 ## EnumProvider (Critical Pattern)
 Never reference `Microsoft.Dynamics.Nav.CodeAnalysis` enum values directly. Always use `EnumProvider` from `ALCops.Common.Reflection`. This provides backward compatibility across SDK versions via reflection-based caching.

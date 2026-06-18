@@ -224,31 +224,11 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (operation == DatabaseOperation.None)
             return null;
 
-        // `this.Method()` self-reference (AL 'this' keyword, represented as
-        // ThisExpressionSyntax). In a table/tableextension `this` is the record itself,
-        // equivalent to a bare `Method()` call. Resolve its type via the semantic model;
-        // in non-record objects (e.g. codeunits, where `this` is the codeunit instance)
-        // the type is not a record and is correctly ignored.
-        //
-        // Guarded out on netstandard2.1: the public ThisExpressionSyntax type is absent
-        // from the netstandard2.1 compile floor (AL 12.0.13, which predates the Fall 2024
-        // 'this' feature; the type was added in AL 14.0), so it cannot be referenced there.
-        // Consequence: AL 14.0-15.2 ship a netstandard2.0 SDK and therefore run ALCops's
-        // netstandard2.1 binary, which has no 'this' handling -- the self-access false
-        // positive (#343) is only fixed on the net8.0/net10.0 binaries (AL 16.0+).
-#if !NETSTANDARD2_1
-        if (receiverExpression is ThisExpressionSyntax thisExpression)
-        {
-            var thisType = ctx.SemanticModel.GetOperation(thisExpression, ctx.CancellationToken)?.Type;
-            return TryGetSelfPermission(thisType, operation, node);
-        }
-#endif
-
         // Implicit self: bare `Method()` inside a table. The accessed table is the
         // containing object itself (an ITableTypeSymbol). The operation model reports a
         // null instance for bare self calls, so resolve directly from the object symbol.
         if (hasImplicitSelf)
-            return TryGetSelfPermission(containingObject as ITypeSymbol, operation, node);
+            return TryGetPermissionForType(containingObject as ITypeSymbol, operation, node);
 
         // Fast path: resolve receiver via variable map lookup
         if (receiverExpression is IdentifierNameSyntax identifierName)
@@ -274,17 +254,33 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             }
         }
 
+        // Non-identifier receiver (e.g. `this.Method()`, or an expression receiver such as
+        // `GetRec().Method()`). Resolve the receiver's type off the base IOperation. This
+        // mirrors AC0031 (RequiredPermissionDetector) and deliberately avoids referencing
+        // ThisExpressionSyntax, which is absent from the netstandard2.1 compile floor
+        // (AL 12.0.13, predating the Fall 2024 `this` feature). IOperation/GetOperation and
+        // IOperation.Type all exist at that floor, so this works on every TFM and AL version:
+        // in a table `this` binds to the record; in non-record objects (e.g. a codeunit,
+        // where `this` is the codeunit instance) the type is not a record and is ignored.
+        if (receiverExpression is not null && receiverExpression is not IdentifierNameSyntax)
+        {
+            var receiverType = ctx.SemanticModel.GetOperation(receiverExpression, ctx.CancellationToken)?.Type;
+            var permission = TryGetPermissionForType(receiverType, operation, node);
+            if (permission is not null)
+                return permission;
+        }
+
         // Fallback: complex receiver or unresolved name (use GetSymbolInfo)
         return TryGetPermissionViaSymbolInfo(node, receiverExpression, containingObject, ctx);
     }
 
     /// <summary>
-    /// Builds a required permission for a self-access (bare `Method()` or `this.Method()`).
-    /// Accepts either a record type (resolved to its backing table) or a table type directly.
-    /// Returns null when the self type is not a non-temporary record/table (e.g. inside a
-    /// codeunit, where `this` is the codeunit instance).
+    /// Builds a required permission from a resolved receiver/self type (bare `Method()`,
+    /// `this.Method()`, or an expression receiver). Accepts either a record type (resolved to
+    /// its backing table) or a table type directly. Returns null when the type is not a
+    /// non-temporary record/table (e.g. inside a codeunit, where `this` is the codeunit instance).
     /// </summary>
-    private static RequiredPermission? TryGetSelfPermission(
+    private static RequiredPermission? TryGetPermissionForType(
         ITypeSymbol? selfType,
         DatabaseOperation operation,
         SyntaxNode node)

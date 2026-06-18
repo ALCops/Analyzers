@@ -85,8 +85,8 @@ namespace ALCops.ApplicationCop.Test
             SkipTestIfVersionIsTooLow(
                 ["ThisKeywordSelfAccess"],
                 testCase,
-                "16.0",
-                "this. self-access is only detected by the net8.0/net10.0 analyzer builds; AL 14.0-15.2 ship a netstandard2.0 SDK and run ALCops's netstandard2.1 binary, where ThisExpressionSyntax is absent at the 12.0.13 compile floor and the 'this' branch is excluded.");
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
 
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
