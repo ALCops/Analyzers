@@ -1,0 +1,10 @@
+{
+    "name": "Enable AC0021",
+    "description": "Enables the default-disabled LabelLockedMustHaveTokSuffix rule so it can be tested.",
+    "rules": [
+        {
+            "id": "AC0021",
+            "action": "Info"
+        }
+    ]
+}

@@ -333,6 +333,40 @@ public async Task NoDiagnosticWithTargetOnPrem(string testCase)
 
 This requires `using Microsoft.Dynamics.Nav.CodeAnalysis;` for `CompilationOptions` and `CompilationTarget`.
 
+## Testing rules that are `isEnabledByDefault: false`
+
+Rules declared with `isEnabledByDefault: false` never run in tests unless a ruleset explicitly enables them. Inject a co-located ruleset JSON fixture via `AnalyzerTestFixtureConfig.RuleSetPath` (requires RoslynTestKit 1.4.0+, which loads the ruleset and applies it to the compilation's diagnostic options).
+
+Add a `{RuleName}.ruleset.json` next to the test class in its `Rules/{RuleName}/` folder:
+
+```json
+{
+  "name": "Enable AC0013",
+  "description": "Enables AC0013 for tests.",
+  "rules": [ { "id": "AC0013", "action": "Info" } ]
+}
+```
+
+Set `action` to the rule's default severity (`Info`, `Warning`, etc.) to enable it. Then wire it in `Setup` (compute `_testCasePath` **before** creating the fixture, since the path feeds `RuleSetPath`):
+
+```csharp
+[SetUp]
+public void Setup()
+{
+    _testCasePath = Path.Combine(
+        Directory.GetParent(Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
+        Path.Combine("Rules", nameof(MyRule)));
+
+    _fixture = RoslynFixtureFactory.Create<Analyzers.MyRule>(
+        new AnalyzerTestFixtureConfig
+        {
+            RuleSetPath = Path.Combine(_testCasePath, $"{nameof(MyRule)}.ruleset.json")
+        });
+}
+```
+
+The ruleset JSON resolves via the same source-tree absolute path as the `.al` fixtures, so no `CopyToOutputDirectory` is required. For code-fix tests, pass `RuleSetPath` on `CodeFixTestFixtureConfig` too.
+
 ## Naming Conventions
 
 | Element | Convention | Example |

@@ -1,0 +1,10 @@
+{
+    "name": "Enable PC0005",
+    "description": "Enables the default-disabled ExtensiblePropertyExplicitlySet rule so it can be tested.",
+    "rules": [
+        {
+            "id": "PC0005",
+            "action": "Warning"
+        }
+    ]
+}
