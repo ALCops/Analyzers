@@ -152,6 +152,7 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 2. **CalcFields/CalcSums**: Indirect table access through FlowFields is not traced
 3. **InherentPermissions overlap**: Table-level `InherentPermissions` may make an object-level entry redundant, but the analyzer does not flag this (different concern from unused)
 4. **Cross-object calls**: If codeunit A calls codeunit B, and B accesses a table, A's permission for that table appears unused (correct, because permissions don't flow through the call stack)
+5. **`this` self-reference before runtime 16.0**: Resolving `this` to the record type inside a table relies on `GetOperation(this).Type` returning the backing record. The SDK only binds table `this` to a record from runtime 16.0 (BC 2025 wave 2). On 14.0-15.2 the `this` keyword parses but does not resolve to a record, so `this.Modify()` self-access is not detected and the unused-permission false positive can persist. The `ThisKeywordSelfAccess` test is guarded to 16.0 for this reason
 
 ## Design decisions (continued)
 

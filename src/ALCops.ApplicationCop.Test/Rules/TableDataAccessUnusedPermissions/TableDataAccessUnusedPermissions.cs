@@ -85,8 +85,8 @@ namespace ALCops.ApplicationCop.Test
             SkipTestIfVersionIsTooLow(
                 ["ThisKeywordSelfAccess"],
                 testCase,
-                "14.0",
-                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+                "16.0",
+                "Resolving 'this' to the record type inside a table requires runtime version 16.0 (BC 2025 wave 2); on 14.0-15.2 the SDK does not bind table 'this' to a record, so self-access cannot be detected.");
 
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
