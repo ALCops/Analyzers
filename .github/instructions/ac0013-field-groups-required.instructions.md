@@ -49,7 +49,7 @@ Uses `RegisterCompilationStartAction` to discover which tables are referenced by
 
 ## Test coverage
 
-Tests are commented out (TODO: `WithRuleSetPath` in RoslynTestKit needed since rule is `isEnabledByDefault: false`).
+The rule is `isEnabledByDefault: false`, so the test class enables it via a co-located `FieldGroupsRequired.ruleset.json` fixture passed through `AnalyzerTestFixtureConfig.RuleSetPath` (requires RoslynTestKit that applies the ruleset to the compilation).
 
-**HasDiagnostic (3 cases, commented out):** BrickIsMissing, DropDownIsMissing, TemporaryTable (referenced by page).
+**HasDiagnostic (3 cases):** BrickIsMissing, DropDownIsMissing, TemporaryTable (referenced by page).
 **NoDiagnostic (2 cases):** HasBrickAndDropDown, TemporaryTable (no page reference).

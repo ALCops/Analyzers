@@ -1,0 +1,10 @@
+{
+    "name": "Enable AC0013",
+    "description": "Enables the default-disabled FieldGroupsRequired rule so it can be tested.",
+    "rules": [
+        {
+            "id": "AC0013",
+            "action": "Info"
+        }
+    ]
+}

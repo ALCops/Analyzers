@@ -1,0 +1,10 @@
+{
+    "name": "Enable AC0008",
+    "description": "Enables the default-disabled TableDataPerCompanyDeclaration rule so it can be tested.",
+    "rules": [
+        {
+            "id": "AC0008",
+            "action": "Info"
+        }
+    ]
+}

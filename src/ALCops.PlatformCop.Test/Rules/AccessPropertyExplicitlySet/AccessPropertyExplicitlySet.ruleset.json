@@ -1,0 +1,10 @@
+{
+    "name": "Enable PC0006",
+    "description": "Enables the default-disabled AccessPropertyExplicitlySet rule so it can be tested.",
+    "rules": [
+        {
+            "id": "PC0006",
+            "action": "Warning"
+        }
+    ]
+}

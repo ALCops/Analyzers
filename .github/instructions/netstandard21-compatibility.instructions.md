@@ -21,6 +21,7 @@ Some `Microsoft.Dynamics.Nav.CodeAnalysis` APIs only exist in newer SDK versions
 | API | Available in | netstandard2.1 workaround |
 |---|---|---|
 | `IFieldSymbol.Type` | net8.0 only | `fieldSymbol.OriginalDefinition.GetTypeSymbol()` (requires `using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols`) |
+| `ThisExpressionSyntax` (AL `this` keyword) | net8.0+ only (do not reference) | The public type, `SyntaxKind.ThisExpression`, and `IInstanceReferenceOperation` are absent from the netstandard2.1 compile floor (AL 12.0.13, predating the Fall 2024 `this` feature), so there is no type-name or `EnumProvider` workaround for the syntax type. Instead, **do not reference it at all**: resolve the receiver via the operation tree (`GetOperation(receiver)?.Type`, or `IInvocationExpression.Instance.Type`), which *is* available at the floor and binds a table's `this` to its record. This avoids the `#if` entirely and works on AL 14.0-15.2 (which run the netstandard2.1 binary). See AC0032 `TableDataAccessUnusedPermissions` and AC0031 `RequiredPermissionDetector`. |
 
 ### Pattern for `IFieldSymbol.Type`
 

@@ -31,8 +31,15 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("TemporaryRecord")]
         [TestCase("ParameterPartialUnused")]
         [TestCase("ReportDataItemPartialUnused")]
+        [TestCase("ThisKeywordPartialUnused")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ThisKeywordPartialUnused"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -65,6 +72,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("MethodWithoutParenthesesFindFirst")]
         [TestCase("MethodWithoutParenthesesIsEmpty")]
         [TestCase("MethodWithoutParenthesesChained")]
+        [TestCase("ThisKeywordSelfAccess")]
+        [TestCase("ImplicitSelfBareCall")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -72,6 +81,12 @@ namespace ALCops.ApplicationCop.Test
                 testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");
+
+            SkipTestIfVersionIsTooLow(
+                ["ThisKeywordSelfAccess"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
 
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
