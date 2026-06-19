@@ -1,0 +1,14 @@
+{
+    "name": "Enable DC0006, DC0010",
+    "description": "Enables the default-disabled ProcedureRequiresDocumentation.ruleset rule so it can be tested.",
+    "rules": [
+        {
+            "id": "DC0006",
+            "action": "Info"
+        },
+        {
+            "id": "DC0010",
+            "action": "Info"
+        }
+    ]
+}

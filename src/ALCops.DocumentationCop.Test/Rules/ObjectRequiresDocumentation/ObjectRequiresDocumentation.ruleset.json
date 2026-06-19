@@ -1,0 +1,10 @@
+{
+    "name": "Enable DC0008",
+    "description": "Enables the default-disabled ObjectRequiresDocumentation.ruleset rule so it can be tested.",
+    "rules": [
+        {
+            "id": "DC0008",
+            "action": "Info"
+        }
+    ]
+}

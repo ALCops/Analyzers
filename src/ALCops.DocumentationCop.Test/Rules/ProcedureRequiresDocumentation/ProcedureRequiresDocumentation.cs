@@ -10,12 +10,17 @@ namespace ALCops.DocumentationCop.Test
 		[SetUp]
 		public void Setup()
 		{
-			_fixture = RoslynFixtureFactory.Create<Analyzers.ProcedureRequiresDocumentation>();
-
 			_testCasePath = Path.Combine(
 				Directory.GetParent(
 					Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
 					Path.Combine("Rules", nameof(ProcedureRequiresDocumentation)));
+
+		    _fixture = RoslynFixtureFactory.Create<Analyzers.ProcedureRequiresDocumentation>(
+				// Inject a ruleset to enable testing for rules, that are not enabled by default (isEnabledByDefault: false).
+				new AnalyzerTestFixtureConfig
+				{
+					RuleSetPath = Path.Combine(_testCasePath, $"{nameof(ProcedureRequiresDocumentation)}.ruleset.json")
+				});
 		}
 
 		[Test]

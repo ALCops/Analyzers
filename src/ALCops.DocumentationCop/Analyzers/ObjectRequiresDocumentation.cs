@@ -31,9 +31,9 @@ public sealed class ObjectRequiresDocumentation : DiagnosticAnalyzer
 
 	private void CheckObjectDocumentation(SymbolAnalysisContext ctx)
 	{
-		if (ctx.Compilation.FileSystem is null)
+        if (ctx.IsObsolete())
 		{
-			return;
+            return;
 		}
 
 		if (ctx.Symbol is not IApplicationObjectTypeSymbol appObjectTypeSymbol)

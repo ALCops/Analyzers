@@ -6,18 +6,6 @@ namespace ALCops.Common.Extensions;
 
 public static class SyntaxNodeExtensions
 {
-	/// <summary>
-	/// Checks whether the method is an IntegrationEvent or BusinessEvent.
-	/// </summary>
-    public static bool IsIntegrationOrBusinessEvent(this MethodDeclarationSyntax methodSyntax) =>
-        methodSyntax.Attributes.Any(a => (a.Name.Identifier.ToString() == "IntegrationEvent") || (a.Name.Identifier.ToString() == "BusinessEvent"));
-
-	/// <summary>
-	/// Checks whether the method is an InternalEvent.
-	/// </summary>
-    public static bool IsInternalEvent(this MethodDeclarationSyntax methodSyntax) =>
-        methodSyntax.Attributes.Any(a => a.Name.Identifier.ToString() == "InternalEvent");
-
     public static int? GetIntegerPropertyValue(this LabelPropertyValueSyntax? labelProperty, IdentifierProperty property) =>
         labelProperty?.Value.GetIntegerPropertyValue(property);
 

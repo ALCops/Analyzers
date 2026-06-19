@@ -60,8 +60,8 @@ public static class DiagnosticDescriptors
         title: DocumentationCopAnalyzers.InternalProcedureRequiresDocumentationTitle,
         messageFormat: DocumentationCopAnalyzers.InternalProcedureRequiresDocumentationMessageFormat,
         category: Category.Design,
-        defaultSeverity: DiagnosticSeverity.Hidden,
-        isEnabledByDefault: true,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
         description: DocumentationCopAnalyzers.InternalProcedureRequiresDocumentationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.InternalProcedureRequiresDocumentation));
 
@@ -80,8 +80,8 @@ public static class DiagnosticDescriptors
         title: DocumentationCopAnalyzers.InternalObjectRequiresDocumentationTitle,
         messageFormat: DocumentationCopAnalyzers.InternalObjectRequiresDocumentationMessageFormat,
         category: Category.Design,
-        defaultSeverity: DiagnosticSeverity.Hidden,
-        isEnabledByDefault: true,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
         description: DocumentationCopAnalyzers.InternalObjectRequiresDocumentationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.InternalObjectRequiresDocumentation));
 
@@ -90,7 +90,7 @@ public static class DiagnosticDescriptors
         title: DocumentationCopAnalyzers.EventRequiresDocumentationTitle,
         messageFormat: DocumentationCopAnalyzers.EventRequiresDocumentationMessageFormat,
         category: Category.Design,
-        defaultSeverity: DiagnosticSeverity.Hidden,
+        defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         description: DocumentationCopAnalyzers.EventRequiresDocumentationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.EventRequiresDocumentation));
@@ -100,8 +100,8 @@ public static class DiagnosticDescriptors
         title: DocumentationCopAnalyzers.InternalEventRequiresDocumentationTitle,
         messageFormat: DocumentationCopAnalyzers.InternalEventRequiresDocumentationMessageFormat,
         category: Category.Design,
-        defaultSeverity: DiagnosticSeverity.Hidden,
-        isEnabledByDefault: true,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
         description: DocumentationCopAnalyzers.InternalEventRequiresDocumentationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.InternalEventRequiresDocumentation));
 
