@@ -20,7 +20,7 @@ jobs:
       || github.event.workflow_run.conclusion == 'failure'
     steps:
       - name: Checkout tested commit
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
