@@ -160,7 +160,17 @@ For parameterized messages, use standard .NET format strings:
 
 ## Analyzer Class Pattern
 
-All analyzers inherit from `DiagnosticAnalyzer` and are decorated with `[DiagnosticAnalyzer]`.
+All analyzers are decorated with `[DiagnosticAnalyzer]`.
+
+> **Exception harness (XX0000).** Analyzers may instead derive from the per-cop
+> bridge `{Cop}Analyzer` (for example `ApplicationCopAnalyzer`) so that an
+> unhandled exception becomes a located `XX0000` diagnostic instead of `AD0001`
+> on `app.json`. Adoption is a 3-line change: base type `: DiagnosticAnalyzer` →
+> `: {Cop}Analyzer`, `SupportedDiagnostics` → `SupportedDiagnosticsCore`, and
+> `Initialize(AnalysisContext)` → `InitializeAnalyzer(SafeAnalysisContext)` (no
+> `Register*` changes). Currently only `CaptionRequired` is converted. See
+> `analyzer-exception-harness.instructions.md`. The template below shows the
+> still-supported plain `DiagnosticAnalyzer` form.
 
 ### Minimal Template (Symbol-based)
 

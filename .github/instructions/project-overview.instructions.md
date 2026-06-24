@@ -17,6 +17,7 @@ The solution (`ALCops.sln`) contains 13 projects in the `src/` directory. A 14th
   - `Extensions/` : Syntax node, symbol, compilation, and type extension methods
   - `Helpers/` : `ManifestHelper.cs`, `AppSourceCopConfigurationProvider.cs`
   - `Reflection/` : `CompilationHelper.cs`, `EnumProvider.cs`, `PropertyAccessor.cs`, `SymbolHelper.cs`, `VersionProvider.cs`, `StringHelper.cs`
+  - `Diagnostics/` : `ALCopsDiagnosticAnalyzer.cs` (exception-handling base class), `SafeAnalysisContext.cs` / `SafeCompilationStartContext.cs` (callback-wrapping decorators), `AnalyzerExceptionReporter.cs`. Convert analyzer exceptions into a located per-cop `XX0000` diagnostic instead of the SDK's `AD0001`. See `analyzer-exception-harness.instructions.md`.
   - `Constants.cs` : Shared constant values
 
 ### Analyzer projects (6)
