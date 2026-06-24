@@ -365,6 +365,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.UseValidateForFieldAssignmentDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UseValidateForFieldAssignment));
 
+    public static readonly DiagnosticDescriptor AnalyzerException = new(
+        id: DiagnosticIds.AnalyzerException,
+        title: PlatformCopAnalyzers.AnalyzerExceptionTitle,
+        messageFormat: PlatformCopAnalyzers.AnalyzerExceptionMessageFormat,
+        category: Category.Internal,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.AnalyzerExceptionDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.AnalyzerException));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLower());
@@ -411,5 +421,11 @@ public static class DiagnosticDescriptors
         /// Example: Avoid exposing internal APIs, hard-coded credentials, or missing permission checks.
         /// </summary>
         public const string Security = "Security";
+
+        /// <summary>
+        /// Internal issues: failures inside ALCops analyzers themselves
+        /// (for example an unhandled exception in a rule), not problems in user code.
+        /// </summary>
+        public const string Internal = "Internal";
     }
 }

@@ -495,4 +495,13 @@
   <data name="UseValidateForFieldAssignmentCodeAction" xml:space="preserve">
     <value>ALCops: Use Validate() for field assignment</value>
   </data>
+  <data name="AnalyzerExceptionTitle" xml:space="preserve">
+    <value>Analyzer threw an unhandled exception</value>
+  </data>
+  <data name="AnalyzerExceptionMessageFormat" xml:space="preserve">
+    <value>Analyzer '{0}' threw an exception of type '{1}': {2}</value>
+  </data>
+  <data name="AnalyzerExceptionDescription" xml:space="preserve">
+    <value>An ALCops analyzer threw an unhandled exception while analyzing this object. This is a defect in the analyzer, not in the analyzed code. The diagnostic is reported at the object or line being analyzed (instead of the generic AD0001 on app.json) so the culprit can be located. Please report it to the ALCops maintainers with the object name and exception details.</value>
+  </data>
 </root>

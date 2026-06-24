@@ -47,6 +47,16 @@ public static class DiagnosticDescriptors
         helpLinkUri: GetHelpUri(DiagnosticIds.PermissionDeclarationOrder));
 
 
+    public static readonly DiagnosticDescriptor AnalyzerException = new(
+        id: DiagnosticIds.AnalyzerException,
+        title: FormattingCopAnalyzers.AnalyzerExceptionTitle,
+        messageFormat: FormattingCopAnalyzers.AnalyzerExceptionMessageFormat,
+        category: Category.Internal,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: FormattingCopAnalyzers.AnalyzerExceptionDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.AnalyzerException));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/formattingcop/{0}/", identifier.ToLower());
@@ -93,5 +103,11 @@ public static class DiagnosticDescriptors
         /// Example: Avoid exposing internal APIs, hard-coded credentials, or missing permission checks.
         /// </summary>
         public const string Security = "Security";
+
+        /// <summary>
+        /// Internal issues: failures inside ALCops analyzers themselves
+        /// (for example an unhandled exception in a rule), not problems in user code.
+        /// </summary>
+        public const string Internal = "Internal";
     }
 }

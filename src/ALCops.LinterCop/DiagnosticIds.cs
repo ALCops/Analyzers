@@ -2,6 +2,7 @@ namespace ALCops.LinterCop;
 
 public static class DiagnosticIds
 {
+    public static readonly string AnalyzerException = "LC0000";
     public static readonly string ObjectIdInDeclaration = "LC0003";
     public static readonly string RecordInstanceIsolationLevel = "LC0031";
     public static readonly string MaintainabilityIndexMetric = "LC0007";

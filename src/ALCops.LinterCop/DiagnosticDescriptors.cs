@@ -314,6 +314,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.UseSecretTextForSensitiveTextDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UseSecretTextForSensitiveText));
 
+    public static readonly DiagnosticDescriptor AnalyzerException = new(
+        id: DiagnosticIds.AnalyzerException,
+        title: LinterCopAnalyzers.AnalyzerExceptionTitle,
+        messageFormat: LinterCopAnalyzers.AnalyzerExceptionMessageFormat,
+        category: Category.Internal,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.AnalyzerExceptionDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.AnalyzerException));
+
     public static string GetHelpUri(string identifier)
     {
         return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/lintercop/{0}/", identifier.ToLower());
@@ -360,5 +370,11 @@ public static class DiagnosticDescriptors
         /// Example: Avoid exposing internal APIs, hard-coded credentials, or missing permission checks.
         /// </summary>
         public const string Security = "Security";
+
+        /// <summary>
+        /// Internal issues: failures inside ALCops analyzers themselves
+        /// (for example an unhandled exception in a rule), not problems in user code.
+        /// </summary>
+        public const string Internal = "Internal";
     }
 }

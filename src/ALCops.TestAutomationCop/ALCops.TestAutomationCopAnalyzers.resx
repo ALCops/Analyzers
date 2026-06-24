@@ -129,4 +129,13 @@
     <value>Codeunits with Subtype = Test define the executable surface for automated tests and must contain only explicit test entry points. Any global procedure declared in a test codeunit is implicitly exposed as callable logic and therefore must represent an actual test, explicitly marked with the [Test] attribute. A global procedure without this attribute indicates either an incomplete test or misplaced reusable logic.</value>
     <comment/>
   </data>
+  <data name="AnalyzerExceptionTitle" xml:space="preserve">
+    <value>Analyzer threw an unhandled exception</value>
+  </data>
+  <data name="AnalyzerExceptionMessageFormat" xml:space="preserve">
+    <value>Analyzer '{0}' threw an exception of type '{1}': {2}</value>
+  </data>
+  <data name="AnalyzerExceptionDescription" xml:space="preserve">
+    <value>An ALCops analyzer threw an unhandled exception while analyzing this object. This is a defect in the analyzer, not in the analyzed code. The diagnostic is reported at the object or line being analyzed (instead of the generic AD0001 on app.json) so the culprit can be located. Please report it to the ALCops maintainers with the object name and exception details.</value>
+  </data>
 </root>

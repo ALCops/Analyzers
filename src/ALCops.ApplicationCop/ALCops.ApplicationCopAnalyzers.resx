@@ -450,4 +450,13 @@
   <data name="ZeroEnumValueReservedForEmptyDescription" xml:space="preserve">
     <value>Zero (0) should be reserved as the empty Enum value. Business Central stores Enums as integers and does not support null; new records (and existing records after adding a field via table extension) default to 0, which makes non-empty meaning at 0 ambiguous.</value>
   </data>
+  <data name="AnalyzerExceptionTitle" xml:space="preserve">
+    <value>Analyzer threw an unhandled exception</value>
+  </data>
+  <data name="AnalyzerExceptionMessageFormat" xml:space="preserve">
+    <value>Analyzer '{0}' threw an exception of type '{1}': {2}</value>
+  </data>
+  <data name="AnalyzerExceptionDescription" xml:space="preserve">
+    <value>An ALCops analyzer threw an unhandled exception while analyzing this object. This is a defect in the analyzer, not in the analyzed code. The diagnostic is reported at the object or line being analyzed (instead of the generic AD0001 on app.json) so the culprit can be located. Please report it to the ALCops maintainers with the object name and exception details.</value>
+  </data>
 </root>
