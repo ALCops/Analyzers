@@ -3,7 +3,7 @@ using RoslynTestKit;
 
 namespace ALCops.ApplicationCop.Test
 {
-    public class ToolTipMustEndWithDot : NavCodeAnalysisBase
+    public class ToolTipMustEndWithPunctuation : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
         private AnalyzerTestFixture _analysisViewFixture;
@@ -21,7 +21,7 @@ namespace ALCops.ApplicationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(ToolTipMustEndWithDot)));
+                    Path.Combine("Rules", nameof(ToolTipMustEndWithPunctuation)));
         }
 
         [Test]
@@ -48,7 +48,7 @@ namespace ALCops.ApplicationCop.Test
                 .ConfigureAwait(false);
 
             var fixture = AnalysisViewTestCases.Contains(testCase) ? _analysisViewFixture : _fixture;
-            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.ToolTipMustEndWithDot);
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.ToolTipMustEndWithPunctuation);
         }
 
         [Test]
@@ -75,7 +75,7 @@ namespace ALCops.ApplicationCop.Test
                 .ConfigureAwait(false);
 
             var fixture = AnalysisViewTestCases.Contains(testCase) ? _analysisViewFixture : _fixture;
-            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ToolTipMustEndWithDot);
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ToolTipMustEndWithPunctuation);
         }
     }
 }

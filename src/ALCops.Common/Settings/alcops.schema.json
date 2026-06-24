@@ -68,6 +68,19 @@
       "type": "string",
       "enum": ["AllGuidFields"],
       "description": "Controls the scope of the sequential GUID check. When set to 'AllGuidFields', all CreateGuid() calls are flagged, not just those in primary key fields. Used by PC0029."
+    },
+    "ToolTipAllowedPunctuations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Punctuation"
+      },
+      "default": [
+        {
+          "Character": ".",
+          "Name": "dot"
+        }
+      ],
+      "description": "The set of allowed ending punctuations for tooltip text. Used by AC0014. Default: [{\"Character\":\".\",\"Name\":\"dot\"}]"
     }
   },
   "$defs": {
@@ -91,6 +104,21 @@
         "DisallowDescription": {
           "type": "string",
           "description": "A human-readable description shown in the diagnostic message when DisallowPattern is violated. Example: \"should not contain special characters\""
+        }
+      }
+    },
+    "Punctuation": {
+      "type": "object",
+      "description": "Definition of allowed punctuations like '.', '!' for the end of tooltips.",
+      "additionalProperties": false,
+      "properties": {
+        "Character": {
+          "type": "string",
+          "description": "A character allowed as punctuation (i.e. '.', '!')."
+        },
+        "Name": {
+          "type": "string",
+          "description": "A name of the allowed character (i.e. 'dot', 'exclamation mark')."
         }
       }
     }

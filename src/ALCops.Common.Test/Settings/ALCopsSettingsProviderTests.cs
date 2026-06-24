@@ -196,4 +196,47 @@ public class ALCopsSettingsProviderTests
         // Assert: defaults
         Assert.That(settings.CyclomaticComplexityThreshold, Is.EqualTo(8));
     }
+
+    [Test]
+    public void PunctuationSettings()
+    {
+        // Arrange: alcops.json in the app folder itself
+        string appFolder = Path.Combine(_tempRoot, "App1");
+        Directory.CreateDirectory(appFolder);
+
+        File.WriteAllText(
+            Path.Combine(appFolder, "alcops.json"),
+			@"{
+	""ToolTipAllowedPunctuations"": [
+		{
+			""Character"": ""."",
+			""Name"": ""dot""
+		},
+		{
+			""Character"": ""!"",
+			""Name"": ""exclamation mark""
+		}
+	]
+}");
+
+		List<Punctuation>? expectedPunctuations = [
+			new Punctuation { Character = ".", Name = "dot" },
+			new Punctuation { Character = "!", Name = "exclamation mark" }
+		];
+
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
+
+		Assert.That(settings.ToolTipAllowedPunctuations?.Count, Is.EqualTo(2));
+
+		if (settings.ToolTipAllowedPunctuations != null)
+		{
+			foreach(Punctuation punctuation in settings.ToolTipAllowedPunctuations)
+			{
+				var expected = expectedPunctuations.FirstOrDefault(p => p.Character == punctuation.Character);
+
+		        Assert.That(punctuation.Character, Is.EqualTo(expected?.Character));
+		        Assert.That(punctuation.Name, Is.EqualTo(expected?.Name));
+			}
+		}
+    }
 }
