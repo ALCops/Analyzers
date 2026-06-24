@@ -14,6 +14,9 @@
         <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>
     </PropertyGroup>
     <ItemGroup>
+        <InternalsVisibleTo Include="ALCops.LinterCop.Test" />
+    </ItemGroup>
+    <ItemGroup>
         <EmbeddedResource Update="ALCops.LinterCopAnalyzers.resx">
             <LogicalName>ALCops.LinterCop.LinterCopAnalyzers.resources</LogicalName>
             <Generator>MSBuild:Compile</Generator>

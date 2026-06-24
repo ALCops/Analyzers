@@ -25,7 +25,7 @@ No version gate · Full netstandard2.1 support
 |---|---|---|
 | Cop | LinterCop (LC0092) | Code quality convention; reuse same ID for migration from BusinessCentral.LinterCop |
 | Severity | Warning | Convention violation, not a bug |
-| Single diagnostic ID | LC0092 for all 13 naming targets | Simpler user experience; message differentiates targets |
+| Single diagnostic ID | LC0092 for all 16 naming targets | Simpler user experience; message differentiates targets |
 | Settings format | `NamingPatterns` dictionary in alcops.json | PascalCase keys, named per target |
 | Default behavior | Built-in MS convention defaults, user can override | Immediate value without configuration |
 | Object affixes | Strip AppSourceCop affixes before checking, trim whitespace | Avoids false positives on prefixed/suffixed names; handles common `"PTE MyCodeunit"` pattern where space separates affix from name |
@@ -44,11 +44,14 @@ No version gate · Full netstandard2.1 support
 | Message UX | Four-tier strategy: description → suggestion → regex explainer → raw regex | Progressive enhancement; most users see human-readable messages |
 | Built-in descriptions | Hardcoded per default pattern | Best UX for out-of-box experience |
 | AllowDescription/DisallowDescription | Optional user-provided description fields in settings | Users can provide custom descriptions for their custom patterns |
+| Single-letter variable/parameter names | Exempt from uppercase-start requirement | Common idiom (`i`, `j`, `k` for loops, `t` for text). Aligned with pylint `good-names`, ESLint `id-length`, Checkstyle `allowOneCharVarInForLoop`. Default pattern changed from `^[A-Z]` to `^(?:[A-Za-z]$\|[A-Z])` for LocalVariable, GlobalVariable, and Parameter targets |
+| Underscore prefix for variables/parameters | Allow `_` followed by PascalCase | C# convention used in AL for variable disambiguation when the name collides with a parameter or type. PascalCase enforced after `_` (`_Text` passes, `_text` fails) to stay consistent with AL conventions. Pattern: `_[A-Z]` added to LocalVariable, GlobalVariable, and Parameter defaults |
+| xRec prefix for variables/parameters | Allow `x` followed by PascalCase | Idiomatic AL convention for "previous record state" (e.g., `xSalesLine`). The platform uses `Rec`/`xRec`; developers extend this pattern to custom variables. Pattern: `x[A-Z]` added to LocalVariable, GlobalVariable, and Parameter defaults |
 | Auto-suggestion | Pattern-specific name transformation | `^[A-Z]` capitalizes first char, `^(?:[A-Za-z]$\|[A-Z])` capitalizes first char for multi-char names only, `[%&!?]` removes disallowed chars |
 | RegexExplainer | Mini parser for common constructs (char classes, anchors) | Translates simple regex to English when no description available |
-| Single-letter variable/parameter names | Exempt from uppercase-start requirement | Common idiom (`i`, `j`, `k` for loops, `t` for text). Aligned with pylint `good-names`, ESLint `id-length`, Checkstyle `allowOneCharVarInForLoop`. Default pattern changed from `^[A-Z]` to `^(?:[A-Za-z]$\|[A-Z])` for Variable and Parameter targets |
-| Underscore prefix for variables/parameters | Allow `_` followed by PascalCase | C# convention used in AL for variable disambiguation when the name collides with a parameter or type. PascalCase enforced after `_` (`_Text` passes, `_text` fails) to stay consistent with AL conventions. Pattern: `_[A-Z]` added to Variable and Parameter defaults |
-| xRec prefix for variables/parameters | Allow `x` followed by PascalCase | Idiomatic AL convention for "previous record state" (e.g., `xSalesLine`). The platform uses `Rec`/`xRec`; developers extend this pattern to custom variables. Pattern: `x[A-Z]` added to Variable and Parameter defaults |
+| LocalVariable vs GlobalVariable as distinct targets | Yes | Enables different conventions for local vs global variables (e.g. `_` prefix only for locals). `Variable` remains as pure fallback parent, never directly dispatched to. |
+| Parameter inherits from LocalVariable | Yes | Parameter naming is closer to local variable conventions than global. Multi-level chain: Parameter → LocalVariable → Variable. |
+| VarParameter as distinct target | Yes | `var` parameters are passed by reference; teams may want different conventions (e.g. no underscore prefix). Inherits from `Parameter` → `LocalVariable` → `Variable`. |
 
 ## Architecture
 
@@ -60,17 +63,20 @@ Uses `RegisterCompilationStartAction` to:
 3. Build `NamingPatternConfig` (resolves effective patterns per target)
 4. Register `RegisterSymbolAction` for all relevant SymbolKinds
 
-### NamingTarget enum (13 values)
+### NamingTarget enum (16 values)
 
 | Target | SymbolKind registration | Classification logic |
 |---|---|---|
-| Procedure | Method | (parent, never directly used for checking) |
+| Procedure | Method | Parent target, never directly dispatched to |
 | LocalProcedure | Method | `method.IsLocal == true` |
 | GlobalProcedure | Method | `!IsLocal && !IsEvent` |
 | EventSubscriber | Method | `AttributeKind.EventSubscriber` |
 | EventDeclaration | Method | `AttributeKind.IntegrationEvent` or `AttributeKind.BusinessEvent` |
-| Variable | LocalVariable, GlobalVariable | Direct registration |
-| Parameter | Method | Iterate `method.Parameters` |
+| Variable | — | Parent target, never directly dispatched to |
+| LocalVariable | LocalVariable | `SymbolKind.LocalVariable` |
+| GlobalVariable | GlobalVariable | `SymbolKind.GlobalVariable` |
+| Parameter | Method | `parameter.IsVar == false` in `method.Parameters` |
+| VarParameter | Method | `parameter.IsVar == true` in `method.Parameters` |
 | ReturnValue | Method | `method.ReturnValueSymbol` |
 | Object | Table, Page, Codeunit, Report, Query, XmlPort, Enum, Interface, PermissionSet | Direct registration |
 | Field | Field | Direct registration |
@@ -80,13 +86,18 @@ Uses `RegisterCompilationStartAction` to:
 
 ### NamingPatternConfig (inner class)
 
-Resolves effective patterns per target using a three-level cascade:
+Resolves effective patterns per target using a two-phase chain walk:
 
-1. **User override** for the specific target (from `alcops.json`)
-2. **User override for parent** (sub-targets inherit from Procedure)
-3. **Built-in defaults** (hardcoded in `BuiltInDefaults` dictionary)
+1. **Phase 1 — User overrides**: Walk the inheritance chain from most specific to most general; return the first match.
+2. **Phase 2 — Built-in defaults**: Walk the same chain; return the first match.
 
-Inheritance map: LocalProcedure, GlobalProcedure, EventSubscriber, EventDeclaration all inherit from Procedure.
+Inheritance chains:
+- `LocalProcedure`, `GlobalProcedure`, `EventSubscriber`, `EventDeclaration` → `Procedure`
+- `LocalVariable`, `GlobalVariable` → `Variable`
+- `Parameter` → `LocalVariable` → `Variable`
+- `VarParameter` → `Parameter` → `LocalVariable` → `Variable`
+
+`Variable` and `Procedure` are pure parent targets with no SymbolKind registration. Overriding `Variable` in `alcops.json` automatically applies to `LocalVariable`, `GlobalVariable`, and `Parameter` unless those have their own override.
 
 Returns `ResolvedPatterns` containing: compiled `Regex`, original pattern string, and description (for both allow and disallow).
 
@@ -124,17 +135,20 @@ Pattern-specific name transformations:
 
 ### Default patterns
 
-| Target | AllowPattern | DisallowPattern |
-|---|---|---|
-| Procedure | `^[A-Z]` | (none) |
-| Variable | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z]\|x[A-Z])` | `[%&!?]` |
-| Parameter | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z]\|x[A-Z])` | (none) |
-| ReturnValue | `^[A-Z]` | (none) |
-| Object | `^[A-Z]` | (none) |
-| Field | `^[A-Za-z]` | `[%&!?]` |
-| Action | `^[A-Z]` | (none) |
-| EnumValue | (none, opt-in only) | (none) |
-| Control | `^[A-Z]` | (none) |
+| Target | AllowPattern | DisallowPattern | Note |
+|---|---|---|---|
+| Procedure | `^[A-Z]` | (none) | Parent; own built-in default |
+| Variable | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z]\|x[A-Z])` | `[%&!?]` | Parent; own built-in default |
+| LocalVariable | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z]\|x[A-Z])` | `[%&!?]` | Own built-in default |
+| GlobalVariable | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z]\|x[A-Z])` | `[%&!?]` | Own built-in default |
+| Parameter | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z]\|x[A-Z])` | (none) | Own built-in default; no disallow |
+| VarParameter | `^(?:[A-Za-z]$\|[A-Z]\|_[A-Z]\|x[A-Z])` | (none) | Own built-in default; inherits from Parameter |
+| ReturnValue | `^[A-Z]` | (none) | |
+| Object | `^[A-Z]` | (none) | |
+| Field | `^[A-Za-z]` | `[%&!?]` | |
+| Action | `^[A-Z]` | (none) | |
+| EnumValue | (none, opt-in only) | (none) | |
+| Control | `^[A-Z]` | (none) | |
 
 ### Settings schema (alcops.json)
 
@@ -173,5 +187,6 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 - **Object affix stripping tests**: Test cases with AppSourceCop configuration
 - **ControlAddIn object type**: Add ControlAddIn to the Object target registration
 - **Procedure sub-target inheritance tests**: Verify LocalProcedure/GlobalProcedure/EventSubscriber/EventDeclaration inheritance
+- **Variable sub-target inheritance tests**: Verify LocalVariable/GlobalVariable/Parameter multi-level fallback chain
 - **Per-object-type overrides**: Allow different patterns for Table vs Codeunit vs Page names
 - **CodeFix**: Auto-rename to match the pattern (complex, requires semantic analysis)
