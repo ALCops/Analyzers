@@ -104,9 +104,9 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             if (string.IsNullOrEmpty(parameter.Name))
                 continue;
 
-            CheckNameForSymbol(ctx, parameter, parameter.Name, 
-				parameter.IsVar ? NamingTarget.VarParameter : NamingTarget.Parameter,
-				config, "Parameter");
+            CheckNameForSymbol(ctx, parameter, parameter.Name,
+                parameter.IsVar ? NamingTarget.VarParameter : NamingTarget.Parameter,
+                config, "Parameter");
         }
 
         // Check return value
@@ -428,10 +428,10 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         EventSubscriber,
         EventDeclaration,
         Variable,
-		LocalVariable,
-		GlobalVariable,
+        LocalVariable,
+        GlobalVariable,
         Parameter,
-		VarParameter,
+        VarParameter,
         ReturnValue,
         Object,
         Field,
@@ -444,15 +444,15 @@ public sealed class NamingPattern : DiagnosticAnalyzer
     {
         private static readonly (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) pascalCase = (@"^[A-Z]", null, "should start with an uppercase letter", null);
         private static readonly (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) pascalCaseUnderscoreNoSpecial = (@"^(?:[A-Za-z]$|[A-Z]|_[A-Z]|x[A-Z])", @"[%&!?]", "should start with an uppercase letter, underscore followed by uppercase, or x followed by uppercase for xRec pattern (single-letter names are exempt)", "should not contain special characters (%, &, !, ?)");
-		private static readonly (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) pascalCaseUnderscore = (@"^(?:[A-Za-z]$|[A-Z]|_[A-Z]|x[A-Z])", null, "should start with an uppercase letter, underscore followed by uppercase, or x followed by uppercase for xRec pattern (single-letter names are exempt)", null);
-		private static readonly (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) anyCaseNoSpecial = (@"^[A-Za-z]", @"[%&!?]", "should start with a letter", "should not contain special characters (%, &, !, ?)");
+        private static readonly (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) pascalCaseUnderscore = (@"^(?:[A-Za-z]$|[A-Z]|_[A-Z]|x[A-Z])", null, "should start with an uppercase letter, underscore followed by uppercase, or x followed by uppercase for xRec pattern (single-letter names are exempt)", null);
+        private static readonly (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) anyCaseNoSpecial = (@"^[A-Za-z]", @"[%&!?]", "should start with a letter", "should not contain special characters (%, &, !, ?)");
 
         private static readonly Dictionary<NamingTarget, (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc)> BuiltInDefaults = new()
         {
-			[NamingTarget.Procedure] = pascalCase,
+            [NamingTarget.Procedure] = pascalCase,
             [NamingTarget.Variable] =  pascalCaseUnderscoreNoSpecial,
-			[NamingTarget.LocalVariable] = pascalCaseUnderscoreNoSpecial,
-			[NamingTarget.GlobalVariable] = pascalCaseUnderscoreNoSpecial,
+            [NamingTarget.LocalVariable] = pascalCaseUnderscoreNoSpecial,
+            [NamingTarget.GlobalVariable] = pascalCaseUnderscoreNoSpecial,
             [NamingTarget.Parameter] = pascalCaseUnderscore,
             [NamingTarget.VarParameter] = pascalCaseUnderscore,
             [NamingTarget.ReturnValue] = pascalCase,
@@ -468,11 +468,11 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             [NamingTarget.GlobalProcedure] = NamingTarget.Procedure,
             [NamingTarget.EventSubscriber] = NamingTarget.Procedure,
             [NamingTarget.EventDeclaration] = NamingTarget.Procedure,
-			[NamingTarget.LocalVariable] = NamingTarget.Variable,
-			[NamingTarget.GlobalVariable] = NamingTarget.Variable,
-			[NamingTarget.Parameter] = NamingTarget.LocalVariable,
-			[NamingTarget.VarParameter] = NamingTarget.Parameter,
-			[NamingTarget.ReturnValue] = NamingTarget.LocalVariable,
+            [NamingTarget.LocalVariable] = NamingTarget.Variable,
+            [NamingTarget.GlobalVariable] = NamingTarget.Variable,
+            [NamingTarget.Parameter] = NamingTarget.LocalVariable,
+            [NamingTarget.VarParameter] = NamingTarget.Parameter,
+            [NamingTarget.ReturnValue] = NamingTarget.LocalVariable,
         };
 
         private readonly Dictionary<NamingTarget, ResolvedPatterns> _resolvedPatterns;
@@ -509,9 +509,9 @@ public sealed class NamingPattern : DiagnosticAnalyzer
                 chain.Add(current);
 
                 if (!InheritanceMap.TryGetValue(current, out var next))
-				{
+                 {
                     break;
-				}
+                 }
 
                 current = next;
             }
@@ -535,9 +535,9 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             foreach (var t in chain)
             {
                 if (BuiltInDefaults.TryGetValue(t, out var builtIn))
-				{
+                {
                     return builtIn;
-				}
+                }
             }
 
             return (null, null, null, null);

@@ -34,9 +34,9 @@ No version gate · Full netstandard2.1 support
 
 ## Known issues
 
-- If settings define empty or invalid punctuation entries, they may produce less helpful diagnostics. Validation currently relies on schema/editor guidance rather than runtime filtering.
+- Empty or fully invalid `ToolTipAllowedPunctuations` configurations are ignored and the analyzer falls back to the default dot punctuation.
 
 ## Test coverage
 
-**HasDiagnostic (4 cases):** PageAction, PageAnalysisView, PageField, TableField.
-**NoDiagnostic (4 cases):** PageAction, PageAnalysisView, PageField, TableField.
+**HasDiagnostic (7 cases):** PageAction, PageAnalysisView, PageField, TableField, CustomExclamationMissing, InvalidConfigFallbackToDefault, CustomNamesConfigDiagnostic.
+**NoDiagnostic (6 cases):** PageAction, PageAnalysisView, PageField, TableField, CustomExclamationAllowed, EmptyConfigFallbackToDefault.

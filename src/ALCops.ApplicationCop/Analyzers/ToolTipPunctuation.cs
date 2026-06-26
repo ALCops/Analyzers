@@ -12,6 +12,11 @@ namespace ALCops.ApplicationCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class ToolTipPunctuation : DiagnosticAnalyzer
 {
+    private static readonly List<Punctuation> DefaultAllowedPunctuations =
+    [
+        new Punctuation { Character = ".", Name = "dot" }
+    ];
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
             DiagnosticDescriptors.ToolTipDoNotUseLineBreaks,
@@ -86,19 +91,39 @@ public sealed class ToolTipPunctuation : DiagnosticAnalyzer
         var fileSystem = ctx.SemanticModel.Compilation.FileSystem;
         var settings = ALCopsSettingsProvider.GetSettings(fileSystem);
 
-		List<Punctuation>? allowedPunctuations = settings.ToolTipAllowedPunctuations ?? [new Punctuation { Character = ".", Name = "dot" }];
+        var allowedPunctuations = ResolveAllowedPunctuations(settings);
 
-		foreach (Punctuation punctuation in allowedPunctuations)
-		{
-			if (tooltipText.EndsWith(punctuation.Character + "'", StringComparison.OrdinalIgnoreCase))
-			{
-				return;	
-			}
-		}
+        foreach (Punctuation punctuation in allowedPunctuations)
+        {
+            if (tooltipText.EndsWith(punctuation.Character + "'", StringComparison.Ordinal))
+            {
+                return;
+            }
+        }
 
-		ctx.ReportDiagnostic(Diagnostic.Create(
-			DiagnosticDescriptors.ToolTipMustEndWithPunctuation,
-			tooltipProperty.GetLocation(), string.Join(',', allowedPunctuations.Select(p => $"'{p.Name}'"))));
+        ctx.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticDescriptors.ToolTipMustEndWithPunctuation,
+            tooltipProperty.GetLocation(),
+            string.Join("', '", allowedPunctuations.Select(p => p.Name))));
+    }
+
+    private static List<Punctuation> ResolveAllowedPunctuations(ALCopsSettings settings)
+    {
+        if (settings.ToolTipAllowedPunctuations is null or { Count: 0 })
+        {
+            return DefaultAllowedPunctuations;
+        }
+
+        var normalizedPunctuations = settings.ToolTipAllowedPunctuations
+            .Where(p => !string.IsNullOrWhiteSpace(p.Character))
+            .Select(p => new Punctuation
+            {
+                Character = p.Character,
+                Name = string.IsNullOrWhiteSpace(p.Name) ? p.Character : p.Name
+            })
+            .ToList();
+
+        return normalizedPunctuations.Count == 0 ? DefaultAllowedPunctuations : normalizedPunctuations;
     }
 
     private static void AnalyzeStartsWithSpecifies(SyntaxNodeAnalysisContext ctx, string tooltipText, PropertyValueSyntax tooltipProperty)

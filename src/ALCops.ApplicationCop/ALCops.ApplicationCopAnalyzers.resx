@@ -400,7 +400,7 @@
     <value>The user assistance model recommends keeping ToolTips short (about 200 characters including spaces) so users can scan them quickly. The UI can render longer ToolTips, but longer text reduces scannability and consistency.</value>
   </data>
   <data name="ToolTipMustEndWithPunctuationTitle" xml:space="preserve">
-    <value>ToolTip must end with one of the following punctuations: {0}</value>
+    <value>ToolTip must end with a punctuation</value>
   </data>
   <data name="ToolTipMustEndWithPunctuationMessageFormat" xml:space="preserve">
     <value>ToolTip must end with one of the following punctuations: '{0}'.</value>
