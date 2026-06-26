@@ -220,12 +220,12 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
 
         var sourceTableExtensions =
             tableExtensions
-                .Where(te => te.Target is not null && te.Target.Name.Equals(relation.Source.Name))
+                .Where(te => te.Target is not null && SemanticFacts.IsSameName(te.Target.Name, relation.Source.Name))
                 .SelectMany(x => x.AddedFields);
 
         var targetTableExtensions =
             tableExtensions
-                .Where(te => te.Target is not null && te.Target.Name.Equals(relation.Target.Name))
+                .Where(te => te.Target is not null && SemanticFacts.IsSameName(te.Target.Name, relation.Target.Name))
                 .SelectMany(x => x.AddedFields);
 
         var sourceById = BuildFieldMapById(sourceTableExtensions);

@@ -38,13 +38,16 @@ internal static class TransferFieldsRelations
         var ns = table.GetContainingNamespaceQualifiedNameWithReflection() ?? string.Empty;
         var name = table.Name ?? string.Empty;
 
-        if (StringComparer.Ordinal.Equals(configured.Name, name) &&
-            StringComparer.Ordinal.Equals(configured.Namespace, ns))
+        // AL namespaces and object identifiers are case-insensitive, but the runtime-resolved
+        // namespace casing (symbol.ContainingNamespace.QualifiedName) is not stable across
+        // compilations, so both comparisons must be case-insensitive.
+        if (SemanticFacts.IsSameName(configured.Name, name) &&
+            SemanticFacts.IsSameName(configured.Namespace, ns))
             return true;
 
-        // Keep backwards comptibility for objects without namespace
+        // Keep backwards compatibility for objects without namespace
         if (string.IsNullOrEmpty(ns) &&
-            StringComparer.Ordinal.Equals(configured.Name, name))
+            SemanticFacts.IsSameName(configured.Name, name))
             return true;
 
         return false;
