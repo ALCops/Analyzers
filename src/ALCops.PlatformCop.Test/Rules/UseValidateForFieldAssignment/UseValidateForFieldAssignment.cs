@@ -52,16 +52,15 @@ namespace ALCops.PlatformCop.Test
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["TableExtensionFieldOnBeforeValidateSameField", "TableExtensionFieldOnAfterValidateSameField"],
+                [
+                    "TableExtensionFieldOnBeforeValidateSameField",
+                    "TableExtensionFieldOnAfterValidateSameField",
+                    "PageExtensionControlOnBeforeValidateSameField",
+                    "PageExtensionControlOnAfterValidateSameField"
+                ],
                 testCase,
                 "13.0",
-                "No support for tableextensions when target itself is already declared in the same module");
-
-            SkipTestIfVersionIsTooLow(
-                ["PageExtensionControlOnBeforeValidateSameField", "PageExtensionControlOnAfterValidateSameField"],
-                testCase,
-                "13.0",
-                "No support for pageextensions when target itself is already declared in the same module");
+                "No support for table/page extensions when target itself is already declared in the same module");
 
             SkipTestIfVersionIsTooLow(
                 ["OnValidateSameFieldThisReference"],
