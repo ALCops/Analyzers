@@ -140,6 +140,11 @@ public class UseValidateForFieldAssignment : DiagnosticAnalyzer
     private static IFieldSymbol? ResolveTriggerOwnerField(OperationAnalysisContext ctx)
         => ResolveOwnerField(ctx.ContainingSymbol?.ContainingSymbol);
 
+    // Name of the internal 'SourceChangeModifySymbol.Target' property. It is not exposed on
+    // the public IChangeSymbol interface (which only surfaces ChangeKind and Type), so the
+    // modified base field/control can only be reached via reflection.
+    private const string ChangeModifyTargetPropertyName = "Target";
+
     private static IFieldSymbol? ResolveOwnerField(ISymbol? owner)
     {
         switch (owner)
@@ -152,7 +157,12 @@ public class UseValidateForFieldAssignment : DiagnosticAnalyzer
                 return control.RelatedFieldSymbol;
         }
 
-        var target = owner.GetPropertyIfExists<ISymbol>("Target");
+        // modify(field)/modify(control) in extensions: the owner is a change-modify symbol
+        // (SymbolKind.Change) whose modified base symbol is exposed via the internal 'Target'.
+        if (owner.Kind != EnumProvider.SymbolKind.Change)
+            return null;
+
+        var target = owner.GetPropertyIfExists<ISymbol>(ChangeModifyTargetPropertyName);
         if (target is not null && !ReferenceEquals(target, owner))
             return ResolveOwnerField(target);
 
