@@ -25,6 +25,9 @@ namespace ALCops.PlatformCop.Test
         [TestCase("CompoundAssignment")]
         [TestCase("AfterInit")]
         [TestCase("PrimaryKeyField")]
+        [TestCase("OnValidateDifferentFieldOnRec")]
+        [TestCase("OnValidateXRecSameField")]
+        [TestCase("OnValidateOtherRecordSameField")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -38,6 +41,14 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ValidateCall")]
         [TestCase("NonRecordVariable")]
         [TestCase("InsideOnValidateTrigger")]
+        [TestCase("TableFieldOnValidateSameField")]
+        [TestCase("TableExtensionFieldOnBeforeValidateSameField")]
+        [TestCase("TableExtensionFieldOnAfterValidateSameField")]
+        [TestCase("PageControlOnValidateSameField")]
+        [TestCase("PageExtensionControlOnBeforeValidateSameField")]
+        [TestCase("PageExtensionControlOnAfterValidateSameField")]
+        [TestCase("OnValidateSameFieldThisReference")]
+        [TestCase("PageControlOnValidateSameFieldBareReference")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
