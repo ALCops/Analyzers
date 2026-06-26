@@ -114,19 +114,29 @@ public class UseValidateForFieldAssignment : DiagnosticAnalyzer
         return false;
     }
 
-    // The current record is referenced either as 'this'/self (an instance reference) or
-    // through the synthesized 'Rec' global variable (including a page's implicit-with).
-    // 'xRec' and any user-declared record variable are different records and must keep firing.
+    // The current record is referenced either as 'this'/self or through the synthesized 'Rec'
+    // global variable (including a page's implicit-with bare reference). 'xRec' (the before-image)
+    // and any user-declared record variable are different records and must keep firing.
     private static bool IsCurrentRecordInstance(IOperation? instance)
     {
         if (instance is null)
             return false;
 
-#if !NETSTANDARD2_1
-        if (instance is IInstanceReferenceOperation)
+        // 'this'/self reference (AL 14.0+). Detected via the OperationKind enum, NOT the
+        // IInstanceReferenceOperation type: that type (and SyntaxKind.ThisExpression) is absent
+        // from the netstandard2.1 compile floor (AL 12.0.13, predating the Fall 2024 'this'
+        // feature). Referencing it would force an #if guard that silently drops 'this' detection
+        // on the netstandard2.1 binary that serves AL 14.0-15.2. The enum resolves to default on
+        // SDKs without the member (where no 'this' code can exist anyway). See AC0032 / PR #353.
+        var thisReferenceKind = EnumProvider.OperationKind.ThisReference;
+        if (thisReferenceKind != default && instance.Kind == thisReferenceKind)
             return true;
-#endif
 
+        // Current record global 'Rec'. 'Rec' and 'xRec' are reserved AL keywords the compiler
+        // synthesizes by these exact names (TableObjectMembers/PageObjectMembers), sharing the
+        // same record type, so the name is the only public, stable discriminator between the
+        // current record and the 'xRec' before-image (the distinguishing IsThis/HasImplicitWith
+        // flags live on the internal SynthesizedGlobalVariableSymbol and are not publicly reachable).
         var symbol = instance.GetSymbolSafe();
         return symbol is not null
                && string.Equals(symbol.Name, "Rec", StringComparison.OrdinalIgnoreCase);
