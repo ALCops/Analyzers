@@ -51,6 +51,24 @@ namespace ALCops.PlatformCop.Test
         [TestCase("PageControlOnValidateSameFieldBareReference")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["TableExtensionFieldOnBeforeValidateSameField", "TableExtensionFieldOnAfterValidateSameField"],
+                testCase,
+                "13.0",
+                "No support for tableextensions when target itself is already declared in the same module");
+
+            SkipTestIfVersionIsTooLow(
+                ["PageExtensionControlOnBeforeValidateSameField", "PageExtensionControlOnAfterValidateSameField"],
+                testCase,
+                "13.0",
+                "No support for pageextensions when target itself is already declared in the same module");
+
+            SkipTestIfVersionIsTooLow(
+                ["OnValidateSameFieldThisReference"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
