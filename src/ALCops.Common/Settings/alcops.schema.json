@@ -51,7 +51,10 @@
           "EventSubscriber",
           "EventDeclaration",
           "Variable",
+          "LocalVariable",
+          "GlobalVariable",
           "Parameter",
+          "VarParameter",
           "ReturnValue",
           "Object",
           "Field",
@@ -65,9 +68,10 @@
       }
     },
     "UseSequentialGuidScope": {
-      "type": "string",
-      "enum": ["AllGuidFields"],
-      "description": "Controls the scope of the sequential GUID check. When set to 'AllGuidFields', all CreateGuid() calls are flagged, not just those in primary key fields. Used by PC0029."
+      "type": ["string", "null"],
+      "enum": ["AllGuidFields", null],
+      "default": null,
+      "description": "Controls the scope of the sequential GUID check. When set to 'AllGuidFields', all CreateGuid() calls are flagged, not just those in primary key fields. Used by PC0029. Default: null"
     },
     "ToolTipAllowedPunctuations": {
       "type": "array",

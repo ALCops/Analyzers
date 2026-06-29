@@ -1,4 +1,5 @@
 using RoslynTestKit;
+using System.Text.Json;
 using NamingPatternTarget = ALCops.LinterCop.Analyzers.NamingPattern.NamingTarget;
 using NamingPatternConfig = ALCops.LinterCop.Analyzers.NamingPattern.NamingPatternConfig;
 using NamingPatternSetting = ALCops.Common.Settings.NamingPattern;
@@ -65,6 +66,68 @@ namespace ALCops.LinterCop.Test
             var actual = config.GetPatterns(target).AllowPatternString;
 
             Assert.That(actual, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void NamingTargetEnumMatchesSchemaPropertyNames()
+        {
+            string repoRoot = FindRepositoryRoot();
+            string schemaPath = Path.Combine(repoRoot, "src", "ALCops.Common", "Settings", "alcops.schema.json");
+
+            Assert.That(File.Exists(schemaPath), Is.True, $"Schema file not found: {schemaPath}");
+
+            using JsonDocument document = JsonDocument.Parse(File.ReadAllText(schemaPath));
+            
+			JsonElement enumValues = document.RootElement
+                .GetProperty("properties")
+                .GetProperty("NamingPatterns")
+                .GetProperty("propertyNames")
+                .GetProperty("enum");
+
+            var schemaTargets = enumValues
+                .EnumerateArray()
+                .Where(item => item.ValueKind == JsonValueKind.String)
+                .Select(item => item.GetString())
+                .OfType<string>()
+                .ToHashSet(StringComparer.Ordinal);
+
+            var namingTargets = Enum.GetNames(typeof(NamingPatternTarget))
+                .ToHashSet(StringComparer.Ordinal);
+
+            var missingInSchema = namingTargets.Except(schemaTargets).OrderBy(name => name).ToArray();
+            var extraInSchema = schemaTargets.Except(namingTargets).OrderBy(name => name).ToArray();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    missingInSchema,
+                    Is.Empty,
+                    $"NamingTarget enum values missing in schema: {string.Join(", ", missingInSchema)}");
+
+                Assert.That(
+                    extraInSchema,
+                    Is.Empty,
+                    $"Schema contains unknown NamingPatterns targets: {string.Join(", ", extraInSchema)}");
+            });
+        }
+
+        private static string FindRepositoryRoot()
+        {
+            var current = new DirectoryInfo(Environment.CurrentDirectory);
+
+            while (current is not null)
+            {
+                if (File.Exists(Path.Combine(current.FullName, "ALCops.sln")))
+				{
+					return current.FullName;
+				}
+
+                current = current.Parent;
+            }
+
+            Assert.Fail("Could not locate repository root (ALCops.sln).");
+
+            return string.Empty;
         }
 
         private static string AllowPatternFor(string targetName) => $"{targetName}_Allow";

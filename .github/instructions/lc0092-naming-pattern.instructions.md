@@ -180,6 +180,7 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 **HasDiagnostic (9 cases):** ProcedureLowerCaseStart, VariableLowerCaseStart, VariableWithSpecialChars, ParameterLowerCaseStart, ReturnValueLowerCaseStart, ObjectLowerCaseStart, FieldWithSpecialChars, ActionLowerCaseStart, ControlLowerCaseStart.
 **NoDiagnostic (18 cases):** ProcedurePascalCase, VariablePascalCase, FieldWithLettersAndDigits, ObsoleteProcedure, TriggerMethod, InterfaceImplementingMethod, EventSubscriberPascalCase, EventSubscriberPlatformParams, EventSubscriberUserParams, ApiPageControlCamelCase, ActionAcceleratorKey, EnumValueBlankSpace, EnumValueLowerCaseStart, SingleLetterVariable, SingleLetterParameter, UnderscorePrefix, XRecVariable, XRecParameter, ParameterPascalCase.
 **HasDiagnosticWithCustomSettings (1 case):** EnumValueLowerCaseStartCustomSettings.
+**SchemaParity (1 case):** NamingTargetEnumMatchesSchemaPropertyNames.
 
 ## Phase 2 roadmap (not yet implemented)
 

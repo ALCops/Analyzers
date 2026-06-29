@@ -1,5 +1,5 @@
 ---
-applyTo: 'src/ALCops.Common/Settings/ALCopsSettings.cs'
+applyTo: 'src/**/{ALCopsSettings,alcops.schema,NamingPattern}*'
 ---
 
 # Settings Schema Synchronization
@@ -30,6 +30,14 @@ When you:
 | Change value constraints (min/max/enum) | Update constraints in the schema |
 | Add a new `NamingTarget` enum value | Add to the `propertyNames.enum` array in `NamingPatterns` |
 | Add/modify fields in `NamingPattern.cs` | Update the `NamingPattern` definition in `$defs` |
+
+## Required parity guard test
+
+For NamingPattern schema parity, the PR must include or update a test that validates `NamingPattern.NamingTarget` enum values against `NamingPatterns.propertyNames.enum` in `alcops.schema.json`.
+
+Minimum expectation:
+- Run `NamingTargetEnumMatchesSchemaPropertyNames` in `src/ALCops.LinterCop.Test/Rules/NamingPattern/NamingPatternSettings.cs`.
+- The test must fail when either side adds/removes a target without updating the other.
 
 ## Description format
 
