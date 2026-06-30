@@ -413,3 +413,27 @@ jobs:
           path: |
             **/TestResults_${{ matrix.version }}.trx
 
+  merge-test-results:
+    if: ${{ always() && (!inputs.draft-check || github.event.pull_request.draft == false) }}
+    needs: test
+    runs-on: ubuntu-latest
+    name: Merge Test Results
+    steps:
+      # Merge the per-version test-results-* artifacts into a single artifact so the
+      # Test Report workflow can consume it via dorny/test-reporter's 'artifact:' input.
+      # That path resolves source files for annotations via the GitHub REST API, avoiding
+      # an unsafe fork-PR checkout in the trusted workflow_run context.
+      - name: Download per-version test result artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+          path: TestResults
+
+      - name: Upload unified test results artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+          if-no-files-found: ignore
+
