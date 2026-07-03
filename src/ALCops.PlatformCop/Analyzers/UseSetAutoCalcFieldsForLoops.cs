@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
+using ALCops.Common.Permissions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -117,7 +118,9 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
             if (IsInLoop() && _conditionalDepth == 0 && IsCalcFieldsCall(operation))
             {
                 var instanceName = GetInstanceVariableName(operation);
-                if (instanceName is not null && IsLoopVariable(instanceName))
+                if (instanceName is not null &&
+                    IsLoopVariable(instanceName) &&
+                    !IsTemporaryRecord(operation))
                 {
                     _diagnostics.Add(new CalcFieldsDiagnosticInfo(
                         operation.Syntax.GetLocation(),
@@ -262,6 +265,18 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
 
             return targetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod &&
                    SemanticFacts.IsSameName(targetMethod.Name, "CalcFields");
+        }
+
+        /// <summary>
+        /// Returns true when the record the CalcFields call targets is temporary by any means:
+        /// the <c>temporary</c> keyword on the variable, or a backing table declared with
+        /// <c>TableType = Temporary</c>. SetAutoCalcFields rewrites the SQL SELECT and is a no-op
+        /// on in-memory temporary records, so the suggestion would be wrong there.
+        /// </summary>
+        private static bool IsTemporaryRecord(IInvocationExpression invocation)
+        {
+            return invocation.Instance?.Type is IRecordTypeSymbol recordType &&
+                   RequiredPermissionDetector.IsEffectivelyTemporary(recordType);
         }
 
         private static string? GetInstanceVariableName(IInvocationExpression invocation)

@@ -44,6 +44,9 @@ public class UseSetAutoCalcFieldsForLoops : NavCodeAnalysisBase
     [TestCase("CalcFieldsInIfBlock")]
     [TestCase("CalcFieldsInCaseBlock")]
     [TestCase("CalcFieldsInIfElseBlock")]
+    [TestCase("TemporaryVariable")]
+    [TestCase("TemporaryTableType")]
+    [TestCase("ReportTemporaryTableType")]
     public async Task NoDiagnostic(string testCase)
     {
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
