@@ -37,7 +37,8 @@ Extension methods on SDK types. Each file extends one type or interface family.
 | `SyntaxNodeExtensions.cs` | `LabelPropertyValueSyntax`, `LabelSyntax`, `SyntaxNode`, `CommaSeparatedIdentifierEqualsLiteralListSyntax` | `GetIntegerPropertyValue(property)`, `GetBooleanPropertyValue(property)` (overloaded for each syntax type) |
 | `TypeSymbolInterfaceExtensions.cs` | `ITypeSymbol` | `GetTypeLength(ref isError)` |
 | `OperationExtensions.cs` | `IOperation` | `GetSymbolSafe()` - Safe replacement for SDK `GetSymbol()` that handles `BoundApplicationObjectAccess` (`DATABASE::X`, `CODEUNIT::X`) via `IApplicationObjectAccess` interface check, and guards against `BoundObjectAccess` via `is not IFieldAccess`. No try/catch. See `analyzer-development.instructions.md` "SDK GetSymbol() Bug". |
-| `RecordTypeSymbolExtensions.cs` | `IRecordTypeSymbol`, `ITableTypeSymbol` | `IsTemporary()` (overloaded). Table overload: `TableType == TableTypeKind.Temporary`. Record overload: `Temporary` keyword OR backing table `TableType == Temporary`. Centralizes temporary-record detection shared by AC0013, AC0031, AC0032, PC0035, and other cops. Replaced the former `RequiredPermissionDetector.IsEffectivelyTemporary` / `IsTemporaryTable`. |
+| `RecordTypeSymbolExtensions.cs` | `IRecordTypeSymbol` | `IsTemporary()` - `Temporary` keyword OR backing table `TableType = Temporary` (delegates to `ITableTypeSymbol.IsTemporary()`). Centralizes temporary-record detection shared by AC0013, AC0031, AC0032, PC0035, and other cops. Replaced the former `RequiredPermissionDetector.IsEffectivelyTemporary`. |
+| `TableTypeSymbolExtensions.cs` | `ITableTypeSymbol` | `IsTemporary()` - `TableType == TableTypeKind.Temporary`. Replaced the former `RequiredPermissionDetector.IsTemporaryTable` and a private duplicate in `FieldGroupsRequired`. |
 | `IdentifierProperty.cs` | N/A (enum) | `Comment`, `Locked`, `MaxLength` |
 
 ### Helpers/
