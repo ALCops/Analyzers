@@ -43,6 +43,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("LocalProcedure")]
         [TestCase("TriggerUnusedParam")]
         [TestCase("InterfaceImplementation")]
+		[TestCase("InterfaceImplementationWrongCasing")]
         [TestCase("EventDeclaration")]
         [TestCase("ObsoleteProcedure")]
         [TestCase("AllParametersUsed")]

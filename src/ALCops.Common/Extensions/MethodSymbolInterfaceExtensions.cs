@@ -40,7 +40,7 @@ public static class MethodSymbolInterfaceExtensions
         if (methodSymbol is null || interfaceMethodSymbol is null)
             return false;
 
-        if (!string.Equals(methodSymbol.Name, interfaceMethodSymbol.Name, StringComparison.Ordinal))
+        if (!string.Equals(methodSymbol.Name, interfaceMethodSymbol.Name, StringComparison.OrdinalIgnoreCase))
             return false;
 
         if (methodSymbol.Parameters.Length != interfaceMethodSymbol.Parameters.Length)
