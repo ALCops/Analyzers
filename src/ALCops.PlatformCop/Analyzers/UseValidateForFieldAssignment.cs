@@ -50,6 +50,16 @@ public class UseValidateForFieldAssignment : DiagnosticAnalyzer
         if (recordType.Temporary)
             return;
 
+        // Fire only on Normal and inherently-temporary tables (TableType = Temporary).
+        // Externally-backed types (CRM/CDS/ExternalSQL/Exchange/MicrosoftGraph) sync from an
+        // external source their OnValidate can't see, so Validate() would mislead (issue #369).
+        // recordType.Temporary above already excludes the 'temporary' variable keyword.
+        // Unresolved base table -> stay silent.
+        var tableType = recordType.BaseTable?.TableType;
+        if (tableType != EnumProvider.TableTypeKind.Normal
+            && tableType != EnumProvider.TableTypeKind.Temporary)
+            return;
+
         if (IsAssignmentToOwnValidateField(ctx, fieldAccess))
             return;
 

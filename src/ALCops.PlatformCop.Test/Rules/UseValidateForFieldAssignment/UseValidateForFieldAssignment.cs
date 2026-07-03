@@ -28,6 +28,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("OnValidateDifferentFieldOnRec")]
         [TestCase("OnValidateXRecSameField")]
         [TestCase("OnValidateOtherRecordSameField")]
+        [TestCase("InherentlyTemporaryTable")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -49,6 +50,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("PageExtensionControlOnAfterValidateSameField")]
         [TestCase("OnValidateSameFieldThisReference")]
         [TestCase("PageControlOnValidateSameFieldBareReference")]
+        [TestCase("CRMTableType")]
+        [TestCase("CDSTableType")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
