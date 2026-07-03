@@ -43,7 +43,7 @@ public static class RequiredPermissionDetector
             return null;
 
         var tableType = recordType.OriginalDefinition as ITableTypeSymbol;
-        if (tableType is null || (!includeSystemTables && IsSystemTable(tableType)))
+        if (tableType is null || IsTemporaryTable(tableType) || (!includeSystemTables && IsSystemTable(tableType)))
             return null;
 
         return new RequiredPermission(tableType, recordType, operation, invocation.Syntax.GetLocation());
@@ -67,7 +67,7 @@ public static class RequiredPermissionDetector
         if (recordType.Temporary)
             return null;
 
-        if (recordType.OriginalDefinition is not ITableTypeSymbol tableType || (!includeSystemTables && IsSystemTable(tableType)))
+        if (recordType.OriginalDefinition is not ITableTypeSymbol tableType || IsTemporaryTable(tableType) || (!includeSystemTables && IsSystemTable(tableType)))
             return null;
 
         return new RequiredPermission(tableType, recordType, DatabaseOperation.Read, symbol.GetLocation());
@@ -80,7 +80,7 @@ public static class RequiredPermissionDetector
     public static RequiredPermission? TryGetFromQueryDataItem(ISymbol symbol, bool includeSystemTables = false)
     {
         var targetSymbol = ((IQueryDataItemSymbol)symbol).GetTypeSymbol();
-        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || (!includeSystemTables && IsSystemTable(tableType)))
+        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || IsTemporaryTable(tableType) || (!includeSystemTables && IsSystemTable(tableType)))
             return null;
 
         return new RequiredPermission(tableType, targetSymbol, DatabaseOperation.Read, symbol.GetLocation());
@@ -97,7 +97,9 @@ public static class RequiredPermissionDetector
             yield break;
 
         var targetSymbol = nodeSymbol.GetTypeSymbol();
-        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || (!includeSystemTables && IsSystemTable(tableType)))
+        if (targetSymbol is IRecordTypeSymbol { Temporary: true })
+            yield break;
+        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || IsTemporaryTable(tableType) || (!includeSystemTables && IsSystemTable(tableType)))
             yield break;
 
         var xmlPort = (IXmlPortTypeSymbol)symbol.GetContainingObjectTypeSymbol();
@@ -124,6 +126,25 @@ public static class RequiredPermissionDetector
     /// Returns true if the table is a system table (ID > 2,000,000,000).
     /// </summary>
     public static bool IsSystemTable(ITableTypeSymbol table) => table.Id > 2000000000;
+
+    /// <summary>
+    /// Returns true if the table object itself is temporary (<c>TableType = Temporary</c>).
+    /// This is independent of the <c>temporary</c> keyword on a variable: a plain
+    /// <c>Record MyTable</c> where <c>MyTable</c> has <c>TableType = Temporary</c> is still
+    /// temporary at runtime, yet <see cref="IRecordTypeSymbol.Temporary"/> would be false.
+    /// </summary>
+    public static bool IsTemporaryTable(ITableTypeSymbol table) =>
+        table.TableType == EnumProvider.TableTypeKind.Temporary;
+
+    /// <summary>
+    /// Returns true if the record is temporary by any means: the <c>temporary</c> keyword on the
+    /// variable (<see cref="IRecordTypeSymbol.Temporary"/>) or a backing table declared with
+    /// <c>TableType = Temporary</c>. Temporary records never touch the database, so they require
+    /// no permissions regardless of how the temporary table is implemented.
+    /// </summary>
+    public static bool IsEffectivelyTemporary(IRecordTypeSymbol record) =>
+        record.Temporary
+        || (record.OriginalDefinition is ITableTypeSymbol table && IsTemporaryTable(table));
 
 
     private static DirectionKind ResolveXmlPortDirection(IXmlPortTypeSymbol xmlPort)

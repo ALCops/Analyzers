@@ -69,6 +69,9 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("CountWithPermissions")]
         [TestCase("ImplicitSelfCallWithInherentPermissions")]
         [TestCase("DottedTableNameWithPermissions")]
+        [TestCase("TableTypeTemporaryVariable")]
+        [TestCase("TableTypeTemporaryImplicitSelf")]
+        [TestCase("XmlPortUseTemporary")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
