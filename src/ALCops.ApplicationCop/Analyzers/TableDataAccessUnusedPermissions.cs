@@ -82,7 +82,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         {
             if (member is IVariableSymbol globalVar
                 && globalVar.Type is IRecordTypeSymbol globalRecordType
-                && !RequiredPermissionDetector.IsEffectivelyTemporary(globalRecordType))
+                && !globalRecordType.IsTemporary())
             {
                 objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
                 objectScopeRecordMap.TryAdd(globalVar.Name, globalRecordType);
@@ -94,7 +94,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         {
             if (dataItem.GetBooleanPropertyValue(EnumProvider.PropertyKind.UseTemporary) is not true
                 && dataItem.GetTypeSymbol() is IRecordTypeSymbol nestedRecordType
-                && !RequiredPermissionDetector.IsEffectivelyTemporary(nestedRecordType))
+                && !nestedRecordType.IsTemporary())
             {
                 objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
                 objectScopeRecordMap.TryAdd(dataItem.Name, nestedRecordType);
@@ -130,7 +130,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
             foreach (var local in methodSymbol.LocalVariables)
             {
-                if (local.Type is IRecordTypeSymbol recordType && !RequiredPermissionDetector.IsEffectivelyTemporary(recordType))
+                if (local.Type is IRecordTypeSymbol recordType && !recordType.IsTemporary())
                 {
                     localRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
                     localRecordVarMap.TryAdd(local.Name, recordType);
@@ -139,7 +139,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
             foreach (var param in methodSymbol.Parameters)
             {
-                if (param.ParameterType is IRecordTypeSymbol recordType && !RequiredPermissionDetector.IsEffectivelyTemporary(recordType))
+                if (param.ParameterType is IRecordTypeSymbol recordType && !recordType.IsTemporary())
                 {
                     localRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
                     localRecordVarMap.TryAdd(param.Name, recordType);
@@ -149,7 +149,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             // Named return value acts as an implicit local variable in AL
             if (methodSymbol.ReturnValueSymbol is { IsNamed: true } returnValue
                 && returnValue.ReturnType is IRecordTypeSymbol returnRecordType
-                && !RequiredPermissionDetector.IsEffectivelyTemporary(returnRecordType))
+                && !returnRecordType.IsTemporary())
             {
                 localRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
                 localRecordVarMap.TryAdd(returnValue.Name, returnRecordType);
@@ -287,11 +287,11 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
     {
         switch (selfType)
         {
-            case IRecordTypeSymbol record when !RequiredPermissionDetector.IsEffectivelyTemporary(record)
+            case IRecordTypeSymbol record when !record.IsTemporary()
                 && record.OriginalDefinition is ITableTypeSymbol recordTable:
                 return new RequiredPermission(recordTable, record, operation, node.GetLocation());
 
-            case ITableTypeSymbol table when !RequiredPermissionDetector.IsTemporaryTable(table):
+            case ITableTypeSymbol table when !table.IsTemporary():
                 return new RequiredPermission(table, table, operation, node.GetLocation());
 
             default:
@@ -339,7 +339,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             return null;
 
         var tableType = recordType.OriginalDefinition as ITableTypeSymbol;
-        if (tableType is null || RequiredPermissionDetector.IsTemporaryTable(tableType))
+        if (tableType is null || tableType.IsTemporary())
             return null;
 
         return new RequiredPermission(tableType, recordType, operation, node.GetLocation());
@@ -380,7 +380,7 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
     {
         if (node.SourceTypeKind == EnumProvider.XmlPortSourceTypeKind.Table
             && ((ISymbol)node).GetTypeSymbol() is IRecordTypeSymbol recordType
-            && !RequiredPermissionDetector.IsEffectivelyTemporary(recordType))
+            && !recordType.IsTemporary())
         {
             objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
             objectScopeRecordMap.TryAdd(((ISymbol)node).Name, recordType);

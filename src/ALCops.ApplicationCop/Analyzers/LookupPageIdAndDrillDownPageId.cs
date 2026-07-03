@@ -34,7 +34,7 @@ public sealed class LookupPageIdAndDrillDownPageId : DiagnosticAnalyzer
 
     private void AnalyzeRelatedTable(ITableTypeSymbol table, SymbolAnalysisContext context)
     {
-        if (table.TableType == EnumProvider.TableTypeKind.Temporary ||
+        if (table.IsTemporary() ||
             !table.GetLocation().IsInSource ||
             table.IsObsolete())
             return;
