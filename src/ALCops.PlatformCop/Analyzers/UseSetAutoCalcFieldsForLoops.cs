@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
-using ALCops.Common.Permissions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -276,7 +275,7 @@ public sealed class UseSetAutoCalcFieldsForLoops : DiagnosticAnalyzer
         private static bool IsTemporaryRecord(IInvocationExpression invocation)
         {
             return invocation.Instance?.Type is IRecordTypeSymbol recordType &&
-                   RequiredPermissionDetector.IsEffectivelyTemporary(recordType);
+                   recordType.IsTemporary();
         }
 
         private static string? GetInstanceVariableName(IInvocationExpression invocation)

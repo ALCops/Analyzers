@@ -25,7 +25,7 @@ Version gate: None (SetAutoCalcFields available since runtime 1.0)
 |---|---|---|
 | Loop types | FindSet/Find + repeat-until, while-do, report OnAfterGetRecord | All patterns that iterate over records |
 | Variable matching | Only flag CalcFields on the variable driving the loop | Avoids false positives (Example #2 from spec) |
-| Temporary records | Suppress (both `temporary` keyword and `TableType = Temporary`) | SetAutoCalcFields rewrites the SQL SELECT; temporary records are in-memory and never issue it, so the suggestion is a no-op. Detected via `RequiredPermissionDetector.IsEffectivelyTemporary` on `invocation.Instance.Type`. See issue #364 |
+| Temporary records | Suppress (both `temporary` keyword and `TableType = Temporary`) | SetAutoCalcFields rewrites the SQL SELECT; temporary records are in-memory and never issue it, so the suggestion is a no-op. Detected via the `IRecordTypeSymbol.IsTemporary()` extension on `invocation.Instance.Type`. See issue #364 |
 | Conditional paths | Skip entirely (if/case) | Cannot guarantee conditional CalcFields always executes; avoids false positives |
 | Cross-method tracking | Out of scope v1 | Complex, may lack source code for dependencies |
 | RecordRef | N/A | RecordRef does not have a CalcFields method in the SDK |
@@ -58,7 +58,7 @@ This follows the same `_branchDepth` pattern used in `PartialRecordOperations` (
 
 ### CalcFields detection
 
-`VisitInvocationExpression` checks: `IsInLoop() && _conditionalDepth == 0 && IsCalcFieldsCall(...)` and verifies the instance variable is in the current set of loop variables (at any nesting level). It then calls `IsTemporaryRecord(...)`, which resolves `invocation.Instance?.Type as IRecordTypeSymbol` and delegates to `RequiredPermissionDetector.IsEffectivelyTemporary`. Temporary records (either the `temporary` keyword or a `TableType = Temporary` backing table) are skipped, because `SetAutoCalcFields` is a no-op on in-memory records.
+`VisitInvocationExpression` checks: `IsInLoop() && _conditionalDepth == 0 && IsCalcFieldsCall(...)` and verifies the instance variable is in the current set of loop variables (at any nesting level). It then calls `IsTemporaryRecord(...)`, which resolves `invocation.Instance?.Type as IRecordTypeSymbol` and delegates to the `IRecordTypeSymbol.IsTemporary()` extension (`ALCops.Common.Extensions`). Temporary records (either the `temporary` keyword or a `TableType = Temporary` backing table) are skipped, because `SetAutoCalcFields` is a no-op on in-memory records.
 
 ### CodeFix strategy
 

@@ -22,7 +22,7 @@ public sealed class AutoIncrementInTemporaryTable : DiagnosticAnalyzer
         if (ctx.IsObsolete() || ctx.Symbol is not ITableTypeSymbol table)
             return;
 
-        if (table.TableType != EnumProvider.TableTypeKind.Temporary)
+        if (!table.IsTemporary())
             return;
 
         foreach (var field in table.Fields)

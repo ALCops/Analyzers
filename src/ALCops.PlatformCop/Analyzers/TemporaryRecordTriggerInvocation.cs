@@ -33,7 +33,7 @@ public sealed class TemporaryRecordTriggerInvocation : DiagnosticAnalyzer
             return;
 
         if (recordType.BaseTable is not null &&
-            recordType.BaseTable.TableType == EnumProvider.TableTypeKind.Temporary)
+            recordType.BaseTable.IsTemporary())
             return;
 
         var method = invocation.TargetMethod;
