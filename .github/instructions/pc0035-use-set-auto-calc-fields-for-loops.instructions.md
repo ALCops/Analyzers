@@ -25,6 +25,7 @@ Version gate: None (SetAutoCalcFields available since runtime 1.0)
 |---|---|---|
 | Loop types | FindSet/Find + repeat-until, while-do, report OnAfterGetRecord | All patterns that iterate over records |
 | Variable matching | Only flag CalcFields on the variable driving the loop | Avoids false positives (Example #2 from spec) |
+| Temporary records | Suppress (both `temporary` keyword and `TableType = Temporary`) | SetAutoCalcFields rewrites the SQL SELECT; temporary records are in-memory and never issue it, so the suggestion is a no-op. Detected via `RequiredPermissionDetector.IsEffectivelyTemporary` on `invocation.Instance.Type`. See issue #364 |
 | Conditional paths | Skip entirely (if/case) | Cannot guarantee conditional CalcFields always executes; avoids false positives |
 | Cross-method tracking | Out of scope v1 | Complex, may lack source code for dependencies |
 | RecordRef | N/A | RecordRef does not have a CalcFields method in the SDK |
@@ -57,7 +58,7 @@ This follows the same `_branchDepth` pattern used in `PartialRecordOperations` (
 
 ### CalcFields detection
 
-`VisitInvocationExpression` checks: `IsInLoop() && _conditionalDepth == 0 && IsCalcFieldsCall(...)` and verifies the instance variable is in the current set of loop variables (at any nesting level).
+`VisitInvocationExpression` checks: `IsInLoop() && _conditionalDepth == 0 && IsCalcFieldsCall(...)` and verifies the instance variable is in the current set of loop variables (at any nesting level). It then calls `IsTemporaryRecord(...)`, which resolves `invocation.Instance?.Type as IRecordTypeSymbol` and delegates to `RequiredPermissionDetector.IsEffectivelyTemporary`. Temporary records (either the `temporary` keyword or a `TableType = Temporary` backing table) are skipped, because `SetAutoCalcFields` is a no-op on in-memory records.
 
 ### CodeFix strategy
 
@@ -70,7 +71,7 @@ This follows the same `_branchDepth` pattern used in `PartialRecordOperations` (
 ## Test coverage
 
 **HasDiagnostic (7 cases):** FindSetRepeatUntil, FindRepeatUntil, WhileLoop, ReportOnAfterGetRecord, MultipleCalcFields, NestedLoop, NestedLoopInConditional.
-**NoDiagnostic (7 cases):** DifferentVariable, CalcFieldsOutsideLoop, CrossMethodCall, SingleRecord, CalcFieldsInIfBlock, CalcFieldsInCaseBlock, CalcFieldsInIfElseBlock.
+**NoDiagnostic (10 cases):** DifferentVariable, CalcFieldsOutsideLoop, CrossMethodCall, SingleRecord, CalcFieldsInIfBlock, CalcFieldsInCaseBlock, CalcFieldsInIfElseBlock, TemporaryVariable, TemporaryTableType, ReportTemporaryTableType.
 **HasFix (2 cases):** FindSetRepeatUntil, MultipleFields.
 
 ## Known limitations

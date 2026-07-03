@@ -139,8 +139,8 @@ public static class RequiredPermissionDetector
     /// <summary>
     /// Returns true if the record is temporary by any means: the <c>temporary</c> keyword on the
     /// variable (<see cref="IRecordTypeSymbol.Temporary"/>) or a backing table declared with
-    /// <c>TableType = Temporary</c>. Temporary records never touch the database, so they require
-    /// no permissions regardless of how the temporary table is implemented.
+    /// <c>TableType = Temporary</c>. Temporary records are in-memory and never touch the database,
+    /// regardless of how the temporary table is implemented.
     /// </summary>
     public static bool IsEffectivelyTemporary(IRecordTypeSymbol record) =>
         record.Temporary
