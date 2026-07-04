@@ -90,13 +90,13 @@ jobs:
 
       # GitVersion
       - name: GitVersion - Setup
-        uses: gittools/actions/gitversion/setup@v4.5.0
+        uses: gittools/actions/gitversion/setup@v4.7.0
         with:
           versionSpec: "6.3.x"
 
       - name: GitVersion - Determine
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v4.5.0
+        uses: gittools/actions/gitversion/execute@v4.7.0
 
       - name: Display version
         run: echo "SemVer:${{ steps.gitversion.outputs.SemVer }}"
