@@ -32,7 +32,7 @@ Version gate: `Fall2024OrGreater` (PageStyle introduced in BC25) · Full netstan
 | Severity | Warning | Actionable code smell, not a correctness issue |
 | Version gate | `Fall2024OrGreater` | PageStyle datatype didn't exist before BC25 |
 | Registration | `RegisterSyntaxNodeAction` on `StringLiteralValue` | Syntax-level check, no operation tree needed |
-| Caption suppression | Always skip Caption properties | Captions are user-facing text; `Caption = 'Standard'` is legitimate |
+| Caption suppression | Always skip Caption and OptionCaption properties | Caption-like properties are user-facing text; `Caption = 'Standard'` and `OptionCaption = 'None'` are legitimate |
 | Enum suppression | Skip Enum and EnumValue contexts | Enum names/captions are identifiers, not style expressions |
 | Unlocked labels | Skip (no diagnostic) | Unlocked labels are translatable text, not style constants |
 | StyleExpr direct | Skip `StyleExpr = 'Standard'` | Already using the string in the correct property; the fix is to change the property value type, not the location |
@@ -49,7 +49,7 @@ Uses `RegisterSyntaxNodeAction` on `SyntaxKind.StringLiteralValue` to analyze ev
 ### Analysis flow
 
 1. Skip obsolete symbols
-2. Skip Caption properties (`IPropertySymbol` with `PropertyKind.Caption`)
+2. Skip Caption-like properties (`IPropertySymbol` with `PropertyKind.Caption` or `OptionCaption`)
 3. Skip Enum and EnumValue symbol contexts
 4. Extract string value, skip empty strings
 5. **Case-sensitive lookup** in StyleKind dictionary (only PascalCase matches)
@@ -88,7 +88,7 @@ The shared `EnumProvider.StyleKind.CanonicalNames` uses `StringComparer.OrdinalI
 
 | Context | Suppressed | Rationale |
 |---|---|---|
-| Caption properties | Yes | User-facing text, not style values |
+| Caption/OptionCaption properties | Yes | User-facing text, not style values |
 | Enum/EnumValue symbols | Yes | Enum identifiers, not style expressions |
 | Unlocked labels | Yes | Translatable text, not style constants |
 | StyleExpr direct assignment | Yes | Already in the correct property location |
@@ -102,7 +102,7 @@ The shared `EnumProvider.StyleKind.CanonicalNames` uses `StringComparer.OrdinalI
 ## Test coverage
 
 **HasDiagnostic (4 cases):** Label (locked), Page (StyleExpr assignment), IfStatement, ExitStatement.
-**NoDiagnostic (10 cases):** AssignToStyleExpr, AssignToTableField, AssignToTableFieldLocal, AssignToTableFieldRec, Enum, Label (unlocked), LockedLabelLowercase, LockedLabelUppercase, Page (Caption), RecordMethodInvocation.
+**NoDiagnostic (11 cases):** AssignToStyleExpr, AssignToTableField, AssignToTableFieldLocal, AssignToTableFieldRec, Enum, Label (unlocked), LockedLabelLowercase, LockedLabelUppercase, Page (Caption), RecordMethodInvocation, TableFieldCaptions.
 
 ## Differences from BC.LinterCop LC0086
 

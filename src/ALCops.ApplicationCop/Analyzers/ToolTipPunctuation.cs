@@ -1,20 +1,27 @@
 ﻿using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
+using ALCops.Common.Settings;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 
 namespace ALCops.ApplicationCop.Analyzers;
 
 [DiagnosticAnalyzer]
 public sealed class ToolTipPunctuation : DiagnosticAnalyzer
 {
+    private static readonly List<Punctuation> DefaultAllowedPunctuations =
+    [
+        new Punctuation { Character = ".", Name = "dot" }
+    ];
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
             DiagnosticDescriptors.ToolTipDoNotUseLineBreaks,
             DiagnosticDescriptors.ToolTipMaximumLength,
-            DiagnosticDescriptors.ToolTipMustEndWithDot,
+            DiagnosticDescriptors.ToolTipMustEndWithPunctuation,
             DiagnosticDescriptors.ToolTipShouldStartWithSpecifies
         );
 
@@ -52,8 +59,8 @@ public sealed class ToolTipPunctuation : DiagnosticAnalyzer
         if (ctx.IsDiagnosticEnabled(DiagnosticDescriptors.ToolTipMaximumLength))
             AnalyzeMaximumLength(ctx, tooltipText, tooltipProperty);
 
-        if (ctx.IsDiagnosticEnabled(DiagnosticDescriptors.ToolTipMustEndWithDot))
-            AnalyzeEndsWithDot(ctx, tooltipText, tooltipProperty);
+        if (ctx.IsDiagnosticEnabled(DiagnosticDescriptors.ToolTipMustEndWithPunctuation))
+            AnalyzeEndsWithPunctuation(ctx, tooltipText, tooltipProperty);
 
         if (ctx.IsDiagnosticEnabled(DiagnosticDescriptors.ToolTipShouldStartWithSpecifies))
             AnalyzeStartsWithSpecifies(ctx, tooltipText, tooltipProperty);
@@ -79,14 +86,44 @@ public sealed class ToolTipPunctuation : DiagnosticAnalyzer
         }
     }
 
-    private static void AnalyzeEndsWithDot(SyntaxNodeAnalysisContext ctx, string tooltipText, PropertyValueSyntax tooltipProperty)
+    private static void AnalyzeEndsWithPunctuation(SyntaxNodeAnalysisContext ctx, string tooltipText, PropertyValueSyntax tooltipProperty)
     {
-        if (!tooltipText.EndsWith(".'", StringComparison.OrdinalIgnoreCase))
+        var fileSystem = ctx.SemanticModel.Compilation.FileSystem;
+        var settings = ALCopsSettingsProvider.GetSettings(fileSystem);
+
+        var allowedPunctuations = ResolveAllowedPunctuations(settings);
+
+        foreach (Punctuation punctuation in allowedPunctuations)
         {
-            ctx.ReportDiagnostic(Diagnostic.Create(
-                DiagnosticDescriptors.ToolTipMustEndWithDot,
-                tooltipProperty.GetLocation()));
+            if (tooltipText.EndsWith(punctuation.Character + "'", StringComparison.Ordinal))
+            {
+                return;
+            }
         }
+
+        ctx.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticDescriptors.ToolTipMustEndWithPunctuation,
+            tooltipProperty.GetLocation(),
+            string.Join("', '", allowedPunctuations.Select(p => p.Name))));
+    }
+
+    private static List<Punctuation> ResolveAllowedPunctuations(ALCopsSettings settings)
+    {
+        if (settings.ToolTipAllowedPunctuations is null or { Count: 0 })
+        {
+            return DefaultAllowedPunctuations;
+        }
+
+        var normalizedPunctuations = settings.ToolTipAllowedPunctuations
+            .Where(p => !string.IsNullOrWhiteSpace(p.Character))
+            .Select(p => new Punctuation
+            {
+                Character = p.Character,
+                Name = string.IsNullOrWhiteSpace(p.Name) ? p.Character : p.Name
+            })
+            .ToList();
+
+        return normalizedPunctuations.Count == 0 ? DefaultAllowedPunctuations : normalizedPunctuations;
     }
 
     private static void AnalyzeStartsWithSpecifies(SyntaxNodeAnalysisContext ctx, string tooltipText, PropertyValueSyntax tooltipProperty)

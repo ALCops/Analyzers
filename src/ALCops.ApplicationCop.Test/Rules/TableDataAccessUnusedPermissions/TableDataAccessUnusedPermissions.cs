@@ -32,6 +32,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("ParameterPartialUnused")]
         [TestCase("ReportDataItemPartialUnused")]
         [TestCase("ThisKeywordPartialUnused")]
+        [TestCase("TableTypeTemporaryUnused")]
+        [TestCase("XmlPortUseTemporaryUnused")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

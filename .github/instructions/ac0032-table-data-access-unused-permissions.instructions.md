@@ -105,7 +105,7 @@ Each `SyntaxNodeAction` callback is self-contained with no shared mutable state.
 | System tables included in collection | AC0032 passes `includeSystemTables: true` to `RequiredPermissionDetector` so that declared permissions on system tables are matched against actual accesses |
 | Two descriptors sharing one ID | Same conceptual rule, different message clarity |
 | `PermissionMatchesTable` duplicated from `PermissionResolver` | Avoids coupling; operates on syntax nodes, not resolved symbols |
-| Temporary records NOT exempted | Declaring permissions on temp-only tables is dead code |
+| Temporary tables NOT counted as permission users (all implementations) | Temporary tables never touch the database, so a permission declared for a table accessed ONLY via temporary records is dead code and IS flagged as unused. All three implementations plus report/xmlport `UseTemporary` are excluded from the "used" collection via the `IRecordTypeSymbol.IsTemporary()` / `ITableTypeSymbol.IsTemporary()` extensions: applied to global var map, data-item map, locals, params, named return, `TryGetPermissionForType` (record + table-type branches), `AddXmlPortNodeToVarMap`, and the `GetSymbolInfo` fallback. The `TableType = Temporary` case needs the explicit `TableType` check because `IRecordTypeSymbol.Temporary` reflects only the `temporary` keyword. |
 | Skip permissionset/permissionsetextension objects | These objects declare permissions as their core purpose |
 
 ## CodeFix
@@ -142,7 +142,7 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 
 ## Test coverage
 
-**HasDiagnostic (11 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord, ParameterPartialUnused, ReportDataItemPartialUnused, ThisKeywordPartialUnused.
+**HasDiagnostic (13 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord, ParameterPartialUnused, ReportDataItemPartialUnused, ThisKeywordPartialUnused, TableTypeTemporaryUnused, XmlPortUseTemporaryUnused.
 **NoDiagnostic (27 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, ReportDataItemAliasModify, XmlPortTableElementModify, XmlPortNestedTableElementModify, ReturnParameterRead, ReportNestedDataItemRead, QueryNestedDataItemRead, MethodWithoutParenthesesCount, MethodWithoutParenthesesFindFirst, MethodWithoutParenthesesIsEmpty, MethodWithoutParenthesesChained, ThisKeywordSelfAccess, ImplicitSelfBareCall.
 **HasFix (4 cases):** RemoveEntireEntry, ReduceChars, RemoveEntireProperty, ReplaceChars.
 

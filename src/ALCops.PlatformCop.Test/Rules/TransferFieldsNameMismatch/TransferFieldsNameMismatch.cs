@@ -33,10 +33,11 @@ namespace ALCops.PlatformCop.Test
         [TestCase("InvocationWithTableExtension")]
         [TestCase("TableExt_Multiple_SameBase")]
         [TestCase("TableExtension")]
+        [TestCase("TableExt_NamespaceCasingMismatch")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["InvocationWithTableExtension", "TableExt_Multiple_SameBase", "TableExtension", "TableExtensionTypeWithLength"],
+                ["InvocationWithTableExtension", "TableExt_Multiple_SameBase", "TableExtension", "TableExtensionTypeWithLength", "TableExt_NamespaceCasingMismatch"],
                 testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");

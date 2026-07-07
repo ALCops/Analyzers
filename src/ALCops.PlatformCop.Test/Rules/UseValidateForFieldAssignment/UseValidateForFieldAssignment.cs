@@ -25,6 +25,10 @@ namespace ALCops.PlatformCop.Test
         [TestCase("CompoundAssignment")]
         [TestCase("AfterInit")]
         [TestCase("PrimaryKeyField")]
+        [TestCase("OnValidateDifferentFieldOnRec")]
+        [TestCase("OnValidateXRecSameField")]
+        [TestCase("OnValidateOtherRecordSameField")]
+        [TestCase("InherentlyTemporaryTable")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -38,8 +42,35 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ValidateCall")]
         [TestCase("NonRecordVariable")]
         [TestCase("InsideOnValidateTrigger")]
+        [TestCase("TableFieldOnValidateSameField")]
+        [TestCase("TableExtensionFieldOnBeforeValidateSameField")]
+        [TestCase("TableExtensionFieldOnAfterValidateSameField")]
+        [TestCase("PageControlOnValidateSameField")]
+        [TestCase("PageExtensionControlOnBeforeValidateSameField")]
+        [TestCase("PageExtensionControlOnAfterValidateSameField")]
+        [TestCase("OnValidateSameFieldThisReference")]
+        [TestCase("PageControlOnValidateSameFieldBareReference")]
+        [TestCase("CRMTableType")]
+        [TestCase("CDSTableType")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                [
+                    "TableExtensionFieldOnBeforeValidateSameField",
+                    "TableExtensionFieldOnAfterValidateSameField",
+                    "PageExtensionControlOnBeforeValidateSameField",
+                    "PageExtensionControlOnAfterValidateSameField"
+                ],
+                testCase,
+                "13.0",
+                "No support for table/page extensions when target itself is already declared in the same module");
+
+            SkipTestIfVersionIsTooLow(
+                ["OnValidateSameFieldThisReference"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 

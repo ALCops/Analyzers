@@ -23,7 +23,7 @@ public sealed class TableDataPerCompanyDeclaration : DiagnosticAnalyzer
         if (ctx.IsObsolete() || ctx.Symbol is not ITableTypeSymbol table)
             return;
 
-        if (table.TableType == EnumProvider.TableTypeKind.Temporary)
+        if (table.IsTemporary())
             return;
 
         if (table.GetProperty(EnumProvider.PropertyKind.DataPerCompany) is null)

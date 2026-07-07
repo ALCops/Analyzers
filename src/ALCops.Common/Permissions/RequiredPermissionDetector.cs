@@ -43,7 +43,7 @@ public static class RequiredPermissionDetector
             return null;
 
         var tableType = recordType.OriginalDefinition as ITableTypeSymbol;
-        if (tableType is null || (!includeSystemTables && IsSystemTable(tableType)))
+        if (tableType is null || tableType.IsTemporary() || (!includeSystemTables && IsSystemTable(tableType)))
             return null;
 
         return new RequiredPermission(tableType, recordType, operation, invocation.Syntax.GetLocation());
@@ -67,7 +67,7 @@ public static class RequiredPermissionDetector
         if (recordType.Temporary)
             return null;
 
-        if (recordType.OriginalDefinition is not ITableTypeSymbol tableType || (!includeSystemTables && IsSystemTable(tableType)))
+        if (recordType.OriginalDefinition is not ITableTypeSymbol tableType || tableType.IsTemporary() || (!includeSystemTables && IsSystemTable(tableType)))
             return null;
 
         return new RequiredPermission(tableType, recordType, DatabaseOperation.Read, symbol.GetLocation());
@@ -80,7 +80,7 @@ public static class RequiredPermissionDetector
     public static RequiredPermission? TryGetFromQueryDataItem(ISymbol symbol, bool includeSystemTables = false)
     {
         var targetSymbol = ((IQueryDataItemSymbol)symbol).GetTypeSymbol();
-        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || (!includeSystemTables && IsSystemTable(tableType)))
+        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || tableType.IsTemporary() || (!includeSystemTables && IsSystemTable(tableType)))
             return null;
 
         return new RequiredPermission(tableType, targetSymbol, DatabaseOperation.Read, symbol.GetLocation());
@@ -97,7 +97,9 @@ public static class RequiredPermissionDetector
             yield break;
 
         var targetSymbol = nodeSymbol.GetTypeSymbol();
-        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || (!includeSystemTables && IsSystemTable(tableType)))
+        if (targetSymbol is IRecordTypeSymbol { Temporary: true })
+            yield break;
+        if (targetSymbol.OriginalDefinition is not ITableTypeSymbol tableType || tableType.IsTemporary() || (!includeSystemTables && IsSystemTable(tableType)))
             yield break;
 
         var xmlPort = (IXmlPortTypeSymbol)symbol.GetContainingObjectTypeSymbol();

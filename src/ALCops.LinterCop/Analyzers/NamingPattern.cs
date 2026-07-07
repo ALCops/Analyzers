@@ -104,7 +104,9 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             if (string.IsNullOrEmpty(parameter.Name))
                 continue;
 
-            CheckNameForSymbol(ctx, parameter, parameter.Name, NamingTarget.Parameter, config, "Parameter");
+            CheckNameForSymbol(ctx, parameter, parameter.Name,
+                parameter.IsVar ? NamingTarget.VarParameter : NamingTarget.Parameter,
+                config, "Parameter");
         }
 
         // Check return value
@@ -120,7 +122,10 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         if (ctx.IsObsolete())
             return;
 
-        CheckName(ctx, ctx.Symbol.Name, NamingTarget.Variable, config, "Variable");
+        var target = ctx.Symbol.Kind == EnumProvider.SymbolKind.LocalVariable
+            ? NamingTarget.LocalVariable
+            : NamingTarget.GlobalVariable;
+        CheckName(ctx, ctx.Symbol.Name, target, config, "Variable");
     }
 
     private static void AnalyzeObject(SymbolAnalysisContext ctx, NamingPatternConfig config,
@@ -415,7 +420,7 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         return affixes.Count > 0 ? affixes : null;
     }
 
-    internal enum NamingTarget
+    public enum NamingTarget
     {
         Procedure,
         LocalProcedure,
@@ -423,7 +428,10 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         EventSubscriber,
         EventDeclaration,
         Variable,
+        LocalVariable,
+        GlobalVariable,
         Parameter,
+        VarParameter,
         ReturnValue,
         Object,
         Field,
@@ -434,16 +442,24 @@ public sealed class NamingPattern : DiagnosticAnalyzer
 
     internal sealed class NamingPatternConfig
     {
+        private static readonly (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) pascalCase = (@"^[A-Z]", null, "should start with an uppercase letter", null);
+        private static readonly (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) pascalCaseUnderscoreNoSpecial = (@"^(?:[A-Za-z]$|[A-Z]|_[A-Z]|x[A-Z])", @"[%&!?]", "should start with an uppercase letter, underscore followed by uppercase, or x followed by uppercase for xRec pattern (single-letter names are exempt)", "should not contain special characters (%, &, !, ?)");
+        private static readonly (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) pascalCaseUnderscore = (@"^(?:[A-Za-z]$|[A-Z]|_[A-Z]|x[A-Z])", null, "should start with an uppercase letter, underscore followed by uppercase, or x followed by uppercase for xRec pattern (single-letter names are exempt)", null);
+        private static readonly (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) anyCaseNoSpecial = (@"^[A-Za-z]", @"[%&!?]", "should start with a letter", "should not contain special characters (%, &, !, ?)");
+
         private static readonly Dictionary<NamingTarget, (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc)> BuiltInDefaults = new()
         {
-            [NamingTarget.Procedure] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
-            [NamingTarget.Variable] = (@"^(?:[A-Za-z]$|[A-Z]|_[A-Z]|x[A-Z])", @"[%&!?]", "should start with an uppercase letter, underscore followed by uppercase, or x followed by uppercase for xRec pattern (single-letter names are exempt)", "should not contain special characters (%, &, !, ?)"),
-            [NamingTarget.Parameter] = (@"^(?:[A-Za-z]$|[A-Z]|_[A-Z]|x[A-Z])", null, "should start with an uppercase letter, underscore followed by uppercase, or x followed by uppercase for xRec pattern (single-letter names are exempt)", null),
-            [NamingTarget.ReturnValue] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
-            [NamingTarget.Object] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
-            [NamingTarget.Field] = (@"^[A-Za-z]", @"[%&!?]", "should start with a letter", "should not contain special characters (%, &, !, ?)"),
-            [NamingTarget.Action] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
-            [NamingTarget.Control] = (@"^[A-Z]", null, "should start with an uppercase letter", null),
+            [NamingTarget.Procedure] = pascalCase,
+            [NamingTarget.Variable] =  pascalCaseUnderscoreNoSpecial,
+            [NamingTarget.LocalVariable] = pascalCaseUnderscoreNoSpecial,
+            [NamingTarget.GlobalVariable] = pascalCaseUnderscoreNoSpecial,
+            [NamingTarget.Parameter] = pascalCaseUnderscore,
+            [NamingTarget.VarParameter] = pascalCaseUnderscore,
+            [NamingTarget.ReturnValue] = pascalCase,
+            [NamingTarget.Object] = pascalCase,
+            [NamingTarget.Field] = anyCaseNoSpecial,
+            [NamingTarget.Action] = pascalCase,
+            [NamingTarget.Control] = pascalCase,
         };
 
         private static readonly Dictionary<NamingTarget, NamingTarget> InheritanceMap = new()
@@ -452,6 +468,11 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             [NamingTarget.GlobalProcedure] = NamingTarget.Procedure,
             [NamingTarget.EventSubscriber] = NamingTarget.Procedure,
             [NamingTarget.EventDeclaration] = NamingTarget.Procedure,
+            [NamingTarget.LocalVariable] = NamingTarget.Variable,
+            [NamingTarget.GlobalVariable] = NamingTarget.Variable,
+            [NamingTarget.Parameter] = NamingTarget.LocalVariable,
+            [NamingTarget.VarParameter] = NamingTarget.Parameter,
+            [NamingTarget.ReturnValue] = NamingTarget.LocalVariable,
         };
 
         private readonly Dictionary<NamingTarget, ResolvedPatterns> _resolvedPatterns;
@@ -479,37 +500,45 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         private static (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc) ResolvePatternStrings(
             NamingTarget target, Dictionary<string, NamingPatternSetting>? userOverrides)
         {
-            // Check if user has explicit override for this target
-            if (userOverrides is not null && TryGetUserOverride(userOverrides, target, out var userSetting))
+            // Build chain: target → parent → grandparent → ...
+            var chain = new List<NamingTarget>();
+            var current = target;
+
+            while (true)
             {
-                return (
-                    !string.IsNullOrEmpty(userSetting.AllowPattern) ? userSetting.AllowPattern : null,
-                    !string.IsNullOrEmpty(userSetting.DisallowPattern) ? userSetting.DisallowPattern : null,
-                    !string.IsNullOrEmpty(userSetting.AllowDescription) ? userSetting.AllowDescription : null,
-                    !string.IsNullOrEmpty(userSetting.DisallowDescription) ? userSetting.DisallowDescription : null);
+                chain.Add(current);
+
+                if (!InheritanceMap.TryGetValue(current, out var next))
+                 {
+                    break;
+                 }
+
+                current = next;
             }
 
-            // Check if this target inherits from a parent
-            if (InheritanceMap.TryGetValue(target, out var parent))
+            // Phase 1: first user override in the chain (specific wins over general).
+            if (userOverrides is not null)
             {
-                // Try user override for the parent
-                if (userOverrides is not null && TryGetUserOverride(userOverrides, parent, out var parentSetting))
+                foreach (var t in chain)
                 {
-                    return (
-                        !string.IsNullOrEmpty(parentSetting.AllowPattern) ? parentSetting.AllowPattern : null,
-                        !string.IsNullOrEmpty(parentSetting.DisallowPattern) ? parentSetting.DisallowPattern : null,
-                        !string.IsNullOrEmpty(parentSetting.AllowDescription) ? parentSetting.AllowDescription : null,
-                        !string.IsNullOrEmpty(parentSetting.DisallowDescription) ? parentSetting.DisallowDescription : null);
+                    if (TryGetUserOverride(userOverrides, t, out var s))
+                        return (
+                            !string.IsNullOrEmpty(s.AllowPattern) ? s.AllowPattern : null,
+                            !string.IsNullOrEmpty(s.DisallowPattern) ? s.DisallowPattern : null,
+                            !string.IsNullOrEmpty(s.AllowDescription) ? s.AllowDescription : null,
+                            !string.IsNullOrEmpty(s.DisallowDescription) ? s.DisallowDescription : null);
                 }
-
-                // Fall through to built-in default for parent
-                if (BuiltInDefaults.TryGetValue(parent, out var parentDefault))
-                    return parentDefault;
             }
 
-            // Use built-in default for this target
-            if (BuiltInDefaults.TryGetValue(target, out var builtIn))
-                return builtIn;
+            // Phase 2: first built-in default in the chain (specific wins over general).
+            // Parameter has its own entry and wins over LocalVariable → Variable.
+            foreach (var t in chain)
+            {
+                if (BuiltInDefaults.TryGetValue(t, out var builtIn))
+                {
+                    return builtIn;
+                }
+            }
 
             return (null, null, null, null);
         }

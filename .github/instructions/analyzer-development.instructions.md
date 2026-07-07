@@ -380,6 +380,35 @@ This is the same mechanism AC0031 (`RequiredPermissionDetector.TryGetFromInvocat
 `invocation.Instance.Type`. Keep the variable-map fast path first so `GetOperation` (the ~0.3ms call)
 only runs for the rare non-identifier receivers.
 
+### Detecting `this`/self at the operation level (`OperationKind.ThisReference`)
+
+When you already hold the bound `IOperation` (e.g. `IFieldAccess.Instance` inside a
+`RegisterOperationAction`) rather than syntax, detect a `this`/self reference via the
+**`OperationKind` enum**, not the `IInstanceReferenceOperation` type:
+
+```csharp
+// Works on every TFM. Never names IInstanceReferenceOperation.
+var thisReferenceKind = EnumProvider.OperationKind.ThisReference;
+if (thisReferenceKind != default && instance.Kind == thisReferenceKind)
+    return true; // `this`/self
+```
+
+`IInstanceReferenceOperation`, `ThisExpressionSyntax`, and `SyntaxKind.ThisExpression` are all
+absent from the netstandard2.1 compile floor (AL 12.0.13). Referencing the interface forces an
+`#if !NETSTANDARD2_1` guard that silently drops `this.` detection on the netstandard2.1 binary that
+serves AL 14.0–15.2. `EnumProvider.OperationKind.ThisReference` resolves to `default` (the enum's
+`None`) on SDKs without the member — where no `this` code can exist anyway — so the `!= default`
+guard makes it a no-op there and exact elsewhere. Add the member to `EnumProvider` with the
+string-literal `ParseEnum<…>("ThisReference")` form (like `CompoundAssignmentStatement`), since
+`nameof(OperationKind.ThisReference)` will not compile at the floor.
+
+Note that `this` yields a record-typed symbol (`BoundThisReference.ExpressionSymbol => Type`), so
+`GetSymbolSafe().Name` is the table name, **not** `"Rec"`. To distinguish the current record from
+the `xRec` before-image (both share the same record type), compare the global's name to the
+reserved keyword `"Rec"` — the `IsThis`/`HasImplicitWith` flags that the compiler uses live on the
+internal `SynthesizedGlobalVariableSymbol` and are not publicly reachable. See PC0037
+`UseValidateForFieldAssignment.IsCurrentRecordInstance`.
+
 ## EnumProvider (Critical Pattern)
 Never reference `Microsoft.Dynamics.Nav.CodeAnalysis` enum values directly. Always use `EnumProvider` from `ALCops.Common.Reflection`. This provides backward compatibility across SDK versions via reflection-based caching.
 

@@ -49,10 +49,11 @@ namespace ALCops.LinterCop.Test
         [TestCase("LockedLabelUppercase")]
         [TestCase("Page")]
         [TestCase("RecordMethodInvocation")]
+		[TestCase("TableFieldCaptions")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["AssignToStyleExpr", "AssignToTableField", "AssignToTableFieldLocal", "AssignToTableFieldRec", "Enum", "Label", "LockedLabelLowercase", "LockedLabelUppercase", "Page", "RecordMethodInvocation"],
+                ["AssignToStyleExpr", "AssignToTableField", "AssignToTableFieldLocal", "AssignToTableFieldRec", "Enum", "Label", "LockedLabelLowercase", "LockedLabelUppercase", "Page", "RecordMethodInvocation", "TableFieldCaptions"],
                 testCase,
                 "14.0",
                 "No support for PageStyle datatype in versions below 14.0."

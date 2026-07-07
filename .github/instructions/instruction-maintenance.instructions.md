@@ -87,6 +87,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `release-strategy` | `'.github/**'` | Release channels, versioning, cleanup |
 | `get-bc-devtools` | `'.github/actions/get-bc-devtools/**'` | BC DevTools discovery and caching |
 | `ac0013-field-groups-required` | rule-scoped | AC0013 rule |
+| `ac0014-tooltip-must-end-with-punctuation` | rule-scoped | AC0014 rule |
 | `ac0026-allow-in-customizations-for-omitted-fields` | rule-scoped | AC0026 rule |
 | `ac0031-table-data-access-requires-permissions` | rule-scoped | AC0031 rule |
 | `ac0032-table-data-access-unused-permissions` | rule-scoped | AC0032 rule |
