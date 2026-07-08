@@ -29,7 +29,7 @@ These decisions were made during the initial design and should be preserved unle
 | Cop placement | LinterCop (LC prefix) | General code quality rule; reuses same ID as original |
 | Severity | Warning | Missing translations directly affect user experience |
 | Extension root symbol | `ExtensionObjectFoldingUtilities.GetTranslationRootSymbol` SDK API | Fixes the multi-extension bug in the original rule; correctly handles all cases |
-| Translation ID generation | `LanguageFileUtilities.GetLanguageSymbolId` / `GetLabelTextConstLanguageSymbolId` | Stable public SDK APIs using FNV hash |
+| Translation ID generation | `LanguageFileUtilities` via **runtime reflection** (`GetTranslationFileId` on new SDKs, public 2-param `GetLanguageSymbolId` / `GetLabelTextConstLanguageSymbolId` on older SDKs) | The public methods gained an optional `useNamespaces` param in `18.0.38.52553`; C# bakes optional-param call sites at compile time, so a direct call breaks across SDK versions (see Known issues). Reflection picks the right method at runtime and supports namespace-aware IDs. |
 | ManifestHelper exception handling | Catch `FileNotFoundException` and treat as null manifest | `ManifestHelper.GetManifest` loads `Microsoft.Dynamics.Nav.Analyzers.Common` assembly via reflection; this assembly isn't present in test contexts |
 | Null manifest behavior | Proceed with analysis (don't skip) | Tests create minimal compilations without manifests; real projects always have manifests |
 | XLIFF caching | Load once in CompilationStartAction | Avoid re-parsing per symbol |
@@ -100,6 +100,16 @@ This is NOT an SDK bug; it's a consequence of running analyzers in a test enviro
 
 The SDK's `OperationExtensions.GetSymbol()` can throw `InvalidCastException` for `BoundObjectAccess` instances. This analyzer doesn't use operation-level analysis, so it's not affected.
 
+### SDK 18.0.38.52553: optional-parameter break on translation-ID methods (version drift)
+
+`LanguageFileUtilities.GetLanguageSymbolId(ISymbol, IRootTypeSymbol?)` and `GetLabelTextConstLanguageSymbolId(ISymbol, IRootTypeSymbol?)` gained an optional `bool useNamespaces = false` parameter in AL `18.0.38.52553` (part of the `TranslationsWithNamespaces` compiler feature). C# compiles optional-parameter defaults into the **call site**, so the analyzer DLL — built once against the lowest net10.0 SDK (`18.0.36.x`, 2-param) and, in CI, run against `18.0.38.52553` (binary reference, `ContinuousIntegrationBuild=true`) — referenced a 2-param overload that no longer exists at runtime → `MissingMethodException` → no `LC0091` emitted (all `HasDiagnostic` tests failed; `NoDiagnostic` trivially passed). A local `ProjectReference` build compiles+runs against the same SDK and does **not** reproduce it; it is a compile-vs-runtime version drift.
+
+**Workaround:** compute all translation IDs through runtime reflection (see the `Translation ID computation (SDK version compat)` region in the analyzer). No arity is baked into the call site:
+- New SDKs (feature present): internal `GetTranslationFileId(name, kind, containingSymbol, isMissingCaption, rootSymbol, useNamespaces)` + public `UseTranslationsWithNamespaces(ISymbol)`. This produces namespace-aware trans-unit IDs (namespace-prefixed, unhashed segments joined by `" - "`, hashed only when > 400 chars), matching the compiler and avoiding false positives on namespace-enabled projects.
+- Older SDKs (methods absent): fall back to the public 2-param methods.
+
+`EnumProvider.SymbolKind.NamedType` was added for the label-const path (mirrors `GetLabelTextConstLanguageSymbolId`, which forces `SymbolKind.NamedType`).
+
 ## Symbol kinds and translatable properties
 
 | Symbol Kind | Properties Checked |
@@ -127,9 +137,11 @@ This matches the AL compiler's XLIFF generation behavior exactly.
 **HasDiagnostic (7 cases):** LocalLabel, GlobalLabel, TableFieldCaption, EnumValueCaption, PageControlToolTip, PageAnalysisViewCaption, ReportLabel.
 **HasDiagnosticWithLanguagesToTranslateNoXliff (1 case):** LocalLabel with LanguagesToTranslate=["da-DK"], no XLIFF files.
 **HasDiagnosticWithLanguagesToTranslatePartialXliff (1 case):** LocalLabel with LanguagesToTranslate=["da-DK","de-DE"], only da-DK XLIFF.
+**HasDiagnosticWithNamespaces (1 case):** NamespaceTableCaption (gated `RequireMinimumVersion("18.0.38.52553")`; `TranslationsWithNamespaces` feature enabled via `CompilationOptions.WithCompilerFeatures`, empty XLIFF → namespace-mode path reports).
 **NoDiagnostic (2 cases):** LockedLabel, LockedReportLabel.
 **NoDiagnosticTranslated (1 case):** TranslatedReportLabel (XLIFF contains proper translation with matching trans-unit ID).
 **NoDiagnosticNoXliff (1 case):** No XLIFF files present, no LanguagesToTranslate setting.
+**NoDiagnosticWithNamespaces (1 case):** NamespaceTableCaptionTranslated (gated `RequireMinimumVersion("18.0.38.52553")`; translated XLIFF with the namespace-aware trans-unit ID `Namespace MyCompany.App - Table MyTable - Property Caption` → no false positive).
 
 ## Test infrastructure
 

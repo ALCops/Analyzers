@@ -38,6 +38,26 @@ namespace ALCops.LinterCop.Test
             </xliff>
             """);
 
+        // Trans-unit id for a table Caption in namespace "MyCompany.App" when the compiler feature
+        // TranslationsWithNamespaces is enabled: namespace-prefixed, unhashed segments joined by " - ".
+        private static readonly byte[] NamespaceTranslatedTableCaptionXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="da-DK" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="Namespace MyCompany.App - Table MyTable - Property Caption" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Table</source>
+                      <target>Min tabel</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Table MyTable - Property Caption</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
         private static readonly byte[] SettingsWithDaDK = System.Text.Encoding.UTF8.GetBytes(
             """{"LanguagesToTranslate": ["da-DK"]}""");
 
@@ -134,6 +154,35 @@ namespace ALCops.LinterCop.Test
                 new AnalyzerTestFixtureConfig
                 {
                     FileSystem = fileSystem
+                });
+        }
+
+        // COMPAT: CompilerFeatures.TranslationsWithNamespaces and CompilationOptions.WithCompilerFeatures are
+        // resolved reflectively so this test project still compiles against older SDKs where the enum member is
+        // absent. The namespace tests are version-gated (RequireMinimumVersion) so this only runs where present.
+        private static Microsoft.Dynamics.Nav.CodeAnalysis.CompilationOptions CreateNamespaceCompilationOptions()
+        {
+            var options = new Microsoft.Dynamics.Nav.CodeAnalysis.CompilationOptions();
+            var optionsType = typeof(Microsoft.Dynamics.Nav.CodeAnalysis.CompilationOptions);
+            var featuresType = optionsType.Assembly.GetType("Microsoft.Dynamics.Nav.CodeAnalysis.CompilerFeatures")!;
+            var feature = Enum.Parse(featuresType, "TranslationsWithNamespaces");
+            var withFeatures = optionsType.GetMethod("WithCompilerFeatures", new[] { featuresType })!;
+            return (Microsoft.Dynamics.Nav.CodeAnalysis.CompilationOptions)withFeatures.Invoke(options, new[] { feature })!;
+        }
+
+        private static AnalyzerTestFixture CreateFixtureWithNamespaceFeature(byte[] xliffContent)
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "Translations/TestApp.da-DK.xlf", xliffContent }
+            };
+            var fileSystem = new MemoryFileSystem(files);
+
+            return RoslynFixtureFactory.Create<Analyzers.TranslatableTextShouldBeTranslated>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = fileSystem,
+                    CompilationOptions = CreateNamespaceCompilationOptions()
                 });
         }
 
@@ -247,6 +296,36 @@ namespace ALCops.LinterCop.Test
 
             var fixture = CreateFixtureWithXliffAndSettings(SettingsWithDaDKAndDeDE);
             fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
+        [TestCase("NamespaceTableCaption")]
+        public async Task HasDiagnosticWithNamespaces(string testCase)
+        {
+            RequireMinimumVersion("18.0.38.52553",
+                "Translations with namespaces (CompilerFeatures.TranslationsWithNamespaces) requires the 18.0.38.52553 SDK.");
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithNamespaceFeature(EmptyXliffContent);
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
+        [TestCase("NamespaceTableCaptionTranslated")]
+        public async Task NoDiagnosticWithNamespaces(string testCase)
+        {
+            RequireMinimumVersion("18.0.38.52553",
+                "Translations with namespaces (CompilerFeatures.TranslationsWithNamespaces) requires the 18.0.38.52553 SDK.");
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithNamespaceFeature(NamespaceTranslatedTableCaptionXliffContent);
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
         }
     }
 }
