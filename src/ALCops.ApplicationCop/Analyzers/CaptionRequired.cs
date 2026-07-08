@@ -4,21 +4,20 @@ using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
-using ALCops.Common.Diagnostics;
 
 namespace ALCops.ApplicationCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public sealed class CaptionRequired : ApplicationCopAnalyzer
+public sealed class CaptionRequired : DiagnosticAnalyzer
 {
-    protected override ImmutableArray<DiagnosticDescriptor> SupportedDiagnosticsCore { get; } =
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
             DiagnosticDescriptors.CaptionRequired);
 
     private static readonly HashSet<string> _predefinedActionCategoryNames =
         SyntaxFacts.PredefinedActionCategoryNames.Select(x => x.Key.ToLowerInvariant()).ToHashSet();
 
-    protected override void InitializeAnalyzer(SafeAnalysisContext context) =>
+    public override void Initialize(AnalysisContext context) =>
         context.RegisterSymbolAction(
             CheckForMissingCaptions,
             EnumProvider.SymbolKind.Page,

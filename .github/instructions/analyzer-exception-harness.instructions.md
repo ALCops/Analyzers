@@ -48,8 +48,16 @@ protected override void InitializeAnalyzer(SafeAnalysisContext context) => ...
 Keep the `[DiagnosticAnalyzer]` attribute. Do **not** list the cop's
 `AnalyzerException` descriptor in `SupportedDiagnosticsCore`; the base appends it.
 
-As of this change only `CaptionRequired` (ApplicationCop) is converted. The other
-analyzers adopt the harness incrementally via this same recipe.
+As of this change **no production analyzer currently adopts the harness.**
+`CaptionRequired` (ApplicationCop) was the first adopter but has been temporarily
+detached back to plain `DiagnosticAnalyzer` to fix issue #389: deriving from the
+Common-based bridge made the AL compiler (`alc`) fail to instantiate the cop with
+`AL1003` because `ALCops.Common.dll` is not resolved from the analyzer's own folder
+at type-load time. The harness framework, per-cop bridges, and `XX0000` descriptors
+remain in place. Re-adoption requires a loader-safe approach first (for example
+merging `ALCops.Common` into each cop assembly, or guaranteeing `ALCops.Common.dll`
+is the first `/analyzer:` argument). Only the harness tests (test-only throwing
+analyzers) currently exercise the recipe.
 
 ## Location strategy per context
 

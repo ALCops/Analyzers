@@ -168,9 +168,11 @@ All analyzers are decorated with `[DiagnosticAnalyzer]`.
 > on `app.json`. Adoption is a 3-line change: base type `: DiagnosticAnalyzer` →
 > `: {Cop}Analyzer`, `SupportedDiagnostics` → `SupportedDiagnosticsCore`, and
 > `Initialize(AnalysisContext)` → `InitializeAnalyzer(SafeAnalysisContext)` (no
-> `Register*` changes). Currently only `CaptionRequired` is converted. See
-> `analyzer-exception-harness.instructions.md`. The template below shows the
-> still-supported plain `DiagnosticAnalyzer` form.
+> `Register*` changes). **Currently no production analyzer adopts the harness**
+> (`CaptionRequired` was temporarily detached to fix issue #389 — the Common-based
+> bridge made `alc` fail with `AL1003` at type-load; re-adoption needs a loader-safe
+> fix first). See `analyzer-exception-harness.instructions.md`. The template below
+> shows the still-supported (and currently used) plain `DiagnosticAnalyzer` form.
 
 ### Minimal Template (Symbol-based)
 
