@@ -823,6 +823,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Method)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _module =
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Module)));
+        private static readonly Lazy<NavCodeAnalysis.SymbolKind> _namedType =
+            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.NamedType)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _page =
             new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Page)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _pageExtension =
@@ -884,6 +886,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SymbolKind LocalVariable => _localVariable.Value;
         public static NavCodeAnalysis.SymbolKind Method => _method.Value;
         public static NavCodeAnalysis.SymbolKind Module => _module.Value;
+        public static NavCodeAnalysis.SymbolKind NamedType => _namedType.Value;
         public static NavCodeAnalysis.SymbolKind Page => _page.Value;
         public static NavCodeAnalysis.SymbolKind PageExtension => _pageExtension.Value;
         public static NavCodeAnalysis.SymbolKind PermissionSet => _permissionSet.Value;

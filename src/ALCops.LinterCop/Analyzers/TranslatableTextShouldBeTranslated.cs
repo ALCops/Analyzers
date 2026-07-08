@@ -138,7 +138,9 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             return;
 
         IRootTypeSymbol? rootSymbol = ExtensionObjectFoldingUtilities.GetTranslationRootSymbol(symbol);
-        string translationId = LanguageFileUtilities.GetLabelTextConstLanguageSymbolId(symbol, rootSymbol);
+        string? translationId = ComputeTranslationId(symbol, rootSymbol, isLabelConst: true);
+        if (translationId is null)
+            return;
 
         ReportMissingTranslation(ctx, symbol, translationId, translationIndex);
     }
@@ -152,7 +154,9 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             return;
 
         IRootTypeSymbol? rootSymbol = ExtensionObjectFoldingUtilities.GetTranslationRootSymbol(symbol);
-        string translationId = LanguageFileUtilities.GetLanguageSymbolId(symbol, rootSymbol);
+        string? translationId = ComputeTranslationId(symbol, rootSymbol, isLabelConst: false);
+        if (translationId is null)
+            return;
 
         ReportMissingTranslation(ctx, symbol, translationId, translationIndex);
     }
@@ -215,7 +219,9 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             return;
 
         IRootTypeSymbol? rootSymbol = ExtensionObjectFoldingUtilities.GetTranslationRootSymbol(property);
-        string translationId = LanguageFileUtilities.GetLanguageSymbolId(property, rootSymbol);
+        string? translationId = ComputeTranslationId(property, rootSymbol, isLabelConst: false);
+        if (translationId is null)
+            return;
 
         ReportMissingTranslation(ctx, property, translationId, translationIndex);
     }
@@ -350,6 +356,81 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         }
 
         return new TranslationIndex(availableLanguages, index);
+    }
+
+    #endregion
+
+    #region Translation ID computation (SDK version compat)
+
+    // COMPAT: In AL SDK 18.0.38.52553 the public LanguageFileUtilities translation-ID methods gained an
+    // optional `bool useNamespaces = false` parameter. C# bakes optional-parameter defaults into the call
+    // site, so a direct call compiled against an older SDK (2-param) throws MissingMethodException when the
+    // analyzer runs against the newer SDK (3-param). All ID computation therefore goes through reflection so
+    // no arity is baked into the call site.
+    //
+    // - New SDK: use internal GetTranslationFileId(...) + public UseTranslationsWithNamespaces(ISymbol) so the
+    //   computed ID matches the compiler-generated trans-unit ID (including namespace-aware IDs).
+    // - Old SDK: fall back to the public 2-param GetLanguageSymbolId / GetLabelTextConstLanguageSymbolId.
+
+    // GetTranslationFileId(string name, SymbolKind kind, Symbol containingSymbol, bool isMissingCaption,
+    //                      IRootTypeSymbol? rootSymbolOverride, bool useNamespaces) — internal, new SDK only.
+    private static readonly Lazy<MethodInfo?> _getTranslationFileIdMethod = new(() =>
+        typeof(LanguageFileUtilities)
+            .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+            .FirstOrDefault(m => m.Name == "GetTranslationFileId" && m.GetParameters().Length == 6));
+
+    // UseTranslationsWithNamespaces(ISymbol) — public, new SDK only.
+    private static readonly Lazy<MethodInfo?> _useTranslationsWithNamespacesMethod = new(() =>
+        typeof(LanguageFileUtilities).GetMethod(
+            "UseTranslationsWithNamespaces",
+            BindingFlags.Public | BindingFlags.Static,
+            null,
+            [typeof(ISymbol)],
+            null));
+
+    // Old-SDK fallbacks: public 2-param methods, present only on SDKs without the namespace feature.
+    private static readonly Lazy<MethodInfo?> _getLanguageSymbolIdMethod = new(() =>
+        typeof(LanguageFileUtilities).GetMethod(
+            "GetLanguageSymbolId",
+            BindingFlags.Public | BindingFlags.Static,
+            null,
+            [typeof(ISymbol), typeof(IRootTypeSymbol)],
+            null));
+
+    private static readonly Lazy<MethodInfo?> _getLabelTextConstLanguageSymbolIdMethod = new(() =>
+        typeof(LanguageFileUtilities).GetMethod(
+            "GetLabelTextConstLanguageSymbolId",
+            BindingFlags.Public | BindingFlags.Static,
+            null,
+            [typeof(ISymbol), typeof(IRootTypeSymbol)],
+            null));
+
+    private static string? ComputeTranslationId(ISymbol symbol, IRootTypeSymbol? rootSymbol, bool isLabelConst)
+    {
+        MethodInfo? translationFileId = _getTranslationFileIdMethod.Value;
+        if (translationFileId is not null)
+        {
+            SymbolKind kind = isLabelConst ? EnumProvider.SymbolKind.NamedType : symbol.Kind;
+            bool useNamespaces = GetUseTranslationsWithNamespaces(symbol);
+
+            return translationFileId.Invoke(null,
+                [symbol.Name, kind, symbol.ContainingSymbol, false, rootSymbol, useNamespaces]) as string;
+        }
+
+        MethodInfo? fallback = isLabelConst
+            ? _getLabelTextConstLanguageSymbolIdMethod.Value
+            : _getLanguageSymbolIdMethod.Value;
+
+        return fallback?.Invoke(null, [symbol, rootSymbol]) as string;
+    }
+
+    private static bool GetUseTranslationsWithNamespaces(ISymbol symbol)
+    {
+        MethodInfo? method = _useTranslationsWithNamespacesMethod.Value;
+        if (method is null)
+            return false;
+
+        return method.Invoke(null, [symbol]) is true;
     }
 
     #endregion
