@@ -138,7 +138,9 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             return;
 
         IRootTypeSymbol? rootSymbol = ExtensionObjectFoldingUtilities.GetTranslationRootSymbol(symbol);
-        string translationId = LanguageFileUtilities.GetLabelTextConstLanguageSymbolId(symbol, rootSymbol);
+        string? translationId = TranslationIdHelper.ComputeTranslationId(symbol, rootSymbol, isLabelConst: true);
+        if (translationId is null)
+            return;
 
         ReportMissingTranslation(ctx, symbol, translationId, translationIndex);
     }
@@ -152,7 +154,9 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             return;
 
         IRootTypeSymbol? rootSymbol = ExtensionObjectFoldingUtilities.GetTranslationRootSymbol(symbol);
-        string translationId = LanguageFileUtilities.GetLanguageSymbolId(symbol, rootSymbol);
+        string? translationId = TranslationIdHelper.ComputeTranslationId(symbol, rootSymbol, isLabelConst: false);
+        if (translationId is null)
+            return;
 
         ReportMissingTranslation(ctx, symbol, translationId, translationIndex);
     }
@@ -215,7 +219,9 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             return;
 
         IRootTypeSymbol? rootSymbol = ExtensionObjectFoldingUtilities.GetTranslationRootSymbol(property);
-        string translationId = LanguageFileUtilities.GetLanguageSymbolId(property, rootSymbol);
+        string? translationId = TranslationIdHelper.ComputeTranslationId(property, rootSymbol, isLabelConst: false);
+        if (translationId is null)
+            return;
 
         ReportMissingTranslation(ctx, property, translationId, translationIndex);
     }
