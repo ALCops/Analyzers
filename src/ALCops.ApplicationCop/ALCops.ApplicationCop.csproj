@@ -23,7 +23,7 @@
             <StronglyTypedClassName>ApplicationCopAnalyzers</StronglyTypedClassName>
         </EmbeddedResource>
         <Compile Include="$(IntermediateOutputPath)ALCops.ApplicationCopAnalyzers.cs"
-                 Condition="Exists('$(IntermediateOutputPath)ALCops.ApplicationCopAnalyzers.cs')"
+                 Condition="'$(DesignTimeBuild)' == 'true' and Exists('$(IntermediateOutputPath)ALCops.ApplicationCopAnalyzers.cs')"
                  Visible="false">
             <AutoGen>true</AutoGen>
             <DesignTime>true</DesignTime>

@@ -26,7 +26,7 @@
             <StronglyTypedClassName>LinterCopAnalyzers</StronglyTypedClassName>
         </EmbeddedResource>
         <Compile Include="$(IntermediateOutputPath)ALCops.LinterCopAnalyzers.cs"
-                 Condition="Exists('$(IntermediateOutputPath)ALCops.LinterCopAnalyzers.cs')"
+                 Condition="'$(DesignTimeBuild)' == 'true' and Exists('$(IntermediateOutputPath)ALCops.LinterCopAnalyzers.cs')"
                  Visible="false">
             <AutoGen>true</AutoGen>
             <DesignTime>true</DesignTime>
