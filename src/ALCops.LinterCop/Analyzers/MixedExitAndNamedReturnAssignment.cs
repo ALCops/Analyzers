@@ -67,7 +67,7 @@ public sealed class MixedExitAndNamedReturnAssignment : DiagnosticAnalyzer
                 DiagnosticDescriptors.MixedExitAndNamedReturnAssignment,
                 location,
                 GetDeclarationKind(declarationSyntax),
-                methodSymbol.Name));
+                methodSymbol.GetDiagnosticDisplayText(MethodSymbolDisplayFormat.MethodSignature)));
         }
     }
 
