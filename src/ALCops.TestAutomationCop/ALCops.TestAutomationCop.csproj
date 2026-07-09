@@ -22,6 +22,13 @@
             <StronglyTypedFileName>$(IntermediateOutputPath)ALCops.TestAutomationCopAnalyzers.cs</StronglyTypedFileName>
             <StronglyTypedClassName>TestAutomationCopAnalyzers</StronglyTypedClassName>
         </EmbeddedResource>
+        <Compile Include="$(IntermediateOutputPath)ALCops.TestAutomationCopAnalyzers.cs"
+                 Condition="Exists('$(IntermediateOutputPath)ALCops.TestAutomationCopAnalyzers.cs')"
+                 Visible="false">
+            <AutoGen>true</AutoGen>
+            <DesignTime>true</DesignTime>
+            <DependentUpon>ALCops.TestAutomationCopAnalyzers.resx</DependentUpon>
+        </Compile>
     </ItemGroup>
     
     <ItemGroup>
