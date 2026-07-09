@@ -81,7 +81,7 @@ public sealed class MixedExitAndNamedReturnAssignment : DiagnosticAnalyzer
 
         public bool HasNamedReturnAssignment { get; private set; }
 
-        public ImmutableArray<Location> ExitLocations => [.. _exitLocations];
+        public ImmutableArray<Location> ExitLocations => _exitLocations.ToImmutableArray();
 
         public override void VisitExitStatement(IExitStatement operation)
         {
