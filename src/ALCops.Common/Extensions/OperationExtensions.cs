@@ -42,4 +42,16 @@ public static class OperationSafeExtensions
 
         return operation.GetSymbol();
     }
+
+    public static bool IsNamedReturnTarget(this IOperation? target, string returnVariableName)
+    {
+        if (target is null)
+            return false;
+
+        if (target.Kind == EnumProvider.OperationKind.ReturnValueReferenceExpression)
+            return true;
+
+        var symbol = target.GetSymbolSafe();
+        return symbol is not null && symbol.Name.IsSameName(returnVariableName);
+    }
 }

@@ -365,6 +365,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.UseValidateForFieldAssignmentDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UseValidateForFieldAssignment));
 
+    public static readonly DiagnosticDescriptor NotAllCodePathsReturnValue = new(
+        id: DiagnosticIds.NotAllCodePathsReturnValue,
+        title: PlatformCopAnalyzers.NotAllCodePathsReturnValueTitle,
+        messageFormat: PlatformCopAnalyzers.NotAllCodePathsReturnValueMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.NotAllCodePathsReturnValueDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.NotAllCodePathsReturnValue));
+
     public static readonly DiagnosticDescriptor AnalyzerException = new(
         id: DiagnosticIds.AnalyzerException,
         title: PlatformCopAnalyzers.AnalyzerExceptionTitle,

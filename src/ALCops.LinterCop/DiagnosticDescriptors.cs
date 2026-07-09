@@ -304,6 +304,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.ParameterNotReferencedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ParameterNotReferenced));
 
+    public static readonly DiagnosticDescriptor MixedExitAndNamedReturnAssignment = new(
+        id: DiagnosticIds.MixedExitAndNamedReturnAssignment,
+        title: LinterCopAnalyzers.MixedExitAndNamedReturnAssignmentTitle,
+        messageFormat: LinterCopAnalyzers.MixedExitAndNamedReturnAssignmentMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: false,
+        description: LinterCopAnalyzers.MixedExitAndNamedReturnAssignmentDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.MixedExitAndNamedReturnAssignment));
+
     public static readonly DiagnosticDescriptor UseSecretTextForSensitiveText = new(
         id: DiagnosticIds.UseSecretTextForSensitiveText,
         title: LinterCopAnalyzers.UseSecretTextForSensitiveTextTitle,
