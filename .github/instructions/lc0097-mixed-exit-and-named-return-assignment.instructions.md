@@ -46,9 +46,9 @@ Detects methods with a named return variable that mix both styles:
 ## Test coverage
 
 **HasDiagnostic (6 cases):** NamedAssignmentAndExitValue, NamedAssignmentAndExitWithoutValue, NamedAssignmentInIfAndExitInElse, NamedCaseAssignmentAndExit, NamedIfElseIfElseAssignmentAndExit, NamedNestedIfElseIfAssignmentAndExit.
-**NoDiagnostic (10 cases):** NamedOnlyAssignment, NamedOnlyExit, UnnamedExitAndLocalAssignment, TryFunctionExcluded, NamedCaseOnlyAssignments, NamedIfElseIfElseOnlyExit, NamedNestedIfElseIfOnlyAssignments, TriggerBooleanOnlyExit, TriggerBooleanCaseOnlyExit, TriggerBooleanNestedIfElseIfOnlyExit.
+**NoDiagnostic (11 cases):** NamedOnlyAssignment, NamedOnlyExit, UnnamedExitAndLocalAssignment, TryFunctionExcluded, NamedCaseOnlyAssignments, NamedIfElseIfElseOnlyExit, NamedNestedIfElseIfOnlyAssignments, TriggerBooleanOnlyExit, TriggerBooleanCaseOnlyExit, TriggerBooleanNestedIfElseIfOnlyExit, NamedFieldSameNameOnlyExit.
 
 ## Known issues
 
-- Assignment target detection prefers `ReturnValueReferenceExpression` but keeps symbol-name fallback for SDK representation differences.
+- Assignment target detection prefers `ReturnValueReferenceExpression` and falls back to symbol identity — the fallback requires the symbol's `Kind` to be `ReturnValue` so that field members whose names happen to match the return variable (e.g. `Buf.Result := 5;` when `Result` is also the return name) are not misidentified as return-variable assignments. See `IsNamedReturnTarget` in `ALCops.Common/Extensions/OperationExtensions.cs`.
 - Methods that only use `exit` (without return-variable assignments) are intentionally not flagged.

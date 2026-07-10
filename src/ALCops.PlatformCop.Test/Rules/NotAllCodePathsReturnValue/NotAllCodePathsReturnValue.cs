@@ -26,6 +26,8 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
     [TestCase("UnnamedCaseWithoutElse")]
     [TestCase("UnnamedIfElseIfElseMissingReturn")]
     [TestCase("NamedNestedIfElseIfMissingAssignment")]
+    [TestCase("NamedPassedAsByValueArgument")]
+    [TestCase("NamedNotAssignedFieldSameName")]
     public async Task HasDiagnostic(string testCase)
     {
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -45,6 +47,13 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
     [TestCase("UnnamedIfElseIfElseAllReturn")]
     [TestCase("NamedNestedIfElseIfAssigned")]
     [TestCase("TriggerCases")]
+    [TestCase("UnnamedIfElseErrorTerminates")]
+    [TestCase("NamedIfElseErrorTerminates")]
+    [TestCase("UnnamedCaseElseErrorTerminates")]
+    [TestCase("UnnamedCaseElseExitTerminates")]
+    [TestCase("UnnamedGuardClauseErrorFirst")]
+    [TestCase("NamedInitializedByVarArgument")]
+    [TestCase("NamedInitializedByReceiverCall")]
     public async Task NoDiagnostic(string testCase)
     {
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

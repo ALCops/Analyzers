@@ -30,6 +30,10 @@ The rule excludes TryFunction methods.
 | Flow analysis based on IOperation tree | Works consistently for nested blocks and AL control-flow constructs |
 | Named return variable counts as return value when definitely assigned on fallthrough paths | Matches AL named-return pattern without forcing exit() usage |
 | `exit` without explicit expression is treated as missing value unless named return was already assigned on that path | Prevents silent default-value returns on early exits |
+| Built-in `Error(...)` and `ThrowError` invocations terminate the path (return empty state set) | Guard clauses like `if Cond then exit(x) else Error('...');` are pervasive in AL; without this, PC0038 would fire on every such branch |
+| Named return is treated as assigned when passed to a `var` (by-reference) parameter or used as the receiver of an invocation (e.g. `Rec.Get(No)`) | Covers common AL idioms: out-parameter initialization and `Record.Get`/`FindFirst`/etc. into the return record. Intentionally conservative to avoid noise |
+| Case-else clauses are traversed through both `IBlockStatement` and `IStatementList` | The AL SDK wraps a case's else clause in `IStatementList` (`BoundStatementList`), so an additional case was added alongside the block handler |
+| `IsNamedReturnTarget` fallback requires symbol kind `ReturnValue` | Comparing by name only would misclassify member accesses that share the return variable's name (e.g. `Buf.Result := 5;` when the record has a field named `Result`). Fix lives in `ALCops.Common/Extensions/OperationExtensions.cs` |
 | Report location is method name | User requirement |
 
 ## Architecture
@@ -51,8 +55,8 @@ The rule excludes TryFunction methods.
 
 ## Test coverage
 
-**HasDiagnostic (7 cases):** UnnamedNoExit, UnnamedIfWithoutElse, NamedAssignedOnlyInIf, NamedLoopMayNotAssign, UnnamedCaseWithoutElse, UnnamedIfElseIfElseMissingReturn, NamedNestedIfElseIfMissingAssignment.
-**NoDiagnostic (15 cases):** UnnamedImmediateExit, UnnamedIfElseBothExit, NamedDirectAssignment, NamedAssignmentInBothBranches, NamedAssignedBeforeConditional, TryFunctionExcluded, NamedCaseAllBranchesAssigned, UnnamedIfElseIfElseAllReturn, NamedNestedIfElseIfAssigned, TriggerBooleanMissingReturn, TriggerBooleanCaseWithoutElse, TriggerBooleanNestedIfElseIfMissingReturn, TriggerBooleanAllPathsReturn, TriggerBooleanCaseAllBranchesReturn, TriggerBooleanNestedIfElseIfAllReturn.
+**HasDiagnostic (9 cases):** UnnamedNoExit, UnnamedIfWithoutElse, NamedAssignedOnlyInIf, NamedLoopMayNotAssign, UnnamedCaseWithoutElse, UnnamedIfElseIfElseMissingReturn, NamedNestedIfElseIfMissingAssignment, NamedPassedAsByValueArgument, NamedNotAssignedFieldSameName.
+**NoDiagnostic (17 cases):** UnnamedImmediateExit, UnnamedIfElseBothExit, NamedDirectAssignment, NamedAssignmentInBothBranches, NamedAssignedBeforeConditional, TryFunctionExcluded, NamedCaseAllBranchesAssigned, UnnamedIfElseIfElseAllReturn, NamedNestedIfElseIfAssigned, TriggerCases, UnnamedIfElseErrorTerminates, NamedIfElseErrorTerminates, UnnamedCaseElseErrorTerminates, UnnamedCaseElseExitTerminates, UnnamedGuardClauseErrorFirst, NamedInitializedByVarArgument, NamedInitializedByReceiverCall.
 
 ## Test notes
 

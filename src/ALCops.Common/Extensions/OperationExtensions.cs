@@ -51,7 +51,14 @@ public static class OperationSafeExtensions
         if (target.Kind == EnumProvider.OperationKind.ReturnValueReferenceExpression)
             return true;
 
+        // Fall back to symbol identity, but only accept symbols whose kind is `ReturnValue`.
+        // Comparing by name alone would incorrectly match unrelated members that happen to
+        // share the return variable's name (e.g. `Buf.Result := 5;` where `Buf` is a record
+        // with a field named `Result`).
         var symbol = target.GetSymbolSafe();
-        return symbol is not null && symbol.Name.IsSameName(returnVariableName);
+
+        return symbol is not null
+            && symbol.Kind == EnumProvider.SymbolKind.ReturnValue
+            && symbol.Name.IsSameName(returnVariableName);
     }
 }

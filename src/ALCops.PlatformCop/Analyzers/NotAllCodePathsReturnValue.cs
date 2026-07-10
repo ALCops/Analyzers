@@ -105,6 +105,9 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
             case IBlockStatement block:
                 return AnalyzeStatements(block.Statements, states, hasNamedReturn, returnVariableName, out hasPathWithoutValue);
 
+            case IStatementList statementList:
+                return AnalyzeStatements(statementList.Statements, states, hasNamedReturn, returnVariableName, out hasPathWithoutValue);
+
             case IAssignmentStatement assignment:
                 if (hasNamedReturn && assignment.Target.IsNamedReturnTarget(returnVariableName))
                 {
@@ -239,9 +242,78 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
 
                 return states.Union(forEachBodyStates);
 
+            case IInvocationExpression invocation:
+                return AnalyzeInvocation(invocation, states, hasNamedReturn, returnVariableName);
+
+            case IExpressionStatement expressionStatement
+                when expressionStatement.Expression is IInvocationExpression wrappedInvocation:
+                return AnalyzeInvocation(wrappedInvocation, states, hasNamedReturn, returnVariableName);
+
             default:
                 return states;
         }
+    }
+
+    private static ImmutableHashSet<bool> AnalyzeInvocation(
+        IInvocationExpression invocation,
+        ImmutableHashSet<bool> states,
+        bool hasNamedReturn,
+        string returnVariableName)
+    {
+        if (IsFlowTerminatingCall(invocation))
+        {
+            return ImmutableHashSet<bool>.Empty;
+        }
+
+        if (hasNamedReturn && InvocationAssignsNamedReturn(invocation, returnVariableName))
+        {
+            return ImmutableHashSet.Create(true);
+        }
+
+        return states;
+    }
+
+    // Named return is considered "assigned" when it is either the receiver of an invocation
+    // (e.g. `Customer.Get(No)` where `Customer` is the return variable, populating the record)
+    // or is passed as a by-reference (`var`) argument (e.g. `ComputeInto(Result)`).
+    // This is intentionally conservative to avoid false positives on common AL idioms.
+    private static bool InvocationAssignsNamedReturn(IInvocationExpression invocation, string returnVariableName)
+    {
+        if (invocation.Instance.IsNamedReturnTarget(returnVariableName))
+        {
+            return true;
+        }
+
+        foreach (var argument in invocation.Arguments)
+        {
+            if (argument.Parameter is IParameterSymbol parameter
+                && parameter.IsVar
+                && argument.Value.IsNamedReturnTarget(returnVariableName))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Built-in AL methods that never return control to the caller (they throw).
+    // Treating them as path terminators prevents PC0038 false positives on guard clauses
+    // such as `if Cond then exit(x) else Error('...');`.
+    private static bool IsFlowTerminatingCall(IInvocationExpression invocation)
+    {
+        if (invocation.TargetMethod is not IMethodSymbol targetMethod)
+        {
+            return false;
+        }
+
+        if (targetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
+        {
+            return false;
+        }
+
+        return string.Equals(targetMethod.Name, "Error", StringComparison.Ordinal)
+            || string.Equals(targetMethod.Name, "ThrowError", StringComparison.Ordinal);
     }
 
     private static ImmutableHashSet<bool> AnalyzeStatements(
