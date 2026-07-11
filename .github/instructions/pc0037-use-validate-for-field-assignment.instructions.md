@@ -42,13 +42,13 @@ Detects direct field assignments on non-temporary record variables and recommend
 - **Current-record detection** (`IsCurrentRecordInstance`): true when the instance is a `this`/self reference — detected via `instance.Kind == EnumProvider.OperationKind.ThisReference` (guarded `!= default`), **not** the `IInstanceReferenceOperation` type — or when its symbol is named `Rec` (covers explicit `Rec.` and a page's implicit-with bare reference). `Rec`/`xRec` are reserved AL keywords, so the name is the only public discriminator between the current record and the `xRec` before-image. See the this/self note in `analyzer-development.instructions.md`.
 - **Owner field resolution** (`ResolveTriggerOwnerField`): the trigger symbol's `ContainingSymbol` is the owner — an `IFieldSymbol` (table field), an `IControlSymbol` (page control, resolved via `RelatedFieldSymbol`), or a change-modify symbol for `modify(...)` extensions whose modified base field/control is read via the internal `Target` property (`PropertyAccessor.GetPropertyIfExists`), then resolved recursively
 - **Location**: Reports on `fieldAccess.Syntax.GetIdentifierNameSyntax()` (the field identifier token)
-- **CodeFix**: Navigates from diagnostic span to parent `AssignmentStatementSyntax`, rewrites to `ExpressionStatement(InvocationExpression(MemberAccess(Rec, "Validate"), ArgumentList(FieldName, Value)))`
+- **CodeFix**: Navigates from diagnostic span to parent `AssignmentStatementSyntax`, rewrites to `ExpressionStatement(InvocationExpression(MemberAccess(Rec, "Validate"), ArgumentList(FieldName, Value)))`. Reuses the original `assignment.SemicolonToken` (a missing token when absent) instead of fabricating one, so then-branch assignments directly before `else` stay compilable (issue #395)
 
 ## Test coverage
 
 **HasDiagnostic (8 cases):** SimpleAssignment, CompoundAssignment, AfterInit, PrimaryKeyField, OnValidateDifferentFieldOnRec, OnValidateXRecSameField, OnValidateOtherRecordSameField, InherentlyTemporaryTable.
 **NoDiagnostic (14 cases):** TemporaryVariable, ValidateCall, NonRecordVariable, InsideOnValidateTrigger, TableFieldOnValidateSameField, TableExtensionFieldOnBeforeValidateSameField, TableExtensionFieldOnAfterValidateSameField, PageControlOnValidateSameField, PageExtensionControlOnBeforeValidateSameField, PageExtensionControlOnAfterValidateSameField, OnValidateSameFieldThisReference, PageControlOnValidateSameFieldBareReference, CRMTableType, CDSTableType.
-**HasFix (1 case):** SimpleAssignment.
+**HasFix (3 cases):** SimpleAssignment, IfElseNoSemicolon, NestedIfElseInRepeatUntil.
 
 ## Known issues
 

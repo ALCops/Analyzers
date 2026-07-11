@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
@@ -88,8 +87,9 @@ public sealed class UseValidateForFieldAssignmentCodeFixProvider : CodeFixProvid
         var argumentList = SyntaxFactory.ArgumentList(arguments);
 
         var validateInvocation = SyntaxFactory.InvocationExpression(validateMemberAccess, argumentList);
-        var expressionStatement = SyntaxFactory.ExpressionStatement(validateInvocation,
-            SyntaxFactory.Token(EnumProvider.SyntaxKind.SemicolonToken))
+        // Reuse the original semicolon token: statements directly before 'else' have none,
+        // and fabricating one would produce non-compiling code (issue #395).
+        var expressionStatement = SyntaxFactory.ExpressionStatement(validateInvocation, assignment.SemicolonToken)
             .WithTriviaFrom(assignment);
 
         var root = await syntaxRootTask.ConfigureAwait(false);
