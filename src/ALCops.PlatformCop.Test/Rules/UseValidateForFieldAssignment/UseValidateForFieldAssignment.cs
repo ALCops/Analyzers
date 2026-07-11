@@ -79,6 +79,8 @@ namespace ALCops.PlatformCop.Test
 
         [Test]
         [TestCase("SimpleAssignment")]
+        [TestCase("IfElseNoSemicolon")]
+        [TestCase("NestedIfElseInRepeatUntil")]
         public async Task HasFix(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
