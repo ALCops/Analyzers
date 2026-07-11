@@ -41,7 +41,7 @@ jobs:
 
       - name: Restore TargetFramework.json cache
         id: restore-tfm-cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: ${{ runner.temp }}/TargetFramework.json
           # Unique key so we never get an exact hit; restore-keys picks up the latest saved entry
@@ -64,7 +64,7 @@ jobs:
 
       - name: Save TargetFramework.json cache
         if: steps.restore-tfm-cache.outputs.cache-matched-key != format('tfm-json-{0}', steps.hash-tfm.outputs.hash)
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ runner.temp }}/TargetFramework.json
           key: tfm-json-${{ steps.hash-tfm.outputs.hash }}
