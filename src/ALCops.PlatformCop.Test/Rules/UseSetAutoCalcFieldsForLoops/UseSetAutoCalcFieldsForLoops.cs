@@ -76,4 +76,23 @@ public class UseSetAutoCalcFieldsForLoops : NavCodeAnalysisBase
 
         fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.UseSetAutoCalcFieldsForLoops);
     }
+
+    [Test]
+    [TestCase("UnblockedThenBranch")]
+    [TestCase("UnblockedThenBranchBeforeElse")]
+    public async Task NoFix(string testCase)
+    {
+        var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoFix), $"{testCase}.al"))
+            .ConfigureAwait(false);
+
+        var fixture = RoslynFixtureFactory.Create<UseSetAutoCalcFieldsForLoopsCodeFixProvider>(
+            new CodeFixTestFixtureConfig
+            {
+                AdditionalAnalyzers = [_analyzer]
+            });
+
+        // The insertion target is an unblocked then-branch: no statement list to
+        // insert into, so no CodeFix must be offered (issue #398).
+        fixture.NoCodeFix(code, DiagnosticDescriptors.UseSetAutoCalcFieldsForLoops);
+    }
 }
