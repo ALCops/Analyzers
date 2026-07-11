@@ -68,11 +68,14 @@ This follows the same `_branchDepth` pattern used in `PartialRecordOperations` (
 4. Insert `SetAutoCalcFields(fields)` before the insertion target
 5. Arguments are passed through directly from CalcFields (unqualified field names)
 
+The insertion target must be an element of a statement list (`BlockSyntax` or `RepeatStatementSyntax` body). When the target is a single-statement branch (e.g. the `if X.FindSet() then repeat...` is itself an unblocked then-branch of an outer `if`), `InsertNodesBefore` would throw `InvalidOperationException` in the SDK's `SyntaxReplacer`. The `InsertableOrNull` guard returns null in that case, so no CodeFix is offered (issue #398); the diagnostic still appears.
+
 ## Test coverage
 
 **HasDiagnostic (7 cases):** FindSetRepeatUntil, FindRepeatUntil, WhileLoop, ReportOnAfterGetRecord, MultipleCalcFields, NestedLoop, NestedLoopInConditional.
 **NoDiagnostic (10 cases):** DifferentVariable, CalcFieldsOutsideLoop, CrossMethodCall, SingleRecord, CalcFieldsInIfBlock, CalcFieldsInCaseBlock, CalcFieldsInIfElseBlock, TemporaryVariable, TemporaryTableType, ReportTemporaryTableType.
-**HasFix (2 cases):** FindSetRepeatUntil, MultipleFields.
+**HasFix (4 cases):** FindSetRepeatUntil, MultipleFields, IfFindSetRepeatUntil, IfFindSetBeginRepeatUntil.
+**NoFix (2 cases):** UnblockedThenBranch, UnblockedThenBranchBeforeElse.
 
 ## Known limitations
 
@@ -80,3 +83,4 @@ This follows the same `_branchDepth` pattern used in `PartialRecordOperations` (
 - Multiple CalcFields in the same loop are reported individually (not merged by the analyzer)
 - The CodeFix handles one CalcFields at a time; use Fix All for multiple occurrences
 - CalcFields inside conditional branches (if/case) within loops are intentionally not flagged, even if all branches call CalcFields (accepted false negative for zero false positives)
+- No CodeFix is offered when the insertion target is not in a statement list (unblocked then-branch scenario, issue #398); wrapping the branch in begin..end was considered and rejected as over-engineering (pattern does not occur in the BaseApp)

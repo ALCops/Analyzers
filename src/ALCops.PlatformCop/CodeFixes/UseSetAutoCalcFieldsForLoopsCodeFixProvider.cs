@@ -172,20 +172,20 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
                     // Check if an ancestor if-statement contains the FindSet condition
                     var enclosingIf = FindEnclosingIfWithFind(repeatStatement);
                     if (enclosingIf is not null)
-                        return enclosingIf;
+                        return InsertableOrNull(enclosingIf);
 
                     // Otherwise look for a standalone FindSet statement before the repeat
                     var precedingFind = FindPrecedingFindStatement(repeatStatement);
                     if (precedingFind is not null)
                         return precedingFind;
 
-                    return repeatStatement;
+                    return InsertableOrNull(repeatStatement);
 
                 case WhileStatementSyntax whileStatement:
-                    return whileStatement;
+                    return InsertableOrNull(whileStatement);
 
                 case ForEachStatementSyntax forEachStatement:
-                    return forEachStatement;
+                    return InsertableOrNull(forEachStatement);
 
                 case MethodOrTriggerDeclarationSyntax:
                     // We've reached the method body without finding a loop.
@@ -197,6 +197,15 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
         }
         return null;
     }
+
+    /// <summary>
+    /// Returns the statement only when it is an element of a statement list
+    /// (begin..end block or repeat..until body). Inserting before a statement that is
+    /// a single-statement branch (e.g. an unblocked then-branch of an outer if) would
+    /// throw InvalidOperationException in the SDK's SyntaxReplacer (issue #398).
+    /// </summary>
+    private static StatementSyntax? InsertableOrNull(StatementSyntax statement) =>
+        statement.Parent is BlockSyntax or RepeatStatementSyntax ? statement : null;
 
     /// <summary>
     /// Walks up from the repeat statement to find an enclosing if-statement whose condition
