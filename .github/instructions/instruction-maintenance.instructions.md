@@ -94,6 +94,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `sdk-analyzer-infrastructure` | `'src/ALCops.*/Analyzers/**'` | NAV SDK internals: callback ordering, incremental compilation, GetOperation perf |
 | `analyzer-exception-harness` | `'src/ALCops.Common/Diagnostics/**'` | XX0000 harness: base class + context decorators that convert analyzer exceptions into located diagnostics |
 | `fc0004-permission-declaration-order` | rule-scoped | FC0004 rule |
+| `fc0006-permission-values-should-be-lowercase` | rule-scoped | FC0006 rule |
 | `lc0086-page-style-string-literal` | rule-scoped | LC0086 rule |
 | `lc0091-translatable-text-should-be-translated` | rule-scoped | LC0091 rule |
 | `lc0092-naming-pattern` | rule-scoped | LC0092 rule |

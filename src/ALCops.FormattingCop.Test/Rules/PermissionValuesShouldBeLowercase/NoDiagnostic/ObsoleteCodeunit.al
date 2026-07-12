@@ -1,0 +1,15 @@
+[||]codeunit 50100 "My Codeunit"
+{
+    ObsoleteState = Pending;
+    ObsoleteReason = 'Deprecated';
+    Permissions = tabledata Alpha = RIMD;
+}
+
+table 50100 Alpha
+{
+    Caption = '', Locked = true;
+    fields
+    {
+        field(1; MyField; Integer) { }
+    }
+}

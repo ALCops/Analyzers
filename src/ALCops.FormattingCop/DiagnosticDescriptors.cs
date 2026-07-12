@@ -46,6 +46,15 @@ public static class DiagnosticDescriptors
         description: FormattingCopAnalyzers.PermissionDeclarationOrderDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.PermissionDeclarationOrder));
 
+    public static readonly DiagnosticDescriptor PermissionValuesShouldBeLowercase = new(
+        id: DiagnosticIds.PermissionValuesShouldBeLowercase,
+        title: FormattingCopAnalyzers.PermissionValuesShouldBeLowercaseTitle,
+        messageFormat: FormattingCopAnalyzers.PermissionValuesShouldBeLowercaseMessageFormat,
+        category: Category.Style,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: FormattingCopAnalyzers.PermissionValuesShouldBeLowercaseDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PermissionValuesShouldBeLowercase));
 
     public static readonly DiagnosticDescriptor AnalyzerException = new(
         id: DiagnosticIds.AnalyzerException,
