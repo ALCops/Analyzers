@@ -6,7 +6,7 @@ applyTo: 'src/ALCops.FormattingCop/**/PermissionValuesShouldBeLowercase*'
 
 ## Purpose
 
-Detects uppercase permission values (e.g. `RIMD`, `Rimd`) in the `Permissions` property of application objects. Casing has no runtime effect there; both cases grant the same indirect permission, but uppercase wrongly suggests direct permissions are granted (a semantic that only exists in permissionset objects and the `InherentPermissions` property). Provides a CodeFix that lowercases all permission values in the property. Origin: discussion #383.
+Detects uppercase permission values (e.g. `RIMD`, `Rimd`, `X`) in the `Permissions` property of application objects. Casing has no runtime effect there; both cases grant the same indirect permission, but uppercase wrongly suggests direct permissions are granted (a semantic that only exists in permissionset objects and the `InherentPermissions` property). Applies to read/insert/modify/delete (`rimd`) and execute (`x`) values alike. Provides a CodeFix that lowercases all permission values in the property. Origin: discussion #383 (execute coverage confirmed by rvanbekkum in the discussion).
 
 ## Diagnostic properties
 
@@ -42,6 +42,7 @@ src/ALCops.FormattingCop/
 - Both object-level and permissionset permission lists produce `PermissionPropertyValueSyntax` (same `SyntaxKind.PermissionPropertyValue`), hence the explicit permissionset ancestor exclusion.
 - `InherentPermissions` produces a different node kind (`InherentPermissionsPropertyValue`), so it is naturally excluded by the registration.
 - The parser uppercases permission values before validation (`GetPermissionValuesTokenWithError`), so any casing parses cleanly.
+- **Execute permission (`X`/`x`) reachability**: on object-level `Permissions`, `tabledata Foo = X` parses into the tree but carries `AL0195: Invalid permission kind. Expected: 'RIMD'` — the analyzer still sees the token and flags it. Non-`tabledata` entries (`codeunit Foo = X`) are dropped entirely by parser error recovery (`SkipBadPermissionSyntaxToken`); their `X` token never reaches a `PermissionSyntax` node, so the analyzer cannot see it (verified empirically). Since the analyzer checks every `PermissionSyntax.Permissions` token for any uppercase char, a future SDK that legalizes non-tabledata entries is covered automatically.
 
 ## Design decisions
 
@@ -53,6 +54,7 @@ src/ALCops.FormattingCop/
 | Exclude permissionset(extension) via syntax ancestors | Deterministic, no semantic model lookup needed |
 | Skip obsolete objects | Standard convention (`ctx.IsObsolete()`) |
 | `ContainsUppercase` is `internal static` on the analyzer | Shared with the CodeFix within the assembly |
+| Execute (`X`) coverage via generic uppercase check, tested with error-tolerant fixtures | `X` in scope only occurs in code with a compile error (AL0195); test methods `*InDocumentWithErrors` use `ThrowsWhenInputDocumentContainsError = false` (same pattern as `ApplicationCop.Test/TestHelper.cs`) |
 
 ## CodeFix
 
@@ -61,5 +63,8 @@ src/ALCops.FormattingCop/
 ## Test coverage
 
 **HasDiagnostic (9 cases):** CodeunitUppercase, CodeunitMixedCase, TableUppercase, PageUppercase, ReportUppercase, XmlPortUppercase, QueryUppercase, RequestPageUppercase, MultipleEntriesOneUppercase.
+**HasDiagnosticInDocumentWithErrors (1 case):** ExecuteUppercase.
 **NoDiagnostic (6 cases):** LowercaseCodeunit, PermissionSetUppercase, PermissionSetExtensionUppercase, InherentPermissionsUppercase, NoPermissionsProperty, ObsoleteCodeunit.
+**NoDiagnosticInDocumentWithErrors (1 case):** LowercaseExecute.
 **HasFix (3 cases):** LowercaseAllValues, MixedCaseValue, MultipleEntries.
+**HasFixInDocumentWithErrors (1 case):** ExecuteValue.

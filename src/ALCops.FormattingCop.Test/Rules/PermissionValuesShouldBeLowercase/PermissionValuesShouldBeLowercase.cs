@@ -6,6 +6,7 @@ namespace ALCops.FormattingCop.Test
     public class PermissionValuesShouldBeLowercase : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
+        private AnalyzerTestFixture _errorTolerantFixture;
         private static readonly Analyzers.PermissionValuesShouldBeLowercase _analyzer = new();
         private string _testCasePath;
 
@@ -13,6 +14,14 @@ namespace ALCops.FormattingCop.Test
         public void Setup()
         {
             _fixture = RoslynFixtureFactory.Create<Analyzers.PermissionValuesShouldBeLowercase>();
+
+            // The compiler rejects execute permission values (X/x) in the object-level
+            // Permissions property (AL0195), so fixtures containing them cannot compile cleanly.
+            _errorTolerantFixture = RoslynFixtureFactory.Create<Analyzers.PermissionValuesShouldBeLowercase>(
+                new AnalyzerTestFixtureConfig
+                {
+                    ThrowsWhenInputDocumentContainsError = false
+                });
 
             _testCasePath = Path.Combine(
                 Directory.GetParent(
@@ -39,6 +48,16 @@ namespace ALCops.FormattingCop.Test
         }
 
         [Test]
+        [TestCase("ExecuteUppercase")]
+        public async Task HasDiagnosticInDocumentWithErrors(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            _errorTolerantFixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.PermissionValuesShouldBeLowercase);
+        }
+
+        [Test]
         [TestCase("LowercaseCodeunit")]
         [TestCase("PermissionSetUppercase")]
         [TestCase("PermissionSetExtensionUppercase")]
@@ -51,6 +70,16 @@ namespace ALCops.FormattingCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.PermissionValuesShouldBeLowercase);
+        }
+
+        [Test]
+        [TestCase("LowercaseExecute")]
+        public async Task NoDiagnosticInDocumentWithErrors(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            _errorTolerantFixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.PermissionValuesShouldBeLowercase);
         }
 
         [Test]
@@ -69,6 +98,26 @@ namespace ALCops.FormattingCop.Test
                 new CodeFixTestFixtureConfig
                 {
                     AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.PermissionValuesShouldBeLowercase);
+        }
+
+        [Test]
+        [TestCase("ExecuteValue")]
+        public async Task HasFixInDocumentWithErrors(string testCase)
+        {
+            var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
+                .ConfigureAwait(false);
+
+            var expectedCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "expected.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<PermissionValuesShouldBeLowercaseCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer],
+                    ThrowsWhenInputDocumentContainsError = false
                 });
 
             fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.PermissionValuesShouldBeLowercase);
