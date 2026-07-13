@@ -7,4 +7,5 @@ public static class DiagnosticIds
     public static readonly string CasingMismatch = "FC0002";
     public static readonly string UseParenthesisForFunctionCall = "FC0003";
     public static readonly string PermissionDeclarationOrder = "FC0004";
+    public static readonly string UseParenthesisForMethodAssignment = "FC0005";
 }
