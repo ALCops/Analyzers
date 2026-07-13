@@ -370,7 +370,7 @@ public static class DiagnosticDescriptors
         title: PlatformCopAnalyzers.NotAllCodePathsReturnValueTitle,
         messageFormat: PlatformCopAnalyzers.NotAllCodePathsReturnValueMessageFormat,
         category: Category.Usage,
-        defaultSeverity: DiagnosticSeverity.Warning,
+        defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         description: PlatformCopAnalyzers.NotAllCodePathsReturnValueDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.NotAllCodePathsReturnValue));

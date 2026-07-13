@@ -309,7 +309,7 @@ public static class DiagnosticDescriptors
         title: LinterCopAnalyzers.MixedExitAndNamedReturnAssignmentTitle,
         messageFormat: LinterCopAnalyzers.MixedExitAndNamedReturnAssignmentMessageFormat,
         category: Category.Usage,
-        defaultSeverity: DiagnosticSeverity.Warning,
+        defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: false,
         description: LinterCopAnalyzers.MixedExitAndNamedReturnAssignmentDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.MixedExitAndNamedReturnAssignment));
