@@ -40,12 +40,14 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
 
 		if (ctx.ContainingSymbol is IMethodSymbol methodSymbol && (methodSymbol is not null))
 		{
+			var methodDisplayText = methodSymbol.GetDiagnosticDisplayText(MethodSymbolDisplayFormat.MethodSignature);
+
 			if (methodSymbol.IsIntegrationOrBusinessEvent())
 			{
 				ctx.ReportDiagnostic(Diagnostic.Create(
 					DiagnosticDescriptors.EventRequiresDocumentation,
 					method.Name.GetLocation(),
-					method.Name.Identifier.ToString()));
+					methodDisplayText));
 			}
 
 			else if (methodSymbol.IsInternalEvent())
@@ -53,7 +55,7 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
 				ctx.ReportDiagnostic(Diagnostic.Create(
 					DiagnosticDescriptors.InternalEventRequiresDocumentation,
 					method.Name.GetLocation(),
-					method.Name.Identifier.ToString()));
+					methodDisplayText));
 			}
 
 			else
@@ -69,14 +71,14 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
 					ctx.ReportDiagnostic(Diagnostic.Create(
 						DiagnosticDescriptors.InternalProcedureRequiresDocumentation,
 						method.Name.GetLocation(),
-						method.Name.Identifier.ToString()));
+						methodDisplayText));
 				}
 				else
 				{
 					ctx.ReportDiagnostic(Diagnostic.Create(
 						DiagnosticDescriptors.PublicProcedureRequiresDocumentation,
 						method.Name.GetLocation(),
-						method.Name.Identifier.ToString()));
+						methodDisplayText));
 				}
 			}
 		}
