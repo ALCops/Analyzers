@@ -60,24 +60,17 @@ namespace ALCops.FormattingCop.Test
         [Test]
         [TestCase("LowercaseCodeunit")]
         [TestCase("PermissionSetUppercase")]
+        [TestCase("PermissionSetExtensionUppercase")]
         [TestCase("InherentPermissionsUppercase")]
         [TestCase("NoPermissionsProperty")]
         [TestCase("ObsoleteCodeunit")]
         public async Task NoDiagnostic(string testCase)
         {
-            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
-                .ConfigureAwait(false);
-
-            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.PermissionValuesShouldBeLowercase);
-        }
-
-        [Test]
-        [TestCase("PermissionSetExtensionUppercase")]
-        public async Task NoDiagnosticOnPermissionSetExtension(string testCase)
-        {
-            RequireMinimumVersion(
+            SkipTestIfVersionIsTooLow(
+                ["PermissionSetExtensionUppercase"],
+                testCase,
                 "13.0",
-                "Older SDKs reject the permission set extension fixture with AL0334 (extension target already declared in this module)");
+                "No support for permissionsetextensions when target itself is already declared in the same module");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
