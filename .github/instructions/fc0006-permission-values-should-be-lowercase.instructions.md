@@ -64,7 +64,8 @@ src/ALCops.FormattingCop/
 
 **HasDiagnostic (9 cases):** CodeunitUppercase, CodeunitMixedCase, TableUppercase, PageUppercase, ReportUppercase, XmlPortUppercase, QueryUppercase, RequestPageUppercase, MultipleEntriesOneUppercase.
 **HasDiagnosticInDocumentWithErrors (1 case):** ExecuteUppercase.
-**NoDiagnostic (6 cases):** LowercaseCodeunit, PermissionSetUppercase, PermissionSetExtensionUppercase, InherentPermissionsUppercase, NoPermissionsProperty, ObsoleteCodeunit.
+**NoDiagnostic (5 cases):** LowercaseCodeunit, PermissionSetUppercase, InherentPermissionsUppercase, NoPermissionsProperty, ObsoleteCodeunit.
+**NoDiagnosticOnPermissionSetExtension (1 case, requires SDK v13+):** PermissionSetExtensionUppercase. Older SDKs reject the fixture with AL0334 (extension target already declared in this module).
 **NoDiagnosticInDocumentWithErrors (1 case):** LowercaseExecute.
 **HasFix (3 cases):** LowercaseAllValues, MixedCaseValue, MultipleEntries.
 **HasFixInDocumentWithErrors (1 case):** ExecuteValue.
