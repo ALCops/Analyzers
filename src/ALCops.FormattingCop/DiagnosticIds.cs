@@ -8,4 +8,5 @@ public static class DiagnosticIds
     public static readonly string UseParenthesisForFunctionCall = "FC0003";
     public static readonly string PermissionDeclarationOrder = "FC0004";
     public static readonly string UseParenthesisForMethodAssignment = "FC0005";
+    public static readonly string PermissionValuesShouldBeLowercase = "FC0006";
 }

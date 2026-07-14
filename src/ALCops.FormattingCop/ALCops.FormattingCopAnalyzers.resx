@@ -174,6 +174,18 @@
   <data name="PermissionDeclarationOrderCodeAction" xml:space="preserve">
     <value>ALCops: Sort permission declarations alphabetically</value>
   </data>
+  <data name="PermissionValuesShouldBeLowercaseTitle" xml:space="preserve">
+    <value>Permission values should be lowercase</value>
+  </data>
+  <data name="PermissionValuesShouldBeLowercaseMessageFormat" xml:space="preserve">
+    <value>The Permissions property contains uppercase permission values; use lowercase 'r', 'i', 'm', 'd' and 'x' instead.</value>
+  </data>
+  <data name="PermissionValuesShouldBeLowercaseDescription" xml:space="preserve">
+    <value>In the Permissions property, the casing of permission values has no runtime effect; both uppercase and lowercase grant the same indirect permission. Uppercase values wrongly suggest that direct permissions are granted, a semantic that only exists in permissionset objects and the InherentPermissions property. Use lowercase values to avoid wrong expectations.</value>
+  </data>
+  <data name="PermissionValuesShouldBeLowercaseCodeAction" xml:space="preserve">
+    <value>ALCops: Convert permission values to lowercase</value>
+  </data>
   <data name="AnalyzerExceptionTitle" xml:space="preserve">
     <value>Analyzer threw an unhandled exception</value>
   </data>
