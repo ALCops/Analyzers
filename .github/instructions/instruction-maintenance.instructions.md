@@ -94,6 +94,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `sdk-analyzer-infrastructure` | `'src/ALCops.*/Analyzers/**'` | NAV SDK internals: callback ordering, incremental compilation, GetOperation perf |
 | `analyzer-exception-harness` | `'src/ALCops.Common/Diagnostics/**'` | XX0000 harness: base class + context decorators that convert analyzer exceptions into located diagnostics |
 | `fc0004-permission-declaration-order` | rule-scoped | FC0004 rule |
+| `fc0005-use-parenthesis-for-method-assignment` | rule-scoped | FC0005 rule |
 | `fc0006-permission-values-should-be-lowercase` | rule-scoped | FC0006 rule |
 | `lc0086-page-style-string-literal` | rule-scoped | LC0086 rule |
 | `lc0091-translatable-text-should-be-translated` | rule-scoped | LC0091 rule |
@@ -108,3 +109,5 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `pc0035-use-set-auto-calc-fields-for-loops` | rule-scoped | PC0035 rule |
 | `lc0095-parameter-not-referenced` | rule-scoped | LC0095 rule |
 | `ac0006-run-page-implement-page-management` | rule-scoped | AC0006 rule |
+| `pc0038-not-all-code-paths-return-value` | rule-scoped | PC0038 rule |
+| `lc0097-mixed-exit-and-named-return-assignment` | rule-scoped | LC0097 rule |

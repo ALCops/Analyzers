@@ -411,6 +411,15 @@
   <data name="ParameterNotReferencedCodeAction" xml:space="preserve">
     <value>ALCops: Remove unreferenced parameter</value>
   </data>
+  <data name="MixedExitAndNamedReturnAssignmentTitle" xml:space="preserve">
+    <value>Avoid mixing exit() and named return variable assignments</value>
+  </data>
+  <data name="MixedExitAndNamedReturnAssignmentMessageFormat" xml:space="preserve">
+    <value>{0} '{1}' mixes exit() with assignments to the named return variable. Use one return style consistently.</value>
+  </data>
+  <data name="MixedExitAndNamedReturnAssignmentDescription" xml:space="preserve">
+    <value>In procedures and triggers with a named return variable, mixing exit() statements with return-variable assignments makes control flow harder to reason about and increases the risk of accidental default returns. Prefer one return style per procedure or trigger.</value>
+  </data>
   <data name="AnalyzerExceptionTitle" xml:space="preserve">
     <value>Analyzer threw an unhandled exception</value>
   </data>

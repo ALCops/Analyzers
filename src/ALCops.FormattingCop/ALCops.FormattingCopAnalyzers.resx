@@ -148,7 +148,19 @@
     <value>Use parenthesis in a function call even if the function does not have any parameters.</value>
   </data>
   <data name="UseParenthesisForFunctionCallCodeAction" xml:space="preserve">
-    <value>Add parenthesis</value>
+    <value>ALCops: Add parenthesis</value>
+  </data>
+  <data name="UseParenthesisForMethodAssignmentTitle" xml:space="preserve">
+    <value>Call methods with parenthesis instead of using assignment syntax</value>
+  </data>
+  <data name="UseParenthesisForMethodAssignmentMessageFormat" xml:space="preserve">
+    <value>Call method '{0}' using parenthesis instead of assignment syntax.</value>
+  </data>
+  <data name="UseParenthesisForMethodAssignmentDescription" xml:space="preserve">
+    <value>A method that takes a single parameter can be invoked using assignment syntax, but this hides that a method is being called and is ambiguous. Call the method using parenthesis instead.</value>
+  </data>
+  <data name="UseParenthesisForMethodAssignmentCodeAction" xml:space="preserve">
+    <value>ALCops: Use parenthesis for method call</value>
   </data>
   <data name="PermissionDeclarationOrderTitle" xml:space="preserve">
     <value>Permission declarations should be ordered alphabetically</value>

@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Setup BC DevTools Dependencies",
+            "label": "ALCops: Setup BC DevTools Dependencies",
             "type": "shell",
             "command": "pwsh",
             "args": [
@@ -17,7 +17,7 @@
             "problemMatcher": []
         },
         {
-            "label": "Copy Bin to AL Analyzers",
+            "label": "ALCops: Copy Bin to AL Analyzers",
             "type": "shell",
             "command": "pwsh",
             "args": [
