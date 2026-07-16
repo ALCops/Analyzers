@@ -34,4 +34,5 @@ public static class DiagnosticIds
     public static readonly string ParameterNotReferenced = "LC0095";
     public static readonly string UnnecessaryRecordParameterInMethodCall = "LC0096";
     public static readonly string MixedExitAndNamedReturnAssignment = "LC0097";
+    public static readonly string EventSubscriberNamingPattern = "LC0098";
 }

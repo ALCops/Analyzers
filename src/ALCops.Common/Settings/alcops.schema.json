@@ -40,6 +40,11 @@
       "uniqueItems": true,
       "description": "List of language codes that translatable text must be translated into. When set, only XLIFF files matching these languages are checked. When omitted, languages are discovered from available XLIFF files. Used by LC0091."
     },
+    "SubscriberNameTemplate": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Template for event subscriber procedure names. Placeholders: {Event Source}/{Event Name}/{Element Name} (raw, emitted verbatim without word splitting or casing transforms), {EventSource} (PascalCase), {eventSource} (camelCase), {event_source} (snake_case), {event-source} (kebab-case). Same style variants exist for {EventName} and {ElementName}. Wrap a sub-template in [...] to emit it only when all token placeholders inside resolve to a non-empty value, e.g. '{Event Source}_{EventName}[_{Element Name}]' emits the underscore and element name only when ElementName is set. Used by LC0098. Default: null (uses built-in template '{Event Source}_{EventName}[_{Element Name}]', which matches the identifier the AL Language extension's Find Event feature generates)."
+    },
     "NamingPatterns": {
       "type": "object",
       "description": "Custom naming convention patterns per target kind. Keys are naming target names (case-insensitive). Each target can define AllowPattern (regex that names must match) and DisallowPattern (regex that names must not match). Sub-targets LocalProcedure, GlobalProcedure, EventSubscriber, and EventDeclaration inherit from Procedure if not explicitly overridden. Used by LC0092.",
@@ -85,6 +90,15 @@
         }
       ],
       "description": "The set of allowed ending punctuations for tooltip text. Used by AC0014. Default: [{\"Character\":\".\",\"Name\":\"dot\"}]"
+    },
+    "KnownAcronyms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "Additional acronyms whose canonical casing is used when generating identifier fragments from all-lowercase source words. Original casing wins: if the source word (e.g. a field name segment) already contains any uppercase character, its casing is preserved and this list is not consulted. Only all-lowercase source words fall back to the registry, resolving e.g. 'vat' -> 'VAT', 'odata' -> 'OData', 'acme' -> 'Acme'. Entries are matched case-insensitively; the stored casing is emitted as the preferred variant. Merged with the built-in default list; user entries override built-ins on identical case-insensitive keys. Used by LC0098."
     }
   },
   "$defs": {
