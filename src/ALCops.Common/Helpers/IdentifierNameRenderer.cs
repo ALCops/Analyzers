@@ -11,8 +11,10 @@ namespace ALCops.Common.Helpers;
 ///
 /// Shared infrastructure for analyzers that generate or validate identifiers derived from
 /// natural-language input (e.g. LC0098 subscriber names, potentially future rules that
-/// suggest table/field/procedure names). Emits a single canonical spelling per input;
-/// callers that validate user-written identifiers compare byte-for-byte against the result.
+/// suggest table/field/procedure names). <see cref="Render"/> returns the single
+/// preferred spelling; <see cref="RenderAccepted"/> additionally returns registered
+/// acronym variants alongside the original casing when the same upper-invariant key
+/// is present in the registry (Pascal / non-first Camel positions only).
 /// </summary>
 public static class IdentifierNameRenderer
 {
@@ -34,30 +36,52 @@ public static class IdentifierNameRenderer
         string? input,
         IdentifierCaseStyle style,
         AcronymRegistry acronyms)
+        => RenderAccepted(input, style, acronyms)[0];
+
+    /// <summary>
+    /// Renders every accepted spelling of the input. Element <c>[0]</c> is the preferred /
+    /// canonical form (identical to <see cref="Render"/>): "original casing wins" — as long
+    /// as a source word carries any uppercase character, its casing is preserved.
+    ///
+    /// Additional elements are produced when, for a Pascal / non-first Camel position, a
+    /// source word that already carries uppercase has a registered acronym on the same
+    /// upper-invariant key with a different casing. This lets callers accept an author's
+    /// deliberate alternate casing (e.g. user pins <c>Lcy</c> to accept <c>...BalanceLcy</c>
+    /// alongside the canonical <c>...BalanceLCY</c>) without changing what the CodeFix
+    /// suggests. The result is the deduplicated cross product of per-word alternatives.
+    /// Snake and Kebab styles as well as the Camel first word never produce alternates
+    /// (they are always fully lowercased). Raw style never produces alternates (the input
+    /// is emitted verbatim). Callers that only need the preferred form should call
+    /// <see cref="Render"/>.
+    /// </summary>
+    public static IReadOnlyList<string> RenderAccepted(
+        string? input,
+        IdentifierCaseStyle style,
+        AcronymRegistry acronyms)
     {
         if (string.IsNullOrEmpty(input))
         {
-            return string.Empty;
+            return new[] { string.Empty };
         }
 
         // Raw style bypasses word splitting and casing transforms entirely;
-        // the input is emitted verbatim. Whitespace and special characters are preserved.
+        // the input is emitted verbatim.
         if (style == IdentifierCaseStyle.Raw)
         {
-            return input!;
+            return new[] { input! };
         }
 
         var words = SplitIntoWords(input!);
 
         if (words.Count == 0)
         {
-            return string.Empty;
+            return new[] { string.Empty };
         }
 
-        return RenderStyle(words, style, acronyms);
+        return RenderStyleAccepted(words, style, acronyms);
     }
 
-    private static string RenderStyle(
+    private static IReadOnlyList<string> RenderStyleAccepted(
         IReadOnlyList<string> words,
         IdentifierCaseStyle style,
         AcronymRegistry acronyms)
@@ -65,34 +89,25 @@ public static class IdentifierNameRenderer
         switch (style)
         {
             case IdentifierCaseStyle.Pascal:
-                var pascal = new StringBuilder();
-
-                foreach (var w in words)
-                {
-                    pascal.Append(RenderWord(w, isFirstInCamel: false, acronyms));
-                }
-
-                return pascal.ToString();
-
             case IdentifierCaseStyle.Camel:
-                var camel = new StringBuilder();
-                camel.Append(RenderWord(words[0], isFirstInCamel: true, acronyms));
+                var buckets = new List<IReadOnlyList<string>>(words.Count);
 
-                for (int i = 1; i < words.Count; i++)
+                for (int i = 0; i < words.Count; i++)
                 {
-                    camel.Append(RenderWord(words[i], isFirstInCamel: false, acronyms));
+                    bool isFirstInCamel = style == IdentifierCaseStyle.Camel && i == 0;
+                    buckets.Add(RenderWordAlternatives(words[i], isFirstInCamel, acronyms));
                 }
 
-                return camel.ToString();
+                return CrossProduct(buckets);
 
             case IdentifierCaseStyle.Snake:
-                return JoinLowered(words, '_');
+                return new[] { JoinLowered(words, '_') };
 
             case IdentifierCaseStyle.Kebab:
-                return JoinLowered(words, '-');
+                return new[] { JoinLowered(words, '-') };
 
             default:
-                return string.Empty;
+                return new[] { string.Empty };
         }
     }
 
@@ -108,55 +123,121 @@ public static class IdentifierNameRenderer
         return string.Join(separator.ToString(), lowered);
     }
 
-    private static string RenderWord(
+    private static IReadOnlyList<string> RenderWordAlternatives(
         string word,
         bool isFirstInCamel,
         AcronymRegistry acronyms)
     {
         // camelCase first word is unconditionally lowercased per C# convention
-        // (xmlParser, ioStream, idBadge).
+        // (xmlParser, ioStream, idBadge). Never produces alternates.
         if (isFirstInCamel)
         {
-            return word.ToLowerInvariant();
+            return new[] { word.ToLowerInvariant() };
         }
 
         // "ID" is an abbreviation (not an acronym) and is always rendered as "Id"
         // per Microsoft's C# naming guidelines.
         if (word.Equals("ID", StringComparison.OrdinalIgnoreCase))
         {
-            return "Id";
+            return new[] { "Id" };
         }
 
         // Two-letter all-uppercase abbreviations (IO, DX, AG, GL, ...) stay uppercase
-        // per C# naming guidelines.
+        // per C# naming guidelines. No alternate: two-letter words are excluded from the
+        // registry by design.
         if (word.Length == 2 && IsAllUpper(word))
         {
-            return word;
+            return new[] { word };
         }
 
         // Original casing wins: as soon as the source word carries any uppercase
-        // character (e.g. field "VAT Amount" -> word "VAT", or "Sales Header" -> word
-        // "Sales"), the acronym registry is not consulted. The renderer only
-        // guarantees a leading uppercase letter for Pascal / non-first Camel positions
-        // and leaves the remaining characters untouched.
+        // character (e.g. field "VAT Amount" -> word "VAT", or event
+        // "OnAfterCalcOverdueBalanceLCY" -> tail word "LCY"), the primary spelling is the
+        // original casing with a guaranteed leading uppercase. This is the preferred /
+        // canonical form and always occupies element [0].
         //
-        // This prevents the rule from suggesting an identifier whose acronym casing
-        // differs from the source object/field name, which would create needless
-        // friction with Microsoft- or partner-owned identifiers.
+        // A registry entry on the same upper-invariant key is *additionally accepted*
+        // when its stored casing differs from the primary. Example: user pins "Lcy" and
+        // the source carries "LCY" -> alternatives are ["LCY", "Lcy"]. Both are green;
+        // "LCY" remains the preferred spelling suggested by the CodeFix.
         if (HasAnyUpper(word))
         {
-            return EnsureUpperFirst(word);
+            var primary = EnsureUpperFirst(word);
+
+            if (acronyms.TryGetCanonical(word, out var registered)
+                && !string.Equals(registered, primary, StringComparison.Ordinal))
+            {
+                return new[] { primary, registered };
+            }
+
+            return new[] { primary };
         }
 
         // Word is all-lowercase (e.g. field "vat amount", or the source was normalised
-        // upstream). Only in this ambiguous case do we consult the shared registry
-        // (defaults + user-configured) to recover a canonical casing.
+        // upstream). Only in this ambiguous case does the registry supply a canonical.
         if (acronyms.TryGetCanonical(word, out var canonical))
         {
-            return canonical;
+            return new[] { canonical };
         }
 
-        return EnsureUpperFirst(word);
+        return new[] { EnsureUpperFirst(word) };
+    }
+
+    private static IReadOnlyList<string> CrossProduct(
+        IReadOnlyList<IReadOnlyList<string>> buckets)
+    {
+        // Start with a single empty accumulator. Extend once per bucket; when the bucket
+        // has a single alternative, append in place (no allocation of a new outer list).
+        var accumulators = new List<StringBuilder>(1) { new StringBuilder() };
+
+        foreach (var bucket in buckets)
+        {
+            if (bucket.Count == 1)
+            {
+                var only = bucket[0];
+
+                foreach (var sb in accumulators)
+                {
+                    sb.Append(only);
+                }
+
+                continue;
+            }
+
+            var next = new List<StringBuilder>(accumulators.Count * bucket.Count);
+
+            foreach (var sb in accumulators)
+            {
+                var prefix = sb.ToString();
+
+                foreach (var alt in bucket)
+                {
+                    var combined = new StringBuilder(prefix.Length + alt.Length);
+                    combined.Append(prefix);
+                    combined.Append(alt);
+                    next.Add(combined);
+                }
+            }
+
+            accumulators = next;
+        }
+
+        // Materialise and dedup, preserving the first-seen order so element [0] stays the
+        // preferred spelling.
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var result = new List<string>(accumulators.Count);
+
+        foreach (var sb in accumulators)
+        {
+            var s = sb.ToString();
+
+            if (seen.Add(s))
+            {
+                result.Add(s);
+            }
+        }
+
+        return result;
     }
 
     private static bool HasAnyUpper(string s)

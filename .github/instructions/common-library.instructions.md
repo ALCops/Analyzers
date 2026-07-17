@@ -71,7 +71,7 @@ Per-project analyzer configuration.
 
 | File | Purpose |
 |------|---------|
-| `ALCopsSettings.cs` | POCO with properties: `CognitiveComplexityThreshold` (default 15), `CyclomaticComplexityThreshold` (default 8), `MaintainabilityIndexThreshold` (default 20), `LanguagesToTranslate`, `NamingPatterns`, `SubscriberNameTemplate`, `UseSequentialGuidScope`, `ToolTipAllowedPunctuations`, `KnownAcronyms`. |
+| `ALCopsSettings.cs` | POCO with properties: `CognitiveComplexityThreshold` (default 15), `CyclomaticComplexityThreshold` (default 8), `MaintainabilityIndexThreshold` (default 20), `LanguagesToTranslate`, `NamingPatterns`, `SubscriberNamingPattern`, `UseSequentialGuidScope`, `ToolTipAllowedPunctuations`, `KnownAcronyms`. |
 | `ALCopsSettingsProvider.cs` | Static provider with `ConcurrentDictionary` cache keyed by directory path. Loads `alcops.json` using hierarchical lookup (see Settings System below). JSON parsing is case-insensitive, allows comments and trailing commas. Preferred API: `GetSettings(compilation.FileSystem)`. |
 
 ### Constants.cs

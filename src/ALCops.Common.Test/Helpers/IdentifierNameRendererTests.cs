@@ -68,14 +68,15 @@ public class IdentifierNameRendererTests
     [Test]
     public void Render_Pascal_KeepsAllUpperAcronymUpper()
     {
-        // Default all-upper entry (e.g. LCY, HTTPS) stays upper regardless of source casing.
-        var allUpper = AcronymRegistry.DefaultAcronyms
-            .First(a => a.All(char.IsUpper) && a.Length >= 3);
+        // Use an explicit registry entry to verify that an all-uppercase acronym
+        // can still be preserved as canonical output from lower-case input.
+        const string allUpper = "LCY";
+        var registry = AcronymRegistry.Create(new[] { allUpper });
 
         var result = IdentifierNameRenderer.Render(
             allUpper.ToLowerInvariant() + " Amount",
             IdentifierCaseStyle.Pascal,
-            Registry);
+            registry);
 
         Assert.That(result, Is.EqualTo(allUpper + "Amount"));
     }
@@ -137,6 +138,111 @@ public class IdentifierNameRendererTests
             Registry);
 
         Assert.That(result, Is.EqualTo("HttpClientHandler"));
+    }
+
+    [Test]
+    public void RenderAccepted_Pascal_ReturnsSingleElement_WhenNoAcronymCollision()
+    {
+        var result = IdentifierNameRenderer.RenderAccepted(
+            "Sales Header",
+            IdentifierCaseStyle.Pascal,
+            Registry);
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0], Is.EqualTo("SalesHeader"));
+    }
+
+    [Test]
+    public void RenderAccepted_Pascal_AddsRegistryVariant_WhenUserPinsAlternateCasingForUppercaseWord()
+    {
+        // User pins "Lcy"; source event "OnAfterCalcOverdueBalanceLCY" ends in uppercase
+        // "LCY". Both spellings must be accepted; the preferred stays "LCY" (original wins).
+        var registry = AcronymRegistry.Create(new[] { "Lcy" });
+
+        var result = IdentifierNameRenderer.RenderAccepted(
+            "OnAfterCalcOverdueBalanceLCY",
+            IdentifierCaseStyle.Pascal,
+            registry);
+
+        Assert.That(result, Has.Count.EqualTo(2));
+        Assert.That(result[0], Is.EqualTo("OnAfterCalcOverdueBalanceLCY"));
+        Assert.That(result[1], Is.EqualTo("OnAfterCalcOverdueBalanceLcy"));
+    }
+
+    [Test]
+    public void RenderAccepted_Pascal_CrossProduct_WhenTwoWordsHaveRegistryAlternates()
+    {
+        // Two ambiguous words -> 2x2 = 4 accepted variants. Preferred (original) is [0].
+        var registry = AcronymRegistry.Create(new[] { "Lcy", "Vat" });
+
+        var result = IdentifierNameRenderer.RenderAccepted(
+            "LCY VAT Amount",
+            IdentifierCaseStyle.Pascal,
+            registry);
+
+        Assert.That(result, Has.Count.EqualTo(4));
+        Assert.That(result[0], Is.EqualTo("LCYVATAmount"));
+        Assert.That(result, Does.Contain("LCYVatAmount"));
+        Assert.That(result, Does.Contain("LcyVATAmount"));
+        Assert.That(result, Does.Contain("LcyVatAmount"));
+    }
+
+    [Test]
+    public void RenderAccepted_Pascal_NoAlternate_WhenRegistryCasingEqualsOriginal()
+    {
+        // Source "Vat Amount" + default registry entry "Vat" -> registry casing equals
+        // the original-wins primary, so no second variant is emitted.
+        var result = IdentifierNameRenderer.RenderAccepted(
+            "Vat Amount",
+            IdentifierCaseStyle.Pascal,
+            Registry);
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0], Is.EqualTo("VatAmount"));
+    }
+
+    [Test]
+    public void RenderAccepted_Pascal_AllLowercaseSource_ReturnsSingleRegistryCanonical()
+    {
+        // All-lowercase source has no case signal to preserve, so only the registry
+        // canonical is produced (no cross product).
+        var result = IdentifierNameRenderer.RenderAccepted(
+            "vat amount",
+            IdentifierCaseStyle.Pascal,
+            Registry);
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0], Is.EqualTo("VatAmount"));
+    }
+
+    [Test]
+    public void RenderAccepted_Snake_NeverProducesAlternates()
+    {
+        var registry = AcronymRegistry.Create(new[] { "Lcy" });
+
+        var result = IdentifierNameRenderer.RenderAccepted(
+            "OnAfterCalcOverdueBalanceLCY",
+            IdentifierCaseStyle.Snake,
+            registry);
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0], Is.EqualTo("on_after_calc_overdue_balance_lcy"));
+    }
+
+    [Test]
+    public void RenderAccepted_Camel_FirstWordAlwaysLowercased_NoAlternate()
+    {
+        // Even if the first word matches a registered acronym alternate, camelCase
+        // forces the first word to lowercase and does not produce alternates for it.
+        var registry = AcronymRegistry.Create(new[] { "Lcy" });
+
+        var result = IdentifierNameRenderer.RenderAccepted(
+            "LCY Amount",
+            IdentifierCaseStyle.Camel,
+            registry);
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0], Is.EqualTo("lcyAmount"));
     }
 
     [TestCase("Line Discount %", "LineDiscount")]

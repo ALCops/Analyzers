@@ -11,6 +11,12 @@ namespace ALCops.Common.Helpers;
 /// input without ever re-casting Microsoft- or partner-owned identifiers whose
 /// original casing is already unambiguous.
 ///
+/// When a source word already carries uppercase but the registry contains an entry with
+/// a different casing under the same upper-invariant key (e.g. source <c>LCY</c> with a
+/// user-registered <c>Lcy</c>), that entry is additionally accepted as a valid variant
+/// alongside the original spelling. The original casing remains the preferred/canonical
+/// form suggested by any CodeFix.
+///
 /// The registry ships a curated default list (<see cref="DefaultAcronyms"/>) and can be
 /// extended per project via <see cref="Create"/>. User entries override built-ins when they
 /// share the same case-insensitive key.
@@ -18,21 +24,21 @@ namespace ALCops.Common.Helpers;
 public sealed class AcronymRegistry
 {
     /// <summary>
-    /// Curated default acronyms. Includes common BC domain abbreviations (LCY, VAT, GST, HST,
-    /// UoM, POS, WIP, ...), web/data protocols commonly used in BC field names
-    /// (HTTP, HTTPS, REST, SOAP, OData, XML, JSON, ...) and general business terms
-    /// (API, CRM, ERP, KPI, SEPA, IBAN, ...). Two-letter abbreviations are deliberately
-    /// excluded because they are handled by callers' 2-letter uppercase rule; the
-    /// abbreviation "ID" is also excluded because C# naming guidelines normalize it to "Id".
+    /// Curated default acronyms. Includes common BC domain abbreviations,
+    /// web/data protocols commonly used in BC field names and general
+    /// business terms. The list is stored in canonical output casing,
+    /// including project/domain-specific variants where needed.
     /// </summary>
     public static readonly IReadOnlyList<string> DefaultAcronyms = new[]
     {
-        "API", "BIC", "BOM", "CRM", "CSV", "EAN", "EDI", "ERP", "FCY",
-        "FTP", "GST", "GTIN", "GUID", "HST", "HTML", "HTTP", "HTTPS",
-        "IBAN", "IMAP", "ISBN", "ISO", "JSON", "KPI", "LCY", "MPS",
-        "MRP", "OData", "PDF", "POS", "REST", "RFC", "RFQ", "RMA",
-        "SEPA", "SMTP", "SOAP", "SQL", "UPC", "URI", "URL", "UoM",
-        "VAT", "WIP", "WMS", "XML"
+        "Aad", "Abc", "Acy", "Adcs", "Api", "Arc", "Ascii", "Ato", "Bcc",
+        "Bic", "Blob", "Bom", "BoM", "Bop", "Bwr", "Cal", "Cds", "Cogs",
+        "Crm", "Csv", "Dach", "Dtd", "Dvr", "Ecsl", "Emu", "Eori", "Fefo",
+        "Gln", "Gtin", "Guid", "Html", "Iban", "Id", "Iso", "Isv", "Json",
+        "Kpi", "Lcid", "Lcy", "Lid", "Mps", "Mrp", "Nav", "Ocr", "Oob",
+        "Pbix", "Pdf", "Pfx", "Qbd", "Sepa", "Sic", "Sid", "Sift", "Sku",
+        "Smtp", "Sqm", "Swift", "Uid", "Uom", "UoM", "Ups", "Uri", "Url",
+        "Urs", "Utc", "Utf", "Vat", "Wip", "Wms", "Xml", "Xsd", "Ytd"
     };
 
     private readonly Dictionary<string, string> _canonicalByKey;

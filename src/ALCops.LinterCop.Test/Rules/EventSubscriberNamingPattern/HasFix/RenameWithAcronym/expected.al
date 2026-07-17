@@ -1,7 +1,7 @@
 codeunit 50100 MySubscriber
 {
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"http client handler", OnBeforeSend, '', false, false)]
-    local procedure OnHTTPClientHandler_OnBeforeSend()
+    local procedure OnHttpClientHandler_OnBeforeSend()
     begin
     end;
 }

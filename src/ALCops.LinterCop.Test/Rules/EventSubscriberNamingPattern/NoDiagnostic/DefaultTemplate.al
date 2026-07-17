@@ -1,4 +1,4 @@
-// New default template {Event Source}_{EventName}[_{Element Name}] matches the identifier
+// New default template {Event Source}_{Event Name}[_{Element Name}] matches the identifier
 // the AL Language extension's "Find Event" feature generates verbatim (quoted when needed).
 codeunit 50100 MySubscriber
 {

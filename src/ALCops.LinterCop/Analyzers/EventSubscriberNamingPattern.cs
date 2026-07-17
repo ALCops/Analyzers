@@ -15,7 +15,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
     // The default matches the identifier form the AL Language extension's "Find Event" feature
     // generates verbatim (e.g. "Sales Header_OnAfterValidateEvent_Document Type") so freshly
     // inserted subscribers pass out of the box.
-    private const string DefaultTemplate = "{Event Source}_{EventName}[_{Element Name}]";
+    private const string DefaultTemplate = "{Event Source}_{Event Name}[_{Element Name}]";
 
     // AL identifier length limit enforced by AL304. Suggesting a longer name would just move
     // the violation from LC0098 to AL304, so both the analyzer and the CodeFix stay silent
@@ -31,9 +31,9 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
     private void CompilationStart(CompilationStartAnalysisContext ctx)
     {
         var settings = ALCopsSettingsProvider.GetSettings(ctx.Compilation.FileSystem);
-        var template = string.IsNullOrWhiteSpace(settings.SubscriberNameTemplate)
+        var template = string.IsNullOrWhiteSpace(settings.SubscriberNamingPattern)
             ? DefaultTemplate
-            : settings.SubscriberNameTemplate!;
+            : settings.SubscriberNamingPattern!;
 
         var segments = TemplateParser.Parse(template);
         var acronyms = AcronymRegistry.Create(settings.KnownAcronyms);
@@ -53,17 +53,21 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
             return;
         }
 
-        var preferred = TryBuildPreferredFor(method, segments, acronyms);
+        var accepted = TryBuildAcceptedFor(method, segments, acronyms);
 
-        if (preferred is null)
+        if (accepted is null || accepted.Count == 0)
         {
             return;
         }
 
-        // Strict single-form: the analyzer accepts exactly the canonical name the template
-        // renders. There is no tolerance for alternate casings (e.g. "Vat" vs the canonical
-        // "VAT"); the CodeFix rewrites the declaration to the preferred name in one step.
-        if (string.Equals(method.Name, preferred, StringComparison.Ordinal))
+        // Element [0] is the preferred / canonical spelling ("original casing wins") and is
+        // what the CodeFix will suggest. Any additional element is a variant accepted via a
+        // KnownAcronyms entry on the same upper-invariant key as an uppercase source word.
+        var preferred = accepted[0];
+
+        // Accept if the current name matches any accepted spelling (preferred or an
+        // opt-in acronym variant). Ordinal comparison — casing is significant.
+        if (accepted.Contains(method.Name, StringComparer.Ordinal))
         {
             return;
         }
@@ -104,7 +108,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
             preferredForMessage));
     }
 
-    private static string? TryBuildPreferredFor(
+    private static IReadOnlyList<string>? TryBuildAcceptedFor(
         IMethodSymbol method,
         IReadOnlyList<TemplateSegment> segments,
         AcronymRegistry acronyms)
@@ -134,7 +138,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
         var eventSourceName = referencedObject.Name;
         var elementName = attribute.Arguments[3].ValueText ?? string.Empty;
 
-        return NameBuilder.BuildPreferred(segments, eventSourceName, eventName, elementName, acronyms);
+        return NameBuilder.BuildAccepted(segments, eventSourceName, eventName, elementName, acronyms);
     }
 
     private static bool WouldCollideInContainingType(
@@ -175,10 +179,12 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
             }
 
             // Case B: another event subscriber would rename to the same preferred name.
-            var siblingPreferred = TryBuildPreferredFor(sibling, segments, acronyms);
+            // We only compare against the sibling's *preferred* spelling (element [0]);
+            // the extra accepted variants of the sibling do not create collisions.
+            var siblingAccepted = TryBuildAcceptedFor(sibling, segments, acronyms);
 
-            if ((siblingPreferred is not null)
-                && string.Equals(siblingPreferred, preferred, StringComparison.Ordinal))
+            if ((siblingAccepted is not null) && (siblingAccepted.Count > 0)
+                && string.Equals(siblingAccepted[0], preferred, StringComparison.Ordinal))
             {
                 return true;
             }
@@ -326,23 +332,48 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
 
     private static class NameBuilder
     {
-        public static string BuildPreferred(
+        /// <summary>
+        /// Returns the set of accepted subscriber names for the given template + inputs.
+        /// Element <c>[0]</c> is the preferred / canonical spelling suggested by the CodeFix
+        /// ("original casing wins"). Additional elements appear only when a Pascal / non-first
+        /// Camel token contains a source word whose upper-invariant key has a registered
+        /// acronym with a different casing — those variants are accepted alongside the
+        /// preferred spelling. See <see cref="IdentifierNameRenderer.RenderAccepted"/>.
+        /// </summary>
+        public static IReadOnlyList<string> BuildAccepted(
             IReadOnlyList<TemplateSegment> segments,
             string eventSource,
             string eventName,
             string elementName,
             AcronymRegistry acronyms)
         {
-            var sb = new StringBuilder();
+            // Start with a single empty accumulator; extend once per segment. When a segment
+            // contributes only one alternative (the common case), the accumulator grows in
+            // place with no outer-list allocation.
+            var accumulators = new List<StringBuilder>(1) { new StringBuilder() };
 
-            AppendPreferred(segments, sb, eventSource, eventName, elementName, acronyms);
+            ExtendAccepted(segments, ref accumulators, eventSource, eventName, elementName, acronyms);
 
-            return sb.ToString();
+            // Materialise and dedup preserving first-seen order so element [0] is preferred.
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var result = new List<string>(accumulators.Count);
+
+            foreach (var sb in accumulators)
+            {
+                var s = sb.ToString();
+
+                if (seen.Add(s))
+                {
+                    result.Add(s);
+                }
+            }
+
+            return result;
         }
 
-        private static void AppendPreferred(
+        private static void ExtendAccepted(
             IReadOnlyList<TemplateSegment> segments,
-            StringBuilder sb,
+            ref List<StringBuilder> accumulators,
             string eventSource,
             string eventName,
             string elementName,
@@ -352,18 +383,50 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
             {
                 if (segment is LiteralSegment literal)
                 {
-                    sb.Append(literal.Text);
+                    foreach (var sb in accumulators)
+                    {
+                        sb.Append(literal.Text);
+                    }
                 }
                 else if (segment is TokenSegment token)
                 {
                     var value = TokenValue(token.Kind, eventSource, eventName, elementName);
-                    sb.Append(IdentifierNameRenderer.Render(value, token.Style, acronyms));
+                    var alts = IdentifierNameRenderer.RenderAccepted(value, token.Style, acronyms);
+
+                    if (alts.Count == 1)
+                    {
+                        var only = alts[0];
+
+                        foreach (var sb in accumulators)
+                        {
+                            sb.Append(only);
+                        }
+                    }
+                    else
+                    {
+                        var next = new List<StringBuilder>(accumulators.Count * alts.Count);
+
+                        foreach (var sb in accumulators)
+                        {
+                            var prefix = sb.ToString();
+
+                            foreach (var alt in alts)
+                            {
+                                var combined = new StringBuilder(prefix.Length + alt.Length);
+                                combined.Append(prefix);
+                                combined.Append(alt);
+                                next.Add(combined);
+                            }
+                        }
+
+                        accumulators = next;
+                    }
                 }
                 else if (segment is ConditionalGroupSegment group)
                 {
                     if (AllTokensNonEmpty(group.Children, eventSource, eventName, elementName))
                     {
-                        AppendPreferred(group.Children, sb, eventSource, eventName, elementName, acronyms);
+                        ExtendAccepted(group.Children, ref accumulators, eventSource, eventName, elementName, acronyms);
                     }
                 }
             }

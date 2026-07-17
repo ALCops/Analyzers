@@ -15,22 +15,27 @@ namespace ALCops.LinterCop.Test
         private const string PascalTemplate = "On{EventSource}_{EventName}[_{ElementName}]";
 
         private static readonly byte[] CustomTemplateSettings = System.Text.Encoding.UTF8.GetBytes(
-            """{"SubscriberNameTemplate": "Handle{EventSource}{EventName}"}""");
+            """{"SubscriberNamingPattern": "Handle{EventSource}{EventName}"}""");
 
         private static readonly byte[] OptionalGroupTemplateSettings = System.Text.Encoding.UTF8.GetBytes(
-            $$"""{"SubscriberNameTemplate": "{{PascalTemplate}}"}""");
+            $$"""{"SubscriberNamingPattern": "{{PascalTemplate}}"}""");
 
         private static readonly byte[] PascalTemplateSettings = System.Text.Encoding.UTF8.GetBytes(
-            $$"""{"SubscriberNameTemplate": "{{PascalTemplate}}"}""");
+            $$"""{"SubscriberNamingPattern": "{{PascalTemplate}}"}""");
 
         // Combined with a PascalCase template so the acronym behaviour is observable
         // (the raw-form template emits source names verbatim and never invokes the acronym renderer).
         private static readonly byte[] CustomAcronymSettings = System.Text.Encoding.UTF8.GetBytes(
-            $$"""{"SubscriberNameTemplate": "{{PascalTemplate}}", "KnownAcronyms": ["Acme"]}""");
+            $$"""{"SubscriberNamingPattern": "{{PascalTemplate}}", "KnownAcronyms": ["Acme"]}""");
 
         // Overrides the built-in default "VAT" with the alternate canonical casing "Vat".
         private static readonly byte[] OverrideDefaultAcronymSettings = System.Text.Encoding.UTF8.GetBytes(
-            $$"""{"SubscriberNameTemplate": "{{PascalTemplate}}", "KnownAcronyms": ["Vat"]}""");
+            $$"""{"SubscriberNamingPattern": "{{PascalTemplate}}", "KnownAcronyms": ["Vat"]}""");
+
+        // Pins "Lcy" as an accepted variant alongside the original casing "LCY".
+        // Both spellings are accepted; any third variant still triggers a diagnostic.
+        private static readonly byte[] LcyAcronymSettings = System.Text.Encoding.UTF8.GetBytes(
+            $$"""{"SubscriberNamingPattern": "{{PascalTemplate}}", "KnownAcronyms": ["Lcy"]}""");
 
         [SetUp]
         public void Setup()
@@ -267,6 +272,31 @@ namespace ALCops.LinterCop.Test
                 {
                     FileSystem = fileSystem
                 });
+
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.EventSubscriberNamingPattern);
+        }
+
+        [Test]
+        [TestCase("AcronymRejectsThirdVariant")]
+        public async Task HasDiagnosticWithLcyAcronym(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithSettings(LcyAcronymSettings);
+
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.EventSubscriberNamingPattern);
+        }
+
+        [Test]
+        [TestCase("AcronymAcceptsOriginalCasing")]
+        [TestCase("AcronymAcceptsRegistryVariant")]
+        public async Task NoDiagnosticWithLcyAcronym(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithSettings(LcyAcronymSettings);
 
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.EventSubscriberNamingPattern);
         }
