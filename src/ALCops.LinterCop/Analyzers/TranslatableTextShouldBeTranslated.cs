@@ -218,8 +218,12 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         if (IsPropertyLocked(property))
             return;
 
+        // Pass the canonical property name (e.g. "ToolTip") as the trans-unit name override so the
+        // computed ID matches the compiler-generated XLIFF ID regardless of the source-text casing
+        // used by the developer (e.g. "Tooltip" or "TOOLTIP").
         IRootTypeSymbol? rootSymbol = ExtensionObjectFoldingUtilities.GetTranslationRootSymbol(property);
-        string? translationId = TranslationIdHelper.ComputeTranslationId(property, rootSymbol, isLabelConst: false);
+        string? translationId = TranslationIdHelper.ComputeTranslationId(property, rootSymbol, isLabelConst: false, nameOverride: propertyKind.ToString());
+
         if (translationId is null)
             return;
 

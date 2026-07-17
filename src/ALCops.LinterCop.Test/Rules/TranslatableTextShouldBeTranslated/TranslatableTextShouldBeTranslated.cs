@@ -58,6 +58,31 @@ namespace ALCops.LinterCop.Test
             </xliff>
             """);
 
+		// "Page 2931038265 - Control 1296262074 - Property 1295455071"
+		// "Page 2931038265 - Control 2674903734 - Property 1295455071"
+        private static readonly byte[] TranslatedPageControlToolTipXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="de-DE" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="Page 2931038265 - Control 1296262074 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>This is a tooltip.</source>
+                      <target>Dies ist ein ToolTip.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Control MyField - Property ToolTip</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Control 2674903734 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>This is also a tooltip.</source>
+                      <target>Dies ist ebenfalls ein ToolTip.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Control SecondField - Property ToolTip</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
         private static readonly byte[] SettingsWithDaDK = System.Text.Encoding.UTF8.GetBytes(
             """{"LanguagesToTranslate": ["da-DK"]}""");
 
@@ -157,6 +182,21 @@ namespace ALCops.LinterCop.Test
                 });
         }
 
+        private static AnalyzerTestFixture CreateFixtureWithTranslatedPageControlToolTipXliff()
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "Translations/TestApp.de-DE.xlf", TranslatedPageControlToolTipXliffContent }
+            };
+            var fileSystem = new MemoryFileSystem(files);
+
+            return RoslynFixtureFactory.Create<Analyzers.TranslatableTextShouldBeTranslated>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = fileSystem
+                });
+        }
+
         // COMPAT: CompilerFeatures.TranslationsWithNamespaces and CompilationOptions.WithCompilerFeatures are
         // resolved reflectively so this test project still compiles against older SDKs where the enum member is
         // absent. The namespace tests are version-gated (RequireMinimumVersion) so this only runs where present.
@@ -235,6 +275,28 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false);
 
             var fixture = CreateFixtureWithEmptyXliff();
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
+        [TestCase("PageControlToolTipWrongCasing")]
+        public async Task NoDiagnosticPropertyCasing(string testCase)
+        {
+            RequireMinimumVersion("16.0",
+                "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
+
+            SkipTestIfVersionIsTooLow(
+                ["PageAnalysisViewLockedCaption"],
+                testCase,
+                "18.0.36",
+                "PageAnalysisView requires net10.0 SDK."
+            );
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithTranslatedPageControlToolTipXliff();
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
         }
 

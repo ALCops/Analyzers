@@ -1,5 +1,7 @@
 #if !NETSTANDARD2_1
+using System.Collections.Concurrent;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Translation;
 
@@ -25,8 +27,8 @@ namespace ALCops.Common.Reflection;
 ///
 /// This helper lives in ALCops.Common so all SDK-version-compat reflection is centralized; future
 /// SDK bumps only need changes here rather than in the analyzer. On netstandard2.1 the underlying
-/// SDK methods do not exist, so this helper is compiled out entirely (the LC0091 analyzer is an inert
-/// stub there).
+/// SDK methods do not exist, so this helper is compiled out entirely (callers are expected to
+/// provide an inert stub there).
 /// </summary>
 public static class TranslationIdHelper
 {
@@ -63,6 +65,17 @@ public static class TranslationIdHelper
             [typeof(ISymbol), typeof(IRootTypeSymbol)],
             null));
 
+    // Per-symbol-type cache for the private `name` field looked up on source symbol types.
+    // Never call reflection lookups on a hot path without caching — see common-library instructions.
+    private static readonly ConcurrentDictionary<Type, FieldInfo?> _nameFieldCache = new();
+
+    // Per-symbol lock table used to serialize the temporary `name`-field mutation across concurrent
+    // analyzer callbacks touching the same symbol instance. `ConditionalWeakTable` holds the symbol
+    // by weak reference so the lock object is collected together with the symbol. Cross-analyzer
+    // races are not covered (other analyzers do not know about this lock) but same-helper races on
+    // the same symbol are eliminated.
+    private static readonly ConditionalWeakTable<ISymbol, object> _symbolLocks = new();
+
     /// <summary>
     /// Computes the XLIFF trans-unit ID for the given translatable symbol, matching the ID the AL
     /// compiler generates. Returns <see langword="null"/> when no compatible SDK method can be resolved
@@ -74,7 +87,18 @@ public static class TranslationIdHelper
     /// <see langword="true"/> for label text constants (uses the NamedType symbol kind and the
     /// label-const fallback); <see langword="false"/> for properties and report labels.
     /// </param>
-    public static string? ComputeTranslationId(ISymbol symbol, IRootTypeSymbol? rootSymbol, bool isLabelConst)
+    /// <param name="nameOverride">
+    /// Optional canonical name to use in place of <c>symbol.Name</c> when building the ID (e.g.
+    /// <c>propertyKind.ToString() == "ToolTip"</c> for a source-cased "Tooltip"). Guarantees the
+    /// computed trans-unit ID matches the compiler-generated one regardless of the casing used in
+    /// source. The SDK's translation-ID methods hash the property/label name from the live symbol
+    /// instance (not from any string parameter they declare), so this helper temporarily rewrites
+    /// the symbol's private <c>name</c> field for the duration of the call and restores it in a
+    /// <c>finally</c>. No state leaks to subsequent callbacks. Applies to both the new-SDK
+    /// (<c>GetTranslationFileId</c>) and old-SDK (<c>GetLanguageSymbolId</c> /
+    /// <c>GetLabelTextConstLanguageSymbolId</c>) paths.
+    /// </param>
+    public static string? ComputeTranslationId(ISymbol symbol, IRootTypeSymbol? rootSymbol, bool isLabelConst, string? nameOverride = null)
     {
         MethodInfo? translationFileId = _getTranslationFileIdMethod.Value;
         if (translationFileId is not null)
@@ -82,15 +106,71 @@ public static class TranslationIdHelper
             SymbolKind kind = isLabelConst ? EnumProvider.SymbolKind.NamedType : symbol.Kind;
             bool useNamespaces = GetUseTranslationsWithNamespaces(symbol);
 
-            return translationFileId.Invoke(null,
-                [symbol.Name, kind, symbol.ContainingSymbol, false, rootSymbol, useNamespaces]) as string;
+            return InvokeWithCanonicalName(symbol, nameOverride,
+                () => translationFileId.Invoke(null,
+                    [symbol.Name, kind, symbol.ContainingSymbol, false, rootSymbol, useNamespaces]) as string);
         }
 
         MethodInfo? fallback = isLabelConst
             ? _getLabelTextConstLanguageSymbolIdMethod.Value
             : _getLanguageSymbolIdMethod.Value;
 
-        return fallback?.Invoke(null, [symbol, rootSymbol]) as string;
+        return InvokeWithCanonicalName(symbol, nameOverride,
+            () => fallback?.Invoke(null, [symbol, rootSymbol]) as string);
+    }
+
+    /// <summary>
+    /// Invokes <paramref name="compute"/> with the target <paramref name="symbol"/>'s private
+    /// <c>name</c> field temporarily replaced by <paramref name="nameOverride"/>, restoring the
+    /// original value in <c>finally</c>. Concurrent callers of this helper on the same symbol are
+    /// serialized through a per-symbol lock so no thread inside this helper observes the mutated
+    /// value across the SDK call boundary.
+    /// <para>
+    /// The SDK's internal <c>GetTranslationFileId</c> hashes the property/label name from the
+    /// live symbol instance rather than from the <c>name</c> string parameter it declares (the
+    /// parameter feeds only human-readable note segments). There is no public seam to override
+    /// the hashed name, so we mutate the private field on <c>SourcePropertySymbol</c> (or the
+    /// equivalent source symbol) around the call. All source symbols we hit follow the same
+    /// convention of storing the name in a single <c>name</c> field.
+    /// </para>
+    /// <para>
+    /// The per-symbol lock only synchronizes this helper's own callers. Other analyzers reading
+    /// <c>symbol.Name</c> concurrently do not participate and could still, in theory, observe the
+    /// canonical name during the mutation window. In practice this is limited to the diagnostic
+    /// message text (never to computed IDs or analysis decisions).
+    /// </para>
+    /// </summary>
+    private static string? InvokeWithCanonicalName(ISymbol symbol, string? nameOverride, Func<string?> compute)
+    {
+        if (nameOverride is null || string.Equals(nameOverride, symbol.Name, StringComparison.Ordinal))
+            return compute();
+
+        FieldInfo? nameField = _nameFieldCache.GetOrAdd(symbol.GetType(), static t =>
+        {
+            FieldInfo? field = t.GetField("name", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            return field is not null && field.FieldType == typeof(string) ? field : null;
+        });
+
+        if (nameField is null)
+            return compute();
+
+        object symbolLock = _symbolLocks.GetValue(symbol, static _ => new object());
+
+        lock (symbolLock)
+        {
+            string? original = (string?)nameField.GetValue(symbol);
+            nameField.SetValue(symbol, nameOverride);
+
+            try
+            {
+                return compute();
+            }
+            finally
+            {
+                nameField.SetValue(symbol, original);
+            }
+        }
     }
 
     private static bool GetUseTranslationsWithNamespaces(ISymbol symbol)
