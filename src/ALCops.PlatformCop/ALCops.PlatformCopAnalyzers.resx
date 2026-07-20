@@ -331,7 +331,7 @@
     <value>Incorrect number or type of arguments in .Get() method on Record object</value>
   </data>
   <data name="RecordGetProcedureArgumentsMessageFormat" xml:space="preserve">
-    <value>Invalid arguments in .Get() method for record '{0}': {1}.</value>
+    <value>Invalid arguments in call to '{0}' for record '{1}': {2}.</value>
   </data>
   <data name="RecordGetProcedureArgumentsDescription" xml:space="preserve">
     <value>This rule ensures that calls to the built-in .Get() procedure on Record objects have the correct number and types of arguments matching the primary key (PK) of the record in question.</value>
