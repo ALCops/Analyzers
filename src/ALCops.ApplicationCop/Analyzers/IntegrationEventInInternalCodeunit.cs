@@ -38,8 +38,7 @@ public sealed class IntegrationEventInInternalCodeunit : DiagnosticAnalyzer
         ctx.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.IntegrationEventInInternalCodeunit,
             methodSymbol.GetLocation(),
-            methodSymbol.Name,
-            applicationObject.Name));
+            methodSymbol.Name));
     }
 
     private static bool IsIntegrationEvent(IMethodSymbol methodSymbol) =>

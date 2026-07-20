@@ -355,7 +355,7 @@
     <value>Consider using a Query object or Rec.Find('-') with Rec.Next() for checking exactly one record</value>
   </data>
   <data name="UseQueryOrFindWithNextInsteadOfCountMessageFormat" xml:space="preserve">
-    <value>Consider using a Query object or {0}.Find('-') together with {0}.Next() instead of {0}.Count() for faster and more efficient record checks.</value>
+    <value>Consider using a Query object or {0}.Find('-') together with {0}.Next() instead of {0}.Count() {1} {2} for faster and more efficient record checks.</value>
   </data>
   <data name="UseQueryOrFindWithNextInsteadOfCountDescription" xml:space="preserve">
     <value>Instead of relying on Rec.Count(), consider using a Query object or a combination of Rec.Find('-') and Rec.Next() for faster and more efficient record checks.</value>

@@ -48,7 +48,8 @@ public sealed class EditableFlowField : DiagnosticAnalyzer
         ctx.ReportDiagnostic(
             Diagnostic.Create(
                 DiagnosticDescriptors.EditableFlowField,
-                field.GetLocation()));
+                field.GetLocation(),
+                field.Name));
     }
 
     private static bool HasLineComment(SyntaxTriviaList triviaList)
