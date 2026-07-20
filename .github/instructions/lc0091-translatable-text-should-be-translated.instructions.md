@@ -30,6 +30,7 @@ These decisions were made during the initial design and should be preserved unle
 | Severity | Warning | Missing translations directly affect user experience |
 | Extension root symbol | `ExtensionObjectFoldingUtilities.GetTranslationRootSymbol` SDK API | Fixes the multi-extension bug in the original rule; correctly handles all cases |
 | Translation ID generation | `LanguageFileUtilities` via **runtime reflection** (`GetTranslationFileId` on new SDKs, public 2-param `GetLanguageSymbolId` / `GetLabelTextConstLanguageSymbolId` on older SDKs) | The public methods gained an optional `useNamespaces` param in `18.0.38.52553`; C# bakes optional-param call sites at compile time, so a direct call breaks across SDK versions (see Known issues). Reflection picks the right method at runtime and supports namespace-aware IDs. |
+| Canonical property-name override | Passed only when `manifest.Runtime > RuntimeVersion.Spring2020CU1` (or runtime unknown → treat as "current") | Mirrors `SymbolExtensions.GetTranslationName`: the compiler uses `PropertyKind.ToString()` on new runtimes but source-cased `symbol.Name` on runtime ≤ 5.1. Unconditional override regresses legacy apps (source-cased hash ≠ canonical hash → false positive). Gate is applied on the LinterCop side; `TranslationIdHelper.ComputeTranslationId(nameOverride: null)` falls through to `symbol.Name`. |
 | ManifestHelper exception handling | Catch `FileNotFoundException` and treat as null manifest | `ManifestHelper.GetManifest` loads `Microsoft.Dynamics.Nav.Analyzers.Common` assembly via reflection; this assembly isn't present in test contexts |
 | Null manifest behavior | Proceed with analysis (don't skip) | Tests create minimal compilations without manifests; real projects always have manifests |
 | XLIFF caching | Load once in CompilationStartAction | Avoid re-parsing per symbol |
@@ -110,6 +111,27 @@ The SDK's `OperationExtensions.GetSymbol()` can throw `InvalidCastException` for
 
 `EnumProvider.SymbolKind.NamedType` was added for the label-const path (mirrors `GetLabelTextConstLanguageSymbolId`, which forces `SymbolKind.NamedType`).
 
+### Runtime ≤ 5.1: canonical property-name override must be gated
+
+The fix for the source-casing false positive (`Tooltip` vs `ToolTip`) forwarded a canonical `nameOverride: propertyKind.ToString()` unconditionally. That regresses apps with `manifest.Runtime ≤ Spring2020CU1` (5.1): on legacy runtimes the compiler hashes the **source-cased** `property.Name` (per `SymbolExtensions.GetTranslationName`), so the analyzer's canonical hash never matched the emitted XLIFF trans-unit ID → false-positive "missing translation".
+
+**Workaround:** compute `useCanonicalPropertyName = manifest?.Runtime is null || manifest.Runtime > RuntimeVersion.Spring2020CU1` at `CompilationStartAction`, thread it into `AnalyzeSymbol`/`AnalyzePageLikeSymbol`/`ReportTranslatableProperty`, and pass `nameOverride: null` (which lets the SDK use `symbol.Name`) on legacy runtimes. Unknown runtime defaults to "current", matching the SDK's `GetRuntimeVersionOrCurrent`.
+
+Regression tests (`HasDiagnosticLegacyRuntime`, `NoDiagnosticLegacyRuntime`) inject an `app.json` with `"runtime": "5.1"` and `"features": ["TranslationFile"]` into the `MemoryFileSystem`. The `features` entry is required — without `TranslationFile` (mapped from the raw string by `CompilerFeaturesExtensions.GetCompilerFeature`), `manifest.CompilerFeatures.ShouldGenerateTranslationFile()` returns `false` and the analyzer short-circuits before hashing anything, hiding the regression. The tests also require `Microsoft.Dynamics.Nav.Analyzers.Common.dll` in the test bin (added as `<Reference Private="True">` in the test csproj) so `ManifestHelper.GetManifest` can resolve the runtime-loaded assembly.
+
+### Canonical-name override mechanism (`TranslationIdHelper.ComputeTranslationId`)
+
+The `nameOverride` parameter is applied differently on new vs old SDKs; both paths are exercised by the same call site in the analyzer:
+
+- **New SDK (`GetTranslationFileId` present)**: the SDK method declares a `name` string parameter and builds the leaf trans-unit segment from that string — the leaf symbol's `Name` is never read. The override is applied by passing `nameOverride ?? symbol.Name` as the `name` argument. No symbol mutation. This is the preferred path.
+- **Old SDK fallback (public 2-param `GetLanguageSymbolId` / `GetLabelTextConstLanguageSymbolId`)**: these overloads accept only `(ISymbol, IRootTypeSymbol?)` and read `symbol.Name` internally, so there is no seam to inject an override. The helper temporarily rewrites the symbol's private `name` field via reflection (`FieldInfo.SetValue`) for the duration of the SDK call, then restores it in a `finally`. The field is cached per symbol type in a `ConcurrentDictionary<Type, FieldInfo?>` (`_nameFieldCache`) to keep reflection off the hot path.
+
+**Per-symbol locking:** the mutation window is serialized through a `ConditionalWeakTable<ISymbol, object>` (`_symbolLocks`) so no other call inside this helper reads the symbol during the swap. The weak-table binding lets the lock object be collected together with the symbol, avoiding a static-cache leak across compilations.
+
+**Caveats:**
+- Cross-analyzer races are **not** covered: other analyzers do not know about this lock and may read `symbol.Name` on a background thread while the field is temporarily overridden. Impact is bounded to a single method call in the same process and only occurs on SDKs older than the one that added `GetTranslationFileId`. If the override equals `symbol.Name` we skip the mutation entirely; the fast path is a plain reflected call.
+- The mutation targets `SourcePropertySymbol.name` (source-declared properties). Merged/synthesized property symbols may not expose the same private field. `_nameFieldCache` stores a nullable `FieldInfo`; when null the helper falls back to invoking the SDK method without mutation, accepting that the resulting ID will match the source-cased name (correct for legacy runtimes, potentially wrong for canonical-name callers on legacy SDKs — mitigated in practice because the canonical-override branch is only taken on runtime > 5.1, and modern SDKs use the mutation-free `GetTranslationFileId` path).
+
 ## Symbol kinds and translatable properties
 
 | Symbol Kind | Properties Checked |
@@ -138,10 +160,13 @@ This matches the AL compiler's XLIFF generation behavior exactly.
 **HasDiagnosticWithLanguagesToTranslateNoXliff (1 case):** LocalLabel with LanguagesToTranslate=["da-DK"], no XLIFF files.
 **HasDiagnosticWithLanguagesToTranslatePartialXliff (1 case):** LocalLabel with LanguagesToTranslate=["da-DK","de-DE"], only da-DK XLIFF.
 **HasDiagnosticWithNamespaces (1 case):** NamespaceTableCaption (gated `RequireMinimumVersion("18.0.38.52553")`; `TranslationsWithNamespaces` feature enabled via `CompilationOptions.WithCompilerFeatures`, empty XLIFF → namespace-mode path reports).
-**NoDiagnostic (2 cases):** LockedLabel, LockedReportLabel.
+**HasDiagnosticLegacyRuntime (1 case):** LegacyRuntimePageControlToolTip (`app.json` runtime `5.1` + `features: ["TranslationFile"]`; XLIFF contains only the canonical-name hash `ToolTip=1295455071` while the compiler on legacy runtimes hashes source-cased `Tooltip=2001309823` → diagnostic. Regresses if the analyzer unconditionally overrides with the canonical name).
+**NoDiagnostic (3 cases):** LockedLabel, LockedReportLabel, PageAnalysisViewLockedCaption.
+**NoDiagnosticPropertyCasing (1 case):** PageControlToolTipWrongCasing (XLIFF contains the canonical `ToolTip` trans-unit ID; source-cased `Tooltip`/`TOOLTIP` in AL must not trigger on runtime > 5.1).
 **NoDiagnosticTranslated (1 case):** TranslatedReportLabel (XLIFF contains proper translation with matching trans-unit ID).
 **NoDiagnosticNoXliff (1 case):** No XLIFF files present, no LanguagesToTranslate setting.
 **NoDiagnosticWithNamespaces (1 case):** NamespaceTableCaptionTranslated (gated `RequireMinimumVersion("18.0.38.52553")`; translated XLIFF with the namespace-aware trans-unit ID `Namespace MyCompany.App - Table MyTable - Property Caption` → no false positive).
+**NoDiagnosticLegacyRuntime (1 case):** LegacyRuntimePageControlToolTip (`app.json` runtime `5.1` + `features: ["TranslationFile"]`; XLIFF contains the source-cased hash `Tooltip=2001309823` matching what the pre-Spring2020CU1 compiler emits → no false positive).
 
 ## Test infrastructure
 

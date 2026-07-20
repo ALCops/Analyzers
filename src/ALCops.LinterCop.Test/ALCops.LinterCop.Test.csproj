@@ -84,5 +84,12 @@
             <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces.dll</HintPath>
             <Private>True</Private>
         </Reference>
+        <!-- Required at test runtime so ManifestHelper.GetManifest(compilation) can load app.json -->
+        <!-- from the MemoryFileSystem (used by LC0091 runtime-version-gated legacy-runtime tests). -->
+        <!-- ALCops.Common references this DLL with Private=False, so tests must supply it. -->
+        <Reference Include="Microsoft.Dynamics.Nav.Analyzers.Common">
+            <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.Analyzers.Common.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
     </ItemGroup>
 </Project>

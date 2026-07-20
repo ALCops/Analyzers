@@ -63,8 +63,14 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         if (translationIndex is null || translationIndex.AvailableLanguages.Count == 0)
             return;
 
+        // Mirror the compiler's runtime-version gate in SymbolExtensions.GetTranslationName:
+        //   runtime <= Spring2020CU1 (5.1) => use source-cased symbol.Name for the XLIFF trans-unit ID
+        //   runtime  > Spring2020CU1        => use canonical PropertyKind.ToString() (e.g. "ToolTip")
+        // Unknown runtime defaults to "current" (matches SDK's GetRuntimeVersionOrCurrent).
+        bool useCanonicalPropertyName = manifest?.Runtime is null || manifest.Runtime > RuntimeVersion.Spring2020CU1;
+
         context.RegisterSymbolAction(
-            ctx => AnalyzeSymbol(ctx, translationIndex),
+            ctx => AnalyzeSymbol(ctx, translationIndex, useCanonicalPropertyName),
             EnumProvider.SymbolKind.Table,
             EnumProvider.SymbolKind.TableExtension,
             EnumProvider.SymbolKind.Page,
@@ -85,7 +91,7 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         );
     }
 
-    private static void AnalyzeSymbol(SymbolAnalysisContext ctx, TranslationIndex translationIndex)
+    private static void AnalyzeSymbol(SymbolAnalysisContext ctx, TranslationIndex translationIndex, bool useCanonicalPropertyName)
     {
         if (ctx.IsObsolete())
             return;
@@ -107,8 +113,8 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
 
         if (kind == EnumProvider.SymbolKind.Field)
         {
-            ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.Caption, translationIndex);
-            ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.ToolTip, translationIndex);
+            ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
+            ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
             return;
         }
 
@@ -118,12 +124,12 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             || kind == EnumProvider.SymbolKind.RequestPageExtension
             || kind == EnumProvider.SymbolKind.Query)
         {
-            AnalyzePageLikeSymbol(ctx, symbol, translationIndex);
+            AnalyzePageLikeSymbol(ctx, symbol, translationIndex, useCanonicalPropertyName);
             return;
         }
 
         // Table, TableExtension, XmlPort, Enum, EnumValue, Report, Profile, PermissionSet
-        ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.Caption, translationIndex);
+        ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
     }
 
     private static void AnalyzeLabelVariable(SymbolAnalysisContext ctx, ISymbol symbol, TranslationIndex translationIndex)
@@ -161,9 +167,9 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         ReportMissingTranslation(ctx, symbol, translationId, translationIndex);
     }
 
-    private static void AnalyzePageLikeSymbol(SymbolAnalysisContext ctx, ISymbol symbol, TranslationIndex translationIndex)
+    private static void AnalyzePageLikeSymbol(SymbolAnalysisContext ctx, ISymbol symbol, TranslationIndex translationIndex, bool useCanonicalPropertyName)
     {
-        ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.Caption, translationIndex);
+        ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
 
         IEnumerable<IControlSymbol>? controls = GetFlattenedControls(symbol);
         if (controls is not null)
@@ -173,9 +179,9 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
                 if (control.IsObsolete())
                     continue;
 
-                ReportTranslatableProperty(ctx, control, EnumProvider.PropertyKind.Caption, translationIndex);
-                ReportTranslatableProperty(ctx, control, EnumProvider.PropertyKind.ToolTip, translationIndex);
-                ReportTranslatableProperty(ctx, control, EnumProvider.PropertyKind.OptionCaption, translationIndex);
+                ReportTranslatableProperty(ctx, control, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
+                ReportTranslatableProperty(ctx, control, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
+                ReportTranslatableProperty(ctx, control, EnumProvider.PropertyKind.OptionCaption, translationIndex, useCanonicalPropertyName);
             }
         }
 
@@ -187,8 +193,8 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
                 if (action.IsObsolete())
                     continue;
 
-                ReportTranslatableProperty(ctx, action, EnumProvider.PropertyKind.Caption, translationIndex);
-                ReportTranslatableProperty(ctx, action, EnumProvider.PropertyKind.ToolTip, translationIndex);
+                ReportTranslatableProperty(ctx, action, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
+                ReportTranslatableProperty(ctx, action, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
             }
         }
 
@@ -200,13 +206,13 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
                 if (analysisView.IsObsolete())
                     continue;
 
-                ReportTranslatableProperty(ctx, analysisView, EnumProvider.PropertyKind.Caption, translationIndex);
-                ReportTranslatableProperty(ctx, analysisView, EnumProvider.PropertyKind.ToolTip, translationIndex);
+                ReportTranslatableProperty(ctx, analysisView, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
+                ReportTranslatableProperty(ctx, analysisView, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
             }
         }
     }
 
-    private static void ReportTranslatableProperty(SymbolAnalysisContext ctx, ISymbol symbol, PropertyKind propertyKind, TranslationIndex translationIndex)
+    private static void ReportTranslatableProperty(SymbolAnalysisContext ctx, ISymbol symbol, PropertyKind propertyKind, TranslationIndex translationIndex, bool useCanonicalPropertyName)
     {
         IPropertySymbol? property = symbol.GetProperty(propertyKind);
         if (property is null)
@@ -218,8 +224,17 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         if (IsPropertyLocked(property))
             return;
 
+        // Pass the canonical property name (e.g. "ToolTip") as the trans-unit name override so the
+        // computed ID matches the compiler-generated XLIFF ID regardless of the source-text casing
+        // used by the developer (e.g. "Tooltip" or "TOOLTIP").
+        //
+        // The compiler only applies this canonical form on runtime > Spring2020CU1 (5.1); on older
+        // runtimes it hashes the source-cased symbol.Name. When useCanonicalPropertyName is false
+        // we pass null so ComputeTranslationId falls back to symbol.Name, matching the compiler.
+        string? nameOverride = useCanonicalPropertyName ? propertyKind.ToString() : null;
         IRootTypeSymbol? rootSymbol = ExtensionObjectFoldingUtilities.GetTranslationRootSymbol(property);
-        string? translationId = TranslationIdHelper.ComputeTranslationId(property, rootSymbol, isLabelConst: false);
+        string? translationId = TranslationIdHelper.ComputeTranslationId(property, rootSymbol, isLabelConst: false, nameOverride: nameOverride);
+
         if (translationId is null)
             return;
 
