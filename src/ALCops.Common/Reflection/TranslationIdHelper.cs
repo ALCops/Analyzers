@@ -88,15 +88,12 @@ public static class TranslationIdHelper
     /// label-const fallback); <see langword="false"/> for properties and report labels.
     /// </param>
     /// <param name="nameOverride">
-    /// Optional canonical name to use in place of <c>symbol.Name</c> when building the ID (e.g.
-    /// <c>propertyKind.ToString() == "ToolTip"</c> for a source-cased "Tooltip"). Guarantees the
-    /// computed trans-unit ID matches the compiler-generated one regardless of the casing used in
-    /// source. The SDK's translation-ID methods hash the property/label name from the live symbol
-    /// instance (not from any string parameter they declare), so this helper temporarily rewrites
-    /// the symbol's private <c>name</c> field for the duration of the call and restores it in a
-    /// <c>finally</c>. No state leaks to subsequent callbacks. Applies to both the new-SDK
-    /// (<c>GetTranslationFileId</c>) and old-SDK (<c>GetLanguageSymbolId</c> /
-    /// <c>GetLabelTextConstLanguageSymbolId</c>) paths.
+    /// Canonical name to hash in place of <c>symbol.Name</c> for the leaf trans-unit segment
+    /// (e.g. <c>"ToolTip"</c> for a source-cased <c>"Tooltip"</c>). New-SDK path forwards it as
+    /// the <c>name</c> string parameter to <c>GetTranslationFileId</c> (no mutation). Old-SDK
+    /// fallback rewrites the symbol's private <c>name</c> field for the duration of the call and
+    /// restores it in <c>finally</c> (see <see cref="InvokeWithCanonicalName"/>). Pass
+    /// <see langword="null"/> to hash <c>symbol.Name</c> unchanged.
     /// </param>
     public static string? ComputeTranslationId(ISymbol symbol, IRootTypeSymbol? rootSymbol, bool isLabelConst, string? nameOverride = null)
     {
@@ -105,10 +102,10 @@ public static class TranslationIdHelper
         {
             SymbolKind kind = isLabelConst ? EnumProvider.SymbolKind.NamedType : symbol.Kind;
             bool useNamespaces = GetUseTranslationsWithNamespaces(symbol);
+            string effectiveName = nameOverride ?? symbol.Name;
 
-            return InvokeWithCanonicalName(symbol, nameOverride,
-                () => translationFileId.Invoke(null,
-                    [symbol.Name, kind, symbol.ContainingSymbol, false, rootSymbol, useNamespaces]) as string);
+            return translationFileId.Invoke(null,
+                [effectiveName, kind, symbol.ContainingSymbol, false, rootSymbol, useNamespaces]) as string;
         }
 
         MethodInfo? fallback = isLabelConst
@@ -120,26 +117,27 @@ public static class TranslationIdHelper
     }
 
     /// <summary>
-    /// Invokes <paramref name="compute"/> with the target <paramref name="symbol"/>'s private
-    /// <c>name</c> field temporarily replaced by <paramref name="nameOverride"/>, restoring the
-    /// original value in <c>finally</c>. Concurrent callers of this helper on the same symbol are
-    /// serialized through a per-symbol lock so no thread inside this helper observes the mutated
-    /// value across the SDK call boundary.
-    /// <para>
-    /// The SDK's internal <c>GetTranslationFileId</c> hashes the property/label name from the
-    /// live symbol instance rather than from the <c>name</c> string parameter it declares (the
-    /// parameter feeds only human-readable note segments). There is no public seam to override
-    /// the hashed name, so we mutate the private field on <c>SourcePropertySymbol</c> (or the
-    /// equivalent source symbol) around the call. All source symbols we hit follow the same
-    /// convention of storing the name in a single <c>name</c> field.
-    /// </para>
-    /// <para>
-    /// The per-symbol lock only synchronizes this helper's own callers. Other analyzers reading
-    /// <c>symbol.Name</c> concurrently do not participate and could still, in theory, observe the
-    /// canonical name during the mutation window. In practice this is limited to the diagnostic
-    /// message text (never to computed IDs or analysis decisions).
-    /// </para>
+    /// Old-SDK fallback helper: invokes <paramref name="compute"/> with the target symbol's
+    /// private <c>name</c> field temporarily replaced by <paramref name="nameOverride"/> and
+    /// restored in <c>finally</c>. Short-circuits to <paramref name="compute"/> when the override
+    /// is <see langword="null"/> or already matches <c>symbol.Name</c>.
     /// </summary>
+    /// <remarks>
+    /// Needed because the public 2-param <c>GetLanguageSymbolId(ISymbol, IRootTypeSymbol?)</c> and
+    /// <c>GetLabelTextConstLanguageSymbolId(ISymbol, IRootTypeSymbol?)</c> overloads read
+    /// <c>symbol.Name</c> internally and expose no name parameter. The new-SDK
+    /// <c>GetTranslationFileId</c> path takes the name as a string parameter and bypasses this
+    /// helper entirely. The mutation targets the private <c>name</c> field on
+    /// <c>SourcePropertySymbol</c> (or equivalent source symbol); all source symbols we hit store
+    /// the name in that single field.
+    /// <para>
+    /// Mutations on the same symbol are serialized via <see cref="_symbolLocks"/> (a
+    /// <see cref="ConditionalWeakTable{TKey, TValue}"/> so lock objects are collected with the
+    /// symbol). Other analyzers reading <c>symbol.Name</c> concurrently do not participate and may
+    /// briefly observe the canonical name during the SDK call; scope is limited to the fallback
+    /// path on SDKs predating <c>GetTranslationFileId</c>.
+    /// </para>
+    /// </remarks>
     private static string? InvokeWithCanonicalName(ISymbol symbol, string? nameOverride, Func<string?> compute)
     {
         if (nameOverride is null || string.Equals(nameOverride, symbol.Name, StringComparison.Ordinal))
