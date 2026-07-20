@@ -81,6 +81,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("NotASubscriber")]
         [TestCase("DerivedNameExceedsMaxLength")]
         [TestCase("PreferredNameCollidesWithSibling")]
+        [TestCase("PreferredNameCollidesWithSiblingDifferentCase")]
         [TestCase("TwoSubscribersSameEventBothMisnamed")]
         public async Task NoDiagnostic(string testCase)
         {

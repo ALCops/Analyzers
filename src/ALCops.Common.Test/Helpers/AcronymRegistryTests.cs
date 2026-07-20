@@ -12,14 +12,14 @@ public class AcronymRegistryTests
         foreach (var acronym in AcronymRegistry.DefaultAcronyms)
         {
             Assert.That(
-                AcronymRegistry.Default.TryGetCanonical(acronym, out var canonical),
+                AcronymRegistry.Default.TryGetVariants(acronym, out var variants),
                 Is.True,
-                $"Default should expose '{acronym}'");
+                $"Default should expose '{acronym}' as a registered variant");
 
             Assert.That(
-                canonical,
-                Is.EqualTo(acronym),
-                $"Canonical casing for '{acronym}' must be preserved");
+                variants,
+                Does.Contain(acronym),
+                $"'{acronym}' must be present among registered variants for its case-insensitive key");
         }
     }
 
@@ -118,10 +118,49 @@ public class AcronymRegistryTests
 
         foreach (var acronym in AcronymRegistry.DefaultAcronyms)
         {
-            Assert.That(registry.TryGetCanonical(acronym, out var canonical), Is.True);
-            Assert.That(canonical, Is.EqualTo(acronym));
+            Assert.That(registry.TryGetVariants(acronym, out var variants), Is.True);
+            Assert.That(variants, Does.Contain(acronym));
         }
 
         Assert.That(registry.TryGetCanonical("MyCoDomainAcronym", out _), Is.False);
+    }
+
+    [Test]
+    public void TryGetVariants_ExposesAllRegisteredVariantsForSameKey()
+    {
+        // Defaults list both "BoM" (canonical) and "Bom" for the "BOM" upper-key.
+        Assert.That(AcronymRegistry.Default.TryGetVariants("bom", out var variants), Is.True);
+        Assert.That(variants, Is.EquivalentTo(new[] { "BoM", "Bom" }));
+    }
+
+    [Test]
+    public void TryGetCanonical_ReturnsFirstAddedVariantForKey()
+    {
+        // Defaults order for the "BOM" upper-key is ["BoM", "Bom"] -> canonical is "BoM".
+        Assert.That(AcronymRegistry.Default.TryGetCanonical("BOM", out var canonical), Is.True);
+        Assert.That(canonical, Is.EqualTo("BoM"));
+    }
+
+    [Test]
+    public void Create_UserEntriesDisplaceDefaultVariantsForSameKey()
+    {
+        // Defaults contain "BoM" and "Bom" under the "BOM" key. Supplying "bOm" as user
+        // entry must wipe those defaults and become the sole variant for that key.
+        var registry = AcronymRegistry.Create(new[] { "bOm" });
+
+        Assert.That(registry.TryGetVariants("BOM", out var variants), Is.True);
+        Assert.That(variants, Is.EqualTo(new[] { "bOm" }));
+    }
+
+    [Test]
+    public void Create_MultipleUserEntriesForSameKey_AllRegisteredInOrder()
+    {
+        var registry = AcronymRegistry.Create(new[] { "Lcy", "LCY" });
+
+        Assert.That(registry.TryGetVariants("lcy", out var variants), Is.True);
+        Assert.That(variants, Is.EqualTo(new[] { "Lcy", "LCY" }));
+
+        Assert.That(registry.TryGetCanonical("lcy", out var canonical), Is.True);
+        Assert.That(canonical, Is.EqualTo("Lcy"));
     }
 }

@@ -160,6 +160,10 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
         // (any sibling whose name equals 'preferred' is treated as a collision, even when the
         // signatures differ and the overload would technically compile): renaming into an
         // overload set changes semantics and confuses readers, so silence beats a risky fix.
+        //
+        // Name comparison is case-insensitive (`SemanticFacts.IsSameName`) because AL treats
+        // duplicate method identifiers case-insensitively (`AL0018`); an only-case-different
+        // sibling would still cause the CodeFix to produce a duplicate-identifier error.
         foreach (var member in containingType.GetMembers())
         {
             if (member is not IMethodSymbol sibling)
@@ -173,7 +177,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
             }
 
             // Case A: an existing method already carries the preferred name.
-            if (string.Equals(sibling.Name, preferred, StringComparison.Ordinal))
+            if (SemanticFacts.IsSameName(sibling.Name, preferred))
             {
                 return true;
             }
@@ -184,7 +188,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
             var siblingAccepted = TryBuildAcceptedFor(sibling, segments, acronyms);
 
             if ((siblingAccepted is not null) && (siblingAccepted.Count > 0)
-                && string.Equals(siblingAccepted[0], preferred, StringComparison.Ordinal))
+                && SemanticFacts.IsSameName(siblingAccepted[0], preferred))
             {
                 return true;
             }

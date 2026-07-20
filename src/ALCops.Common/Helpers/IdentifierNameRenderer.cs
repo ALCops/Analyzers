@@ -156,18 +156,28 @@ public static class IdentifierNameRenderer
         // original casing with a guaranteed leading uppercase. This is the preferred /
         // canonical form and always occupies element [0].
         //
-        // A registry entry on the same upper-invariant key is *additionally accepted*
-        // when its stored casing differs from the primary. Example: user pins "Lcy" and
-        // the source carries "LCY" -> alternatives are ["LCY", "Lcy"]. Both are green;
-        // "LCY" remains the preferred spelling suggested by the CodeFix.
+        // Every registered variant on the same upper-invariant key is *additionally
+        // accepted* when its stored casing differs from the primary. Example: registry
+        // holds ["UoM", "Uom"] and the source carries "UOM" -> alternatives are
+        // ["UOM", "UoM", "Uom"]. Element [0] remains the preferred spelling suggested by
+        // any CodeFix.
         if (HasAnyUpper(word))
         {
             var primary = EnsureUpperFirst(word);
 
-            if (acronyms.TryGetCanonical(word, out var registered)
-                && !string.Equals(registered, primary, StringComparison.Ordinal))
+            if (acronyms.TryGetVariants(word, out var variants))
             {
-                return new[] { primary, registered };
+                var alternatives = new List<string>(variants.Count + 1) { primary };
+
+                foreach (var variant in variants)
+                {
+                    if (!string.Equals(variant, primary, StringComparison.Ordinal))
+                    {
+                        alternatives.Add(variant);
+                    }
+                }
+
+                return alternatives;
             }
 
             return new[] { primary };
