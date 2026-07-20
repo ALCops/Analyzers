@@ -239,4 +239,57 @@ public class ALCopsSettingsProviderTests
 			}
 		}
     }
+
+    [Test]
+    public void GetSettings_ParsesKnownAcronymsList()
+    {
+        // Arrange: alcops.json with a multi-entry KnownAcronyms list
+        var appFolder = Path.Combine(_tempRoot, "App1");
+        Directory.CreateDirectory(appFolder);
+        File.WriteAllText(
+            Path.Combine(appFolder, "alcops.json"),
+            """{"KnownAcronyms": ["Acme", "FooBar", "XYZ"]}""");
+
+        // Act
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
+
+        // Assert
+        Assert.That(settings.KnownAcronyms, Is.Not.Null);
+        Assert.That(settings.KnownAcronyms, Is.EqualTo(new[] { "Acme", "FooBar", "XYZ" }));
+    }
+
+    [Test]
+    public void GetSettings_KnownAcronyms_DefaultsToNullWhenAbsent()
+    {
+        // Arrange: alcops.json without a KnownAcronyms key
+        var appFolder = Path.Combine(_tempRoot, "App1");
+        Directory.CreateDirectory(appFolder);
+        File.WriteAllText(
+            Path.Combine(appFolder, "alcops.json"),
+            """{"CyclomaticComplexityThreshold": 10}""");
+
+        // Act
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
+
+        // Assert
+        Assert.That(settings.KnownAcronyms, Is.Null);
+    }
+
+    [Test]
+    public void GetSettings_KnownAcronyms_AcceptsEmptyArray()
+    {
+        // Arrange: alcops.json with an explicit empty array
+        var appFolder = Path.Combine(_tempRoot, "App1");
+        Directory.CreateDirectory(appFolder);
+        File.WriteAllText(
+            Path.Combine(appFolder, "alcops.json"),
+            """{"KnownAcronyms": []}""");
+
+        // Act
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
+
+        // Assert
+        Assert.That(settings.KnownAcronyms, Is.Not.Null);
+        Assert.That(settings.KnownAcronyms, Is.Empty);
+    }
 }

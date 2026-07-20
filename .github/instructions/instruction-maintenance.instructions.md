@@ -112,3 +112,4 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `ac0006-run-page-implement-page-management` | rule-scoped | AC0006 rule |
 | `pc0038-not-all-code-paths-return-value` | rule-scoped | PC0038 rule |
 | `lc0097-mixed-exit-and-named-return-assignment` | rule-scoped | LC0097 rule |
+| `lc0098-event-subscriber-naming-pattern` | rule-scoped | LC0098 rule |

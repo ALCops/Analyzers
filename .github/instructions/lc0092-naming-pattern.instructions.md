@@ -175,6 +175,10 @@ Pattern-specific name transformations:
 
 Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `ArgumentException` and returns null, effectively disabling that pattern check.
 
+### LC0098 interaction
+
+[LC0098 (EventSubscriberNamingPattern)](lc0098-event-subscriber-naming-pattern.instructions.md) also targets `EventSubscriber` methods, but enforces a **structural template** (source object + event name + optional element) rather than a **character-class pattern**. A subscriber that violates both rules receives two independent diagnostics. This is intentional: the two checks are orthogonal (LC0092 controls what the first character may be, LC0098 controls the overall shape) and their settings are decoupled (`NamingPatterns.EventSubscriber` vs. `SubscriberNamingPattern` + `KnownAcronyms`). If LC0098's default template is left active, subscriber names typically start with the raw source-object name — teams whose source objects occasionally start with a lowercase or non-letter character should relax LC0092's `EventSubscriber` pattern to accept the leading quote character.
+
 ## Test coverage
 
 **HasDiagnostic (9 cases):** ProcedureLowerCaseStart, VariableLowerCaseStart, VariableWithSpecialChars, ParameterLowerCaseStart, ReturnValueLowerCaseStart, ObjectLowerCaseStart, FieldWithSpecialChars, ActionLowerCaseStart, ControlLowerCaseStart.

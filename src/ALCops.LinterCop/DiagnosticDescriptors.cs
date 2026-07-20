@@ -294,6 +294,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.UnnecessaryRecordParameterInMethodCallDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UnnecessaryRecordParameterInMethodCall));
 
+    public static readonly DiagnosticDescriptor EventSubscriberNamingPattern = new(
+        id: DiagnosticIds.EventSubscriberNamingPattern,
+        title: LinterCopAnalyzers.EventSubscriberNamingPatternTitle,
+        messageFormat: LinterCopAnalyzers.EventSubscriberNamingPatternMessageFormat,
+        category: Category.Naming,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.EventSubscriberNamingPatternDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.EventSubscriberNamingPattern));
+
     public static readonly DiagnosticDescriptor ParameterNotReferenced = new(
         id: DiagnosticIds.ParameterNotReferenced,
         title: LinterCopAnalyzers.ParameterNotReferencedTitle,
