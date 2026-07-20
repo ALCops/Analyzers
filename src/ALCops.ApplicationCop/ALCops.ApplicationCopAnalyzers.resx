@@ -277,7 +277,7 @@
     <value>DrillDownPageId and LookupPageId property must be defined for tables used in list pages</value>
   </data>
   <data name="LookupPageIdAndDrillDownPageIdMessageFormat" xml:space="preserve">
-    <value>Table '{0}' is used in a list page but does not define both the DrillDownPageId and LookupPageId properties.</value>
+    <value>Table '{0}' is used in list page '{1}' but does not define both the DrillDownPageId and LookupPageId properties.</value>
   </data>
   <data name="LookupPageIdAndDrillDownPageIdDescription" xml:space="preserve">
     <value>When a table is used as the source for a list page, users expect to be able to drill down into records and open lookups in a consistent and predictable way. The DrillDownPageId and LookupPageId table properties define which pages are used for these interactions.</value>

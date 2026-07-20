@@ -42,7 +42,8 @@ public sealed class InterfaceObjectNameGuide : DiagnosticAnalyzer
         {
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.InterfaceObjectNameGuide,
-                interfaceTypeSymbol.GetLocation()));
+                interfaceTypeSymbol.GetLocation(),
+                interfaceTypeSymbol.Name));
 
             return;
         }
@@ -54,7 +55,8 @@ public sealed class InterfaceObjectNameGuide : DiagnosticAnalyzer
         {
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.InterfaceObjectNameGuide,
-                interfaceTypeSymbol.GetLocation()));
+                interfaceTypeSymbol.GetLocation(),
+                interfaceTypeSymbol.Name));
 
             return;
         }
@@ -67,7 +69,8 @@ public sealed class InterfaceObjectNameGuide : DiagnosticAnalyzer
             {
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.InterfaceObjectNameGuide,
-                    interfaceTypeSymbol.GetLocation()));
+                    interfaceTypeSymbol.GetLocation(),
+                    interfaceTypeSymbol.Name));
 
                 return;
             }

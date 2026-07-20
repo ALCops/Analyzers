@@ -87,6 +87,7 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.RecordGetProcedureArguments,
                 ctx.Operation.Syntax.GetLocation(),
+                GetPrimaryKeySignature(table),
                 table.Name,
                 expectedArgs));
 
@@ -117,6 +118,7 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.RecordGetProcedureArguments,
                 ctx.Operation.Syntax.GetLocation(),
+                GetPrimaryKeySignature(table),
                 table.Name,
                 expectedArgs));
             return;
@@ -214,5 +216,20 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
 
         return fieldType.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Code
             || SemanticFacts.IsSameName(pkField.Name, PrimaryKeyFieldName);
+    }
+
+    private static string GetPrimaryKeySignature(ITableTypeSymbol table) =>
+        $"{GetMethodName}({string.Join(", ", table.PrimaryKey.Fields.Select(GetFieldDisplay))})";
+
+    private static string GetFieldDisplay(IFieldSymbol field)
+    {
+        var name = field.Name.QuoteIdentifierIfNeededWithReflection();
+#if NETSTANDARD2_1
+        var fieldType = field.OriginalDefinition.GetTypeSymbol();
+        var type = fieldType?.ToDisplayStringWithReflection() ?? string.Empty;
+#else
+        var type = field.Type?.ToDisplayString() ?? string.Empty;
+#endif
+        return $"{name}: {type}";
     }
 }
