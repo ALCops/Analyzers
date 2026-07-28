@@ -879,7 +879,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SymbolKind Change => _change.Value;
         public static NavCodeAnalysis.SymbolKind Class => _class.Value;
         public static NavCodeAnalysis.SymbolKind Codeunit => _codeunit.Value;
-		public static NavCodeAnalysis.SymbolKind ControlAddIn => _controlAddIn.Value;
+        public static NavCodeAnalysis.SymbolKind ControlAddIn => _controlAddIn.Value;
         public static NavCodeAnalysis.SymbolKind Control => _control.Value;
         public static NavCodeAnalysis.SymbolKind Entitlement => _entitlement.Value;
         public static NavCodeAnalysis.SymbolKind Enum => _enum.Value;
@@ -930,6 +930,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.BooleanLiteralValue)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _caseLine =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CaseLine)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _caseElse =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CaseElse)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _caseStatement =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CaseStatement)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _closeBraceToken =
@@ -1260,6 +1262,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind Block => _block.Value;
         public static NavCodeAnalysis.SyntaxKind BooleanLiteralValue => _booleanLiteralValue.Value;
         public static NavCodeAnalysis.SyntaxKind CaseLine => _caseLine.Value;
+        public static NavCodeAnalysis.SyntaxKind CaseElse => _caseElse.Value;
         public static NavCodeAnalysis.SyntaxKind CaseStatement => _caseStatement.Value;
         public static NavCodeAnalysis.SyntaxKind CloseBraceToken => _closeBraceToken.Value;
         public static NavCodeAnalysis.SyntaxKind CloseParenToken => _closeParenToken.Value;

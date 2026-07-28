@@ -11,4 +11,5 @@ public sealed class ALCopsSettings
     public string? UseSequentialGuidScope { get; set; }
     public List<Punctuation>? ToolTipAllowedPunctuations { get; set; }
     public List<string>? KnownAcronyms { get; set; }
+    public StatementBlockSpacingSettings StatementBlockSpacing { get; set; } = new();
 }

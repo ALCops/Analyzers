@@ -71,8 +71,8 @@ Per-project analyzer configuration.
 
 | File | Purpose |
 |------|---------|
-| `ALCopsSettings.cs` | POCO with properties: `CognitiveComplexityThreshold` (default 15), `CyclomaticComplexityThreshold` (default 8), `MaintainabilityIndexThreshold` (default 20), `LanguagesToTranslate`, `NamingPatterns`, `SubscriberNamingPattern`, `UseSequentialGuidScope`, `ToolTipAllowedPunctuations`, `KnownAcronyms`. |
-| `ALCopsSettingsProvider.cs` | Static provider with `ConcurrentDictionary` cache keyed by directory path. Loads `alcops.json` using hierarchical lookup (see Settings System below). JSON parsing is case-insensitive, allows comments and trailing commas. Preferred API: `GetSettings(compilation.FileSystem)`. |
+| `ALCopsSettings.cs` | POCO with properties: `CognitiveComplexityThreshold` (default 15), `CyclomaticComplexityThreshold` (default 8), `MaintainabilityIndexThreshold` (default 20), `LanguagesToTranslate`, `NamingPatterns`, `SubscriberNamingPattern`, `UseSequentialGuidScope`, `ToolTipAllowedPunctuations`, `KnownAcronyms`, `StatementBlockSpacing`. |
+| `ALCopsSettingsProvider.cs` | Static provider with `ConcurrentDictionary` cache keyed by directory path. Loads `alcops.json` using hierarchical lookup (see Settings System below). JSON parsing is case-insensitive, allows comments and trailing commas. Malformed JSON (invalid syntax, unknown enum values, wrong types) falls back to defaults silently via a `JsonException` catch in `DeserializeSettings`. Preferred API: `GetSettings(compilation.FileSystem)`. |
 
 ### Constants.cs
 Three constants: `PermissionNodeXPath` (XPath for permission set XML), `Comment`, `Locked`, `MaxLength` (label property name strings matching the SDK's `LabelPropertyHelper`).
@@ -171,8 +171,9 @@ Settings are cached per directory path for the analyzer session lifetime. Call `
 
 ### How to Add a New Setting
 1. Add a new property with a default value to `ALCopsSettings.cs`.
-2. No changes needed to `ALCopsSettingsProvider.cs` (JSON deserialization picks it up automatically).
-3. Document the new setting in the project README.
+2. No changes needed to `ALCopsSettingsProvider.cs` for scalar / string / list / dictionary properties — JSON deserialization picks them up automatically.
+3. **For enum-typed properties**, add a converter registration to `ALCopsSettingsProvider.cs`: `JsonStringEnumConverter` in `_jsonOptions.Converters` (net8+) and `StringEnumConverter` in `_jsonSettings.Converters` (netstandard2.1). Both are case-insensitive by default. Then add a schema-parity guard test that compares `Enum.GetNames(typeof(YourEnum))` with the `enum` array in `alcops.schema.json` (see `StatementBlockSpacingSchema` in `src/ALCops.FormattingCop.Test/Rules/StatementBlocksSeparatedByBlankLine/` for a template).
+4. Document the new setting in the project README.
 
 ### Backward Compatibility
 - Do not remove or rename public methods, properties, or classes.

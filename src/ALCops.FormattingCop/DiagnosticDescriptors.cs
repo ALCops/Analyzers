@@ -66,6 +66,17 @@ public static class DiagnosticDescriptors
         description: FormattingCopAnalyzers.PermissionValuesShouldBeLowercaseDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.PermissionValuesShouldBeLowercase));
 
+    public static readonly DiagnosticDescriptor StatementBlocksSeparatedByBlankLine = new(
+        id: DiagnosticIds.StatementBlocksSeparatedByBlankLine,
+        title: FormattingCopAnalyzers.StatementBlocksSeparatedByBlankLineTitle,
+        messageFormat: FormattingCopAnalyzers.StatementBlocksSeparatedByBlankLineMessageFormat,
+        category: Category.Style,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: FormattingCopAnalyzers.StatementBlocksSeparatedByBlankLineDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.StatementBlocksSeparatedByBlankLine));
+
+
     public static readonly DiagnosticDescriptor AnalyzerException = new(
         id: DiagnosticIds.AnalyzerException,
         title: FormattingCopAnalyzers.AnalyzerExceptionTitle,
