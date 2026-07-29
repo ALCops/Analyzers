@@ -109,6 +109,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `pc0034-placeholder-argument-count-mismatch` | rule-scoped | PC0034 rule |
 | `pc0035-use-set-auto-calc-fields-for-loops` | rule-scoped | PC0035 rule |
 | `lc0095-parameter-not-referenced` | rule-scoped | LC0095 rule |
+| `lc0099-event-subscriber-parameter-not-referenced` | rule-scoped | LC0099 rule |
 | `ac0006-run-page-implement-page-management` | rule-scoped | AC0006 rule |
 | `pc0038-not-all-code-paths-return-value` | rule-scoped | PC0038 rule |
 | `lc0097-mixed-exit-and-named-return-assignment` | rule-scoped | LC0097 rule |

@@ -31,6 +31,10 @@ src/ALCops.{Cop}.Test/
             └── {TestCaseName}/
                 ├── current.al               # Code before the fix
                 └── expected.al              # Code after the fix
+        └── HasFixAll/                       # Only when a custom FixAllProvider exists
+            └── {TestCaseName}/
+                ├── current.al               # Code with multiple [|...|] markers
+                └── expected.al              # Code after batch fix
 ```
 
 ## Test Class Template
@@ -163,7 +167,8 @@ table 50100 MyTable
 |---|---|
 | `_fixture.HasDiagnosticAtAllMarkers(code, diagnosticId)` | Assert diagnostic reported at every `[|...|]` marker |
 | `_fixture.NoDiagnosticAtAllMarkers(code, diagnosticId)` | Assert NO diagnostic at any `[|...|]` marker |
-| `fixture.TestCodeFix(currentCode, expectedCode, diagnosticDescriptor)` | Assert code fix transforms current into expected |
+| `fixture.TestCodeFix(currentCode, expectedCode, diagnosticDescriptor)` | Assert single code fix transforms current into expected |
+| `fixture.TestFixAll(currentCode, expectedCode, diagnosticId, codeFixIndex, equivalenceKey)` | Assert `FixAllProvider` transforms current into expected across ALL `[|...|]` markers in one pass |
 
 ## Testing Code Fixes
 
@@ -217,6 +222,48 @@ namespace ALCops.{Cop}.Test
 ```
 
 Note: `HasFix` uses `DiagnosticDescriptors.{Name}` (the full descriptor object), not `DiagnosticIds.{Name}` (the string ID). Both classes live in the analyzer project.
+
+## Testing FixAll
+
+Add a dedicated `HasFixAll` test method when the `CodeFixProvider` uses a custom `FixAllProvider` (see `codefix-development.instructions.md` → "Custom FixAllProvider"). This is required for rules where multiple diagnostics can produce edits on a shared ancestor node (e.g. removing multiple parameters from the same signature), because `TestCodeFix` only exercises the single-diagnostic path and misses batching regressions.
+
+Directory layout is identical to `HasFix`: place `current.al` (with multiple `[|...|]` markers, one per expected diagnostic) and `expected.al` under `HasFixAll/{TestCaseName}/`.
+
+```csharp
+[Test]
+[TestCase("{TestCaseName}")]
+public async Task HasFixAll(string testCase)
+{
+    var currentCode = await File.ReadAllTextAsync(
+        Path.Combine(_testCasePath, nameof(HasFixAll), testCase, "current.al"))
+        .ConfigureAwait(false);
+
+    var expectedCode = await File.ReadAllTextAsync(
+        Path.Combine(_testCasePath, nameof(HasFixAll), testCase, "expected.al"))
+        .ConfigureAwait(false);
+
+    var fixture = RoslynFixtureFactory.Create<{CodeFixProviderClassName}>(
+        new CodeFixTestFixtureConfig
+        {
+            AdditionalAnalyzers = [_analyzer]
+        });
+
+    fixture.TestFixAll(
+        currentCode,
+        expectedCode,
+        DiagnosticIds.{DiagnosticIdConstant},
+        codeFixIndex: 0,
+        equivalenceKey: $"{nameof({CodeFixProviderClassName})}.All");
+}
+```
+
+Key details:
+
+- `TestFixAll` takes the **diagnostic ID string** (`DiagnosticIds.{Name}`), not the descriptor object — unlike `TestCodeFix`.
+- `codeFixIndex` selects which registered `CodeAction` to apply. Use `0` unless a rule registers multiple actions in a deterministic order.
+- `equivalenceKey` must exactly match the key assigned to the `CodeAction` in the provider. Passing the wrong key silently short-circuits FixAll.
+- Prefer at least **two markers** in `current.al` targeting sibling nodes in the same list (`ParameterListSyntax`, `PropertyListSyntax`, etc.). A single-marker FixAll test does not exercise the merge behavior and would pass even with `BatchFixer` on a broken provider.
+- Wrap the method in `RequireMinimumVersion(...)` if the underlying rule is version-scoped, same as `HasDiagnostic`.
 
 ## Version-Conditional Test Skipping
 
@@ -375,9 +422,11 @@ The ruleset JSON resolves via the same source-tree absolute path as the `.al` fi
 | Test method (positive) | `HasDiagnostic` | Always this exact name |
 | Test method (negative) | `NoDiagnostic` | Always this exact name |
 | Test method (code fix) | `HasFix` | Always this exact name |
+| Test method (fix all) | `HasFixAll` | Always this exact name |
 | TestCase parameter | PascalCase, describes the scenario | `"RecordCountEqualsOne"` |
 | .al fixture file | `{TestCaseName}.al`, matching the TestCase value | `RecordCountEqualsOne.al` |
 | HasFix directory | `{TestCaseName}/current.al` + `expected.al` | `GlobalVariable/current.al` |
+| HasFixAll directory | `{TestCaseName}/current.al` + `expected.al` | `RemoveTwoParametersFromSingleMethod/current.al` |
 
 ## Writing AL Fixture Files
 

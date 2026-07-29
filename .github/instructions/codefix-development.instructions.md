@@ -28,7 +28,7 @@ Every CodeFix provider:
 Required overrides:
 
 - `FixableDiagnosticIds` (property, `ImmutableArray<string>`) - declares which diagnostic IDs this provider handles
-- `GetFixAllProvider()` (method) - always returns `WellKnownFixAllProviders.BatchFixer`
+- `GetFixAllProvider()` (method) - normally returns `WellKnownFixAllProviders.BatchFixer`. Use a custom `FixAllProvider.Create(FixAllAsync)` when multiple diagnostics in the same document may resolve to edits on a **shared ancestor node** (e.g. removing multiple entries from the same `ParameterListSyntax` / `PropertyListSyntax` / any `SeparatedSyntaxList`). See "Custom FixAllProvider" below.
 - `RegisterCodeFixesAsync(CodeFixContext ctx)` (method) - entry point that registers fix actions
 
 ## Diagnostic ID linkage
@@ -172,6 +172,76 @@ Key points about this structure:
 - The inner `CodeAction` class inherits `CodeAction.DocumentChangeAction`, with `Kind` always set to `CodeActionKind.QuickFix`.
 - The fix title comes from the `.resx` resource file (e.g. `PlatformCopAnalyzers.EditableFlowFieldCodeAction`).
 - `RegisterInstanceCodeFix` is a static helper that finds the node and calls `RegisterCodeFix`.
+
+## Custom FixAllProvider
+
+Default to `WellKnownFixAllProviders.BatchFixer`. It runs the single-diagnostic fix path once per diagnostic and merges the resulting document edits.
+
+**Exception — use a custom `FixAllProvider` when multiple diagnostics may produce edits on a shared ancestor node.** BatchFixer merges the produced `Document`s using a diff strategy that assumes independent edits. When two or more diagnostics translate into `ReplaceNode(sameAncestor, …)` calls (e.g. removing multiple `ParameterSyntax` entries from the same `ParameterListSyntax`, or two properties from the same `PropertyListSyntax`), only one of the edits survives the merge and the rest are silently dropped. Symptoms are FixAll actions that fix "1 of N" occurrences.
+
+Trigger conditions:
+
+- The fix removes or replaces a node inside a `SeparatedSyntaxList` (parameters, properties, arguments, variables in a `var` section, permission entries).
+- Multiple diagnostics from the same rule can point at siblings in the same list within one document.
+
+Pattern — one syntax rewrite per document, executed in `FixAllAsync`:
+
+```csharp
+public sealed override FixAllProvider GetFixAllProvider() =>
+    FixAllProvider.Create(FixAllAsync);
+
+private static async Task<Document?> FixAllAsync(FixAllContext fixAllContext, Document document,
+    Optional<ImmutableArray<TextSpan>> fixAllSpans)
+{
+    var cancellationToken = fixAllContext.CancellationToken;
+
+    SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+    if (root is null)
+        return document;
+
+    // Resolve the spans to fix. See "Optional<ImmutableArray<TextSpan>> quirk" below.
+    ImmutableArray<TextSpan> spans;
+    if (fixAllSpans.HasValue && !fixAllSpans.Value.IsDefaultOrEmpty)
+    {
+        spans = fixAllSpans.Value;
+    }
+    else
+    {
+        var diagnostics = await fixAllContext.GetDocumentDiagnosticsAsync(document).ConfigureAwait(false);
+        spans = diagnostics.Select(d => d.Location.SourceSpan).ToImmutableArray();
+    }
+
+    if (spans.IsDefaultOrEmpty)
+        return document;
+
+    // Collect all target nodes in one pass, then rewrite the tree once.
+    var nodesToRemove = new HashSet<SyntaxNode>();
+    foreach (var span in spans)
+    {
+        var node = root.FindNode(span, getInnermostNodeForTie: true);
+        // Optional: apply scope filter (e.g. based on fixAllContext.CodeActionEquivalenceKey).
+        if (node is not null)
+            nodesToRemove.Add(node);
+    }
+
+    if (nodesToRemove.Count == 0)
+        return document;
+
+    var newRoot = root.RemoveNodes(nodesToRemove, SyntaxRemoveOptions.KeepNoTrivia);
+    return newRoot is null ? document : document.WithSyntaxRoot(newRoot);
+}
+```
+
+Key details:
+
+- **Delegate signature.** `FixAllProvider.Create(...)` requires `Task<Document?>` (nullable). Returning `Task<Document>` compiles but binds to a different overload path and can misbehave.
+- **`Optional<ImmutableArray<TextSpan>>` quirk.** In the AL SDK, `fixAllSpans.HasValue` can be `true` while `fixAllSpans.Value.IsDefaultOrEmpty` is also `true` (observed with RoslynTestKit's default document-scope FixAll). Always guard with `!IsDefaultOrEmpty` and fall back to `fixAllContext.GetDocumentDiagnosticsAsync(document)` so the FixAll works both inside VS Code and inside tests.
+- **One-pass rewrite for `SeparatedSyntaxList`.** Use `root.RemoveNodes(collection, SyntaxRemoveOptions.KeepNoTrivia)` (plural). It handles separator removal correctly across siblings in the same list, whereas per-diagnostic `ReplaceNode` calls conflict.
+- **Trivia handling.** For node removals, prefer `SyntaxRemoveOptions.KeepNoTrivia` so multi-line signatures do not leave dangling comments or blank continuation lines.
+- **Scope filter via `CodeActionEquivalenceKey`.** Register multiple `CodeAction`s with distinct `EquivalenceKey`s if a rule needs "Fix all of kind X" variants. Read `fixAllContext.CodeActionEquivalenceKey` inside `FixAllAsync` to know which action the user invoked.
+- **Single-fix path stays consistent.** Use `root.RemoveNode(node, SyntaxRemoveOptions.KeepNoTrivia)` (singular) for the individual quick-fix so single and Fix-All behave identically.
+
+Reference implementation: `ParameterNotReferencedCodeFixProvider` in `ALCops.LinterCop`. See `lc0095-parameter-not-referenced.instructions.md` for its scope-split CodeActions.
 
 ## Common fix patterns
 

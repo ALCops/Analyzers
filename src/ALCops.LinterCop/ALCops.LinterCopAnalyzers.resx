@@ -411,6 +411,18 @@
   <data name="ParameterNotReferencedCodeAction" xml:space="preserve">
     <value>ALCops: Remove unreferenced parameter</value>
   </data>
+  <data name="EventSubscriberParameterNotReferencedTitle" xml:space="preserve">
+    <value>Event subscriber parameter is not referenced</value>
+  </data>
+  <data name="EventSubscriberParameterNotReferencedMessageFormat" xml:space="preserve">
+    <value>Parameter '{0}' is not referenced in event subscriber '{1}'.</value>
+  </data>
+  <data name="EventSubscriberParameterNotReferencedDescription" xml:space="preserve">
+    <value>Event subscriber methods often include generated parameters. Unused parameters can be removed when they are not needed by the implementation. This rule reports unreferenced event subscriber parameters as information to keep signatures focused without enforcing warning-level strictness.</value>
+  </data>
+  <data name="EventSubscriberParameterNotReferencedCodeAction" xml:space="preserve">
+    <value>ALCops: Remove unreferenced event subscriber parameter</value>
+  </data>
   <data name="MixedExitAndNamedReturnAssignmentTitle" xml:space="preserve">
     <value>Avoid mixing exit() and named return variable assignments</value>
   </data>
