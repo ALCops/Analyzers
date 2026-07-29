@@ -289,10 +289,10 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
     {
         if (statement.Parent is null)
         {
-            return [];
+            return ImmutableArray<StatementSyntax>.Empty;
         }
 
-        return [.. statement.Parent.ChildNodes().OfType<StatementSyntax>()];
+        return statement.Parent.ChildNodes().OfType<StatementSyntax>().ToImmutableArray();
     }
 
     private static string GetControlFlowStatementName(SyntaxNode node)
