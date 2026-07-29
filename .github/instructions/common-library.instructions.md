@@ -117,12 +117,9 @@ This allows a multi-root workspace to share a single `alcops.json` at the worksp
     └── app.json          ← inherits from workspace-level
 ```
 
-### Two overloads
+### Public API
 
-| Overload | Use when | Behavior |
-|---|---|---|
-| `GetSettings(IFileSystem?)` | **Preferred.** All analyzer code. | Virtual FS check → parent traversal → assembly fallback. Cached by `GetDirectoryPath()`. |
-| `GetSettings(string?)` | Legacy. Avoid in new code. | Physical FS check → parent traversal → assembly fallback. Cached by path. |
+`ALCopsSettingsProvider` exposes a single entry point: `GetSettings(IFileSystem?)`. All analyzer code obtains settings through `context.SemanticModel.Compilation.FileSystem`. Behavior: virtual FS check → parent traversal → assembly fallback. Results are cached by `IFileSystem.GetDirectoryPath()`; a `MemoryFileSystem` returning `""` bypasses the cache.
 
 ### Error handling
 
@@ -139,7 +136,7 @@ Users configure settings by placing an `alcops.json` file in their AL project ro
 }
 ```
 
-Settings are cached per directory path for the analyzer session lifetime. Call `ALCopsSettingsProvider.ClearCache()` only in tests.
+Settings are cached per directory path for the analyzer session lifetime. There is no public cache-invalidation API; tests inject an isolated `IFileSystem` (typically `MemoryFileSystem` or a purpose-built `RelativeFileSystem`) to avoid contaminating the cache.
 
 ## Coding Standards
 

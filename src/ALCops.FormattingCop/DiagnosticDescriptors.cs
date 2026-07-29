@@ -76,7 +76,6 @@ public static class DiagnosticDescriptors
         description: FormattingCopAnalyzers.StatementBlocksSeparatedByBlankLineDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.StatementBlocksSeparatedByBlankLine));
 
-
     public static readonly DiagnosticDescriptor AnalyzerException = new(
         id: DiagnosticIds.AnalyzerException,
         title: FormattingCopAnalyzers.AnalyzerExceptionTitle,

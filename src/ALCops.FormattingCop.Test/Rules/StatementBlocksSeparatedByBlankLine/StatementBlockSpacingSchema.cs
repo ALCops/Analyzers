@@ -1,5 +1,7 @@
 using System.Text.Json;
 
+using RoslynTestKit;
+
 using StatementBlockSpacingSettings = ALCops.Common.Settings.StatementBlockSpacingSettings;
 using ScopeLeavingMode = ALCops.Common.Settings.ScopeLeavingMode;
 using ElseChainBeforeMode = ALCops.Common.Settings.ElseChainBeforeMode;
@@ -10,7 +12,7 @@ namespace ALCops.FormattingCop.Test
     // Schema parity guard for FC0007's StatementBlockSpacing enum-typed settings. If a new value is
     // added to any enum without updating alcops.schema.json (or vice versa) these tests fail loudly.
     // Mirrors NamingPatternSettings.NamingTargetEnumMatchesSchemaPropertyNames.
-    public class StatementBlockSpacingSchema
+    public class StatementBlockSpacingSchema : NavCodeAnalysisBase
     {
         [Test]
         public void ScopeLeavingModeEnumMatchesSchema() =>

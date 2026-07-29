@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using ALCops.Common.Diagnostics;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using ALCops.Common.Settings;
@@ -10,11 +9,11 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 namespace ALCops.FormattingCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public sealed class StatementBlocksSeparatedByBlankLine : FormattingCopAnalyzer
+public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
 {
     private const string ErrorMethodName = "Error";
 
-    protected override ImmutableArray<DiagnosticDescriptor> SupportedDiagnosticsCore { get; } =
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.StatementBlocksSeparatedByBlankLine);
 
     // Single source of truth for control-flow kinds. Consumed both by the syntax-node registration
@@ -32,7 +31,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : FormattingCopAnalyzer
     private static readonly ImmutableHashSet<SyntaxKind> ControlFlowStatementKinds =
         ImmutableHashSet.Create(ControlFlowStatementKindsArray);
 
-    protected override void InitializeAnalyzer(SafeAnalysisContext context)
+    public override void Initialize(AnalysisContext context)
     {
         context.RegisterSyntaxNodeAction(AnalyzeControlFlowNode, ControlFlowStatementKindsArray);
 
