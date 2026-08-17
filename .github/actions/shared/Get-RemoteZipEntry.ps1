@@ -21,7 +21,9 @@ Supports both ZIP32 and ZIP64 archives.
 The remote URL of the ZIP/VSIX/nupkg file.
 
 .PARAMETER EntryPath
-The full path of the entry to extract, using forward slashes.
+One or more candidate entry paths to extract, using forward slashes.
+Candidates are tried in order against the Central Directory (a single pass,
+no extra HTTP requests); the first match wins.
 Example: 'extension/bin/Analyzers/Microsoft.Dynamics.Nav.CodeAnalysis.dll'
 
 .PARAMETER OutputPath
@@ -32,6 +34,13 @@ Get-RemoteZipEntry.ps1 `
     -Uri 'https://example.com/package.vsix' `
     -EntryPath 'extension/bin/Analyzers/Microsoft.Dynamics.Nav.CodeAnalysis.dll' `
     -OutputPath 'C:\Temp\Microsoft.Dynamics.Nav.CodeAnalysis.dll'
+
+.EXAMPLE
+Get-RemoteZipEntry.ps1 `
+    -Uri 'https://example.com/package.vsix' `
+    -EntryPath 'extension/bin/Microsoft.Dynamics.Nav.CodeAnalysis.dll',
+               'extension/bin/Analyzers/Microsoft.Dynamics.Nav.CodeAnalysis.dll' `
+    -OutputPath 'C:\Temp\Microsoft.Dynamics.Nav.CodeAnalysis.dll'
 #>
 
 [CmdletBinding()]
@@ -40,7 +49,7 @@ param(
     [string]$Uri,
 
     [Parameter(Mandatory = $true)]
-    [string]$EntryPath,
+    [string[]]$EntryPath,
 
     [Parameter(Mandatory = $true)]
     [string]$OutputPath
@@ -258,13 +267,18 @@ else {
 $entries = Get-CentralDirectoryEntries -CdBytes $cdBytes
 Write-Verbose "  [RangeRequest] $($entries.Count) entries in Central Directory"
 
-$normalizedEntry = ($EntryPath -replace '\\', '/').TrimStart('/')
-$target = $entries | Where-Object {
-    ($_.Filename -replace '\\', '/') -ieq $normalizedEntry
-} | Select-Object -First 1
+# Try each candidate entry path in order; first match wins (single CD pass, no extra requests)
+$normalizedCandidates = @($EntryPath | ForEach-Object { ($_ -replace '\\', '/').TrimStart('/') })
+$target = $null
+foreach ($candidate in $normalizedCandidates) {
+    $target = $entries | Where-Object {
+        ($_.Filename -replace '\\', '/') -ieq $candidate
+    } | Select-Object -First 1
+    if ($target) { break }
+}
 
 if (-not $target) {
-    throw "Entry '$normalizedEntry' not found in the Central Directory ($($entries.Count) entries scanned)."
+    throw "None of the candidate entries [$($normalizedCandidates -join ', ')] found in the Central Directory ($($entries.Count) entries scanned)."
 }
 
 Write-Verbose "  [RangeRequest] Found '$($target.Filename)' (method=$($target.Method), compressed=$([math]::Round($target.CompressedSize/1KB,1)) KB, offset=$($target.HeaderOffset))"

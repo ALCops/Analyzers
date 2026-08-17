@@ -152,10 +152,25 @@ runs:
         ACTION_PATH: ${{ github.action_path }}
         TFM: ${{ inputs.tfm }}
       run: |
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+
         $pathInArchive = switch ($env:ASSET_TYPE) {
-          'VSIX'       { 'extension/bin/Analyzers' }
+          { $_ -in 'VSIX', 'BCArtifact' } {
+            # VSIX layout changed in BC 29 (AL 17): DLLs moved from the legacy
+            # 'extension/bin/Analyzers' folder to a flat 'extension/bin'.
+            # Probe the archive for the current layout first; fall back to legacy.
+            $probe = [System.IO.Compression.ZipFile]::OpenRead($env:ARCHIVE_PATH)
+            try {
+              $flatLayout = $probe.Entries | Where-Object {
+                ($_.FullName -replace '\\', '/') -ieq 'extension/bin/Microsoft.Dynamics.Nav.Analyzers.Common.dll'
+              } | Select-Object -First 1
+            }
+            finally {
+              $probe.Dispose()
+            }
+            if ($flatLayout) { 'extension/bin' } else { 'extension/bin/Analyzers' }
+          }
           'NuGet'      { "tools/$($env:TFM)/any" }
-          'BCArtifact' { 'extension/bin/Analyzers' }
           default { 
             Write-Error "Invalid asset-type: $($env:ASSET_TYPE). Must be 'VSIX', 'NuGet', or 'BCArtifact'."
             exit 1
