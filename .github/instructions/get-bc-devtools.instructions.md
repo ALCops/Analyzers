@@ -20,6 +20,20 @@ The `get-bc-devtools` composite GitHub Action discovers all available BC DevTool
 3. **`action.yml`** — Composite action entry point. Calls `Get-BC-DevTools.ps1`, deduplicates sources by version, determines lowest version per TFM, and sets outputs.
 4. **`Display-Sources.ps1`** — Renders a summary table to the workflow log.
 
+### VSIX layout change in BC 29 (AL 17)
+
+Starting with BC 29, `ALLanguage.vsix` no longer contains the `extension/bin/Analyzers/` folder; all SDK DLLs (including `Microsoft.Dynamics.Nav.Analyzers.Common.dll`) sit flat in `extension/bin/` alongside the compiler and third-party dependencies. Both layouts are supported via an ordered candidate-path list (current layout first, legacy fallback):
+
+1. `extension/bin/Microsoft.Dynamics.Nav.Analyzers.Common.dll` (BC 29+ / AL 17+)
+2. `extension/bin/Analyzers/Microsoft.Dynamics.Nav.Analyzers.Common.dll` (legacy, pre-BC 29)
+
+This applies in three places:
+- `Get-BC-DevTools.ps1` BCArtifact path: first-match over the local VSIX zip entries
+- `Get-BC-DevTools.ps1` Marketplace VSIX path: passes the candidate array to `Get-RemoteZipEntry.ps1`
+- `setup-bc-devtools/action.yml`: probes the local archive for the flat-layout DLL and extracts `extension/bin` (new) or `extension/bin/Analyzers` (legacy) recursively
+
+`Get-RemoteZipEntry.ps1` (shared) accepts `-EntryPath` as `[string[]]`: candidates are matched in order against the Central Directory in a single pass, so trying multiple layouts costs no extra HTTP requests.
+
 ### Assembly analysis (`Get-AssemblyInfo`)
 
 For each new BC DevTools version, the script downloads `Microsoft.Dynamics.Nav.Analyzers.Common.dll` and inspects it using `System.Reflection.Metadata` (built into the .NET runtime, no NuGet package needed):
@@ -46,6 +60,7 @@ This approach reads PE metadata directly from the file bytes without loading the
 | Assembly inspection method | `System.Reflection.Metadata` via `PEReader` + `MetadataReader` | Reads PE metadata directly from file bytes without loading the assembly into the runtime. Immune to cross-runtime version mismatches (e.g. net10.0 DLL on net8.0 host). Built into the .NET runtime, no NuGet package needed. |
 | TFM parsing | Regex on `TargetFrameworkAttribute` value | Handles `.NETStandard`, `.NETCoreApp`, and `.NETFramework` monikers. Future .NET versions are handled automatically. |
 | Cache key strategy | Content-based (SHA256 hash) | Only creates new cache entries when data actually changes |
+| VSIX DLL discovery | Ordered candidate-path list (flat `extension/bin` first, legacy `extension/bin/Analyzers` fallback) | BC 29 moved the SDK DLLs out of the `Analyzers` folder. Candidate list is predictable and cheap; the remote path resolves all candidates in one Central Directory pass. Bin-first because the `Analyzers` folder is legacy. |
 
 ## Maintenance
 
@@ -70,6 +85,7 @@ The pipeline is prepared for net10.0 BC DevTools:
 | Issue | Workaround |
 |---|---|
 | Corrupted or non-.NET assemblies cannot be read by `PEReader` | Returns `"analysis-error"` sentinel; downstream consumers should handle non-parseable versions |
+| Failed analyses write `error` entries into `TargetFramework.json`; since `Find-MissingVersions` matches on composite keys, those versions are never retried | Manually delete the `tfm-json-*` GitHub Actions cache entry; the next run re-analyzes everything |
 
 ## Key files
 

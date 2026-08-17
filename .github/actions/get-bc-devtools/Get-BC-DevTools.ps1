@@ -210,6 +210,15 @@ function Get-AssetInfo {
     #         (VSIX is itself a ZIP, but it is local so no nested HTTP range requests needed).
     # Step 3: Reflect on the DLL via Get-AssemblyInfo — identical to the VSIX/NuGet path,
     #         giving both the true AL Language assembly version and target framework moniker.
+    #
+    # VSIX layout changed in BC 29 (AL 17): the DLL moved from the legacy
+    # 'extension/bin/Analyzers/' folder to a flat 'extension/bin/'. Try the current
+    # layout first, then fall back to the legacy folder for older versions.
+    $vsixDllCandidates = @(
+        'extension/bin/Microsoft.Dynamics.Nav.Analyzers.Common.dll',           # BC29+ flat layout
+        'extension/bin/Analyzers/Microsoft.Dynamics.Nav.Analyzers.Common.dll'  # legacy layout (pre-BC29)
+    )
+
     if ($PackageType -eq 'BCArtifact') {
         $vsixPath = Join-Path $TempDirectory 'ALLanguage.vsix'
         $dllPath = Join-Path $TempDirectory 'Microsoft.Dynamics.Nav.Analyzers.Common.dll'
@@ -218,15 +227,19 @@ function Get-AssetInfo {
             $rangeScript = Join-Path (Split-Path $PSScriptRoot -Parent) 'shared\Get-RemoteZipEntry.ps1'
             & $rangeScript -Uri $uri -EntryPath 'ALLanguage.vsix' -OutputPath $vsixPath
 
-            # Step 2: extract the Analyzers DLL from the now-local VSIX
+            # Step 2: extract the Analyzers DLL from the now-local VSIX (first candidate path wins)
             $vsixZip = [System.IO.Compression.ZipFile]::OpenRead($vsixPath)
             try {
-                $dllEntry = $vsixZip.Entries | Where-Object {
-                    $_.FullName -ieq 'extension/bin/Analyzers/Microsoft.Dynamics.Nav.Analyzers.Common.dll'
-                } | Select-Object -First 1
+                $dllEntry = $null
+                foreach ($candidate in $vsixDllCandidates) {
+                    $dllEntry = $vsixZip.Entries | Where-Object {
+                        ($_.FullName -replace '\\', '/') -ieq $candidate
+                    } | Select-Object -First 1
+                    if ($dllEntry) { break }
+                }
 
                 if (-not $dllEntry) {
-                    throw "Microsoft.Dynamics.Nav.Analyzers.Common.dll not found inside ALLanguage.vsix."
+                    throw "Microsoft.Dynamics.Nav.Analyzers.Common.dll not found inside ALLanguage.vsix at any known path: $($vsixDllCandidates -join ', ')."
                 }
 
                 [System.IO.Compression.ZipFileExtensions]::ExtractToFile($dllEntry, $dllPath, $true)
@@ -249,14 +262,11 @@ function Get-AssetInfo {
         }
     }
 
-    # Determine the archive-internal folder and the full entry path for the target DLL.
     # For NuGet packages that ship multiple TFMs, we want the highest.
     # Order highest-first so the first successful extraction wins.
     $nugetTfmPaths = @('tools/net10.0/any', 'tools/net8.0/any')
-    $pathInArchive = switch ($PackageType) {
-        'VSIX' { 'extension/bin/Analyzers' }
-        'NuGet' { $nugetTfmPaths[0] }
-        default { throw "Unknown asset type: $PackageType" }
+    if ($PackageType -notin 'VSIX', 'NuGet') {
+        throw "Unknown asset type: $PackageType"
     }
     $dllPath = Join-Path $TempDirectory 'Microsoft.Dynamics.Nav.Analyzers.Common.dll'
 
@@ -282,8 +292,9 @@ function Get-AssetInfo {
             }
         }
         else {
-            $entryPath = "$pathInArchive/Microsoft.Dynamics.Nav.Analyzers.Common.dll"
-            & $rangeScript -Uri $uri -EntryPath $entryPath -OutputPath $dllPath
+            # Marketplace VSIX: try current (flat bin) and legacy (Analyzers) layouts
+            # in a single Central Directory pass — first candidate match wins.
+            & $rangeScript -Uri $uri -EntryPath $vsixDllCandidates -OutputPath $dllPath
         }
 
         $assemblyInfo = Get-AssemblyInfo -AssemblyPath $dllPath
