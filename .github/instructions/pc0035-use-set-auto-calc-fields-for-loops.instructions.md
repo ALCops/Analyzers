@@ -79,6 +79,8 @@ The insertion target must be an element of a statement list (`BlockSyntax` or `R
 **HasFix (5 cases):** FindSetRepeatUntil, MultipleFields, IfFindSetRepeatUntil, IfFindSetBeginRepeatUntil, ThisQualifiedGlobalVariable.
 **NoFix (2 cases):** UnblockedThenBranch, UnblockedThenBranchBeforeElse.
 
+ThisQualifiedGlobalVariable (HasDiagnostic and HasFix) is gated with `SkipTestIfVersionIsTooLow("14.0")`: the `this` self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).
+
 ## Known limitations
 
 - Cross-method CalcFields calls (passed record variable) are not detected
