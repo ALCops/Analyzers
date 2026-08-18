@@ -78,14 +78,18 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
         if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
             return document;
 
-        var variableName = memberAccess.Expression.ToString();
         var arguments = invocation.ArgumentList?.Arguments ?? default;
 
         if (arguments.Count == 0)
             return document;
 
-        // Build SetAutoCalcFields statement
-        var setAutoCalcFieldsStatement = BuildSetAutoCalcFieldsStatement(variableName, arguments);
+        // Build SetAutoCalcFields statement, reusing the original receiver expression
+        // so qualified receivers like 'this.Job' are preserved verbatim (issue #428).
+        // The elastic marker makes the CodeAction formatter indent the inserted
+        // statement; source nodes lack the elastic trivia factory tokens carry.
+        var setAutoCalcFieldsStatement = BuildSetAutoCalcFieldsStatement(
+            memberAccess.Expression.WithoutTrivia().WithLeadingTrivia(SyntaxFactory.ElasticMarker),
+            arguments);
 
         // Find the insertion point: before the loop or before the FindSet/Find call
         var insertionTarget = FindInsertionTarget(invocation);
@@ -139,12 +143,10 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
     }
 
     private static ExpressionStatementSyntax BuildSetAutoCalcFieldsStatement(
-        string variableName, SeparatedSyntaxList<CodeExpressionSyntax> calcFieldsArguments)
+        CodeExpressionSyntax instanceExpression, SeparatedSyntaxList<CodeExpressionSyntax> calcFieldsArguments)
     {
-        var variableIdentifier = SyntaxFactory.IdentifierName(variableName);
-
         var setAutoCalcFieldsAccess = SyntaxFactory.MemberAccessExpression(
-            variableIdentifier,
+            instanceExpression,
             SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
             SyntaxFactory.IdentifierName("SetAutoCalcFields"));
 

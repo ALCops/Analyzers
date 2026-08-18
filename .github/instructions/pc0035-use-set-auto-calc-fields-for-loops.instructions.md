@@ -68,13 +68,15 @@ This follows the same `_branchDepth` pattern used in `PartialRecordOperations` (
 4. Insert `SetAutoCalcFields(fields)` before the insertion target
 5. Arguments are passed through directly from CalcFields (unqualified field names)
 
+The receiver expression is reused verbatim from the CalcFields member access (trivia stripped), so qualified receivers like `this.Job` are preserved. Rebuilding it via `SyntaxFactory.IdentifierName(expression.ToString())` produced the quoted identifier `"this.Job"` (issue #428). An `SyntaxFactory.ElasticMarker` leading trivia is attached to the reused node: the SDK's `CodeAction` post-formats only elastic-annotated spans, and source nodes (unlike factory-created tokens) carry no elastic trivia, so without it the inserted statement loses its indentation.
+
 The insertion target must be an element of a statement list (`BlockSyntax` or `RepeatStatementSyntax` body). When the target is a single-statement branch (e.g. the `if X.FindSet() then repeat...` is itself an unblocked then-branch of an outer `if`), `InsertNodesBefore` would throw `InvalidOperationException` in the SDK's `SyntaxReplacer`. The `InsertableOrNull` guard returns null in that case, so no CodeFix is offered (issue #398); the diagnostic still appears.
 
 ## Test coverage
 
-**HasDiagnostic (7 cases):** FindSetRepeatUntil, FindRepeatUntil, WhileLoop, ReportOnAfterGetRecord, MultipleCalcFields, NestedLoop, NestedLoopInConditional.
+**HasDiagnostic (8 cases):** FindSetRepeatUntil, FindRepeatUntil, WhileLoop, ReportOnAfterGetRecord, MultipleCalcFields, NestedLoop, NestedLoopInConditional, ThisQualifiedGlobalVariable.
 **NoDiagnostic (10 cases):** DifferentVariable, CalcFieldsOutsideLoop, CrossMethodCall, SingleRecord, CalcFieldsInIfBlock, CalcFieldsInCaseBlock, CalcFieldsInIfElseBlock, TemporaryVariable, TemporaryTableType, ReportTemporaryTableType.
-**HasFix (4 cases):** FindSetRepeatUntil, MultipleFields, IfFindSetRepeatUntil, IfFindSetBeginRepeatUntil.
+**HasFix (5 cases):** FindSetRepeatUntil, MultipleFields, IfFindSetRepeatUntil, IfFindSetBeginRepeatUntil, ThisQualifiedGlobalVariable.
 **NoFix (2 cases):** UnblockedThenBranch, UnblockedThenBranchBeforeElse.
 
 ## Known limitations

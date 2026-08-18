@@ -28,6 +28,7 @@ public class UseSetAutoCalcFieldsForLoops : NavCodeAnalysisBase
     [TestCase("MultipleCalcFields")]
     [TestCase("NestedLoop")]
     [TestCase("NestedLoopInConditional")]
+    [TestCase("ThisQualifiedGlobalVariable")]
     public async Task HasDiagnostic(string testCase)
     {
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -60,6 +61,7 @@ public class UseSetAutoCalcFieldsForLoops : NavCodeAnalysisBase
     [TestCase("MultipleFields")]
     [TestCase("IfFindSetRepeatUntil")]
     [TestCase("IfFindSetBeginRepeatUntil")]
+    [TestCase("ThisQualifiedGlobalVariable")]
     public async Task HasFix(string testCase)
     {
         var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
