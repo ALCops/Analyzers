@@ -28,8 +28,15 @@ public class UseSetAutoCalcFieldsForLoops : NavCodeAnalysisBase
     [TestCase("MultipleCalcFields")]
     [TestCase("NestedLoop")]
     [TestCase("NestedLoopInConditional")]
+    [TestCase("ThisQualifiedGlobalVariable")]
     public async Task HasDiagnostic(string testCase)
     {
+        SkipTestIfVersionIsTooLow(
+            ["ThisQualifiedGlobalVariable"],
+            testCase,
+            "14.0",
+            "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
             .ConfigureAwait(false);
 
@@ -60,8 +67,15 @@ public class UseSetAutoCalcFieldsForLoops : NavCodeAnalysisBase
     [TestCase("MultipleFields")]
     [TestCase("IfFindSetRepeatUntil")]
     [TestCase("IfFindSetBeginRepeatUntil")]
+    [TestCase("ThisQualifiedGlobalVariable")]
     public async Task HasFix(string testCase)
     {
+        SkipTestIfVersionIsTooLow(
+            ["ThisQualifiedGlobalVariable"],
+            testCase,
+            "14.0",
+            "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
         var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
             .ConfigureAwait(false);
 
