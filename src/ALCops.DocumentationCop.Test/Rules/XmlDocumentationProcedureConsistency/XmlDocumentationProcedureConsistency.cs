@@ -24,6 +24,7 @@ namespace ALCops.DocumentationCop.Test
         [TestCase("DuplicateParameter")]
         [TestCase("DuplicateReturns")]
         [TestCase("TryFunction")]
+        [TestCase("ParamWithoutNameAttribute")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
