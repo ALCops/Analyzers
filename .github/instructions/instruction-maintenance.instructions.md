@@ -86,6 +86,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `cicd` | `'.github/**'` | CI/CD workflows |
 | `release-strategy` | `'.github/**'` | Release channels, versioning, cleanup |
 | `get-bc-devtools` | `'.github/actions/get-bc-devtools/**'` | BC DevTools discovery and caching |
+| `ac0011-caption-required` | rule-scoped | AC0011 rule |
 | `ac0013-field-groups-required` | rule-scoped | AC0013 rule |
 | `ac0014-tooltip-must-end-with-punctuation` | rule-scoped | AC0014 rule |
 | `ac0026-allow-in-customizations-for-omitted-fields` | rule-scoped | AC0026 rule |

@@ -26,6 +26,7 @@ namespace ALCops.ApplicationCop.Test
 
         [Test]
         [TestCase("EnumObject")]
+        [TestCase("HeadlinePartPage")]
         [TestCase("PageObject")]
         [TestCase("PageAnalysisView")]
         [TestCase("TableObject")]
@@ -48,6 +49,8 @@ namespace ALCops.ApplicationCop.Test
         [Test]
         [TestCase("ApiPage")]
         [TestCase("EnumObject")]
+        [TestCase("HeadlinePartPage")]
+        [TestCase("HeadlinePartPageExtension")]
         [TestCase("PageObject")]
         [TestCase("PageAnalysisView")]
         [TestCase("TableObject")]
