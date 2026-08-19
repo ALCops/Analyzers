@@ -34,6 +34,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("ThisKeywordPartialUnused")]
         [TestCase("TableTypeTemporaryUnused")]
         [TestCase("XmlPortUseTemporaryUnused")]
+        [TestCase("RecordRefNoDbOperation")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -76,6 +77,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("MethodWithoutParenthesesChained")]
         [TestCase("ThisKeywordSelfAccess")]
         [TestCase("ImplicitSelfBareCall")]
+        [TestCase("RecordRefParameterModify")]
+        [TestCase("RecordRefLocalVarFind")]
+        [TestCase("RecordRefGlobalVarDelete")]
+        [TestCase("RecordRefWithoutParensCount")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

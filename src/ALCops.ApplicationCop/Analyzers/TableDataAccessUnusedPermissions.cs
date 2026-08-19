@@ -59,7 +59,11 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
         var requiredPermissions = new List<RequiredPermission>();
 
-        CollectFromInvocations(ctx, containingObject, requiredPermissions);
+        // Whole-object bailout: a DB operation on a RecordRef receiver can target any
+        // table at runtime, so unused-permission analysis is unsound for this object.
+        if (CollectFromInvocations(ctx, containingObject, requiredPermissions))
+            return;
+
         CollectFromDataItems(containingObject, requiredPermissions);
 
         var pageContext = PermissionResolver.GetPageContext(containingObject);
@@ -71,21 +75,36 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         }
     }
 
-    private static void CollectFromInvocations(
+    /// <summary>
+    /// Collects required permissions from DB invocations in all method bodies.
+    /// Returns true when a DB operation on a RecordRef receiver is found, in which case
+    /// the caller must abort analysis of the whole object (the RecordRef's runtime table
+    /// is statically unknowable, so any declared permission may be in use).
+    /// </summary>
+    private static bool CollectFromInvocations(
         SyntaxNodeAnalysisContext ctx,
         IApplicationObjectTypeSymbol containingObject,
         List<RequiredPermission> requiredPermissions)
     {
         // Build object-scope record map (global vars, data items, xmlport table elements)
+        // and the set of object-scope RecordRef variable names
         Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap = null;
+        HashSet<string>? objectScopeRecordRefNames = null;
         foreach (var member in containingObject.GetMembers())
         {
-            if (member is IVariableSymbol globalVar
-                && globalVar.Type is IRecordTypeSymbol globalRecordType
+            if (member is not IVariableSymbol globalVar)
+                continue;
+
+            if (globalVar.Type is IRecordTypeSymbol globalRecordType
                 && !globalRecordType.IsTemporary())
             {
                 objectScopeRecordMap ??= new(StringComparer.OrdinalIgnoreCase);
                 objectScopeRecordMap.TryAdd(globalVar.Name, globalRecordType);
+            }
+            else if (globalVar.Type?.NavTypeKind == EnumProvider.NavTypeKind.RecordRef)
+            {
+                objectScopeRecordRefNames ??= new(StringComparer.OrdinalIgnoreCase);
+                objectScopeRecordRefNames.Add(globalVar.Name);
             }
         }
 
@@ -125,8 +144,9 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             if (methodSymbol is null || methodSymbol.IsObsolete())
                 continue;
 
-            // Build per-method record variable map from locals + parameters
+            // Build per-method record variable map and RecordRef name set from locals + parameters
             Dictionary<string, IRecordTypeSymbol>? localRecordVarMap = null;
+            HashSet<string>? localRecordRefNames = null;
 
             foreach (var local in methodSymbol.LocalVariables)
             {
@@ -134,6 +154,11 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 {
                     localRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
                     localRecordVarMap.TryAdd(local.Name, recordType);
+                }
+                else if (local.Type?.NavTypeKind == EnumProvider.NavTypeKind.RecordRef)
+                {
+                    localRecordRefNames ??= new(StringComparer.OrdinalIgnoreCase);
+                    localRecordRefNames.Add(local.Name);
                 }
             }
 
@@ -144,15 +169,27 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     localRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
                     localRecordVarMap.TryAdd(param.Name, recordType);
                 }
+                else if (param.ParameterType?.NavTypeKind == EnumProvider.NavTypeKind.RecordRef)
+                {
+                    localRecordRefNames ??= new(StringComparer.OrdinalIgnoreCase);
+                    localRecordRefNames.Add(param.Name);
+                }
             }
 
             // Named return value acts as an implicit local variable in AL
-            if (methodSymbol.ReturnValueSymbol is { IsNamed: true } returnValue
-                && returnValue.ReturnType is IRecordTypeSymbol returnRecordType
-                && !returnRecordType.IsTemporary())
+            if (methodSymbol.ReturnValueSymbol is { IsNamed: true } returnValue)
             {
-                localRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
-                localRecordVarMap.TryAdd(returnValue.Name, returnRecordType);
+                if (returnValue.ReturnType is IRecordTypeSymbol returnRecordType
+                    && !returnRecordType.IsTemporary())
+                {
+                    localRecordVarMap ??= new(StringComparer.OrdinalIgnoreCase);
+                    localRecordVarMap.TryAdd(returnValue.Name, returnRecordType);
+                }
+                else if (returnValue.ReturnType?.NavTypeKind == EnumProvider.NavTypeKind.RecordRef)
+                {
+                    localRecordRefNames ??= new(StringComparer.OrdinalIgnoreCase);
+                    localRecordRefNames.Add(returnValue.Name);
+                }
             }
 
             // Walk method body for DB invocations (handles both with and without parentheses)
@@ -162,13 +199,20 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     || (descendant is MemberAccessExpressionSyntax ma && ma.Parent is not InvocationExpressionSyntax))
                 {
                     var permission = TryGetPermissionFromDbAccess(
-                        descendant, containingObject, localRecordVarMap, objectScopeRecordMap, ctx);
+                        descendant, containingObject, localRecordVarMap, objectScopeRecordMap,
+                        localRecordRefNames, objectScopeRecordRefNames, ctx,
+                        out var isRecordRefAccess);
+
+                    if (isRecordRefAccess)
+                        return true;
 
                     if (permission is not null)
                         requiredPermissions.Add(permission.Value);
                 }
             }
         }
+
+        return false;
     }
 
     /// <summary>
@@ -176,14 +220,20 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
     /// - InvocationExpressionSyntax (with parentheses: MyTable.Find())
     /// - MemberAccessExpressionSyntax without parent InvocationExpressionSyntax (no parens: MyTable.Count)
     /// Uses variable-map fast path when possible, falls back to GetSymbolInfo for complex receivers.
+    /// Sets <paramref name="isRecordRefAccess"/> when the receiver is a RecordRef, which
+    /// requires the caller to abort analysis of the whole object.
     /// </summary>
     private static RequiredPermission? TryGetPermissionFromDbAccess(
         SyntaxNode node,
         IApplicationObjectTypeSymbol containingObject,
         Dictionary<string, IRecordTypeSymbol>? localRecordVarMap,
         Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap,
-        SyntaxNodeAnalysisContext ctx)
+        HashSet<string>? localRecordRefNames,
+        HashSet<string>? objectScopeRecordRefNames,
+        SyntaxNodeAnalysisContext ctx,
+        out bool isRecordRefAccess)
     {
+        isRecordRefAccess = false;
         // Extract method name, receiver expression, and location from either syntax form
         string? methodName;
         ExpressionSyntax? receiverExpression;
@@ -236,6 +286,13 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             var receiverName = identifierName.Identifier.ValueText?.UnquoteIdentifier();
             if (receiverName is not null)
             {
+                if ((localRecordRefNames is not null && localRecordRefNames.Contains(receiverName))
+                    || (objectScopeRecordRefNames is not null && objectScopeRecordRefNames.Contains(receiverName)))
+                {
+                    isRecordRefAccess = true;
+                    return null;
+                }
+
                 IRecordTypeSymbol? recordType = null;
 
                 if (localRecordVarMap is not null)
@@ -265,13 +322,19 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (receiverExpression is not null && receiverExpression is not IdentifierNameSyntax)
         {
             var receiverType = ctx.SemanticModel.GetOperation(receiverExpression, ctx.CancellationToken)?.Type;
+            if (receiverType?.NavTypeKind == EnumProvider.NavTypeKind.RecordRef)
+            {
+                isRecordRefAccess = true;
+                return null;
+            }
+
             var permission = TryGetPermissionForType(receiverType, operation, node);
             if (permission is not null)
                 return permission;
         }
 
         // Fallback: complex receiver or unresolved name (use GetSymbolInfo)
-        return TryGetPermissionViaSymbolInfo(node, receiverExpression, containingObject, ctx);
+        return TryGetPermissionViaSymbolInfo(node, receiverExpression, containingObject, ctx, out isRecordRefAccess);
     }
 
     /// <summary>
@@ -303,8 +366,11 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         SyntaxNode node,
         ExpressionSyntax? receiverExpression,
         IApplicationObjectTypeSymbol containingObject,
-        SyntaxNodeAnalysisContext ctx)
+        SyntaxNodeAnalysisContext ctx,
+        out bool isRecordRefAccess)
     {
+        isRecordRefAccess = false;
+
         var symbolInfo = ctx.SemanticModel.GetSymbolInfo(node, ctx.CancellationToken);
         if (symbolInfo.Symbol is not IMethodSymbol targetMethod)
             return null;
@@ -328,6 +394,13 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 IMethodSymbol m => m.ReturnValueSymbol?.ReturnType,
                 _ => null
             };
+
+            if (receiverType?.NavTypeKind == EnumProvider.NavTypeKind.RecordRef)
+            {
+                isRecordRefAccess = true;
+                return null;
+            }
+
             recordType = receiverType as IRecordTypeSymbol;
         }
         else
