@@ -39,6 +39,8 @@ namespace ALCops.FormattingCop.Test
         [TestCase("GlobalVarAndParamThisPrefix")]
         [TestCase("GlobalVarAndReturnValue")]
         [TestCase("GlobalVarAndLocalVar")]
+        [TestCase("XmlPortDataType")]
+        [TestCase("XmlPortObjectAccess")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -89,6 +91,8 @@ namespace ALCops.FormattingCop.Test
         [TestCase("GlobalVarAndParamThisPrefix")]
         [TestCase("GlobalVarAndReturnValue")]
         [TestCase("GlobalVarAndLocalVar")]
+        [TestCase("XmlPortDataType")]
+        [TestCase("XmlPortObjectAccess")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
