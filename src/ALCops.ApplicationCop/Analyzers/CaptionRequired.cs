@@ -45,6 +45,12 @@ public sealed class CaptionRequired : DiagnosticAnalyzer
             switch (Control.ControlKind)
             {
                 case var _ when Control.ControlKind == EnumProvider.ControlKind.Field:
+                    // The Caption property is ignored by the runtime for field controls on HeadlinePart pages;
+                    // only Expression, Visible, ApplicationArea, Drilldown and DrillDownPageID apply there.
+                    // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-create-role-center-headline#in-development
+                    if (IsInHeadlinePartPage(context))
+                        break;
+
                     if (CaptionIsMissing(context.Symbol, context))
                         if (Control.RelatedFieldSymbol is not null)
                         {
@@ -188,6 +194,18 @@ public sealed class CaptionRequired : DiagnosticAnalyzer
             return false;
 
         return ((IPageTypeSymbol)containingObject).PageType == EnumProvider.PageTypeKind.API;
+    }
+
+    private static bool IsInHeadlinePartPage(SymbolAnalysisContext context)
+    {
+        IPageBaseTypeSymbol? pageBase = context.Symbol.GetContainingObjectTypeSymbol() switch
+        {
+            IPageTypeSymbol page => page,
+            IApplicationObjectExtensionTypeSymbol ext => ext.Target?.OriginalDefinition as IPageBaseTypeSymbol,
+            _ => null
+        };
+
+        return pageBase?.PageType == EnumProvider.PageTypeKind.HeadlinePart;
     }
 
     private void RaiseDiagnostic(SymbolAnalysisContext context)
