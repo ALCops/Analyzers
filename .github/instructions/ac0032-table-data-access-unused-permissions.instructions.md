@@ -47,13 +47,14 @@ src/ALCops.Common/
 2. Skip PermissionSet/PermissionSetExtension, obsolete objects, test codeunits with permissions disabled
 3. Get `Permissions` property (early exit if null, covers ~70% of objects)
 4. **Collect DB invocations** (`CollectFromInvocations`):
-   - Build object-scope record map (`objectScopeRecordMap`) from `containingObject.GetMembers()`: global vars, report data items (via `GetTypeSymbol()`), xmlport table elements (via `FlattenedNodes` + `GetTypeSymbol()`)
+   - Build object-scope record map (`objectScopeRecordMap`) from `containingObject.GetMembers()`: global vars, report data items (via `GetTypeSymbol()`), xmlport table elements (via `FlattenedNodes` + `GetTypeSymbol()`); also collect object-scope RecordRef variable names (`objectScopeRecordRefNames`)
    - Walk `ctx.Node.DescendantNodes()` for `MethodOrTriggerDeclarationSyntax`
    - Skip obsolete methods via `GetDeclaredSymbol` + `IsObsolete()`
    - For each method body: syntax pre-filter (`HasPossibleDbInvocation`)
-   - Build per-method record variable map from `IMethodSymbol.LocalVariables` + `.Parameters`
+   - Build per-method record variable map from `IMethodSymbol.LocalVariables` + `.Parameters`; RecordRef-typed locals/parameters/named returns go into a per-method RecordRef name set (`localRecordRefNames`)
    - Walk method body for both `InvocationExpressionSyntax` and standalone `MemberAccessExpressionSyntax` (method calls without parentheses)
    - Unified `TryGetPermissionFromDbAccess` extracts method name + receiver from either form, resolves via variable map (fast path), then via the receiver's `IOperation.Type` for non-identifier receivers (`this.`, expression receivers), and falls back to `GetSymbolInfo` for anything unresolved
+   - **RecordRef whole-object bailout**: when a DB-operation method is invoked on a RecordRef receiver (detected via the RecordRef name sets, `IOperation.Type.NavTypeKind`, or the `GetSymbolInfo` fallback), `CollectFromInvocations` returns `true` and `AnalyzeApplicationObject` aborts without reporting any diagnostic for the object
 5. **Collect data items** (`CollectFromDataItems`):
    - Iterate `containingObject.GetMembers()` for ReportDataItem, QueryDataItem, XmlPortNode symbols
    - For XmlPortNode: also iterate `FlattenedNodes` to reach nested table elements
@@ -65,7 +66,7 @@ src/ALCops.Common/
 | Method | Purpose |
 |---|---|
 | `AnalyzeApplicationObject` | Entry point; checks Permissions, orchestrates collection and reporting |
-| `CollectFromInvocations` | Builds object-scope record map (vars + data items), walks method bodies, resolves DB calls via unified handler |
+| `CollectFromInvocations` | Builds object-scope record map (vars + data items) and RecordRef name set, walks method bodies, resolves DB calls via unified handler. Returns `true` (bail out) when a RecordRef DB operation is found |
 | `TryGetPermissionFromDbAccess` | Unified resolution for both syntax forms (with/without parentheses). Handles all four receiver forms: `MyTable.Modify()` / `Rec.Modify()` (variable-map fast path), `Modify()` (bare implicit self), `this.Modify()` (AL `this` self-reference, resolved via `IOperation.Type`). Falls back to `TryGetPermissionViaSymbolInfo` for unresolved receivers |
 | `TryGetPermissionForType` | Builds a required permission from a resolved receiver/self type (record resolved to its backing table, or a table type directly); returns null for non-record/table types (e.g. `this` inside a codeunit) |
 | `TryGetPermissionViaSymbolInfo` | Fallback for complex receivers: uses GetSymbolInfo on the node and receiver expression to resolve method and receiver type |
@@ -107,6 +108,8 @@ Each `SyntaxNodeAction` callback is self-contained with no shared mutable state.
 | `PermissionMatchesTable` duplicated from `PermissionResolver` | Avoids coupling; operates on syntax nodes, not resolved symbols |
 | Temporary tables NOT counted as permission users (all implementations) | Temporary tables never touch the database, so a permission declared for a table accessed ONLY via temporary records is dead code and IS flagged as unused. All three implementations plus report/xmlport `UseTemporary` are excluded from the "used" collection via the `IRecordTypeSymbol.IsTemporary()` / `ITableTypeSymbol.IsTemporary()` extensions: applied to global var map, data-item map, locals, params, named return, `TryGetPermissionForType` (record + table-type branches), `AddXmlPortNodeToVarMap`, and the `GetSymbolInfo` fallback. The `TableType = Temporary` case needs the explicit `TableType` check because `IRecordTypeSymbol.Temporary` reflects only the `temporary` keyword. |
 | Skip permissionset/permissionsetextension objects | These objects declare permissions as their core purpose |
+| RecordRef whole-object bailout (issue #420) | A DB operation (any `MethodOperationMap` entry, reads included) on a `RecordRef` receiver can target any table at runtime; static analysis cannot tell which declared permission it consumes. AC0032 is therefore disabled for the entire object (silent, no diagnostic). Operation-granular suppression (only suppress the matching permission char) was considered and rejected in favor of simplicity. Detection: RecordRef-typed globals/locals/params/named returns tracked by name (fast path, `NavTypeKind == RecordRef`), complex receivers via `IOperation.Type.NavTypeKind`, plus the `GetSymbolInfo` fallback. Without this, the FixAll CodeFix removed permissions that were required at runtime |
+| Fast-path lookup honors AL scoping | Variables are classified by symbol type, never by name, so `RecordRef: Record Customer` tracks Customer normally. Because locals shadow globals, the receiver lookup consults the full local scope (RecordRef name set, then record map) before the object scope; otherwise a global `RecordRef: RecordRef` shadowed by a local record variable of the same name would falsely trigger the bailout |
 
 ## CodeFix
 
@@ -142,8 +145,8 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 
 ## Test coverage
 
-**HasDiagnostic (13 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord, ParameterPartialUnused, ReportDataItemPartialUnused, ThisKeywordPartialUnused, TableTypeTemporaryUnused, XmlPortUseTemporaryUnused.
-**NoDiagnostic (27 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, ReportDataItemAliasModify, XmlPortTableElementModify, XmlPortNestedTableElementModify, ReturnParameterRead, ReportNestedDataItemRead, QueryNestedDataItemRead, MethodWithoutParenthesesCount, MethodWithoutParenthesesFindFirst, MethodWithoutParenthesesIsEmpty, MethodWithoutParenthesesChained, ThisKeywordSelfAccess, ImplicitSelfBareCall.
+**HasDiagnostic (16 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord, ParameterPartialUnused, ReportDataItemPartialUnused, ThisKeywordPartialUnused, TableTypeTemporaryUnused, XmlPortUseTemporaryUnused, RecordRefNoDbOperation, RecordRefFieldRefValueOnly, RecordRefNameShadowedByLocalRecord.
+**NoDiagnostic (33 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, ReportDataItemAliasModify, XmlPortTableElementModify, XmlPortNestedTableElementModify, ReturnParameterRead, ReportNestedDataItemRead, QueryNestedDataItemRead, MethodWithoutParenthesesCount, MethodWithoutParenthesesFindFirst, MethodWithoutParenthesesIsEmpty, MethodWithoutParenthesesChained, ThisKeywordSelfAccess, ImplicitSelfBareCall, RecordRefParameterModify, RecordRefLocalVarFind, RecordRefGlobalVarDelete, RecordRefWithoutParensCount, RecordRefFindWithArgument, RecordRefNamedRecordVariable.
 **HasFix (4 cases):** RemoveEntireEntry, ReduceChars, RemoveEntireProperty, ReplaceChars.
 
 ## Known limitations
@@ -152,6 +155,8 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 2. **CalcFields/CalcSums**: Indirect table access through FlowFields is not traced
 3. **InherentPermissions overlap**: Table-level `InherentPermissions` may make an object-level entry redundant, but the analyzer does not flag this (different concern from unused)
 4. **Cross-object calls**: If codeunit A calls codeunit B, and B accesses a table, A's permission for that table appears unused (correct, because permissions don't flow through the call stack)
+5. **RecordRef bailout hides true positives**: When the whole-object bailout triggers, genuinely unused permissions in that object are no longer reported (accepted trade-off; see design decisions)
+6. **FieldRef access is not a DB operation**: `FieldRef.Value`/`Field`/`Caption` operate on the in-memory current row and neither consume a permission nor trigger the RecordRef bailout (verified: only mapped DB methods on the RecordRef itself count). `FieldRef.CalcField` does read the database but is not traced, consistent with limitation 2
 
 ## Design decisions (continued)
 
