@@ -42,4 +42,4 @@ Single `RegisterSymbolAction` over Page, Query, Table, Field, Action, EnumValue,
 **HasDiagnostic (5 cases):** EnumObject, HeadlinePartPage, PageObject, PageAnalysisView, TableObject.
 **NoDiagnostic (7 cases):** ApiPage, EnumObject, HeadlinePartPage, HeadlinePartPageExtension, PageObject, PageAnalysisView, TableObject.
 
-PageAnalysisView cases require the net10.0 SDK (skipped below version 18.0.36).
+PageAnalysisView cases require the net10.0 SDK (skipped below version 18.0.36). HeadlinePartPageExtension requires SDK 13.0+ (older compilers reject an extension whose target is declared in the same module, AL0334).

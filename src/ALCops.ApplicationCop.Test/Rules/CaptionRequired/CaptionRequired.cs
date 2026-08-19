@@ -10,6 +10,7 @@ namespace ALCops.ApplicationCop.Test
         private string _testCasePath;
 
         private static readonly string[] AnalysisViewTestCases = ["PageAnalysisView"];
+        private static readonly string[] SameModuleExtensionTestCases = ["HeadlinePartPageExtension"];
 
         [SetUp]
         public void Setup()
@@ -61,6 +62,13 @@ namespace ALCops.ApplicationCop.Test
                 testCase,
                 "18.0.36",
                 "PageAnalysisView requires net10.0 SDK."
+            );
+
+            SkipTestIfVersionIsTooLow(
+                SameModuleExtensionTestCases,
+                testCase,
+                "13.0",
+                "No support for page extensions when the target itself is already declared in the same module."
             );
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
