@@ -35,6 +35,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("TableTypeTemporaryUnused")]
         [TestCase("XmlPortUseTemporaryUnused")]
         [TestCase("RecordRefNoDbOperation")]
+        [TestCase("RecordRefFieldRefValueOnly")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -81,6 +82,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("RecordRefLocalVarFind")]
         [TestCase("RecordRefGlobalVarDelete")]
         [TestCase("RecordRefWithoutParensCount")]
+        [TestCase("RecordRefFindWithArgument")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

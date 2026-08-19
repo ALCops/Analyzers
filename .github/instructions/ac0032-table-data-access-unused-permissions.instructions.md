@@ -144,8 +144,8 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 
 ## Test coverage
 
-**HasDiagnostic (14 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord, ParameterPartialUnused, ReportDataItemPartialUnused, ThisKeywordPartialUnused, TableTypeTemporaryUnused, XmlPortUseTemporaryUnused, RecordRefNoDbOperation.
-**NoDiagnostic (31 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, ReportDataItemAliasModify, XmlPortTableElementModify, XmlPortNestedTableElementModify, ReturnParameterRead, ReportNestedDataItemRead, QueryNestedDataItemRead, MethodWithoutParenthesesCount, MethodWithoutParenthesesFindFirst, MethodWithoutParenthesesIsEmpty, MethodWithoutParenthesesChained, ThisKeywordSelfAccess, ImplicitSelfBareCall, RecordRefParameterModify, RecordRefLocalVarFind, RecordRefGlobalVarDelete, RecordRefWithoutParensCount.
+**HasDiagnostic (15 cases):** EntireEntryUnused, PartialCharsUnused, MultipleUnusedEntries, NoCodeInCodeunit, UnusedOnReport, UnusedOnQuery, UnusedOnXmlPort, TemporaryRecord, ParameterPartialUnused, ReportDataItemPartialUnused, ThisKeywordPartialUnused, TableTypeTemporaryUnused, XmlPortUseTemporaryUnused, RecordRefNoDbOperation, RecordRefFieldRefValueOnly.
+**NoDiagnostic (32 cases):** AllPermissionsUsed, PageSourceTable, TestCodeunitDisabled, ReadUsed, ReportDataItemRead, QueryDataItemRead, PermissionSet, PermissionSetExtension, SystemTable, ParameterOperations, UppercasePermissions, ParameterAllOperations, LocalVarSpacedTable, GlobalVarSpacedTable, ReportDataItemModify, ReportDataItemAliasModify, XmlPortTableElementModify, XmlPortNestedTableElementModify, ReturnParameterRead, ReportNestedDataItemRead, QueryNestedDataItemRead, MethodWithoutParenthesesCount, MethodWithoutParenthesesFindFirst, MethodWithoutParenthesesIsEmpty, MethodWithoutParenthesesChained, ThisKeywordSelfAccess, ImplicitSelfBareCall, RecordRefParameterModify, RecordRefLocalVarFind, RecordRefGlobalVarDelete, RecordRefWithoutParensCount, RecordRefFindWithArgument.
 **HasFix (4 cases):** RemoveEntireEntry, ReduceChars, RemoveEntireProperty, ReplaceChars.
 
 ## Known limitations
@@ -155,6 +155,7 @@ When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remo
 3. **InherentPermissions overlap**: Table-level `InherentPermissions` may make an object-level entry redundant, but the analyzer does not flag this (different concern from unused)
 4. **Cross-object calls**: If codeunit A calls codeunit B, and B accesses a table, A's permission for that table appears unused (correct, because permissions don't flow through the call stack)
 5. **RecordRef bailout hides true positives**: When the whole-object bailout triggers, genuinely unused permissions in that object are no longer reported (accepted trade-off; see design decisions)
+6. **FieldRef access is not a DB operation**: `FieldRef.Value`/`Field`/`Caption` operate on the in-memory current row and neither consume a permission nor trigger the RecordRef bailout (verified: only mapped DB methods on the RecordRef itself count). `FieldRef.CalcField` does read the database but is not traced, consistent with limitation 2
 
 ## Design decisions (continued)
 
