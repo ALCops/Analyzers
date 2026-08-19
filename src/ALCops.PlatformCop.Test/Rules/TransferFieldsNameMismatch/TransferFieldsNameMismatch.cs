@@ -1,3 +1,4 @@
+using Microsoft.Dynamics.Nav.CodeAnalysis;
 using RoslynTestKit;
 
 namespace ALCops.PlatformCop.Test
@@ -6,6 +7,29 @@ namespace ALCops.PlatformCop.Test
     {
         private AnalyzerTestFixture _fixture;
         private string _testCasePath;
+
+        private static readonly byte[] AppSourceCopWithAffixes = System.Text.Encoding.UTF8.GetBytes(
+            """
+            {
+                "mandatoryPrefix": "ABC ",
+                "mandatorySuffix": " XYZ",
+                "mandatoryAffixes": ["FOO"]
+            }
+            """);
+
+        private static AnalyzerTestFixture CreateFixtureWithAffixes()
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "AppSourceCop.json", AppSourceCopWithAffixes }
+            };
+
+            return RoslynFixtureFactory.Create<Analyzers.TransferFieldsSchemaCompatibility>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = new MemoryFileSystem(files)
+                });
+        }
 
         [SetUp]
         public void Setup()
@@ -76,6 +100,39 @@ namespace ALCops.PlatformCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TransferFieldsNameMismatch);
+        }
+
+        [Test]
+        [TestCase("Affix_Invocation_CoreNameDiffers")]
+        [TestCase("Affix_Invocation_OwnTableFieldsNotStripped")]
+        public async Task HasDiagnosticWithAffixes(string testCase)
+        {
+            SkipTestIfVersionIsTooLow(
+                ["Affix_Invocation_CoreNameDiffers"],
+                testCase,
+                "13.0",
+                "No support for tableextensions when target itself is already declared in the same module");
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            CreateFixtureWithAffixes().HasDiagnosticAtAllMarkers(code, DiagnosticIds.TransferFieldsNameMismatch);
+        }
+
+        [Test]
+        [TestCase("Affix_Invocation_PrefixStripped")]
+        [TestCase("Affix_Invocation_SuffixStripped")]
+        [TestCase("Affix_Invocation_AffixTrimmed")]
+        [TestCase("Affix_TableExt_BothSidesStripped")]
+        public async Task NoDiagnosticWithAffixes(string testCase)
+        {
+            RequireMinimumVersion("13.0",
+                "No support for tableextensions when target itself is already declared in the same module");
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            CreateFixtureWithAffixes().NoDiagnosticAtAllMarkers(code, DiagnosticIds.TransferFieldsNameMismatch);
         }
     }
 }
