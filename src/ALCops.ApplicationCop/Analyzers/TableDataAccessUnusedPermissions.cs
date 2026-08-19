@@ -280,14 +280,15 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (hasImplicitSelf)
             return TryGetPermissionForType(containingObject as ITypeSymbol, operation, node);
 
-        // Fast path: resolve receiver via variable map lookup
+        // Fast path: resolve receiver via variable map lookup, honoring AL scoping:
+        // locals/parameters shadow object-scope variables, so the full local scope is
+        // consulted (RecordRef set + record map) before the object scope.
         if (receiverExpression is IdentifierNameSyntax identifierName)
         {
             var receiverName = identifierName.Identifier.ValueText?.UnquoteIdentifier();
             if (receiverName is not null)
             {
-                if ((localRecordRefNames is not null && localRecordRefNames.Contains(receiverName))
-                    || (objectScopeRecordRefNames is not null && objectScopeRecordRefNames.Contains(receiverName)))
+                if (localRecordRefNames is not null && localRecordRefNames.Contains(receiverName))
                 {
                     isRecordRefAccess = true;
                     return null;
@@ -297,6 +298,13 @@ public class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
                 if (localRecordVarMap is not null)
                     localRecordVarMap.TryGetValue(receiverName, out recordType);
+
+                if (recordType is null
+                    && objectScopeRecordRefNames is not null && objectScopeRecordRefNames.Contains(receiverName))
+                {
+                    isRecordRefAccess = true;
+                    return null;
+                }
 
                 if (recordType is null && objectScopeRecordMap is not null)
                     objectScopeRecordMap.TryGetValue(receiverName, out recordType);
