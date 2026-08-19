@@ -31,6 +31,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("InvocationWithVarLocals")]
         [TestCase("InvocationWithVarParam")]
         [TestCase("InvocationWithTableExtension")]
+        [TestCase("Invocation_SourceTableObsoleteStatePending")]
         [TestCase("TableExt_Multiple_SameBase")]
         [TestCase("TableExtension")]
         [TestCase("TableExt_NamespaceCasingMismatch")]
@@ -52,17 +53,21 @@ namespace ALCops.PlatformCop.Test
         [TestCase("BuiltInInvocation")]
         [TestCase("Invocation_ObsoleteStateRemoved")]
         [TestCase("Invocation_Pragma")]
+        [TestCase("Invocation_SourceTableObsoleteStateRemoved")]
+        [TestCase("Invocation_TargetTableObsoleteStateRemoved")]
         [TestCase("InvocationSkipFieldsNotMatchingType")]
         [TestCase("InvocationWithInitPrimaryKeyFieldsIsFalse")]
         [TestCase("InvocationWithTableExtension")]
         [TestCase("TableExt_ObsoleteStateRemoved")]
         [TestCase("TableExt_Paired_Extension_Pragma")]
         [TestCase("TableExt_Paired_SingleTableExt")]
+        [TestCase("TableExt_SourceBaseTableObsoleteStateRemoved")]
+        [TestCase("TableExt_TargetBaseTableObsoleteStateRemoved")]
         [TestCase("TableExt_Unpaired")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["InvocationWithTableExtension", "TableExt_ObsoleteStateRemoved", "TableExt_Paired_Extension_Pragma", "TableExt_Paired_SingleTableExt", "TableExt_Unpaired"],
+                ["InvocationWithTableExtension", "TableExt_ObsoleteStateRemoved", "TableExt_Paired_Extension_Pragma", "TableExt_Paired_SingleTableExt", "TableExt_SourceBaseTableObsoleteStateRemoved", "TableExt_TargetBaseTableObsoleteStateRemoved", "TableExt_Unpaired"],
                 testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");

@@ -136,6 +136,11 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (sourceTable is null || targetTable is null)
             return;
 
+        // Removed (or moved) tables no longer participate in TransferFields at runtime,
+        // e.g. upgrade code transferring from a removed table. Pending tables still do.
+        if (sourceTable.IsRemoved() || targetTable.IsRemoved())
+            return;
+
         var tableExtensions = GetCachedTableExtensions(ctx.Compilation);
         var sourceFields = BuildEffectiveFields(sourceTable, tableExtensions);
         var targetFields = BuildEffectiveFields(targetTable, tableExtensions, IsInitPrimaryKeyFieldsEnabled(invocation));
@@ -204,6 +209,11 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (tableExtension.Target is not ITableTypeSymbol sourceTable)
             return;
 
+        // Skip removed extensions and extensions of removed base tables; their fields
+        // no longer participate in TransferFields at runtime. Pending is still analyzed.
+        if (tableExtension.IsRemoved() || sourceTable.IsRemoved())
+            return;
+
         var relations = TryFindBySource(sourceTable);
         if (!relations.Any())
             return;
@@ -221,11 +231,13 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         var sourceTableExtensions =
             tableExtensions
                 .Where(te => te.Target is not null && SemanticFacts.IsSameName(te.Target.Name, relation.Source.Name))
+                .Where(te => !te.IsRemoved() && !te.Target!.IsRemoved())
                 .SelectMany(x => x.AddedFields);
 
         var targetTableExtensions =
             tableExtensions
                 .Where(te => te.Target is not null && SemanticFacts.IsSameName(te.Target.Name, relation.Target.Name))
+                .Where(te => !te.IsRemoved() && !te.Target!.IsRemoved())
                 .SelectMany(x => x.AddedFields);
 
         var sourceById = BuildFieldMapById(sourceTableExtensions);
