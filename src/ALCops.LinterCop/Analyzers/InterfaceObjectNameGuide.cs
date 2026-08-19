@@ -40,7 +40,8 @@ public sealed class InterfaceObjectNameGuide : DiagnosticAnalyzer
             return;
 
         // The interface object should start with a capital 'I' and should not have a space after it
-        if (interfaceTypeSymbol.Name.StartsWith(CharOfCapitalI) && !char.IsWhiteSpace(interfaceTypeSymbol.Name[1]))
+        if (interfaceTypeSymbol.Name.StartsWith(CharOfCapitalI) &&
+            (interfaceTypeSymbol.Name.Length == 1 || !char.IsWhiteSpace(interfaceTypeSymbol.Name[1])))
             return;
 
         int? indexAfterAffix = MandatoryAffixes.GetIndexAfterLeadingAffix(interfaceTypeSymbol.Name, affixes.Value);
@@ -57,7 +58,8 @@ public sealed class InterfaceObjectNameGuide : DiagnosticAnalyzer
         string objectNameWithoutPrefix = interfaceTypeSymbol.Name.Remove(0, indexAfterAffix.GetValueOrDefault());
 
         // The first character after the prefix should be a capital 'I'
-        if (RemoveSpecialCharacters(objectNameWithoutPrefix)[0] != CharOfCapitalI)
+        string lettersAndDigitsAfterPrefix = RemoveSpecialCharacters(objectNameWithoutPrefix);
+        if (lettersAndDigitsAfterPrefix.Length == 0 || lettersAndDigitsAfterPrefix[0] != CharOfCapitalI)
         {
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.InterfaceObjectNameGuide,

@@ -61,6 +61,7 @@ namespace ALCops.LinterCop.Test
 
         [Test]
         [TestCase("LeadingI")]
+        [TestCase("SingleCharacterI")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
@@ -72,6 +73,7 @@ namespace ALCops.LinterCop.Test
         [Test]
         [TestCase("AffixWithoutI")]
         [TestCase("AffixThenIWithWhitespace")]
+        [TestCase("AffixThenNoLettersOrDigits")]
         public async Task HasDiagnosticWithAffixes(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
