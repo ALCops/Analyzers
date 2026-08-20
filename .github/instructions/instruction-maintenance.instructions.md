@@ -92,6 +92,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `ac0026-allow-in-customizations-for-omitted-fields` | rule-scoped | AC0026 rule |
 | `ac0031-table-data-access-requires-permissions` | rule-scoped | AC0031 rule |
 | `ac0032-table-data-access-unused-permissions` | rule-scoped | AC0032 rule |
+| `dc0004-procedure-requires-documentation` | rule-scoped | DC0004/DC0006/DC0009/DC0010 rules (one analyzer, layered containing-object resolution) |
 | `sdk-analyzer-infrastructure` | `'src/ALCops.*/Analyzers/**'` | NAV SDK internals: callback ordering, incremental compilation, GetOperation perf |
 | `analyzer-exception-harness` | `'src/ALCops.Common/Diagnostics/**'` | XX0000 harness: base class + context decorators that convert analyzer exceptions into located diagnostics |
 | `fc0002-casing-mismatch` | rule-scoped | FC0002 rule (both analyzers, XmlPort casing matrix) |
