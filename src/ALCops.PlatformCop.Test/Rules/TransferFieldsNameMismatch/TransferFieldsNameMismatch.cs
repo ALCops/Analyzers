@@ -31,6 +31,27 @@ namespace ALCops.PlatformCop.Test
                 });
         }
 
+        private static readonly byte[] AppSourceCopWithCoincidentalAffix = System.Text.Encoding.UTF8.GetBytes(
+            """
+            {
+                "mandatoryAffixes": ["MER"]
+            }
+            """);
+
+        private static AnalyzerTestFixture CreateFixtureWithCoincidentalAffix()
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "AppSourceCop.json", AppSourceCopWithCoincidentalAffix }
+            };
+
+            return RoslynFixtureFactory.Create<Analyzers.TransferFieldsSchemaCompatibility>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = new MemoryFileSystem(files)
+                });
+        }
+
         [SetUp]
         public void Setup()
         {
@@ -133,6 +154,32 @@ namespace ALCops.PlatformCop.Test
                 .ConfigureAwait(false);
 
             CreateFixtureWithAffixes().NoDiagnosticAtAllMarkers(code, DiagnosticIds.TransferFieldsNameMismatch);
+        }
+
+        [Test]
+        [TestCase("Affix_GluedCoincidence_StillFires")]
+        public async Task HasDiagnosticWithCoincidentalAffix(string testCase)
+        {
+            RequireMinimumVersion("13.0",
+                "No support for tableextensions when target itself is already declared in the same module");
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            CreateFixtureWithCoincidentalAffix().HasDiagnosticAtAllMarkers(code, DiagnosticIds.TransferFieldsNameMismatch);
+        }
+
+        [Test]
+        [TestCase("Affix_GluedCoreCollision_DocumentedLimitation")]
+        public async Task NoDiagnosticWithCoincidentalAffix(string testCase)
+        {
+            RequireMinimumVersion("13.0",
+                "No support for tableextensions when target itself is already declared in the same module");
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            CreateFixtureWithCoincidentalAffix().NoDiagnosticAtAllMarkers(code, DiagnosticIds.TransferFieldsNameMismatch);
         }
     }
 }
