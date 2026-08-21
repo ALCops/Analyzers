@@ -16,20 +16,24 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.StatementBlocksSeparatedByBlankLine);
 
-    // Single source of truth for control-flow kinds. Consumed both by the syntax-node registration
-    // and by IsControlFlowStatement(); adding a new kind here is enough.
+    // Single source of truth for control-flow kinds and their user-facing names. Consumed by
+    // the syntax-node registration, IsControlFlowStatement(), and GetControlFlowStatementName().
+    // Adding a new kind here is enough.
+    private static readonly Dictionary<SyntaxKind, string> ControlFlowStatementNames = new()
+    {
+        [EnumProvider.SyntaxKind.IfStatement]      = "if",
+        [EnumProvider.SyntaxKind.CaseStatement]    = "case",
+        [EnumProvider.SyntaxKind.RepeatStatement]  = "repeat",
+        [EnumProvider.SyntaxKind.WhileStatement]   = "while",
+        [EnumProvider.SyntaxKind.ForStatement]     = "for",
+        [EnumProvider.SyntaxKind.ForEachStatement] = "foreach",
+    };
+
     private static readonly SyntaxKind[] ControlFlowStatementKindsArray =
-    [
-        EnumProvider.SyntaxKind.IfStatement,
-        EnumProvider.SyntaxKind.CaseStatement,
-        EnumProvider.SyntaxKind.RepeatStatement,
-        EnumProvider.SyntaxKind.WhileStatement,
-        EnumProvider.SyntaxKind.ForStatement,
-        EnumProvider.SyntaxKind.ForEachStatement,
-    ];
+        ControlFlowStatementNames.Keys.ToArray();
 
     private static readonly ImmutableHashSet<SyntaxKind> ControlFlowStatementKinds =
-        ImmutableHashSet.Create(ControlFlowStatementKindsArray);
+        ImmutableHashSet.CreateRange(ControlFlowStatementNames.Keys);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -53,12 +57,12 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
 
         var config = GetConfig(ctx.SemanticModel.Compilation.FileSystem);
 
-        AnalyzeControlFlowStatement(ctx, statement, config);
-        AnalyzeElseChain(ctx, statement, config);
+        AnalyzeControlFlowStatement(ctx.ReportDiagnostic, statement, config);
+        AnalyzeElseChain(ctx.ReportDiagnostic, statement, config);
     }
 
     private static void AnalyzeControlFlowStatement(
-        SyntaxNodeAnalysisContext ctx,
+        Action<Diagnostic> report,
         StatementSyntax statement,
         StatementBlockSpacingSettings config)
     {
@@ -80,51 +84,34 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        var statements = GetSiblingStatements(statement);
-
-        if (statements.Length == 0)
+        if (!TryGetSiblingIndex(statement, out var siblings, out var i))
         {
             return;
         }
 
-        for (int i = 0; i < statements.Length; i++)
+        var name = GetControlFlowStatementName(statement);
+
+        if (config.ControlFlowBefore && i > 0)
         {
-            if (statements[i] != statement)
-            {
-                continue;
-            }
+            ReportIfNoBlankLineBetween(
+                report,
+                siblings[i - 1].GetLastToken(),
+                statement.GetFirstToken(),
+                $"before '{name}' block");
+        }
 
-            var statementName = GetControlFlowStatementName(statement);
-
-            if (config.ControlFlowBefore && i > 0)
-            {
-                ReportMissingBlankLineBeforeIfNeeded(
-                    ctx,
-                    statements[i - 1],
-                    statement.GetFirstToken(),
-                    $"before '{statementName}' block");
-            }
-
-            if (config.ControlFlowAfter && i < statements.Length - 1)
-            {
-                var nextStatement = statements[i + 1];
-
-                if (!IsControlFlowStatement(nextStatement))
-                {
-                    ReportMissingBlankLineBeforeIfNeeded(
-                        ctx,
-                        statement,
-                        nextStatement.GetFirstToken(),
-                        $"after '{statementName}' block");
-                }
-            }
-
-            return;
+        if (config.ControlFlowAfter && i < siblings.Length - 1 && !IsControlFlowStatement(siblings[i + 1]))
+        {
+            ReportIfNoBlankLineBetween(
+                report,
+                statement.GetLastToken(),
+                siblings[i + 1].GetFirstToken(),
+                $"after '{name}' block");
         }
     }
 
     private static void AnalyzeElseChain(
-        SyntaxNodeAnalysisContext ctx,
+        Action<Diagnostic> report,
         StatementSyntax statement,
         StatementBlockSpacingSettings config)
     {
@@ -154,10 +141,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        if (!HasBlankLineBetween(tokenBeforeElse, elseToken))
-        {
-            ReportDiagnostic(ctx, elseToken, "before 'else' keyword");
-        }
+        ReportIfNoBlankLineBetween(report, tokenBeforeElse, elseToken, "before 'else' keyword");
     }
 
     private void AnalyzeExitStatement(SyntaxNodeAnalysisContext ctx)
@@ -181,31 +165,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        var statements = GetSiblingStatements(statement);
-
-        if (statements.Length == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < statements.Length; i++)
-        {
-            if (statements[i] != statement)
-            {
-                continue;
-            }
-
-            if (i > 0)
-            {
-                ReportMissingBlankLineBeforeIfNeeded(
-                    ctx,
-                    statements[i - 1],
-                    statement.GetFirstToken(),
-                    "before scope-leaving statement 'exit'");
-            }
-
-            return;
-        }
+        CheckScopeLeavingSpacing(ctx.ReportDiagnostic, statement, "before scope-leaving statement 'exit'");
     }
 
     private void AnalyzeErrorInvocation(OperationAnalysisContext ctx)
@@ -239,31 +199,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        var statements = GetSiblingStatements(expressionStatement);
-
-        if (statements.Length == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < statements.Length; i++)
-        {
-            if (statements[i] != expressionStatement)
-            {
-                continue;
-            }
-
-            if (i > 0)
-            {
-                ReportMissingBlankLineBeforeIfNeeded(
-                    ctx,
-                    statements[i - 1],
-                    expressionStatement.GetFirstToken(),
-                    "before scope-leaving statement 'Error()'");
-            }
-
-            return;
-        }
+        CheckScopeLeavingSpacing(ctx.ReportDiagnostic, expressionStatement, "before scope-leaving statement 'Error()'");
     }
 
     private static StatementBlockSpacingSettings GetConfig(IFileSystem? fileSystem) =>
@@ -309,84 +245,64 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         return statement.Parent.ChildNodes().OfType<StatementSyntax>().ToImmutableArray();
     }
 
-    private static string GetControlFlowStatementName(SyntaxNode node)
+    private static string GetControlFlowStatementName(SyntaxNode node) =>
+        ControlFlowStatementNames.TryGetValue(node.Kind, out var name) ? name : "control-flow";
+
+    private static bool TryGetSiblingIndex(
+        StatementSyntax statement,
+        out ImmutableArray<StatementSyntax> siblings,
+        out int index)
     {
-        if (node.IsKind(EnumProvider.SyntaxKind.IfStatement))
+        siblings = GetSiblingStatements(statement);
+
+        for (int i = 0; i < siblings.Length; i++)
         {
-            return "if";
+            if (siblings[i] == statement)
+            {
+                index = i;
+
+                return true;
+            }
         }
 
-        if (node.IsKind(EnumProvider.SyntaxKind.CaseStatement))
-        {
-            return "case";
-        }
+        index = -1;
 
-        if (node.IsKind(EnumProvider.SyntaxKind.RepeatStatement))
-        {
-            return "repeat";
-        }
-
-        if (node.IsKind(EnumProvider.SyntaxKind.WhileStatement))
-        {
-            return "while";
-        }
-
-        if (node.IsKind(EnumProvider.SyntaxKind.ForStatement))
-        {
-            return "for";
-        }
-
-        if (node.IsKind(EnumProvider.SyntaxKind.ForEachStatement))
-        {
-            return "foreach";
-        }
-
-        return "control-flow";
+        return false;
     }
 
-    private static void ReportMissingBlankLineBeforeIfNeeded(
-        SyntaxNodeAnalysisContext ctx,
-        SyntaxNode previousStatement,
-        SyntaxToken currentToken,
+    private static void CheckScopeLeavingSpacing(
+        Action<Diagnostic> report,
+        StatementSyntax statement,
         string requirement)
     {
-        if (!HasBlankLineBetween(previousStatement.GetLastToken(), currentToken))
+        if (!TryGetSiblingIndex(statement, out var siblings, out var i) || i == 0)
         {
-            ReportDiagnostic(ctx, currentToken, requirement);
+            return;
         }
+
+        ReportIfNoBlankLineBetween(
+            report,
+            siblings[i - 1].GetLastToken(),
+            statement.GetFirstToken(),
+            requirement);
     }
 
-    private static void ReportMissingBlankLineBeforeIfNeeded(
-        OperationAnalysisContext ctx,
-        SyntaxNode previousStatement,
-        SyntaxToken currentToken,
+    private static void ReportIfNoBlankLineBetween(
+        Action<Diagnostic> report,
+        SyntaxToken leading,
+        SyntaxToken trailing,
         string requirement)
     {
-        if (!HasBlankLineBetween(previousStatement.GetLastToken(), currentToken))
+        if (!HasBlankLineBetween(leading, trailing))
         {
-            ReportDiagnostic(ctx, currentToken, requirement);
+            report(Diagnostic.Create(
+                DiagnosticDescriptors.StatementBlocksSeparatedByBlankLine,
+                trailing.GetLocation(),
+                requirement));
         }
     }
 
     private static bool HasBlankLineBetween(SyntaxToken previousToken, SyntaxToken nextToken) =>
         nextToken.GetLocation().GetLineSpan().StartLinePosition.Line -
         previousToken.GetLocation().GetLineSpan().EndLinePosition.Line >= 2;
-
-    private static void ReportDiagnostic(
-        SyntaxNodeAnalysisContext ctx,
-        SyntaxToken token,
-        string requirement) =>
-        ctx.ReportDiagnostic(Diagnostic.Create(
-            DiagnosticDescriptors.StatementBlocksSeparatedByBlankLine,
-            token.GetLocation(),
-            requirement));
-
-    private static void ReportDiagnostic(
-        OperationAnalysisContext ctx,
-        SyntaxToken token,
-        string requirement) =>
-        ctx.ReportDiagnostic(Diagnostic.Create(
-            DiagnosticDescriptors.StatementBlocksSeparatedByBlankLine,
-            token.GetLocation(),
-            requirement));
 }
