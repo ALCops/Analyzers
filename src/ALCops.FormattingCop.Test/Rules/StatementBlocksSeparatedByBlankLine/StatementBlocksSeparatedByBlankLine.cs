@@ -42,6 +42,8 @@ namespace ALCops.FormattingCop.Test
         // Default settings (no alcops.json injected).
         [TestCase(null, "ControlFlowSpacingMissing")]
         [TestCase(null, "ScopeLeavingSpacingMissing")]
+        // Comment-only lines between statements must not satisfy the blank-line requirement.
+        [TestCase(null, "CommentBetweenStatements")]
         // Config-driven positive cases.
         [TestCase("OneLinerAll", "OneLinerAll")]
         [TestCase("ExitOnly", "ExitOnly")]

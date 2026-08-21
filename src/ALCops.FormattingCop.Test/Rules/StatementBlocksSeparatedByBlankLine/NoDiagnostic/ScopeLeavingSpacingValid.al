@@ -63,6 +63,21 @@ codeunit 50111 MyValidScopeLeavingCodeunit
         if Flag then Message('Then') else [|Error|]('Else branch');
     end;
 
+    // Trailing comment on the previous statement does not suppress a real blank line that follows it.
+    procedure TrailingCommentThenBlankThenExit()
+    begin
+        Message('Start'); // trailing comment
+
+        [|exit|];
+    end;
+
+    procedure TrailingCommentThenBlankThenError()
+    begin
+        Message('Start'); // trailing comment
+
+        [|Error|]('boom');
+    end;
+
     local procedure MyError(Msg: Text)
     begin
         Message(Msg);

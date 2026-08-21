@@ -302,7 +302,35 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         }
     }
 
-    private static bool HasBlankLineBetween(SyntaxToken previousToken, SyntaxToken nextToken) =>
-        nextToken.GetLocation().GetLineSpan().StartLinePosition.Line -
-        previousToken.GetLocation().GetLineSpan().EndLinePosition.Line >= 2;
+    // Requires at least one truly whitespace-only line strictly between the two tokens.
+    // Comments and directives on interior lines are non-blank, so `stmt; \n //note \n stmt2;`
+    // fails and the caller reports.
+    private static bool HasBlankLineBetween(SyntaxToken previousToken, SyntaxToken nextToken)
+    {
+        var previousEndLine = previousToken.GetLocation().GetLineSpan().EndLinePosition.Line;
+        var nextStartLine = nextToken.GetLocation().GetLineSpan().StartLinePosition.Line;
+
+        if (nextStartLine - previousEndLine < 2)
+        {
+            return false;
+        }
+
+        var text = previousToken.SyntaxTree?.GetText();
+
+        if (text is null)
+        {
+            // Should not happen in an analyzer context. Fall back to the line-diff heuristic.
+            return true;
+        }
+
+        for (int line = previousEndLine + 1; line < nextStartLine; line++)
+        {
+            if (string.IsNullOrWhiteSpace(text.Lines[line].ToString()))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -44,7 +44,7 @@ Settings type: [src/ALCops.Common/Settings/StatementBlockSpacingSettings.cs](src
 | Move settings into a dedicated file (`StatementBlockSpacingSettings.cs`) | Keeps `ALCopsSettings` slim and colocates the 5 properties + 3 enums with their consumer. |
 | Real C# enums instead of strings for tri-/multi-state options | Type-safe comparisons in the analyzer, discoverable values, IDE-friendly. |
 | JSON string enums via `JsonStringEnumConverter` (net8+) and `StringEnumConverter` (netstandard2.1) | Human-readable JSON matches other alcops settings. Both converters are case-insensitive by default. |
-| Compare token line positions instead of only checking leading trivia | Blank-line detection is more robust when based on line spans between adjacent tokens. |
+| Blank-line check inspects source-text lines strictly between the two token positions | Comparing token line diffs alone counts a comment-only line as a separator, contradicting the intended semantics. Iterating `SourceText.Lines` and requiring at least one whitespace-only line is robust against comments and directives. |
 | Use sibling `StatementSyntax` nodes from the parent | The rule is about statement sequencing in the same statement list and must also work in contexts not represented by `BlockSyntax` (for example `repeat`). |
 | Skip the "after" check when the next sibling is another control-flow block | Avoids duplicate diagnostics between adjacent blocks — the second block's "before" check owns that gap. |
 | Skip one-liners unless `OneLinerMode = All` | One-liner control-flow statements (`if X then Y`) rarely benefit from surrounding blank lines. |
@@ -56,6 +56,7 @@ Settings type: [src/ALCops.Common/Settings/StatementBlockSpacingSettings.cs](src
 Tests enable the rule via a physical `StatementBlocksSeparatedByBlankLine.ruleset.json` (same pattern as `DC0008`, `AC0028`, etc.). Config-driven tests inject `alcops.json` via `MemoryFileSystem` on the `AnalyzerTestFixtureConfig.FileSystem` slot alongside `RuleSetPath`.
 
 **HasDiagnostic (2 cases):** ControlFlowSpacingMissing, ScopeLeavingSpacingMissing.
+**HasDiagnosticWithCommentBetween (1 case):** CommentBetweenStatements.
 **NoDiagnostic (3 cases):** ControlFlowSpacingValid, ScopeLeavingSpacingValid, DisabledByDefault.
 **HasDiagnosticWithOneLinerAll (1 case):** OneLinerAll.
 **NoDiagnosticWithControlFlowDisabled (1 case):** ControlFlowSpacingMissing.
@@ -79,7 +80,7 @@ Tests enable the rule via a physical `StatementBlocksSeparatedByBlankLine.rulese
 - Blank lines **between the branches** of a `case` statement are not enforced (only the spacing around the whole `case` block is). See Roadmap → `CaseBranchMode`.
 - Guard clauses (`if X then exit;` / `if X then Error(...);` at the top of a method) are treated like ordinary scope-leavers and inherit the `ScopeLeavingMode` requirement of a preceding blank line, which conflicts with the widely-used stacked-guard-clause pattern. See Roadmap → `GuardClauseMode`.
 - Loop-control statements (`break`, `continue`, `Skip`) are not covered — only `exit` and `Error(...)` are. See Roadmap → `LoopControlBeforeMode`.
-- Compiler-directive boundaries (`#region` / `#endregion`, `#pragma`) are treated as transparent trivia; the spacing rule runs across them. See Roadmap → `SkipDirectiveBoundaries`.
+- Compiler-directive boundaries (`#region` / `#endregion`, `#pragma`) count as non-blank interior lines under the standard rule and therefore do **not** satisfy the blank-line requirement. Configuring them as explicit separators is a Roadmap item. See Roadmap → `SkipDirectiveBoundaries`.
 
 ## Roadmap
 
@@ -141,7 +142,7 @@ Proposed values (final naming to be decided when implemented):
 Design questions to answer before implementation:
 - Does this share the `Off` short-circuit with `ScopeLeavingMode`, or is it fully independent? Recommendation: fully independent — teams may want blank before `break` but not before `exit`.
 - Is `Skip` (report/xmlport-only) covered under the same axis or its own? Recommendation: same axis for simplicity; add a separate mode only if user feedback demands it.
-- Reuse the existing sibling-lookup + line-diff helper (`GetSiblingStatements`, `HasBlankLineBetween`) — no new infrastructure needed.
+- Reuse the existing sibling-lookup + blank-line helpers (`GetSiblingStatements`, `HasBlankLineBetween`) — no new infrastructure needed.
 
 ### `TreatCommentOnlyLinesAsSeparator` (planned, not implemented)
 
@@ -154,13 +155,13 @@ Design questions to answer before implementation:
 - Is a multi-line block comment on a single line (`/* foo */`) a separator? Recommendation: yes.
 - What about comments **on** a statement line (trailing comment)? Recommendation: no — the statement line still counts as "a statement line", the comment is trivia on it.
 
-Implementation notes: the current line-diff check compares source line numbers of adjacent tokens. To support this setting, the diff calculation would need to inspect the trivia between the tokens and treat comment-only lines as blank-equivalent. Estimated effort ~2 h including tests.
+Implementation notes: the current check walks `SourceText.Lines` strictly between the two token positions and returns true iff any is whitespace-only. To support this setting, additionally count lines whose sole non-whitespace content is a comment token as blank-equivalent. Estimated effort ~1 h including tests.
 
 ### `SkipDirectiveBoundaries` (planned, not implemented)
 
-A future `StatementBlockSpacing.SkipDirectiveBoundaries` boolean to **suppress** FC0007 diagnostics across compiler-directive boundaries (`#region` / `#endregion`, `#pragma`, etc.). Directives are trivia; they visually break the code but do not represent statements. Enforcing blank lines around them can conflict with team conventions that already collapse spacing at region boundaries.
+A future `StatementBlockSpacing.SkipDirectiveBoundaries` boolean to **suppress** FC0007 diagnostics across compiler-directive boundaries (`#region` / `#endregion`, `#pragma`, etc.). Directives visually break the code but do not represent statements. Enforcing blank lines around them can conflict with team conventions that already collapse spacing at region boundaries.
 
-Proposed default: `false` (current behavior — directives are transparent, spacing rules run through them). Setting to `true` opts in to treating the boundary as a natural separator.
+Proposed default: `false` (current behavior — directive-only lines are non-blank, so spacing rules fire across them). Setting to `true` opts in to treating the boundary as a natural separator.
 
 Design questions to answer before implementation:
 - Which directives count? `#region` / `#endregion` clearly; `#pragma` is less obviously a "visual break". Recommendation: `#region` / `#endregion` only, with a follow-up if `#pragma` demand emerges.
