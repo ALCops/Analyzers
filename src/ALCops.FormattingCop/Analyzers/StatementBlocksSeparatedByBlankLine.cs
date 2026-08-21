@@ -40,7 +40,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             EnumProvider.SyntaxKind.ExitStatement);
 
         context.RegisterOperationAction(
-            AnalyzeInvocationExpression,
+            AnalyzeErrorInvocation,
             EnumProvider.OperationKind.InvocationExpression);
     }
 
@@ -167,6 +167,13 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
+        // Direct else/then branch statements are not block siblings; comparing them against the
+        // sibling branch produces false positives (`end else exit;`, `... else exit;`).
+        if (statement.Parent is IfStatementSyntax)
+        {
+            return;
+        }
+
         var config = GetConfig(ctx.SemanticModel.Compilation.FileSystem);
 
         if (!IncludesExit(config))
@@ -201,7 +208,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         }
     }
 
-    private void AnalyzeInvocationExpression(OperationAnalysisContext ctx)
+    private void AnalyzeErrorInvocation(OperationAnalysisContext ctx)
     {
         if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression invocation)
         {
@@ -209,6 +216,13 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         }
 
         if (invocation.Syntax.Parent is not ExpressionStatementSyntax expressionStatement)
+        {
+            return;
+        }
+
+        // Direct else/then branch statements are not block siblings; comparing them against the
+        // sibling branch produces false positives (`end else Error(...);`).
+        if (expressionStatement.Parent is IfStatementSyntax)
         {
             return;
         }

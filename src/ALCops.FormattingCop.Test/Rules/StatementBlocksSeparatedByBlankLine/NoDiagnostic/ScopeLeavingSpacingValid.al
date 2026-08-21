@@ -35,6 +35,34 @@ codeunit 50111 MyValidScopeLeavingCodeunit
         [|MyError|]('Not a built-in Error, must not be flagged');
     end;
 
+    // Regression: exit/Error() as a direct else-branch statement must not be treated as a block
+    // sibling of the then-branch. Both multi-line and single-line forms are safe.
+    procedure ExitAsElseBranchMultiLine(Flag: Boolean)
+    begin
+        if Flag then begin
+            Message('Then');
+        end else
+            [|exit|];
+    end;
+
+    procedure ExitAsElseBranchOneLine(Flag: Boolean)
+    begin
+        if Flag then Message('Then') else [|exit|];
+    end;
+
+    procedure ErrorAsElseBranchMultiLine(Flag: Boolean)
+    begin
+        if Flag then begin
+            Message('Then');
+        end else
+            [|Error|]('Else branch');
+    end;
+
+    procedure ErrorAsElseBranchOneLine(Flag: Boolean)
+    begin
+        if Flag then Message('Then') else [|Error|]('Else branch');
+    end;
+
     local procedure MyError(Msg: Text)
     begin
         Message(Msg);
