@@ -47,7 +47,7 @@ The provider uses a custom FixAll implementation (`FixAllProvider.Create(FixAllA
 | Separate ID from LC0095 | Event subscriber signatures are often scaffolded with optional parameters; Info severity provides guidance without warning-level pressure. |
 | Shared implementation with LC0095 | Keeps behavior and fixes consistent while allowing different ID/severity and configuration behavior. |
 | Fix only signature parameter list | Safe and deterministic; does not attempt call-site rewrites. |
-| Use `KeepNoTrivia` for removals | Avoids leftover trivia artifacts in multiline signatures. |
+| Shared trivia-safe removal with LC0095 | Comments follow parser trivia ownership; balanced pragma pairs are removed or transferred to prevent unbalanced directives. |
 
 ## Known issues
 

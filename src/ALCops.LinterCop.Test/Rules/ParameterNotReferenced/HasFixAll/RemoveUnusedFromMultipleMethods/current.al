@@ -1,4 +1,4 @@
-codeunit 50100 MyCodeunit
+codeunit 50100 FixAllMultipleMethods
 {
     procedure FirstProcedure(MyInteger: Integer; [|UnusedA: Text|])
     begin

@@ -1,4 +1,4 @@
-codeunit 50102 MyCodeunit implements MyInterface
+codeunit 50102 InterfaceWrongCasing implements CaseInsensitiveContract
 {
     procedure Myprocedure([|myInteger: Integer|]; Mytext: Text; MyDAte: Date)
     begin
@@ -7,7 +7,7 @@ codeunit 50102 MyCodeunit implements MyInterface
     end;
 }
 
-interface MyInterface
+interface CaseInsensitiveContract
 {
     procedure MyProcedure(MyInteger: Integer; MyText: Text; MyDate: Date);
 }

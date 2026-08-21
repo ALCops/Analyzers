@@ -124,6 +124,8 @@ namespace ALCops.LinterCop.Test
         [Test]
         [TestCase("RemoveTwoParametersSingleMethod")]
         [TestCase("RemoveUnusedFromMultipleMethods")]
+        [TestCase("RemoveParametersWithComments")]
+        [TestCase("RemoveParametersWithPragmas")]
         public async Task HasFixAll(string testCase)
         {
             RequireSdkV13Support();

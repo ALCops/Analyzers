@@ -1,4 +1,4 @@
-codeunit 50100 MyCodeunit
+codeunit 50100 FixAllTwoUnusedParameters
 {
     procedure MyProcedure(MyInteger: Integer)
     begin

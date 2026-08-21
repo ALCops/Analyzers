@@ -46,12 +46,13 @@ LC0099 uses the same implementation with `ParameterNotReferencedCodeFixProvider.
 Uses a **custom `FixAllProvider`** via `FixAllProvider.Create(FixAllAsync)` instead of `WellKnownFixAllProviders.BatchFixer`. See `codefix-development.instructions.md` for the general pattern and rationale.
 
 Single-fix path (`RemoveUnreferencedParameter`):
-- Loads syntax root, resolves the `ParameterSyntax` from the diagnostic span, applies the procedure-kind scope filter from diagnostic ID, and calls `root.RemoveNode(parameter, SyntaxRemoveOptions.KeepNoTrivia)`.
+- Loads syntax root, resolves the `ParameterSyntax` from the diagnostic span, applies the procedure-kind scope filter from diagnostic ID, and delegates the removal to `RemoveParameters`.
 
 Fix-All path (`FixAllAsync`):
 - Reads spans from `Optional<ImmutableArray<TextSpan>>` (see design decision below).
 - Reads `fixAllContext.CodeActionEquivalenceKey` to derive `ProcedureKind`.
-- Resolves every span to its `ParameterSyntax`, collects them in a `HashSet<ParameterSyntax>`, then applies **one** `root.RemoveNodes(..., SyntaxRemoveOptions.KeepNoTrivia)` call.
+- Resolves every span to its `ParameterSyntax`, collects them in a `HashSet<ParameterSyntax>`, then delegates all removals to `RemoveParameters`, which rewrites directives before one consolidated `RemoveNodes` call.
+- `RemoveParameters` removes balanced pragma pairs that exclusively wrap removed parameters, and transfers directives whose matching pair extends beyond the removed parameter to the next remaining parameter.
 
 ## Design decisions
 
@@ -68,7 +69,8 @@ Fix-All path (`FixAllAsync`):
 | CodeFix removes param only | Updating call sites is complex and risky |
 | Use `SemanticFacts.NameEqualityComparer` | Case-insensitive AL identifier comparison |
 | Custom `FixAllProvider` instead of `BatchFixer` | Multiple parameter removals in the same signature share a common ancestor (`ParameterListSyntax`). `BatchFixer` computes conflicting `ReplaceNode(parameterList, …)` edits per diagnostic and drops all but one, so only one of N parameters would be removed. Rewriting all parameters in one pass via `RemoveNodes` avoids the merge conflict entirely. |
-| Use `RemoveNode`/`RemoveNodes` with `KeepNoTrivia` (not `ReplaceNode`) | `SeparatedSyntaxList` handles separator removal correctly when nodes are removed as a set. `KeepNoTrivia` prevents dangling comments/whitespace from the removed parameter (e.g. multi-line signatures with per-parameter comments). |
+| Use `RemoveNodes` with `KeepNoTrivia` (not `ReplaceNode`) | `SeparatedSyntaxList` handles separator removal correctly when nodes are removed as a set. Comments follow the parser's trivia ownership and are removed only when attached to a removed parameter. |
+| Preserve pragma pairing explicitly | A pragma may be attached to a removed parameter while its matching directive belongs to a neighboring parameter or lies outside the procedure. Remove pairs that only wrap removed parameters; otherwise transfer the directive and its immediately preceding comments to the next remaining parameter. This includes balanced pairs that span both removed and retained parameters, which must remain intact. After parameter annotations rewrite the tree, resolve balanced-pair directives by their original spans and remove the complete directive-line trivia to avoid duplicated indentation. |
 | Shared provider for LC0095 and LC0099 | Keeps fix behavior identical while surfacing separate IDs/severities. |
 | Fall back to `GetDocumentDiagnosticsAsync` when `fixAllSpans` is empty | The AL SDK's `Optional<ImmutableArray<TextSpan>>` may report `HasValue = true` with an empty array (RoslynTestKit's default Document scope does this). Checking `!IsDefaultOrEmpty` and re-querying diagnostics keeps the FixAll functional in both hosts and tests. |
 
@@ -81,4 +83,4 @@ Fix-All path (`FixAllAsync`):
 **HasDiagnostic (6 cases):** InternalProcedure, PublicProcedure, MultipleParamsOneUnused, VarParameterUnused, ErrorInfoInPage, ErrorInfoMultipleParams.
 **NoDiagnostic (12 cases):** LocalProcedure, TriggerUnusedParam, InterfaceImplementation, InterfaceImplementationWrongCasing, EventDeclaration, ObsoleteProcedure, AllParametersUsed, ParameterUsedInExpression, ErrorInfoCallbackInCodeunit, NotificationCallbackInCodeunit, MessageHandlerInCodeunit, ConfirmHandlerInCodeunit.
 **HasFix (3 cases):** RemoveSingleParameter, RemoveMiddleParameter, RemoveMiddleParameterMultiline.
-**HasFixAll (2 cases):** RemoveTwoParametersSingleMethod, RemoveUnusedFromMultipleMethods.
+**HasFixAll (4 cases):** RemoveTwoParametersSingleMethod, RemoveUnusedFromMultipleMethods, RemoveParametersWithComments, RemoveParametersWithPragmas.
