@@ -48,6 +48,28 @@ namespace ALCops.LinterCop.Test
                 });
         }
 
+        private static readonly byte[] AppSourceCopWithOverlappingPrefix = System.Text.Encoding.UTF8.GetBytes(
+            """
+            {
+                "mandatoryPrefix": "ICU"
+            }
+            """);
+
+        private AnalyzerTestFixture CreateFixtureWithOverlappingPrefix()
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "AppSourceCop.json", AppSourceCopWithOverlappingPrefix }
+            };
+
+            return RoslynFixtureFactory.Create<Analyzers.InterfaceObjectNameGuide>(
+                new AnalyzerTestFixtureConfig
+                {
+                    RuleSetPath = Path.Combine(_testCasePath, $"{nameof(InterfaceObjectNameGuide)}.ruleset.json"),
+                    FileSystem = new MemoryFileSystem(files)
+                });
+        }
+
         [Test]
         [TestCase("NoLeadingI")]
         [TestCase("WhitespaceAfterI")]
@@ -92,6 +114,16 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false);
 
             CreateFixtureWithAffixes().NoDiagnosticAtAllMarkers(code, DiagnosticIds.InterfaceObjectNameGuide);
+        }
+
+        [Test]
+        [TestCase("OverlappingPrefixCompliantI")]
+        public async Task NoDiagnosticWithOverlappingPrefix(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            CreateFixtureWithOverlappingPrefix().NoDiagnosticAtAllMarkers(code, DiagnosticIds.InterfaceObjectNameGuide);
         }
     }
 }

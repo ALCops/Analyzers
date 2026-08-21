@@ -45,7 +45,10 @@ disabled by default, `AnalyzerTestFixtureConfig.RuleSetPath` points to
 `InterfaceObjectNameGuide.ruleset.json` (action `Warning`). Affix cases inject an
 `AppSourceCop.json` (`mandatoryPrefix: "ABC "`, `mandatorySuffix: "XYZ "`,
 `mandatoryAffixes: ["FOO "]`) via `MemoryFileSystem` in dedicated
-`HasDiagnosticWithAffixes`/`NoDiagnosticWithAffixes` methods.
+`HasDiagnosticWithAffixes`/`NoDiagnosticWithAffixes` methods. The
+`NoDiagnosticWithOverlappingPrefix` method injects a coincidental glued prefix
+(`mandatoryPrefix: "ICU"`) to lock in that the fast path wins for `ICustomerFactory` (the prefix
+overlaps a compliant `I`-name and must not be stripped to `stomerFactory`).
 
 **HasDiagnostic (5 cases):** NoLeadingI, WhitespaceAfterI, AffixWithoutI, AffixThenIWithWhitespace, AffixThenNoLettersOrDigits.
-**NoDiagnostic (5 cases):** LeadingI, SingleCharacterI, PrefixThenI, AffixThenI, SuffixAsLeadingAffixThenI.
+**NoDiagnostic (6 cases):** LeadingI, SingleCharacterI, PrefixThenI, AffixThenI, SuffixAsLeadingAffixThenI, OverlappingPrefixCompliantI.
