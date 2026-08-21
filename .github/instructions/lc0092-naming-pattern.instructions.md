@@ -28,7 +28,7 @@ No version gate · Full netstandard2.1 support
 | Single diagnostic ID | LC0092 for all 16 naming targets | Simpler user experience; message differentiates targets |
 | Settings format | `NamingPatterns` dictionary in alcops.json | PascalCase keys, named per target |
 | Default behavior | Built-in MS convention defaults, user can override | Immediate value without configuration |
-| Object affixes | Strip AppSourceCop affixes before checking, trim whitespace | Avoids false positives on prefixed/suffixed names; handles common `"PTE MyCodeunit"` pattern where space separates affix from name |
+| Object affixes | Strip AppSourceCop affixes **only as a fallback** when the full name already violates the pattern; report against the original name | Issue #436 / PR #447: unconditional stripping produced false positives when a mandatory affix is a substring of a valid name (e.g. suffix `mer` in `Customer` → `Custo`, or prefix `Cust` → `omer`). Now the full name is checked first; the affix-stripped core is only tried if the full name fails, and it can only *suppress* a diagnostic, never introduce one. The diagnostic and suggestion always reference the original name |
 | Skip triggers | Yes | Platform-defined names, can't rename |
 | Skip interface implementations | Yes | Name is dictated by the interface |
 | Skip event subscriber params | Yes | Subscriber parameters must match publisher signature (AL0828); platform trigger params (`xRec`, `BelowxRec`, `RunTrigger`, etc.) can't be renamed |
@@ -59,7 +59,7 @@ No version gate · Full netstandard2.1 support
 
 Uses `RegisterCompilationStartAction` to:
 1. Load `ALCopsSettings` (for NamingPatterns user overrides)
-2. Load AppSourceCop affixes (for object name stripping, wrapped in try-catch)
+2. Load AppSourceCop affixes (fallback for object name stripping, wrapped in try-catch)
 3. Build `NamingPatternConfig` (resolves effective patterns per target)
 4. Register `RegisterSymbolAction` for all relevant SymbolKinds
 
@@ -171,6 +171,10 @@ Pattern-specific name transformations:
 
 `AppSourceCopConfigurationProvider.GetAppSourceCopConfiguration(compilation)` may throw exceptions in test contexts where the SDK runtime environment is minimal. The `CompilationStart` method wraps `GetAffixes` in a try-catch and continues with null affixes.
 
+### Affix over-stripping (fixed, issue #436 / PR #447)
+
+`AnalyzeObject` previously called `StripAffixes` unconditionally before the pattern check. Because `StripAffixes` uses naive case-insensitive `StartsWith`/`EndsWith` (the same matching AppSourceCop's `RuleIdentifiersMustHaveValidAffixes.VerifyAffixIsUsed` uses), any object whose name merely contained a mandatory affix as a leading/trailing substring was mutated before checking — e.g. suffix `mer` turned `Customer` into `Custo`, prefix `Cust` turned it into `omer`. The current implementation checks the full name first (`NameSatisfiesPattern`), and only falls back to the stripped core when the full name fails. Stripping can therefore only suppress a diagnostic, never create one, and the reported name/suggestion is always the original. Note: `GetAffixes` here intentionally reads only `MandatoryPrefix` + `MandatoryAffixes` (not `MandatorySuffix`); a suffix must be expressed via `MandatoryAffixes` to be considered.
+
 ### Regex compilation failures
 
 Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `ArgumentException` and returns null, effectively disabling that pattern check.
@@ -184,12 +188,12 @@ Invalid user-supplied patterns fail gracefully: `CompilePattern` catches `Argume
 **HasDiagnostic (9 cases):** ProcedureLowerCaseStart, VariableLowerCaseStart, VariableWithSpecialChars, ParameterLowerCaseStart, ReturnValueLowerCaseStart, ObjectLowerCaseStart, FieldWithSpecialChars, ActionLowerCaseStart, ControlLowerCaseStart.
 **NoDiagnostic (18 cases):** ProcedurePascalCase, VariablePascalCase, FieldWithLettersAndDigits, ObsoleteProcedure, TriggerMethod, InterfaceImplementingMethod, EventSubscriberPascalCase, EventSubscriberPlatformParams, EventSubscriberUserParams, ApiPageControlCamelCase, ActionAcceleratorKey, EnumValueBlankSpace, EnumValueLowerCaseStart, SingleLetterVariable, SingleLetterParameter, UnderscorePrefix, XRecVariable, XRecParameter, ParameterPascalCase.
 **HasDiagnosticWithCustomSettings (1 case):** EnumValueLowerCaseStartCustomSettings.
+**Affix regression (3 cases):** NoDiagnostic_ObjectPrefixCollision, NoDiagnostic_ObjectSuffixCollision, HasDiagnostic_ObjectAffixGenuineViolation.
 **SchemaParity (1 case):** NamingTargetEnumMatchesSchemaPropertyNames.
 
 ## Phase 2 roadmap (not yet implemented)
 
 - **Custom pattern tests**: Test cases that inject custom NamingPatterns via alcops.json
-- **Object affix stripping tests**: Test cases with AppSourceCop configuration
 - **ControlAddIn object type**: Add ControlAddIn to the Object target registration
 - **Procedure sub-target inheritance tests**: Verify LocalProcedure/GlobalProcedure/EventSubscriber/EventDeclaration inheritance
 - **Variable sub-target inheritance tests**: Verify LocalVariable/GlobalVariable/Parameter multi-level fallback chain

@@ -134,8 +134,42 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         if (ctx.IsObsolete())
             return;
 
-        var name = StripAffixes(ctx.Symbol.Name, affixes);
+        var name = ctx.Symbol.Name;
+
+        // Affix stripping is a fallback, not an unconditional pre-step. An object whose
+        // full name already satisfies the pattern must never be penalized just because it
+        // happens to start or end with a mandatory affix (e.g. "Customer" with suffix
+        // "MER", which would otherwise be stripped to "Custo" and reported).
+        if (NameSatisfiesPattern(name, NamingTarget.Object, config))
+            return;
+
+        // The full name violates the pattern. Retry against the affix-stripped core so a
+        // mandatory affix does not itself count against the pattern.
+        var strippedName = StripAffixes(name, affixes);
+        if (!string.Equals(strippedName, name, StringComparison.Ordinal) &&
+            NameSatisfiesPattern(strippedName, NamingTarget.Object, config))
+            return;
+
+        // Both the full name and the stripped core fail: report against the original name.
         CheckName(ctx, name, NamingTarget.Object, config, "Object");
+    }
+
+    private static bool NameSatisfiesPattern(string name, NamingTarget target,
+        NamingPatternConfig config)
+    {
+        // Mirror CheckName's early-out: blank names are never flagged.
+        if (string.IsNullOrWhiteSpace(name))
+            return true;
+
+        var resolved = config.GetPatterns(target);
+
+        if (resolved.AllowRegex is not null && !TryIsMatch(resolved.AllowRegex, name))
+            return false;
+
+        if (resolved.DisallowRegex is not null && TryIsMatch(resolved.DisallowRegex, name))
+            return false;
+
+        return true;
     }
 
     private static void AnalyzeField(SymbolAnalysisContext ctx, NamingPatternConfig config)
