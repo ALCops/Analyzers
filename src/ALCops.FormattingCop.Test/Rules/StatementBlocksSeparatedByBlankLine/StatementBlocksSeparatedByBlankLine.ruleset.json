@@ -1,0 +1,10 @@
+{
+    "name": "Enable FC0007",
+    "description": "Enables the default-disabled StatementBlocksSeparatedByBlankLine rule so it can be tested.",
+    "rules": [
+        {
+            "id": "FC0007",
+            "action": "Info"
+        }
+    ]
+}

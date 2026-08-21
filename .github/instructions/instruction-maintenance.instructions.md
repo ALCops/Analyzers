@@ -100,6 +100,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `fc0004-permission-declaration-order` | rule-scoped | FC0004 rule |
 | `fc0005-use-parenthesis-for-method-assignment` | rule-scoped | FC0005 rule |
 | `fc0006-permission-values-should-be-lowercase` | rule-scoped | FC0006 rule |
+| `fc0007-statement-blocks-separated-by-blank-line` | rule-scoped | FC0007 rule |
 | `lc0083-built-in-date-time-method` | rule-scoped | LC0083 rule |
 | `lc0086-page-style-string-literal` | rule-scoped | LC0086 rule |
 | `lc0091-translatable-text-should-be-translated` | rule-scoped | LC0091 rule |

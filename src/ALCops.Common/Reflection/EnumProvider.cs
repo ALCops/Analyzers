@@ -882,7 +882,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SymbolKind Change => _change.Value;
         public static NavCodeAnalysis.SymbolKind Class => _class.Value;
         public static NavCodeAnalysis.SymbolKind Codeunit => _codeunit.Value;
-		public static NavCodeAnalysis.SymbolKind ControlAddIn => _controlAddIn.Value;
+        public static NavCodeAnalysis.SymbolKind ControlAddIn => _controlAddIn.Value;
         public static NavCodeAnalysis.SymbolKind Control => _control.Value;
         public static NavCodeAnalysis.SymbolKind Entitlement => _entitlement.Value;
         public static NavCodeAnalysis.SymbolKind Enum => _enum.Value;

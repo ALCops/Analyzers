@@ -2,8 +2,10 @@ using System.Collections.Concurrent;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 #if NETSTANDARD2_1
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 #else
 using System.Text.Json;
+using System.Text.Json.Serialization;
 #endif
 
 
@@ -16,12 +18,18 @@ namespace ALCops.Common.Settings;
 public static class ALCopsSettingsProvider
 {
     private static readonly ConcurrentDictionary<string, ALCopsSettings> _cache = new();
-#if !NETSTANDARD2_1
+#if NETSTANDARD2_1
+    private static readonly JsonSerializerSettings _jsonSettings = new()
+    {
+        Converters = { new StringEnumConverter() }
+    };
+#else
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
         ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true
+        AllowTrailingCommas = true,
+        Converters = { new JsonStringEnumConverter() }
     };
 #endif
 
@@ -80,11 +88,26 @@ public static class ALCopsSettingsProvider
 
     private static ALCopsSettings DeserializeSettings(string json)
     {
+        // Malformed JSON (invalid syntax, unknown enum values, wrong types) must fall back to defaults
+        // silently. See common-library.instructions.md "Unreadable/malformed alcops.json: silently
+        // returns defaults" and github.com/ALCops/Analyzers/issues/328.
+        try
+        {
 #if NETSTANDARD2_1
-        return JsonConvert.DeserializeObject<ALCopsSettings>(json) ?? new ALCopsSettings();
+            var settings = JsonConvert.DeserializeObject<ALCopsSettings>(json, _jsonSettings) ?? new ALCopsSettings();
 #else
-        return JsonSerializer.Deserialize<ALCopsSettings>(json, _jsonOptions) ?? new ALCopsSettings();
+            var settings = JsonSerializer.Deserialize<ALCopsSettings>(json, _jsonOptions) ?? new ALCopsSettings();
 #endif
+            // Explicit `null` on nested settings deserializes without JsonException; restore defaults
+            // so consumers can rely on the property being non-null.
+            settings.StatementBlockSpacing ??= new StatementBlockSpacingSettings();
+
+            return settings;
+        }
+        catch (JsonException)
+        {
+            return new ALCopsSettings();
+        }
     }
 
     private static string? FindSettingsFileInParentOrAssemblyDirectory(string directoryPath)

@@ -72,8 +72,8 @@ Per-project analyzer configuration.
 
 | File | Purpose |
 |------|---------|
-| `ALCopsSettings.cs` | POCO with properties: `CognitiveComplexityThreshold` (default 15), `CyclomaticComplexityThreshold` (default 8), `MaintainabilityIndexThreshold` (default 20), `LanguagesToTranslate`, `NamingPatterns`, `SubscriberNamingPattern`, `UseSequentialGuidScope`, `ToolTipAllowedPunctuations`, `KnownAcronyms`. |
-| `ALCopsSettingsProvider.cs` | Static provider with `ConcurrentDictionary` cache keyed by directory path. Loads `alcops.json` using hierarchical lookup (see Settings System below). JSON parsing is case-insensitive, allows comments and trailing commas. Preferred API: `GetSettings(compilation.FileSystem)`. |
+| `ALCopsSettings.cs` | POCO with properties: `CognitiveComplexityThreshold` (default 15), `CyclomaticComplexityThreshold` (default 8), `MaintainabilityIndexThreshold` (default 20), `LanguagesToTranslate`, `NamingPatterns`, `SubscriberNamingPattern`, `UseSequentialGuidScope`, `ToolTipAllowedPunctuations`, `KnownAcronyms`, `StatementBlockSpacing`. |
+| `ALCopsSettingsProvider.cs` | Static provider with `ConcurrentDictionary` cache keyed by directory path. Loads `alcops.json` using hierarchical lookup (see Settings System below). JSON parsing is case-insensitive, allows comments and trailing commas. Malformed JSON (invalid syntax, unknown enum values, wrong types) falls back to defaults silently via a `JsonException` catch in `DeserializeSettings`. Preferred API: `GetSettings(compilation.FileSystem)`. |
 
 ### Constants.cs
 Three constants: `PermissionNodeXPath` (XPath for permission set XML), `Comment`, `Locked`, `MaxLength` (label property name strings matching the SDK's `LabelPropertyHelper`).
@@ -118,12 +118,9 @@ This allows a multi-root workspace to share a single `alcops.json` at the worksp
     └── app.json          ← inherits from workspace-level
 ```
 
-### Two overloads
+### Public API
 
-| Overload | Use when | Behavior |
-|---|---|---|
-| `GetSettings(IFileSystem?)` | **Preferred.** All analyzer code. | Virtual FS check → parent traversal → assembly fallback. Cached by `GetDirectoryPath()`. |
-| `GetSettings(string?)` | Legacy. Avoid in new code. | Physical FS check → parent traversal → assembly fallback. Cached by path. |
+`ALCopsSettingsProvider` exposes a single entry point: `GetSettings(IFileSystem?)`. All analyzer code obtains settings through `context.SemanticModel.Compilation.FileSystem`. Behavior: virtual FS check → parent traversal → assembly fallback. Results are cached by `IFileSystem.GetDirectoryPath()`; a `MemoryFileSystem` returning `""` bypasses the cache.
 
 ### Error handling
 
@@ -140,7 +137,7 @@ Users configure settings by placing an `alcops.json` file in their AL project ro
 }
 ```
 
-Settings are cached per directory path for the analyzer session lifetime. Call `ALCopsSettingsProvider.ClearCache()` only in tests.
+Settings are cached per directory path for the analyzer session lifetime. There is no public cache-invalidation API; tests inject an isolated `IFileSystem` (typically `MemoryFileSystem` or a purpose-built `RelativeFileSystem`) to avoid contaminating the cache.
 
 ## Coding Standards
 
@@ -172,8 +169,11 @@ Settings are cached per directory path for the analyzer session lifetime. Call `
 
 ### How to Add a New Setting
 1. Add a new property with a default value to `ALCopsSettings.cs`.
-2. No changes needed to `ALCopsSettingsProvider.cs` (JSON deserialization picks it up automatically).
-3. Document the new setting in the project README.
+2. No changes needed to `ALCopsSettingsProvider.cs` for scalar / string / list / dictionary properties — JSON deserialization picks them up automatically.
+3. **For enum-typed properties**, add a converter registration to `ALCopsSettingsProvider.cs`: `JsonStringEnumConverter` in `_jsonOptions.Converters` (net8+) and `StringEnumConverter` in `_jsonSettings.Converters` (netstandard2.1). Both are case-insensitive by default. Then add a schema-parity guard test that compares `Enum.GetNames(typeof(YourEnum))` with the `enum` array in `alcops.schema.json` (see `StatementBlockSpacingSchema` in `src/ALCops.FormattingCop.Test/Rules/StatementBlocksSeparatedByBlankLine/` for a template).
+4. **For nested-class properties with a default instance** (e.g. `public MySettings MyGroup { get; set; } = new();`): JSON deserializers ignore NRT annotations and happily set the property to `null` when the JSON contains `"MyGroup": null`, which then NREs on the first consumer access — violating the "malformed alcops.json → defaults" contract (see [issue #328](https://github.com/ALCops/Analyzers/issues/328)). Keep the public property non-nullable and normalize in `ALCopsSettingsProvider.DeserializeSettings` after the deserialize call: `settings.MyGroup ??= new MySettings();`. Consumers then use the property directly without `!` or a duplicate fallback.
+   - Add a regression fixture that injects `{"MyGroup": null}` and asserts the analyzer falls back to defaults without NRE (see `StatementBlockSpacingNull` test case in `StatementBlocksSeparatedByBlankLine.cs` for a template).
+5. Document the new setting in the project README.
 
 ### Backward Compatibility
 - Do not remove or rename public methods, properties, or classes.
