@@ -70,15 +70,16 @@ Tests enable the rule via a physical `StatementBlocksSeparatedByBlankLine.rulese
 **HasDiagnosticWithControlFlowBeforeOnly (1 case):** ControlFlowBeforeOnly.
 **HasDiagnosticWithControlFlowAfterOnly (1 case):** ControlFlowAfterOnly.
 **HasDiagnosticWithMalformedJsonFallsBackToDefaults (1 case):** ExitOnly.
+**HasDiagnosticWithNullSettingsFallsBackToDefaults (1 case):** ExitOnly.
 **SchemaParity (3 cases):** ScopeLeavingModeEnumMatchesSchema, ElseChainBeforeModeEnumMatchesSchema, OneLinerModeEnumMatchesSchema.
 
 ## Known issues / non-goals
 
 - The rule does not handle `foreach`-only scenarios differently from other control-flow constructs.
 - No CodeFix is provided; the missing blank line must be added manually.
-- Comments between statements are not treated as separator content: only actual blank lines (line-span gaps) count. See Roadmap → `TreatCommentOnlyLinesAsSeparator`.
+- Comments between statements are not treated as separator content: only whitespace-only lines count. See Roadmap → `TreatCommentOnlyLinesAsSeparator`.
 - Blank lines **between the branches** of a `case` statement are not enforced (only the spacing around the whole `case` block is). See Roadmap → `CaseBranchMode`.
-- Guard clauses (`if X then exit;` / `if X then Error(...);` at the top of a method) are treated like ordinary scope-leavers and inherit the `ScopeLeavingMode` requirement of a preceding blank line, which conflicts with the widely-used stacked-guard-clause pattern. See Roadmap → `GuardClauseMode`.
+- An `exit` or `Error(...)` used directly as an `if` branch is not analyzed as an independent scope-leaver because branch statements are not siblings in a statement list. The containing `if` is governed by `ControlFlowBefore` / `ControlFlowAfter` and, for one-line guards, `OneLinerMode`. See Roadmap → `GuardClauseMode`.
 - Loop-control statements (`break`, `continue`, `Skip`) are not covered — only `exit` and `Error(...)` are. See Roadmap → `LoopControlBeforeMode`.
 - Compiler-directive boundaries (`#region` / `#endregion`, `#pragma`) count as non-blank interior lines under the standard rule and therefore do **not** satisfy the blank-line requirement. Configuring them as explicit separators is a Roadmap item. See Roadmap → `SkipDirectiveBoundaries`.
 
@@ -113,13 +114,13 @@ Implementation notes: `CaseStatementSyntax.CaseLines` (`SyntaxList<CaseLineSynta
 
 ### `GuardClauseMode` (planned, not implemented)
 
-A future `StatementBlockSpacing.GuardClauseMode` setting to align FC0007 with the widely-used **guard clause** early-exit pattern (`if X then exit;` / `if X then Error(...);` at the top of a method). Currently these one-liners are subject to `ScopeLeavingMode` (`exit` / `Error` requires a leading blank line), which is often undesirable when the guard sits directly after `begin`.
+A future `StatementBlockSpacing.GuardClauseMode` setting to define dedicated spacing for the widely-used **guard clause** early-exit pattern (`if X then exit;` / `if X then Error(...);` at the top of a method). Currently the direct branch is not analyzed as an independent scope-leaver; the containing `if` follows `ControlFlowBefore` / `ControlFlowAfter` and is excluded as a one-liner unless `OneLinerMode = All`.
 
 Proposed values (final naming to be decided when implemented):
 
 | Value | Behavior |
 |---|---|
-| `Off` | Guard clauses are treated like any other scope-leaver (current behavior). |
+| `Off` | No dedicated guard-clause handling; the containing `if` follows the regular control-flow settings (current behavior). |
 | `AllowStacked` | Consecutive guard clauses at the top of a method may be stacked without blank lines between them, but a blank line is required before the first non-guard statement below the guard block. |
 | `Isolated` | Every guard clause requires a blank line before AND after it, regardless of stacking. |
 

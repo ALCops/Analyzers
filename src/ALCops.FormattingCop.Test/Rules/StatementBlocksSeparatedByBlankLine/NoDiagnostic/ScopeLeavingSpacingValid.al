@@ -63,6 +63,28 @@ codeunit 50111 MyValidScopeLeavingCodeunit
         if Flag then Message('Then') else [|Error|]('Else branch');
     end;
 
+    procedure ExitAsThenBranchMultiLine(Flag: Boolean)
+    begin
+        if Flag then
+            [|exit|];
+    end;
+
+    procedure ExitAsThenBranchOneLine(Flag: Boolean)
+    begin
+        if Flag then [|exit|];
+    end;
+
+    procedure ErrorAsThenBranchMultiLine(Flag: Boolean)
+    begin
+        if Flag then
+            [|Error|]('Then branch');
+    end;
+
+    procedure ErrorAsThenBranchOneLine(Flag: Boolean)
+    begin
+        if Flag then [|Error|]('Then branch');
+    end;
+
     // Trailing comment on the previous statement does not suppress a real blank line that follows it.
     procedure TrailingCommentThenBlankThenExit()
     begin

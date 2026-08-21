@@ -57,12 +57,12 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
 
         var config = GetConfig(ctx.SemanticModel.Compilation.FileSystem);
 
-        AnalyzeControlFlowStatement(ctx.ReportDiagnostic, statement, config);
-        AnalyzeElseChain(ctx.ReportDiagnostic, statement, config);
+        AnalyzeControlFlowStatement(ctx, statement, config);
+        AnalyzeElseChain(ctx, statement, config);
     }
 
     private static void AnalyzeControlFlowStatement(
-        Action<Diagnostic> report,
+        SyntaxNodeAnalysisContext ctx,
         StatementSyntax statement,
         StatementBlockSpacingSettings config)
     {
@@ -94,7 +94,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         if (config.ControlFlowBefore && i > 0)
         {
             ReportIfNoBlankLineBetween(
-                report,
+                ctx,
                 siblings[i - 1].GetLastToken(),
                 statement.GetFirstToken(),
                 $"before '{name}' block");
@@ -103,7 +103,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         if (config.ControlFlowAfter && i < siblings.Length - 1 && !IsControlFlowStatement(siblings[i + 1]))
         {
             ReportIfNoBlankLineBetween(
-                report,
+                ctx,
                 statement.GetLastToken(),
                 siblings[i + 1].GetFirstToken(),
                 $"after '{name}' block");
@@ -111,7 +111,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
     }
 
     private static void AnalyzeElseChain(
-        Action<Diagnostic> report,
+        SyntaxNodeAnalysisContext ctx,
         StatementSyntax statement,
         StatementBlockSpacingSettings config)
     {
@@ -141,7 +141,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        ReportIfNoBlankLineBetween(report, tokenBeforeElse, elseToken, "before 'else' keyword");
+        ReportIfNoBlankLineBetween(ctx, tokenBeforeElse, elseToken, "before 'else' keyword");
     }
 
     private void AnalyzeExitStatement(SyntaxNodeAnalysisContext ctx)
@@ -165,7 +165,12 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        CheckScopeLeavingSpacing(ctx.ReportDiagnostic, statement, "before scope-leaving statement 'exit'");
+        var diagnostic = GetScopeLeavingSpacingDiagnostic(statement, "before scope-leaving statement 'exit'");
+
+        if (diagnostic is not null)
+        {
+            ctx.ReportDiagnostic(diagnostic);
+        }
     }
 
     private void AnalyzeErrorInvocation(OperationAnalysisContext ctx)
@@ -199,11 +204,16 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        CheckScopeLeavingSpacing(ctx.ReportDiagnostic, expressionStatement, "before scope-leaving statement 'Error()'");
+        var diagnostic = GetScopeLeavingSpacingDiagnostic(expressionStatement, "before scope-leaving statement 'Error()'");
+
+        if (diagnostic is not null)
+        {
+            ctx.ReportDiagnostic(diagnostic);
+        }
     }
 
     private static StatementBlockSpacingSettings GetConfig(IFileSystem? fileSystem) =>
-        ALCopsSettingsProvider.GetSettings(fileSystem).StatementBlockSpacing!;
+        ALCopsSettingsProvider.GetSettings(fileSystem).StatementBlockSpacing;
 
     private static bool IncludesExit(StatementBlockSpacingSettings config) =>
         config.ScopeLeavingMode is ScopeLeavingMode.ExitOnly or ScopeLeavingMode.ExitAndError;
@@ -270,37 +280,45 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         return false;
     }
 
-    private static void CheckScopeLeavingSpacing(
-        Action<Diagnostic> report,
+    private static Diagnostic? GetScopeLeavingSpacingDiagnostic(
         StatementSyntax statement,
         string requirement)
     {
         if (!TryGetSiblingIndex(statement, out var siblings, out var i) || i == 0)
         {
-            return;
+            return null;
         }
 
-        ReportIfNoBlankLineBetween(
-            report,
+        return CreateDiagnosticIfNoBlankLineBetween(
             siblings[i - 1].GetLastToken(),
             statement.GetFirstToken(),
             requirement);
     }
 
     private static void ReportIfNoBlankLineBetween(
-        Action<Diagnostic> report,
+        SyntaxNodeAnalysisContext ctx,
         SyntaxToken leading,
         SyntaxToken trailing,
         string requirement)
     {
-        if (!HasBlankLineBetween(leading, trailing))
+        var diagnostic = CreateDiagnosticIfNoBlankLineBetween(leading, trailing, requirement);
+
+        if (diagnostic is not null)
         {
-            report(Diagnostic.Create(
-                DiagnosticDescriptors.StatementBlocksSeparatedByBlankLine,
-                trailing.GetLocation(),
-                requirement));
+            ctx.ReportDiagnostic(diagnostic);
         }
     }
+
+    private static Diagnostic? CreateDiagnosticIfNoBlankLineBetween(
+        SyntaxToken leading,
+        SyntaxToken trailing,
+        string requirement) =>
+        HasBlankLineBetween(leading, trailing)
+            ? null
+            : Diagnostic.Create(
+                DiagnosticDescriptors.StatementBlocksSeparatedByBlankLine,
+                trailing.GetLocation(),
+                requirement);
 
     // Requires at least one truly whitespace-only line strictly between the two tokens.
     // Comments and directives on interior lines are non-blank, so `stmt; \n //note \n stmt2;`
