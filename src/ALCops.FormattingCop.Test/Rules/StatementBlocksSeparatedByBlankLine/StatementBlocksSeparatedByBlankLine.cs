@@ -1,4 +1,6 @@
+using System.Collections.Immutable;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using RoslynTestKit;
 
 namespace ALCops.FormattingCop.Test
@@ -45,11 +47,13 @@ namespace ALCops.FormattingCop.Test
         [Test]
         // Default settings (no alcops.json injected).
         [TestCase(null, "ControlFlowSpacingMissing")]
+        [TestCase(null, "ControlFlowInteractionSpacing")]
         [TestCase(null, "ScopeLeavingSpacingMissing")]
         // Comment-only lines between statements must not satisfy the blank-line requirement.
         [TestCase(null, "CommentBetweenStatements")]
         // Config-driven positive cases.
         [TestCase("OneLinerAll", "OneLinerAll")]
+        [TestCase("ScopeLeavingOff", "ControlFlowInteractionSpacing")]
         [TestCase("ExitOnly", "ExitOnly")]
         [TestCase("ErrorOnly", "ErrorOnly")]
         [TestCase("ElseChainRequireBlank", "ElseChainBlank")]
@@ -59,6 +63,7 @@ namespace ALCops.FormattingCop.Test
         // ControlFlowAfterOnly fixture marks only the trailing Message() call; the 'if' keyword
         // is intentionally unmarked because "before" is off.
         [TestCase("ControlFlowAfterOnly", "ControlFlowAfterOnly")]
+        [TestCase("ControlFlowAfterOnly", "ControlFlowAfterAdjacentControlFlow")]
         // Regression guard for malformed alcops.json → provider must fall back to defaults; the
         // ExitOnly fixture's exit markers require the default ScopeLeavingMode=ExitAndError.
         [TestCase("Malformed", "ExitOnly")]
@@ -97,6 +102,18 @@ namespace ALCops.FormattingCop.Test
                 .NoDiagnosticAtAllMarkers(code, DiagnosticIds.StatementBlocksSeparatedByBlankLine);
         }
 
+        [Test]
+        [TestCase("ControlFlowInteractionSpacing", 4)]
+        public async Task ReportsExpectedDiagnosticCount(string fixtureName, int expectedCount)
+        {
+            var code = await LoadFixtureAsync(fixtureName);
+            var fixture = new DiagnosticCountingFixture(_ruleSetPath);
+
+            Assert.That(
+                fixture.CountDiagnostics(code, DiagnosticIds.StatementBlocksSeparatedByBlankLine),
+                Is.EqualTo(expectedCount));
+        }
+
         // Fixtures live in either HasDiagnostic/ or NoDiagnostic/ subfolders (repo convention).
         // Since names are unique across both, callers only supply the fixture name and this helper
         // resolves the folder — keeping test signatures free of layout details.
@@ -132,5 +149,39 @@ namespace ALCops.FormattingCop.Test
                 });
 
         private static byte[] Utf8(string s) => System.Text.Encoding.UTF8.GetBytes(s);
+
+        private sealed class DiagnosticCountingFixture(string ruleSetPath) : AnalyzerTestFixture
+        {
+            protected override string LanguageName => LanguageNames.AL;
+            protected override string? RuleSetPath => ruleSetPath;
+
+            protected override DiagnosticAnalyzer CreateAnalyzer() =>
+                new Analyzers.StatementBlocksSeparatedByBlankLine();
+
+            public int CountDiagnostics(string markupCode, string diagnosticId)
+            {
+                var markup = new CodeMarkup(markupCode);
+                var document = CreateDocumentFromCode(markup.Code);
+                var compilation = document.Project
+                    .GetCompilationAsync(CancellationToken.None)
+                    .GetAwaiter()
+                    .GetResult();
+
+                if (compilation is null)
+                {
+                    return 0;
+                }
+
+                var diagnostics = compilation
+                    .WithAnalyzers(
+                        ImmutableArray.Create(CreateAnalyzer()),
+                        cancellationToken: CancellationToken.None)
+                    .GetAnalyzerDiagnosticsAsync()
+                    .GetAwaiter()
+                    .GetResult();
+
+                return diagnostics.Count(diagnostic => diagnostic.Id == diagnosticId);
+            }
+        }
     }
 }
