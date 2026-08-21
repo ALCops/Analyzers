@@ -203,7 +203,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
     }
 
     private static StatementBlockSpacingSettings GetConfig(IFileSystem? fileSystem) =>
-        ALCopsSettingsProvider.GetSettings(fileSystem).StatementBlockSpacing;
+        ALCopsSettingsProvider.GetSettings(fileSystem).StatementBlockSpacing!;
 
     private static bool IncludesExit(StatementBlockSpacingSettings config) =>
         config.ScopeLeavingMode is ScopeLeavingMode.ExitOnly or ScopeLeavingMode.ExitAndError;

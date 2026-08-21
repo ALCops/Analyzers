@@ -170,7 +170,12 @@ Settings are cached per directory path for the analyzer session lifetime. There 
 1. Add a new property with a default value to `ALCopsSettings.cs`.
 2. No changes needed to `ALCopsSettingsProvider.cs` for scalar / string / list / dictionary properties — JSON deserialization picks them up automatically.
 3. **For enum-typed properties**, add a converter registration to `ALCopsSettingsProvider.cs`: `JsonStringEnumConverter` in `_jsonOptions.Converters` (net8+) and `StringEnumConverter` in `_jsonSettings.Converters` (netstandard2.1). Both are case-insensitive by default. Then add a schema-parity guard test that compares `Enum.GetNames(typeof(YourEnum))` with the `enum` array in `alcops.schema.json` (see `StatementBlockSpacingSchema` in `src/ALCops.FormattingCop.Test/Rules/StatementBlocksSeparatedByBlankLine/` for a template).
-4. Document the new setting in the project README.
+4. **For nested-class properties with a default instance** (e.g. `public MySettings MyGroup { get; set; } = new();`): JSON deserializers ignore NRT annotations and happily set the property to `null` when the JSON contains `"MyGroup": null`, which then NREs on the first consumer access — violating the "malformed alcops.json → defaults" contract (see [issue #328](https://github.com/ALCops/Analyzers/issues/328)). Apply the two-layer guard:
+   - Annotate the property as nullable in `ALCopsSettings.cs`: `public MySettings? MyGroup { get; set; } = new();`
+   - Normalize in `ALCopsSettingsProvider.DeserializeSettings` after the deserialize call: `settings.MyGroup ??= new MySettings();`
+   - Consumers trust this contract and dereference with `!` (`... .MyGroup!`). Do **not** duplicate the null-coalesce at the callsite — that hides regressions if the provider normalization is later removed.
+   - Add a regression fixture that injects `{"MyGroup": null}` and asserts the analyzer falls back to defaults without NRE (see `StatementBlockSpacingNull` test case in `StatementBlocksSeparatedByBlankLine.cs` for a template).
+5. Document the new setting in the project README.
 
 ### Backward Compatibility
 - Do not remove or rename public methods, properties, or classes.

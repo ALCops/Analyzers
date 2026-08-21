@@ -22,6 +22,10 @@ namespace ALCops.FormattingCop.Test
             // ScopeLeavingMode=ExitAndError, so ExitOnly-fixture markers must still fire — proving
             // defaults kicked in.
             ["Malformed"]             = Utf8("""{"StatementBlockSpacing":{"ScopeLeavingMode":"NotAnEnumValue"}}"""),
+            // Regression guard for issue #328: explicit `null` on the nested settings object
+            // deserializes without JsonException (deserializers ignore NRT). Provider must
+            // normalize null back to defaults so the analyzer does not NRE on property access.
+            ["StatementBlockSpacingNull"] = Utf8("""{"StatementBlockSpacing":null}"""),
         };
 
         private string _testCasePath;
@@ -58,6 +62,9 @@ namespace ALCops.FormattingCop.Test
         // Regression guard for malformed alcops.json → provider must fall back to defaults; the
         // ExitOnly fixture's exit markers require the default ScopeLeavingMode=ExitAndError.
         [TestCase("Malformed", "ExitOnly")]
+        // Regression guard for issue #328: explicit null on the nested settings object must not
+        // NRE and must fall back to defaults; ExitOnly markers fire under the default mode.
+        [TestCase("StatementBlockSpacingNull", "ExitOnly")]
         public async Task HasDiagnostic(string? settingsKey, string fixtureName)
         {
             var code = await LoadFixtureAsync(fixtureName);

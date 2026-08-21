@@ -94,10 +94,15 @@ public static class ALCopsSettingsProvider
         try
         {
 #if NETSTANDARD2_1
-            return JsonConvert.DeserializeObject<ALCopsSettings>(json, _jsonSettings) ?? new ALCopsSettings();
+            var settings = JsonConvert.DeserializeObject<ALCopsSettings>(json, _jsonSettings) ?? new ALCopsSettings();
 #else
-            return JsonSerializer.Deserialize<ALCopsSettings>(json, _jsonOptions) ?? new ALCopsSettings();
+            var settings = JsonSerializer.Deserialize<ALCopsSettings>(json, _jsonOptions) ?? new ALCopsSettings();
 #endif
+            // Explicit `null` on nested settings deserializes without JsonException; restore defaults
+            // so consumers can rely on the property being non-null.
+            settings.StatementBlockSpacing ??= new StatementBlockSpacingSettings();
+
+            return settings;
         }
         catch (JsonException)
         {
