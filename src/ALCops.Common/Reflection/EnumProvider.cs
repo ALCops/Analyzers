@@ -930,8 +930,6 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.BooleanLiteralValue)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _caseLine =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CaseLine)));
-        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _caseElse =
-            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CaseElse)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _caseStatement =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CaseStatement)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _closeBraceToken =
@@ -1262,7 +1260,6 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind Block => _block.Value;
         public static NavCodeAnalysis.SyntaxKind BooleanLiteralValue => _booleanLiteralValue.Value;
         public static NavCodeAnalysis.SyntaxKind CaseLine => _caseLine.Value;
-        public static NavCodeAnalysis.SyntaxKind CaseElse => _caseElse.Value;
         public static NavCodeAnalysis.SyntaxKind CaseStatement => _caseStatement.Value;
         public static NavCodeAnalysis.SyntaxKind CloseBraceToken => _closeBraceToken.Value;
         public static NavCodeAnalysis.SyntaxKind CloseParenToken => _closeParenToken.Value;

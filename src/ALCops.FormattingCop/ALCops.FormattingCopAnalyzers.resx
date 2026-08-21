@@ -193,7 +193,7 @@
     <value>Statement blocks should be separated. Insert a blank line {0}.</value>
   </data>
   <data name="StatementBlocksSeparatedByBlankLineDescription" xml:space="preserve">
-    <value>Control-flow statement blocks should be visually separated by blank lines before and after the block, case branches should be separated from each other, and scope-leaving statements such as Exit and Error() should have a blank line before them.</value>
+    <value>Control-flow statement blocks should be visually separated by blank lines before and after the block, and scope-leaving statements such as Exit and Error() should have a blank line before them.</value>
   </data>
   <data name="AnalyzerExceptionTitle" xml:space="preserve">
     <value>Analyzer threw an unhandled exception</value>
