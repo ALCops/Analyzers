@@ -64,6 +64,13 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
         TextSpan span, Document document)
     {
         SyntaxNode node = syntaxRoot.FindNode(span, getInnermostNodeForTie: true);
+
+        if (node.AncestorsAndSelf().OfType<ParameterSyntax>().FirstOrDefault() is { } parameter
+            && HasConditionalDirective(parameter))
+        {
+            return;
+        }
+
         ProcedureKind procedureKind = GetProcedureKind(ctx.Diagnostics[0].Id);
 
         ctx.RegisterCodeFix(
@@ -114,7 +121,7 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
             return document;
         }
 
-        SemanticModel? semanticModel = await GetSemanticModelIfNeededAsync(document, cancellationToken, procedureKind)
+        SemanticModel? semanticModel = await document.GetSemanticModelAsync(cancellationToken)
             .ConfigureAwait(false);
 
         var parameter = FindParameterInScope(node, semanticModel, procedureKind);
@@ -129,13 +136,6 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
         return newRoot is null ? document : document.WithSyntaxRoot(newRoot);
     }
 
-    private static async Task<SemanticModel?> GetSemanticModelIfNeededAsync(Document document,
-        CancellationToken cancellationToken, ProcedureKind procedureKind)
-    {
-        _ = procedureKind;
-        return await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
-    }
-
     private static ParameterSyntax? FindParameterInScope(SyntaxNode currentNode,
         SemanticModel? semanticModel, ProcedureKind procedureKind,
         Dictionary<MethodOrTriggerDeclarationSyntax, bool>? eventSubscriberCache = null)
@@ -145,6 +145,11 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
             .FirstOrDefault();
 
         if (parameter is null)
+        {
+            return null;
+        }
+
+        if (HasConditionalDirective(parameter))
         {
             return null;
         }
@@ -199,28 +204,68 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
         if (pragmasToRemove.Count > 0)
         {
             var pragmaSpans = pragmasToRemove.Select(pragma => pragma.Span).ToHashSet();
-            var triviaToRemove = root.GetDirectives()
-                .OfType<PragmaWarningDirectiveTriviaSyntax>()
+            var triviaToRemove = GetPragmaDirectives(root)
                 .Where(directive => pragmaSpans.Contains(directive.ParentTrivia.Span))
-                .SelectMany(directive => directive.ParentTrivia.Token.LeadingTrivia
-                    .SkipWhile(trivia => trivia != directive.ParentTrivia)
-                    .TakeWhile(trivia => trivia.IsKind(SyntaxKind.PragmaWarningDirectiveTrivia)
-                        || trivia.ToString().All(char.IsWhiteSpace)
-                        || trivia.IsKind(SyntaxKind.EndOfLineTrivia)))
+                .SelectMany(GetPragmaTriviaToRemove)
                 .ToList();
 
             root = root.ReplaceTrivia(triviaToRemove, (_, _) => default);
         }
 
         root = TransferPragmas(root, pragmaTransferPlan.PragmasByRecipient, annotationsByParameter);
-        root = TransferPragmasToClosingParen(root, pragmaTransferPlan.PragmasByClosingParen, annotationsByParameter);
+        root = TransferPragmasToClosingParen(
+            root,
+            pragmaTransferPlan.PragmasByClosingParen,
+            annotationsByParameter,
+            parameters);
 
         var rewrittenParameters = parameters
             .Select(parameter => FindAnnotatedParameter(root, annotationsByParameter[parameter]))
             .Where(parameter => parameter is not null)
             .Cast<ParameterSyntax>();
 
-        return root.RemoveNodes(rewrittenParameters, SyntaxRemoveOptions.KeepNoTrivia);
+        return root.RemoveNodes(rewrittenParameters, SyntaxRemoveOptions.KeepNoTrivia) ?? root;
+    }
+
+    private static bool HasConditionalDirective(ParameterSyntax parameter) =>
+        parameter.GetLeadingTrivia()
+            .Any(trivia => trivia.GetStructure() is ConditionalDirectiveTriviaSyntax);
+
+    private static IEnumerable<SyntaxTrivia> GetPragmaTriviaToRemove(PragmaWarningDirectiveTriviaSyntax directive)
+    {
+        var leadingTrivia = directive.ParentTrivia.Token.LeadingTrivia;
+        int pragmaIndex = leadingTrivia.IndexOf(directive.ParentTrivia);
+
+        if (pragmaIndex < 0)
+        {
+            return [directive.ParentTrivia];
+        }
+
+        var triviaToRemove = leadingTrivia
+            .Skip(pragmaIndex)
+            .TakeWhile(trivia => trivia == directive.ParentTrivia
+                || trivia.ToString().All(char.IsWhiteSpace)
+                || trivia.IsKind(SyntaxKind.EndOfLineTrivia))
+            .ToList();
+
+        if (!directive.ParentTrivia.Token.IsKind(EnumProvider.SyntaxKind.CloseParenToken))
+        {
+            return triviaToRemove;
+        }
+
+        for (int index = pragmaIndex - 1; index >= 0; index--)
+        {
+            var trivia = leadingTrivia[index];
+
+            if (!trivia.ToString().All(char.IsWhiteSpace))
+            {
+                break;
+            }
+
+            triviaToRemove.Insert(0, trivia);
+        }
+
+        return triviaToRemove;
     }
 
     private static Dictionary<ParameterSyntax, SyntaxAnnotation> CreateParameterAnnotations(
@@ -253,8 +298,9 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
         HashSet<ParameterSyntax> parametersToRemove)
     {
         var pragmasToRemove = new HashSet<SyntaxTrivia>();
+        var pragmaPairs = GetPragmaPairs(root).ToList();
 
-        foreach (var pair in GetPragmaPairs(root))
+        foreach (var pair in pragmaPairs)
         {
             var parameterList = parametersToRemove
                 .Select(parameter => parameter.AncestorsAndSelf().OfType<MethodOrTriggerDeclarationSyntax>()
@@ -291,61 +337,31 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
                 continue;
             }
 
-            var enclosingPair = GetLocallyEnclosingPragmaPair(root, parameter);
+            var enclosingPair = pragmaPairs
+                .Where(pair => IsWithin(pair.Disable.Span, parameterList.FullSpan)
+                    && IsWithin(pair.Restore.Span, parameterList.FullSpan)
+                    && pair.Disable.Span.End <= parameter.Span.Start
+                    && pair.Restore.Span.Start >= parameter.Span.End)
+                .OrderBy(pair => pair.Disable.Span.Start)
+                .LastOrDefault();
 
-            if (enclosingPair is null)
+            if (enclosingPair.Disable == default)
             {
                 continue;
             }
 
             var enclosedParameters = parameterList.Parameters
-                .Where(candidate => candidate.Span.Start >= enclosingPair.Value.Disable.Span.End
-                    && candidate.Span.End <= enclosingPair.Value.Restore.Span.Start);
+                .Where(candidate => candidate.Span.Start >= enclosingPair.Disable.Span.End
+                    && candidate.Span.End <= enclosingPair.Restore.Span.Start);
 
             if (enclosedParameters.Any() && enclosedParameters.All(parametersToRemove.Contains))
             {
-                pragmasToRemove.Add(enclosingPair.Value.Disable);
-                pragmasToRemove.Add(enclosingPair.Value.Restore);
+                pragmasToRemove.Add(enclosingPair.Disable);
+                pragmasToRemove.Add(enclosingPair.Restore);
             }
         }
 
         return pragmasToRemove;
-    }
-
-    private static (SyntaxTrivia Disable, SyntaxTrivia Restore)? GetLocallyEnclosingPragmaPair(
-        SyntaxNode root, ParameterSyntax parameter)
-    {
-        var method = parameter.AncestorsAndSelf()
-            .OfType<MethodOrTriggerDeclarationSyntax>()
-            .FirstOrDefault();
-
-        if (method is null)
-        {
-            return null;
-        }
-
-        var pragmas = GetPragmaDirectives(root)
-            .Where(pragma => IsWithin(pragma.Span, method.FullSpan))
-            .ToList();
-        var disable = pragmas
-            .LastOrDefault(pragma => pragma.Span.End <= parameter.Span.Start
-                && IsPragma(pragma, "#pragma warning disable"));
-
-        if (disable == default)
-        {
-            return null;
-        }
-
-        string errorCodes = GetPragmaErrorCodes(disable, "#pragma warning disable");
-        var restore = pragmas
-            .FirstOrDefault(pragma => pragma.Span.Start >= parameter.Span.End
-                && IsPragma(pragma, "#pragma warning restore")
-                && string.Equals(
-                    GetPragmaErrorCodes(pragma, "#pragma warning restore"),
-                    errorCodes,
-                    StringComparison.OrdinalIgnoreCase));
-
-        return restore == default ? null : (disable, restore);
     }
 
     private static PragmaTransferPlan GetPragmaTransferPlan(SyntaxNode root,
@@ -353,8 +369,10 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
     {
         var pragmaTransferPlan = new PragmaTransferPlan();
 
-        foreach (var pragma in GetPragmaDirectives(root))
+        foreach (var directive in GetPragmaDirectives(root))
         {
+            SyntaxTrivia pragma = directive.ParentTrivia;
+
             if (pragmasToRemove.Contains(pragma))
             {
                 continue;
@@ -363,6 +381,11 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
             var target = parametersToRemove.FirstOrDefault(parameter => IsWithin(pragma.Span, parameter.FullSpan));
 
             if (target is null)
+            {
+                continue;
+            }
+
+            if (HasConditionalDirective(target))
             {
                 continue;
             }
@@ -457,7 +480,7 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
             }
 
             string leadingTrivia = rewrittenRecipient.GetLeadingTrivia().ToFullString().TrimStart();
-            string indentation = GetParameterIndentation(root, rewrittenRecipient);
+            string indentation = GetParameterIndentation(rewrittenRecipient);
             string transferredPragmas = string.Concat(pragmas.Select(pragma =>
                 $"{pragma}{Environment.NewLine}{indentation}"));
             var replacement = rewrittenRecipient.WithLeadingTrivia(
@@ -471,10 +494,19 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
 
     private static SyntaxNode TransferPragmasToClosingParen(SyntaxNode root,
         Dictionary<ParameterSyntax, List<SyntaxTrivia>> pragmasByTarget,
-        Dictionary<ParameterSyntax, SyntaxAnnotation> annotationsByParameter)
+        Dictionary<ParameterSyntax, SyntaxAnnotation> annotationsByParameter,
+        HashSet<ParameterSyntax> parametersToRemove)
     {
-        foreach (var (target, pragmas) in pragmasByTarget)
+        var pragmasByParameterList = pragmasByTarget
+            .GroupBy(entry => entry.Key.AncestorsAndSelf()
+                .OfType<MethodOrTriggerDeclarationSyntax>()
+                .FirstOrDefault()?.ParameterList)
+            .Where(group => group.Key is not null);
+
+        foreach (var parameterListPragmas in pragmasByParameterList)
         {
+            var orderedPragmas = parameterListPragmas.OrderBy(entry => entry.Key.SpanStart).ToList();
+            var target = orderedPragmas[0].Key;
             var rewrittenTarget = FindAnnotatedParameter(root, annotationsByParameter[target]);
 
             if (rewrittenTarget is null)
@@ -492,9 +524,14 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
             }
 
             var closeParenToken = parameterList.GetLastToken();
-            string indentation = GetParameterIndentation(root, rewrittenTarget);
-            string transferredPragmas = string.Concat(pragmas.Select(pragma =>
-                $"{Environment.NewLine}{indentation}{pragma}{Environment.NewLine}{indentation}"));
+            string indentation = GetParameterIndentation(rewrittenTarget);
+            bool hasRetainedPrecedingParameter = parameterListPragmas.Key!.Parameters
+                .TakeWhile(parameter => parameter != target)
+                .Any(parameter => !parametersToRemove.Contains(parameter));
+            string leadingNewLine = hasRetainedPrecedingParameter ? Environment.NewLine : string.Empty;
+            string triviaSeparator = $"{Environment.NewLine}{indentation}";
+            var pragmas = orderedPragmas.SelectMany(entry => entry.Value);
+            string transferredPragmas = $"{leadingNewLine}{indentation}{string.Join(triviaSeparator, pragmas)}{triviaSeparator}";
             var replacement = closeParenToken.WithLeadingTrivia(
                 SyntaxFactory.ParseLeadingTrivia($"{transferredPragmas}{closeParenToken.LeadingTrivia}"));
 
@@ -504,11 +541,11 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
         return root;
     }
 
-    private static string GetParameterIndentation(SyntaxNode root, ParameterSyntax parameter)
+    private static string GetParameterIndentation(ParameterSyntax parameter)
     {
-        string source = root.ToFullString();
-        int lineStart = source.LastIndexOf('\n', parameter.Span.Start - 1) + 1;
-        string indentation = source[lineStart..parameter.Span.Start];
+        string leadingTrivia = parameter.GetLeadingTrivia().ToFullString();
+        int lineStart = leadingTrivia.LastIndexOf('\n') + 1;
+        string indentation = leadingTrivia[lineStart..];
 
         if (indentation.All(char.IsWhiteSpace))
         {
@@ -525,14 +562,13 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
     {
         var disabledPragmas = new Dictionary<string, Stack<SyntaxTrivia>>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var pragma in GetPragmaDirectives(root))
+        foreach (var directive in GetPragmaDirectives(root))
         {
-            const string disablePrefix = "#pragma warning disable";
-            const string restorePrefix = "#pragma warning restore";
+            SyntaxTrivia pragma = directive.ParentTrivia;
 
-            if (IsPragma(pragma, disablePrefix))
+            if (IsPragmaDisable(directive))
             {
-                string errorCodes = GetPragmaErrorCodes(pragma, disablePrefix);
+                string errorCodes = GetPragmaErrorCodes(directive);
 
                 if (!disabledPragmas.TryGetValue(errorCodes, out var disabled))
                 {
@@ -542,9 +578,9 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
 
                 disabled.Push(pragma);
             }
-            else if (IsPragma(pragma, restorePrefix))
+            else if (IsPragmaRestore(directive))
             {
-                string errorCodes = GetPragmaErrorCodes(pragma, restorePrefix);
+                string errorCodes = GetPragmaErrorCodes(directive);
 
                 if (disabledPragmas.TryGetValue(errorCodes, out var disabled) && disabled.Count > 0)
                 {
@@ -554,18 +590,22 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
         }
     }
 
-    private static bool IsPragma(SyntaxTrivia pragma, string prefix) =>
-        pragma.ToString().Trim().StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+    private static bool IsPragmaDisable(PragmaWarningDirectiveTriviaSyntax directive) =>
+        string.Equals(directive.DisableOrRestoreKeyword.ValueText, "disable", StringComparison.OrdinalIgnoreCase);
 
-    private static string GetPragmaErrorCodes(SyntaxTrivia pragma, string prefix) =>
-        pragma.ToString().Trim()[prefix.Length..].Trim();
+    private static bool IsPragmaRestore(PragmaWarningDirectiveTriviaSyntax directive) =>
+        string.Equals(directive.DisableOrRestoreKeyword.ValueText, "restore", StringComparison.OrdinalIgnoreCase);
 
-    private static IEnumerable<SyntaxTrivia> GetPragmaDirectives(SyntaxNode root) =>
+    private static string GetPragmaErrorCodes(PragmaWarningDirectiveTriviaSyntax directive) =>
+        string.Join(",", directive.ErrorCodes
+            .Select(errorCode => errorCode.ToString().Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(errorCode => errorCode, StringComparer.OrdinalIgnoreCase));
+
+    private static IEnumerable<PragmaWarningDirectiveTriviaSyntax> GetPragmaDirectives(SyntaxNode root) =>
         root.GetDirectives()
             .OfType<PragmaWarningDirectiveTriviaSyntax>()
-            .Select(directive => directive.ParentTrivia)
-            .Where(trivia => trivia.ToString().Trim()
-                .StartsWith("#pragma warning", StringComparison.OrdinalIgnoreCase));
+            .Where(directive => directive.IsActive);
 
     private static async Task<Document?> FixAllAsync(FixAllContext fixAllContext, Document document,
         Optional<ImmutableArray<TextSpan>> fixAllSpans)
@@ -605,7 +645,7 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
             ? ProcedureKind.EventSubscriber
             : ProcedureKind.Regular;
 
-        SemanticModel? semanticModel = await GetSemanticModelIfNeededAsync(document, cancellationToken, procedureKind)
+        SemanticModel? semanticModel = await document.GetSemanticModelAsync(cancellationToken)
             .ConfigureAwait(false);
 
         var eventSubscriberCache = new Dictionary<MethodOrTriggerDeclarationSyntax, bool>();

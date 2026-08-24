@@ -81,6 +81,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("RemoveSingleParameter")]
         [TestCase("RemoveMiddleParameter")]
         [TestCase("RemoveMiddleParameterMultiline")]
+        [TestCase("RemoveSingleParameterWithPragma")]
         public async Task HasFix(string testCase)
         {
             RequireSdkV13Support();
@@ -101,7 +102,44 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
+        [TestCase("ConditionalParameter")]
+        public async Task NoFix(string testCase)
+        {
+            RequireSdkV13Support();
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoFix), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<ParameterNotReferencedCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.NoCodeFix(code, DiagnosticDescriptors.ParameterNotReferenced);
+        }
+
+        [Test]
+        [TestCase("ConditionalEventSubscriberParameter")]
+        public async Task NoFixEventSubscriber(string testCase)
+        {
+            RequireSdkV13Support();
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoFix), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<ParameterNotReferencedCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.NoCodeFix(code, DiagnosticDescriptors.EventSubscriberParameterNotReferenced);
+        }
+
+        [Test]
         [TestCase("RemoveSingleParameterEventSubscriber")]
+        [TestCase("RemoveSingleParameterEventSubscriberWithPragma")]
         public async Task HasFixEventSubscriber(string testCase)
         {
             RequireSdkV13Support();
@@ -148,6 +186,47 @@ namespace ALCops.LinterCop.Test
                 DiagnosticIds.ParameterNotReferenced,
                 codeFixIndex: 0,
                 equivalenceKey: $"{nameof(ParameterNotReferencedCodeFixProvider)}.RegularProcedure");
+        }
+
+        [Test]
+        public async Task HasFixAllMixedProcedureKinds()
+        {
+            RequireSdkV13Support();
+
+            string testCasePath = Path.Combine(_testCasePath, nameof(HasFixAll), "RemoveMixedProcedureKinds");
+            var currentCode = await File.ReadAllTextAsync(Path.Combine(testCasePath, "current.al"))
+                .ConfigureAwait(false);
+            var regularExpectedCode = await File.ReadAllTextAsync(Path.Combine(testCasePath, "expected-regular.al"))
+                .ConfigureAwait(false);
+            var subscriberExpectedCode = await File.ReadAllTextAsync(Path.Combine(testCasePath, "expected-subscriber.al"))
+                .ConfigureAwait(false);
+            string regularCurrentCode = currentCode.Replace(
+                "[|SubscriberUnused: Boolean|]",
+                "SubscriberUnused: Boolean",
+                StringComparison.Ordinal);
+            string subscriberCurrentCode = currentCode.Replace(
+                "[|RegularUnused: Text|]",
+                "RegularUnused: Text",
+                StringComparison.Ordinal);
+
+            var fixture = RoslynFixtureFactory.Create<ParameterNotReferencedCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.TestFixAll(
+                regularCurrentCode,
+                regularExpectedCode,
+                DiagnosticIds.ParameterNotReferenced,
+                codeFixIndex: 0,
+                equivalenceKey: $"{nameof(ParameterNotReferencedCodeFixProvider)}.RegularProcedure");
+            fixture.TestFixAll(
+                subscriberCurrentCode,
+                subscriberExpectedCode,
+                DiagnosticIds.EventSubscriberParameterNotReferenced,
+                codeFixIndex: 0,
+                equivalenceKey: $"{nameof(ParameterNotReferencedCodeFixProvider)}.EventSubscriber");
         }
 
         [Test]

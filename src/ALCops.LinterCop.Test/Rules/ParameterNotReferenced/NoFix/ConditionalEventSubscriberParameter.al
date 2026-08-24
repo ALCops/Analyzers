@@ -1,14 +1,16 @@
-codeunit 50100 FixAllEventParameters
+codeunit 50100 ConditionalSubscriberNoFix
 {
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterInsertEvent', '', false, false)]
     local procedure OnAfterInsertSalesHeader(
         var Rec: Record "Sales Header";
-        #pragma warning disable AA0024
+#if not ACTIVE
         [|RunTrigger: Boolean|];
-        [|Xyz: Integer|]
-        #pragma warning restore AA0024
-        )
+#else
+        InactiveParameter: Date;
+#endif
+        Xyz: Integer)
     begin
         Rec.Init();
+        Xyz := 1;
     end;
 }

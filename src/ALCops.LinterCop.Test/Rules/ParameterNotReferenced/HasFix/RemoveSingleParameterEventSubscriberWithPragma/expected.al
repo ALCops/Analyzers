@@ -1,14 +1,11 @@
-codeunit 50100 FixAllEventParameters
+codeunit 50100 RemoveEventPragmaParameter
 {
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterInsertEvent', '', false, false)]
     local procedure OnAfterInsertSalesHeader(
         var Rec: Record "Sales Header";
-        #pragma warning disable AA0024
-        [|RunTrigger: Boolean|];
-        [|Xyz: Integer|]
-        #pragma warning restore AA0024
-        )
+        Xyz: Integer)
     begin
         Rec.Init();
+        Xyz := 1;
     end;
 }
