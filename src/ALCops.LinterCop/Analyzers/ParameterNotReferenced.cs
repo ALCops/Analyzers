@@ -12,7 +12,9 @@ namespace ALCops.LinterCop.Analyzers;
 public sealed class ParameterNotReferenced : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-        ImmutableArray.Create(DiagnosticDescriptors.ParameterNotReferenced);
+        ImmutableArray.Create(
+            DiagnosticDescriptors.ParameterNotReferenced,
+            DiagnosticDescriptors.EventSubscriberParameterNotReferenced);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -27,7 +29,9 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
         if (context.OwningSymbol is not IMethodSymbol method)
             return;
 
-        if (!ShouldAnalyzeMethod(method))
+        DiagnosticDescriptor? diagnosticDescriptor = GetDiagnosticDescriptor(method);
+
+        if (diagnosticDescriptor is null)
             return;
 
         if (method.Parameters.IsEmpty)
@@ -46,7 +50,7 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
         {
             context.ReportDiagnostic(
                 Diagnostic.Create(
-                    DiagnosticDescriptors.ParameterNotReferenced,
+                    diagnosticDescriptor,
                     parameter.GetLocation(),
                     parameter.Name,
                     method.Name));
@@ -76,42 +80,42 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
         }
     }
 
-    private static bool ShouldAnalyzeMethod(IMethodSymbol method)
+    private static DiagnosticDescriptor? GetDiagnosticDescriptor(IMethodSymbol method)
     {
         // Handler functions (MessageHandler, ConfirmHandler, etc.) have platform-enforced signatures
         if (method.IsHandler())
-            return false;
+            return null;
 
         // ErrorInfo/Notification AddAction callbacks have a contractually required parameter
         if (IsActionCallbackMethod(method))
-            return false;
+            return null;
 
         // Event subscribers are local but explicitly excluded by AA0137,
-        // so we handle them here
+        // so we handle them here with a dedicated diagnostic ID
         if (method.IsEventSubscriber())
-            return true;
+            return DiagnosticDescriptors.EventSubscriberParameterNotReferenced;
 
         // AA0137 already handles local procedures (except event subscribers above)
         if (method.IsLocal)
-            return false;
+            return null;
 
         // Triggers have platform-defined signatures
         if (method.MethodKind == EnumProvider.MethodKind.Trigger)
-            return false;
+            return null;
 
         // Event declarations define the subscriber contract
         if (method.IsEvent)
-            return false;
+            return null;
 
         // Obsolete methods should not be modified
         if (method.IsObsoleteRemoved || method.IsObsoletePending)
-            return false;
+            return null;
 
         // Interface implementations are bound by the interface contract
         if (method.MethodImplementsInterfaceMethod())
-            return false;
+            return null;
 
-        return true;
+        return DiagnosticDescriptors.ParameterNotReferenced;
     }
 
     private static bool IsActionCallbackMethod(IMethodSymbol method)

@@ -1,4 +1,4 @@
-codeunit 50102 MyCodeunit implements MyInterface
+codeunit 50102 InterfaceImplementation implements InterfaceParameterContract
 {
     procedure MyProcedure([|MyInteger: Integer|]; MyText: Text; MyDate: Date)
     begin
@@ -7,7 +7,7 @@ codeunit 50102 MyCodeunit implements MyInterface
     end;
 }
 
-interface MyInterface
+interface InterfaceParameterContract
 {
     procedure MyProcedure(MyInteger: Integer; MyText: Text; MyDate: Date);
 }

@@ -939,6 +939,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CloseBraceToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _closeParenToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CloseParenToken)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _commentTrivia =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CommentTrivia)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _codeunitKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CodeunitKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _codeunitObject =
@@ -1266,6 +1268,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind CaseStatement => _caseStatement.Value;
         public static NavCodeAnalysis.SyntaxKind CloseBraceToken => _closeBraceToken.Value;
         public static NavCodeAnalysis.SyntaxKind CloseParenToken => _closeParenToken.Value;
+        public static NavCodeAnalysis.SyntaxKind CommentTrivia => _commentTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind CodeunitKeyword => _codeunitKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind CodeunitObject => _codeunitObject.Value;
         public static NavCodeAnalysis.SyntaxKind ConditionalExpression => _conditionalExpression.Value;

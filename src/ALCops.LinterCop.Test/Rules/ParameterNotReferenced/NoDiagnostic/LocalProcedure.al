@@ -1,4 +1,4 @@
-codeunit 50100 MyCodeunit
+codeunit 50100 LocalUnusedParameter
 {
     local procedure MyProcedure([|MyVariant: Variant|])
     begin
