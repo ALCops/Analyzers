@@ -20,7 +20,8 @@ FC0007 reports missing blank lines around statement blocks: before/after control
 - Reports when a scope-leaving statement (`exit`, built-in `Error`) is missing a blank line before it when it follows another statement in the same block.
 - Reports when `else` (block or else-if) has no blank line above it, if configured.
 - Does not report the first statement in a block, the first statement directly owned by a control-flow construct, or a one-liner (unless configured otherwise).
-- Adjacent control-flow blocks: the "after" check is skipped when the next sibling is itself another control-flow block; the second block's "before" check covers that gap.
+- Adjacent control-flow blocks have one configuration-aware owner: the "after" check is skipped only when the next sibling's "before" check is enabled and includes that statement under `OneLinerMode`.
+- A control-flow block followed by `exit` or built-in `Error(...)` produces one diagnostic for the gap. The block's active "after" check owns it; otherwise the scope-leaving "before" check does.
 
 ## Configuration surface (`alcops.json` → `StatementBlockSpacing`)
 
@@ -29,7 +30,7 @@ The rule reads settings from `alcops.json` via `ALCopsSettingsProvider`. All pro
 | Property | Type | Default | Effect |
 |---|---|---|---|
 | `ControlFlowBefore` | `bool` | `true` | Require blank line before control-flow blocks. |
-| `ControlFlowAfter` | `bool` | `true` | Require blank line after control-flow blocks (skipped when next sibling is also a control-flow block). |
+| `ControlFlowAfter` | `bool` | `true` | Require blank lines after control-flow blocks. For an adjacent control-flow sibling, the check is skipped only when that sibling's active "before" check owns the gap. |
 | `ScopeLeavingMode` | enum `Off` \| `ExitOnly` \| `ErrorOnly` \| `ExitAndError` | `ExitAndError` | Which scope-leaving statements require a blank line before them. |
 | `ElseChainBeforeMode` | enum `Off` \| `RequireBlank` | `Off` | Require blank line before `else` / `else if`. Skipped when `else` is on the same line as the previous token (one-liner). |
 | `OneLinerMode` | enum `None` \| `All` | `None` | Include or exclude one-liner statements (whole statement spans a single line) from spacing checks. |
@@ -46,7 +47,7 @@ Settings type: [src/ALCops.Common/Settings/StatementBlockSpacingSettings.cs](src
 | JSON string enums via `JsonStringEnumConverter` (net8+) and `StringEnumConverter` (netstandard2.1) | Human-readable JSON matches other alcops settings. Both converters are case-insensitive by default. |
 | Blank-line check inspects source-text lines strictly between the two token positions | Comparing token line diffs alone counts a comment-only line as a separator, contradicting the intended semantics. Iterating `SourceText.Lines` and requiring at least one whitespace-only line is robust against comments and directives. |
 | Use sibling `StatementSyntax` nodes from the parent | The rule is about statement sequencing in the same statement list and must also work in contexts not represented by `BlockSyntax` (for example `repeat`). |
-| Skip the "after" check when the next sibling is another control-flow block | Avoids duplicate diagnostics between adjacent blocks — the second block's "before" check owns that gap. |
+| Give each statement gap one configuration-aware diagnostic owner | Avoids duplicate diagnostics before scope-leavers while preserving diagnostics next to one-liners or when `ControlFlowBefore` is disabled. An adjacent block owns its "before" gap only when that check actually runs. |
 | Skip one-liners unless `OneLinerMode = All` | One-liner control-flow statements (`if X then Y`) rarely benefit from surrounding blank lines. |
 | Detect `Error(...)` via `MethodKind.BuiltInMethod` + `IsSameName` | Distinguishes the built-in from user-defined `Error` procedures. |
 | `ElseChainBeforeMode` short-circuits when `else` shares its line with the previous token | Prevents false positives on `if X then Y else Z` one-liners. |
@@ -55,11 +56,12 @@ Settings type: [src/ALCops.Common/Settings/StatementBlockSpacingSettings.cs](src
 
 Tests enable the rule via a physical `StatementBlocksSeparatedByBlankLine.ruleset.json` (same pattern as `DC0008`, `AC0028`, etc.). Config-driven tests inject `alcops.json` via `MemoryFileSystem` on the `AnalyzerTestFixtureConfig.FileSystem` slot alongside `RuleSetPath`.
 
-**HasDiagnostic (2 cases):** ControlFlowSpacingMissing, ScopeLeavingSpacingMissing.
+**HasDiagnostic (3 cases):** ControlFlowSpacingMissing, ControlFlowInteractionSpacing, ScopeLeavingSpacingMissing.
 **HasDiagnosticWithCommentBetween (1 case):** CommentBetweenStatements.
 **NoDiagnostic (3 cases):** ControlFlowSpacingValid, ScopeLeavingSpacingValid, DisabledByDefault.
 **HasDiagnosticWithOneLinerAll (1 case):** OneLinerAll.
 **NoDiagnosticWithControlFlowDisabled (1 case):** ControlFlowSpacingMissing.
+**HasDiagnosticWithScopeLeavingOff (1 case):** ControlFlowInteractionSpacing.
 **NoDiagnosticWithScopeLeavingOff (2 cases):** ExitOnly, ErrorOnly.
 **HasDiagnosticWithExitOnly (1 case):** ExitOnly.
 **NoDiagnosticWithExitOnlySuppressesError (1 case):** ErrorOnly.
@@ -68,9 +70,10 @@ Tests enable the rule via a physical `StatementBlocksSeparatedByBlankLine.rulese
 **HasDiagnosticWithElseChainRequireBlank (1 case):** ElseChainBlank.
 **NoDiagnosticWithElseChainRequireBlank (1 case):** ElseChainBlankValid.
 **HasDiagnosticWithControlFlowBeforeOnly (1 case):** ControlFlowBeforeOnly.
-**HasDiagnosticWithControlFlowAfterOnly (1 case):** ControlFlowAfterOnly.
+**HasDiagnosticWithControlFlowAfterOnly (2 cases):** ControlFlowAfterOnly, ControlFlowAfterAdjacentControlFlow.
 **HasDiagnosticWithMalformedJsonFallsBackToDefaults (1 case):** ExitOnly.
 **HasDiagnosticWithNullSettingsFallsBackToDefaults (1 case):** ExitOnly.
+**ExactDiagnosticCount (1 case):** ControlFlowInteractionSpacing.
 **SchemaParity (3 cases):** ScopeLeavingModeEnumMatchesSchema, ElseChainBeforeModeEnumMatchesSchema, OneLinerModeEnumMatchesSchema.
 
 ## Known issues / non-goals

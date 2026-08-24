@@ -100,7 +100,9 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
                 $"before '{name}' block");
         }
 
-        if (config.ControlFlowAfter && i < siblings.Length - 1 && !IsControlFlowStatement(siblings[i + 1]))
+        if (config.ControlFlowAfter &&
+            i < siblings.Length - 1 &&
+            !WillReportControlFlowBefore(siblings[i + 1], config))
         {
             ReportIfNoBlankLineBetween(
                 ctx,
@@ -165,7 +167,10 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        var diagnostic = GetScopeLeavingSpacingDiagnostic(statement, "before scope-leaving statement 'exit'");
+        var diagnostic = GetScopeLeavingSpacingDiagnostic(
+            statement,
+            config,
+            "before scope-leaving statement 'exit'");
 
         if (diagnostic is not null)
         {
@@ -204,7 +209,10 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        var diagnostic = GetScopeLeavingSpacingDiagnostic(expressionStatement, "before scope-leaving statement 'Error()'");
+        var diagnostic = GetScopeLeavingSpacingDiagnostic(
+            expressionStatement,
+            config,
+            "before scope-leaving statement 'Error()'");
 
         if (diagnostic is not null)
         {
@@ -245,6 +253,20 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
     private static bool IsControlFlowStatement(SyntaxNode node) =>
         ControlFlowStatementKinds.Contains(node.Kind);
 
+    private static bool WillReportControlFlowBefore(
+        StatementSyntax statement,
+        StatementBlockSpacingSettings config) =>
+        config.ControlFlowBefore &&
+        IsControlFlowStatement(statement) &&
+        (!IsOneLiner(statement) || IncludesOneLiners(config));
+
+    private static bool WillReportControlFlowAfter(
+        StatementSyntax statement,
+        StatementBlockSpacingSettings config) =>
+        config.ControlFlowAfter &&
+        IsControlFlowStatement(statement) &&
+        (!IsOneLiner(statement) || IncludesOneLiners(config));
+
     private static ImmutableArray<StatementSyntax> GetSiblingStatements(StatementSyntax statement)
     {
         if (statement.Parent is null)
@@ -282,9 +304,15 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
 
     private static Diagnostic? GetScopeLeavingSpacingDiagnostic(
         StatementSyntax statement,
+        StatementBlockSpacingSettings config,
         string requirement)
     {
         if (!TryGetSiblingIndex(statement, out var siblings, out var i) || i == 0)
+        {
+            return null;
+        }
+
+        if (WillReportControlFlowAfter(siblings[i - 1], config))
         {
             return null;
         }
