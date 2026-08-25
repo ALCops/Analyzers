@@ -103,6 +103,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `fc0007-statement-blocks-separated-by-blank-line` | rule-scoped | FC0007 rule |
 | `lc0083-built-in-date-time-method` | rule-scoped | LC0083 rule |
 | `lc0086-page-style-string-literal` | rule-scoped | LC0086 rule |
+| `lc0089-cognitive-complexity` | rule-scoped | LC0089/LC0089i/LC0090 rules |
 | `lc0091-translatable-text-should-be-translated` | rule-scoped | LC0091 rule |
 | `lc0092-naming-pattern` | rule-scoped | LC0092 rule |
 | `lc0096-unnecessary-record-parameter` | rule-scoped | LC0096 rule |

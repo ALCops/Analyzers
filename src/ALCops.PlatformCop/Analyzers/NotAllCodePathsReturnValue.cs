@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Immutable;
+using ALCops.Common;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -299,22 +300,10 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
 
     // Built-in AL methods that never return control to the caller (they throw).
     // Treating them as path terminators prevents PC0038 false positives on guard clauses
-    // such as `if Cond then exit(x) else Error('...');`.
-    private static bool IsFlowTerminatingCall(IInvocationExpression invocation)
-    {
-        if (invocation.TargetMethod is not IMethodSymbol targetMethod)
-        {
-            return false;
-        }
-
-        if (targetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
-        {
-            return false;
-        }
-
-        return string.Equals(targetMethod.Name, "Error", StringComparison.Ordinal)
-            || string.Equals(targetMethod.Name, "ThrowError", StringComparison.Ordinal);
-    }
+    // such as `if Cond then exit(x) else Error('...');` or `... else Rec.FieldError(...);`.
+    private static bool IsFlowTerminatingCall(IInvocationExpression invocation) =>
+        invocation.TargetMethod is IMethodSymbol targetMethod &&
+        FlowTerminatingBuiltIns.IsFlowTerminatingCall(targetMethod);
 
     private static ImmutableHashSet<bool> AnalyzeStatements(
         IEnumerable<IOperation> statements,

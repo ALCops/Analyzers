@@ -56,6 +56,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("ScopeLeavingOff", "ControlFlowInteractionSpacing")]
         [TestCase("ExitOnly", "ExitOnly")]
         [TestCase("ErrorOnly", "ErrorOnly")]
+        [TestCase("ErrorOnly", "ErrorOnlyFieldError")]
         [TestCase("ElseChainRequireBlank", "ElseChainBlank")]
         // ControlFlowBeforeOnly fixture marks only the 'if' keyword; the trailing Message() call
         // (missing blank line after 'end;') is intentionally unmarked because "after" is off.
@@ -82,6 +83,7 @@ namespace ALCops.FormattingCop.Test
         // Default settings.
         [TestCase(null, "ControlFlowSpacingValid")]
         [TestCase(null, "ScopeLeavingSpacingValid")]
+        [TestCase("ErrorOnly", "ErrorOnlyFieldErrorValid")]
         [TestCase(null, "DisabledByDefault")]
         // Disabling ControlFlowBefore/After entirely must silence the ControlFlowSpacingMissing fixture.
         [TestCase("ControlFlowOff", "ControlFlowSpacingMissing")]
@@ -90,6 +92,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("ScopeLeavingOff", "ErrorOnly")]
         // ExitOnly config must suppress Error() markers in the ErrorOnly fixture.
         [TestCase("ExitOnly", "ErrorOnly")]
+        [TestCase("ExitOnly", "ErrorOnlyFieldError")]
         // ErrorOnly config must suppress exit markers in the ExitOnly fixture.
         [TestCase("ErrorOnly", "ExitOnly")]
         // ElseChainBeforeMode=RequireBlank must accept the well-spaced else-chain fixture.

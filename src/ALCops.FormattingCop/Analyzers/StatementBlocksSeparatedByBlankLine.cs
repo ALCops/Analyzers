@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using ALCops.Common.Settings;
@@ -11,8 +12,6 @@ namespace ALCops.FormattingCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
 {
-    private const string ErrorMethodName = "Error";
-
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.StatementBlocksSeparatedByBlankLine);
 
@@ -191,13 +190,14 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         }
 
         // Direct else/then branch statements are not block siblings; comparing them against the
-        // sibling branch produces false positives (`end else Error(...);`).
+        // sibling branch produces false positives (`end else Error(...);`, `end else Rec.FieldError(...);`).
         if (expressionStatement.Parent is IfStatementSyntax)
         {
             return;
         }
 
-        if (!IsBuiltInErrorInvocation(invocation))
+        if (invocation.TargetMethod is not IMethodSymbol targetMethod ||
+            !FlowTerminatingBuiltIns.IsFlowTerminatingCall(targetMethod))
         {
             return;
         }
@@ -212,7 +212,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         var diagnostic = GetScopeLeavingSpacingDiagnostic(
             expressionStatement,
             config,
-            "before scope-leaving statement 'Error()'");
+            $"before scope-leaving statement '{targetMethod.Name}()'");
 
         if (diagnostic is not null)
         {
@@ -237,17 +237,6 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         var span = statement.GetLocation().GetLineSpan();
 
         return span.StartLinePosition.Line == span.EndLinePosition.Line;
-    }
-
-    private static bool IsBuiltInErrorInvocation(IInvocationExpression invocation)
-    {
-        if (invocation.TargetMethod is not IMethodSymbol targetMethod)
-        {
-            return false;
-        }
-
-        return targetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod &&
-            SemanticFacts.IsSameName(targetMethod.Name, ErrorMethodName);
     }
 
     private static bool IsControlFlowStatement(SyntaxNode node) =>

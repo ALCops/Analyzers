@@ -55,6 +55,12 @@ Higher-level utilities that wrap SDK functionality.
 | `IdentifierCaseStyle.cs` | Enum consumed by `IdentifierNameRenderer`: `Pascal`, `Camel`, `Snake`, `Kebab`. |
 | `AcronymRenderMode.cs` | Enum consumed by `IdentifierNameRenderer`: `Preserve` (keep canonical acronym casing) vs `Normalize` (apply C# first-upper/rest-lower to every word). |
 
+### Shared classifications/
+
+| File | Purpose |
+|------|---------|
+| `FlowTerminatingBuiltIns.cs` | Shared case-insensitive classification of AL built-ins that never return control (`Error`, `FieldError`). `IsFlowTerminatingCall(IMethodSymbol?)` also requires `MethodKind.BuiltInMethod`, preventing user-defined names from matching. Used by PC0038, FC0007, and LC0089/LC0090. |
+
 ### Reflection/
 Runtime access to internal/version-dependent SDK types. This is the most sensitive area of Common.
 

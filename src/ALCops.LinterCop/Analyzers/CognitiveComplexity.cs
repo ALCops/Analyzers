@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using ALCops.Common.Settings;
@@ -58,7 +59,6 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     {
         "Break",
         "Continue",
-        "Error",
         "Quit",
         "Skip"
     };
@@ -88,12 +88,15 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
             compilationContext.RegisterCodeBlockAction(codeBlockContext =>
             {
-                AnalyzeCognitiveComplexity(codeBlockContext, recursion);
+                AnalyzeCognitiveComplexity(codeBlockContext, compilation, recursion);
             });
         });
     }
 
-    private void AnalyzeCognitiveComplexity(CodeBlockAnalysisContext context, CognitiveComplexityRecursionGraphService recursion)
+    private void AnalyzeCognitiveComplexity(
+        CodeBlockAnalysisContext context,
+        Compilation compilation,
+        CognitiveComplexityRecursionGraphService recursion)
     {
         if (context.IsObsolete() || context.CodeBlock is not MethodOrTriggerDeclarationSyntax methodOrTrigger)
             return;
@@ -108,7 +111,8 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             methodOrTrigger.Attributes.Any(attr => eventPublisherDecoratorNames.Contains(attr.GetIdentifierOrLiteralValue() ?? string.Empty)))
             return;
 
-        int complexity = CalculateCognitiveComplexity(context, recursion, methodOrTrigger.Body);
+        var semanticModel = compilation.GetSemanticModel(methodOrTrigger.SyntaxTree);
+        int complexity = CalculateCognitiveComplexity(context, recursion, semanticModel, methodOrTrigger.Body);
         if (complexity >= complexityThreshold)
         {
             context.ReportDiagnostic(Diagnostic.Create(
@@ -125,7 +129,11 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             complexityThreshold));
     }
 
-    private int CalculateCognitiveComplexity(CodeBlockAnalysisContext context, CognitiveComplexityRecursionGraphService recursion, SyntaxNode root)
+    private int CalculateCognitiveComplexity(
+        CodeBlockAnalysisContext context,
+        CognitiveComplexityRecursionGraphService recursion,
+        SemanticModel semanticModel,
+        SyntaxNode root)
     {
         int complexity = 0;
         var stack = new Stack<(SyntaxNode node, int nestingLevel)>();
@@ -137,11 +145,11 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
             if (node.IsKind(EnumProvider.SyntaxKind.IfStatement))
             {
-                ProcessIfStatement(context, ref stack, node, ref complexity, ref nestingLevel);
+                ProcessIfStatement(context, semanticModel, ref stack, node, ref complexity, ref nestingLevel);
                 continue; // Skip further processing for this IF node
             }
 
-            if (IsFlowBreakingStructure(node) && !IsGuardClause(node))
+            if (IsFlowBreakingStructure(node) && !IsGuardClause(node, semanticModel, context.CancellationToken))
             {
                 complexity += 1 + nestingLevel;
                 RaiseIncrementDiagnostic(context, GetKeywordLocation(node, node.SpanStart), node.Kind.ToString(), nestingLevel);
@@ -168,12 +176,18 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     // In the AL Language 'else if' is an 'else" keyword followed by an 'if' node (not a single 'elsif' node).
     // If we increment for both 'else' and 'if' kinds the number will be too high.
     // So we'll increment for 'else' nodes not followed by an 'if' and rely on the 'if' to increment 'else if' statements.
-    private void ProcessIfStatement(CodeBlockAnalysisContext context, ref Stack<(SyntaxNode, int)> stack, SyntaxNode node, ref int complexity, ref int nestingLevel)
+    private void ProcessIfStatement(
+        CodeBlockAnalysisContext context,
+        SemanticModel semanticModel,
+        ref Stack<(SyntaxNode, int)> stack,
+        SyntaxNode node,
+        ref int complexity,
+        ref int nestingLevel)
     {
         if (node is not IfStatementSyntax ifStatement)
             return;
 
-        if (!IsGuardClause(node))
+        if (!IsGuardClause(node, semanticModel, context.CancellationToken))
         {
             // Increment for the 'if' statement
             complexity += 1 + nestingLevel;
@@ -225,7 +239,10 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     private static bool IsNestedStructure(SyntaxNode node) =>
         nestedStructures.Contains(node.Kind);
 
-    private static bool IsGuardClause(SyntaxNode node)
+    private static bool IsGuardClause(
+        SyntaxNode node,
+        SemanticModel semanticModel,
+        CancellationToken cancellationToken)
     {
         return node switch
         {
@@ -233,13 +250,22 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             IfStatementSyntax { Statement: ExitStatementSyntax } => true,
 
             IfStatementSyntax { Statement: ExpressionStatementSyntax { Expression: CodeExpressionSyntax codeExpression } }
-                => IsGuardExpression(codeExpression),
+                => IsGuardExpression(codeExpression, semanticModel, cancellationToken),
             _ => false
         };
     }
 
-    private static bool IsGuardExpression(CodeExpressionSyntax codeExpression)
+    private static bool IsGuardExpression(
+        CodeExpressionSyntax codeExpression,
+        SemanticModel semanticModel,
+        CancellationToken cancellationToken)
     {
+        if (semanticModel.GetOperation(codeExpression, cancellationToken) is IInvocationExpression operation &&
+            FlowTerminatingBuiltIns.IsFlowTerminatingCall(operation.TargetMethod as IMethodSymbol))
+        {
+            return true;
+        }
+
         return codeExpression switch
         {
             // if not <condition> then continue;
@@ -266,12 +292,16 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
     private static bool IsGuardCommand(MemberAccessExpressionSyntax memberAccess)
     {
+        var commandName = memberAccess.GetNameStringValue() ?? string.Empty;
+
+        if (!guardClauseExitCommands.Contains(commandName))
+            return false;
+
         if (memberAccess.Expression.GetIdentifierOrLiteralValue() is not { } identifierValue)
             return false;
 
         // if not <condition> then CurrReport.Break() or .Skip() or .Quit();
-        return guardClauseIdentifiers.Contains(identifierValue) &&
-               guardClauseExitCommands.Contains(memberAccess.GetNameStringValue() ?? string.Empty);
+        return guardClauseIdentifiers.Contains(identifierValue);
     }
 
     #region Recursion

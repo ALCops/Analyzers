@@ -11,17 +11,17 @@ applyTo: 'src/ALCops.FormattingCop/**/StatementBlocksSeparatedByBlankLine*'
 
 ## Purpose
 
-FC0007 reports missing blank lines around statement blocks: before/after control-flow constructs (`if`, `case`, `repeat`, `while`, `for`, `foreach`) and before scope-leaving statements (`exit`, built-in `Error(...)`). It is highly opinionated and therefore disabled by default; enable it explicitly and configure it via `alcops.json`.
+FC0007 reports missing blank lines around statement blocks: before/after control-flow constructs (`if`, `case`, `repeat`, `while`, `for`, `foreach`) and before scope-leaving statements (`exit`, built-in `Error(...)`, built-in `FieldError(...)`). It is highly opinionated and therefore disabled by default; enable it explicitly and configure it via `alcops.json`.
 
 ## Scope
 
 - Reports when a control-flow statement (`if`/`case`/`repeat`/`while`/`for`/`foreach`) is missing a blank line before it when it follows another statement in the same block.
 - Reports when a normal statement follows one of those blocks without a blank line.
-- Reports when a scope-leaving statement (`exit`, built-in `Error`) is missing a blank line before it when it follows another statement in the same block.
+- Reports when a scope-leaving statement (`exit`, built-in `Error`, built-in `FieldError`) is missing a blank line before it when it follows another statement in the same block.
 - Reports when `else` (block or else-if) has no blank line above it, if configured.
 - Does not report the first statement in a block, the first statement directly owned by a control-flow construct, or a one-liner (unless configured otherwise).
 - Adjacent control-flow blocks have one configuration-aware owner: the "after" check is skipped only when the next sibling's "before" check is enabled and includes that statement under `OneLinerMode`.
-- A control-flow block followed by `exit` or built-in `Error(...)` produces one diagnostic for the gap. The block's active "after" check owns it; otherwise the scope-leaving "before" check does.
+- A control-flow block followed by `exit`, built-in `Error(...)`, or built-in `FieldError(...)` produces one diagnostic for the gap. The block's active "after" check owns it; otherwise the scope-leaving "before" check does.
 
 ## Configuration surface (`alcops.json` → `StatementBlockSpacing`)
 
@@ -49,7 +49,7 @@ Settings type: [src/ALCops.Common/Settings/StatementBlockSpacingSettings.cs](src
 | Use sibling `StatementSyntax` nodes from the parent | The rule is about statement sequencing in the same statement list and must also work in contexts not represented by `BlockSyntax` (for example `repeat`). |
 | Give each statement gap one configuration-aware diagnostic owner | Avoids duplicate diagnostics before scope-leavers while preserving diagnostics next to one-liners or when `ControlFlowBefore` is disabled. An adjacent block owns its "before" gap only when that check actually runs. |
 | Skip one-liners unless `OneLinerMode = All` | One-liner control-flow statements (`if X then Y`) rarely benefit from surrounding blank lines. |
-| Detect `Error(...)` via `MethodKind.BuiltInMethod` + `IsSameName` | Distinguishes the built-in from user-defined `Error` procedures. |
+| Detect `Error(...)` and `FieldError(...)` through `FlowTerminatingBuiltIns` | The shared classifier uses `MethodKind.BuiltInMethod` and case-insensitive names, distinguishing built-ins from user-defined procedures while preventing PC0038/FC0007/LC0089/LC0090 drift. |
 | `ElseChainBeforeMode` short-circuits when `else` shares its line with the previous token | Prevents false positives on `if X then Y else Z` one-liners. |
 
 ## Test coverage
@@ -64,8 +64,9 @@ Tests enable the rule via a physical `StatementBlocksSeparatedByBlankLine.rulese
 **HasDiagnosticWithScopeLeavingOff (1 case):** ControlFlowInteractionSpacing.
 **NoDiagnosticWithScopeLeavingOff (2 cases):** ExitOnly, ErrorOnly.
 **HasDiagnosticWithExitOnly (1 case):** ExitOnly.
-**NoDiagnosticWithExitOnlySuppressesError (1 case):** ErrorOnly.
-**HasDiagnosticWithErrorOnly (1 case):** ErrorOnly.
+**NoDiagnosticWithExitOnlySuppressesError (2 cases):** ErrorOnly, ErrorOnlyFieldError.
+**HasDiagnosticWithErrorOnly (2 cases):** ErrorOnly, ErrorOnlyFieldError.
+**NoDiagnosticWithErrorOnly (1 case):** ErrorOnlyFieldErrorValid.
 **NoDiagnosticWithErrorOnlySuppressesExit (1 case):** ExitOnly.
 **HasDiagnosticWithElseChainRequireBlank (1 case):** ElseChainBlank.
 **NoDiagnosticWithElseChainRequireBlank (1 case):** ElseChainBlankValid.
@@ -82,8 +83,8 @@ Tests enable the rule via a physical `StatementBlocksSeparatedByBlankLine.rulese
 - No CodeFix is provided; the missing blank line must be added manually.
 - Comments between statements are not treated as separator content: only whitespace-only lines count. See Roadmap → `TreatCommentOnlyLinesAsSeparator`.
 - Blank lines **between the branches** of a `case` statement are not enforced (only the spacing around the whole `case` block is). See Roadmap → `CaseBranchMode`.
-- An `exit` or `Error(...)` used directly as an `if` branch is not analyzed as an independent scope-leaver because branch statements are not siblings in a statement list. The containing `if` is governed by `ControlFlowBefore` / `ControlFlowAfter` and, for one-line guards, `OneLinerMode`. See Roadmap → `GuardClauseMode`.
-- Loop-control statements (`break`, `continue`, `Skip`) are not covered — only `exit` and `Error(...)` are. See Roadmap → `LoopControlBeforeMode`.
+- An `exit`, `Error(...)`, or `FieldError(...)` used directly as an `if` branch is not analyzed as an independent scope-leaver because branch statements are not siblings in a statement list. The containing `if` is governed by `ControlFlowBefore` / `ControlFlowAfter` and, for one-line guards, `OneLinerMode`. See Roadmap → `GuardClauseMode`.
+- Loop-control statements (`break`, `continue`, `Skip`) are not covered — only `exit`, `Error(...)`, and `FieldError(...)` are. See Roadmap → `LoopControlBeforeMode`.
 - Compiler-directive boundaries (`#region` / `#endregion`, `#pragma`) count as non-blank interior lines under the standard rule and therefore do **not** satisfy the blank-line requirement. Configuring them as explicit separators is a Roadmap item. See Roadmap → `SkipDirectiveBoundaries`.
 
 ## Roadmap
@@ -117,7 +118,7 @@ Implementation notes: `CaseStatementSyntax.CaseLines` (`SyntaxList<CaseLineSynta
 
 ### `GuardClauseMode` (planned, not implemented)
 
-A future `StatementBlockSpacing.GuardClauseMode` setting to define dedicated spacing for the widely-used **guard clause** early-exit pattern (`if X then exit;` / `if X then Error(...);` at the top of a method). Currently the direct branch is not analyzed as an independent scope-leaver; the containing `if` follows `ControlFlowBefore` / `ControlFlowAfter` and is excluded as a one-liner unless `OneLinerMode = All`.
+A future `StatementBlockSpacing.GuardClauseMode` setting to define dedicated spacing for the widely-used **guard clause** early-exit pattern (`if X then exit;` / `if X then Error(...);` / `if X then Rec.FieldError(...);` at the top of a method). Currently the direct branch is not analyzed as an independent scope-leaver; the containing `if` follows `ControlFlowBefore` / `ControlFlowAfter` and is excluded as a one-liner unless `OneLinerMode = All`.
 
 Proposed values (final naming to be decided when implemented):
 
