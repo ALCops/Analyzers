@@ -22,20 +22,32 @@ LC0089 reports cognitive-complexity metrics, LC0089i reports individual incremen
 
 | Decision | Rationale |
 |----------|-----------|
-| Resolve `Error(...)` and `FieldError(...)` guard clauses through the semantic model | The shared `FlowTerminatingBuiltIns` classifier requires `MethodKind.BuiltInMethod`, so user-defined procedures with the same names retain their cognitive-complexity increment. The complete code expression is resolved so AL calls without parentheses are also covered. |
+| Resolve `Error(...)` and `FieldError(...)` guard clauses through the semantic model | User-defined procedures with the same names must retain their cognitive-complexity increment. The complete code expression is resolved so AL calls without parentheses are also covered. |
+| Accept an `Error`/`FieldError` target when its name is in `FlowTerminatingBuiltIns.MethodNames` and it has no `DeclaringSyntaxReference`, instead of requiring `MethodKind.BuiltInMethod` | When an argument fails to bind (undefined variable, wrong arity, mid-edit), `Binder.CreateBadCall` synthesizes an `ErrorMethodSymbol` with `MethodKind.Method` for the two-overload built-ins `Dialog.Error`, `Table.FieldError` and `FieldRef.FieldError`; requiring `BuiltInMethod` made `if X then Error(UndefinedVar)` score +1 and LC0089/LC0090 flicker while typing. Only user-defined procedures have a `DeclaringSyntaxReference`, and AL has no user overloads, so a user procedure with bad arguments still binds to its own symbol and is demoted. |
 | Obtain one semantic model per code block | Avoids repeated compilation lookups while resolving only candidate guard-clause invocations. |
-| Keep `exit`, `continue`, and `CurrReport`/`CurrXMLport` commands syntactic | Their existing syntax-specific behavior is unchanged; semantic resolution is limited to the shared built-in terminator classification. |
+| Keep `exit`, `continue`, and `CurrReport`/`CurrXMLport` commands syntactic | Their existing syntax-specific behavior is unchanged; semantic resolution is limited to the shared built-in terminator names. |
 
 ## Architecture
 
 - Registers a code-block action and walks method and trigger syntax iteratively.
 - Resolves a semantic model once for each analyzed code block.
-- Uses `FlowTerminatingBuiltIns.IsFlowTerminatingCall` only for invocation expressions, preserving its `MethodKind.BuiltInMethod` guard.
+- `IsGuardExpression` binds the `then` expression once; an `IInvocationExpression` whose target is named in `FlowTerminatingBuiltIns.MethodNames` and is not source-declared is a guard, everything else falls through to the lexical `Break`/`Continue`/`Quit`/`Skip` checks.
+
+## Known issues
+
+- An `Error`/`FieldError` call whose receiver is itself unresolved (for example `Foo.Error(x)` with `Foo` never declared) is not recognised as a guard clause and scores +1 until the receiver is declared.
+
+## Roadmap
+
+- Unify the lexical and semantic guard models. `Break`, `Continue`, `Quit` and `Skip` (and the `CurrReport`/`CurrXMLport` receivers) are still matched purely lexically.
+- Use `context.SemanticModel` from the code-block context instead of `compilation.GetSemanticModel(...)`.
 
 ## Test coverage
 
 **HasDiagnostic (9 cases):** ConditionalExpressionNested, IfStatement, IfStatementNested, RecursionDirect, RecursionIndirect, RecursionDirectWithoutParentheses, RecursionIndirectWithoutParentheses, UserDefinedErrorNotGuardClause, UserDefinedFieldErrorNotGuardClause.
 **NoDiagnostic (9 cases):** CurrReportGuardClause, CurrXMLportGuardClause, IfStatement, DiscountConsecutiveAndOperator, IfStatementElseIf, IfStatementGuardClause, IfStatementGuardClauseFieldRefFieldErrorWithoutParentheses, IfStatementGuardClauseContinue, IfStatementGuardClauseFieldError.
+**HasDiagnosticInDocumentWithErrors (1 case):** UserDefinedErrorNotGuardClauseUnboundArgument.
+**NoDiagnosticInDocumentWithErrors (2 cases):** IfStatementGuardClauseErrorUnboundArgument, IfStatementGuardClauseFieldErrorUnboundArgument.
 
 ## CodeFix
 
