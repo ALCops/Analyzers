@@ -88,14 +88,13 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
             compilationContext.RegisterCodeBlockAction(codeBlockContext =>
             {
-                AnalyzeCognitiveComplexity(codeBlockContext, compilation, recursion);
+                AnalyzeCognitiveComplexity(codeBlockContext, recursion);
             });
         });
     }
 
     private void AnalyzeCognitiveComplexity(
         CodeBlockAnalysisContext context,
-        Compilation compilation,
         CognitiveComplexityRecursionGraphService recursion)
     {
         if (context.IsObsolete() || context.CodeBlock is not MethodOrTriggerDeclarationSyntax methodOrTrigger)
@@ -111,7 +110,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             methodOrTrigger.Attributes.Any(attr => eventPublisherDecoratorNames.Contains(attr.GetIdentifierOrLiteralValue() ?? string.Empty)))
             return;
 
-        var semanticModel = compilation.GetSemanticModel(methodOrTrigger.SyntaxTree);
+        var semanticModel = context.SemanticModel;
         int complexity = CalculateCognitiveComplexity(context, recursion, semanticModel, methodOrTrigger.Body);
         if (complexity >= complexityThreshold)
         {
