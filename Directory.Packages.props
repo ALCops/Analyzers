@@ -11,7 +11,13 @@
         <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />
     </ItemGroup>
 
-    <!-- Runtime (netstandard2.1 cops only) -->
+    <!--
+        Runtime dependency, netstandard2.1 cops only (net8.0/net10.0 get it from the framework).
+        Deliberately pinned LOW: the cop DLLs are loaded into the AL compiler's process, so this reference must
+        bind against the System.Collections.Immutable version shipped by the oldest supported AL Language
+        extension. Bumping it breaks loading on older BC/AL versions. Do not "update" without testing against
+        the lowest netstandard2.1 BC DevTools version in the CI matrix.
+    -->
     <ItemGroup>
         <PackageVersion Include="System.Collections.Immutable" Version="5.0.0" />
     </ItemGroup>
