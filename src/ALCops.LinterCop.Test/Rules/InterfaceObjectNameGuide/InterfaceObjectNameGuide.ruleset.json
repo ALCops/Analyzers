@@ -1,0 +1,5 @@
+{
+  "name": "Enable LC0054",
+  "description": "Enables LC0054 for tests.",
+  "rules": [ { "id": "LC0054", "action": "Warning" } ]
+}

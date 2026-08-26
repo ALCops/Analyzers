@@ -357,6 +357,26 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             base.VisitAssignmentStatement(operation);
         }
 
+        public override void VisitExitStatement(IExitStatement operation)
+        {
+            // exit(MyTable): the record escapes the procedure scope and the caller
+            // might access any field, so retroactively suppress uncovered reads on
+            // this path. No forward flow flag is set: exit terminates the path, so
+            // forward state is unreachable. Setting a flag would leak suppression
+            // past the enclosing branch via OR-merge, causing false negatives on
+            // reads after an early-exit guard.
+            var returnedVarName = GetVariableNameFromOperation(operation.ReturnedValue);
+            if (returnedVarName != null &&
+                _trackedVariables.TryGetValue(returnedVarName, out var state) &&
+                _flowState.TryGetValue(returnedVarName, out var flowFlags))
+            {
+                flowFlags.UncoveredReads.Clear();
+                state.EverPassedToFunction = true;
+            }
+
+            base.VisitExitStatement(operation);
+        }
+
         #region Control flow overrides
 
         /// <summary>

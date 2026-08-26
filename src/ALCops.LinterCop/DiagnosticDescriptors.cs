@@ -314,6 +314,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.ParameterNotReferencedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ParameterNotReferenced));
 
+    public static readonly DiagnosticDescriptor EventSubscriberParameterNotReferenced = new(
+        id: DiagnosticIds.EventSubscriberParameterNotReferenced,
+        title: LinterCopAnalyzers.EventSubscriberParameterNotReferencedTitle,
+        messageFormat: LinterCopAnalyzers.EventSubscriberParameterNotReferencedMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.EventSubscriberParameterNotReferencedDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.EventSubscriberParameterNotReferenced));
+
     public static readonly DiagnosticDescriptor MixedExitAndNamedReturnAssignment = new(
         id: DiagnosticIds.MixedExitAndNamedReturnAssignment,
         title: LinterCopAnalyzers.MixedExitAndNamedReturnAssignmentTitle,

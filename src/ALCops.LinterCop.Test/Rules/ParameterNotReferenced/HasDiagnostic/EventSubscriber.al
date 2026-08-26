@@ -1,6 +1,6 @@
-codeunit 50100 MyCodeunit
+codeunit 50100 EventSubscriberUnusedParameter
 {
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::MyCodeunit, OnDoSomething, '', false, false)]
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::EventSubscriberUnusedParameter, OnDoSomething, '', false, false)]
     local procedure OnDoSomethingSubscriber([|MyInteger: Integer|]; var IsHandled: Boolean)
     begin
         IsHandled := true;

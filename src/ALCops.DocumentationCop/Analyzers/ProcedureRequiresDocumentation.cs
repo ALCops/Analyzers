@@ -28,9 +28,19 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
 		if (ctx.IsObsolete() || ctx.Node is not MethodDeclarationSyntax method)
 			return;
 
-		var containingObject = ctx.ContainingSymbol.GetContainingApplicationObjectTypeSymbol();
+		var containingApplicationObject = ctx.ContainingSymbol.GetContainingApplicationObjectTypeSymbol();
 
-		if (containingObject.IsTestCodeunit())
+		// Interfaces and control add-ins are IObjectTypeSymbol but not IApplicationObjectTypeSymbol,
+		// so fall back to the object-type walker only when no application object exists in the chain.
+		// The application-object walker stays primary so members nested in request pages keep
+		// resolving to their report/xmlport instead of the request page (which is always Local).
+		var containingObject = (ISymbol?)containingApplicationObject
+			?? ctx.ContainingSymbol.GetContainingObjectTypeSymbol();
+
+		if (containingObject?.Kind == EnumProvider.SymbolKind.ControlAddIn)
+			return;
+
+		if (containingApplicationObject.IsTestCodeunit())
 			return;
 
 		if (HasXmlDocumentation(method))

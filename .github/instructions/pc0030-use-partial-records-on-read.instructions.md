@@ -54,6 +54,7 @@ These decisions were made during the initial design and should be preserved unle
 | Record-as-source assignment | Treat same as write op (suppress forward + backward) | `TempMyTable := MyTable` reads all fields; adding SetLoadFields before a preceding read would cause partial copy. Only bare variable references on RHS, not field access. |
 | HasWriteOp renamed | `HasFullRecordAccess` | Flag now covers writes AND whole-record assignments; name reflects expanded semantics |
 | Setup table suppression | Suppress on parameterless `Get()` when table is a setup table | Near-zero SQL benefit for single-record cached tables; MS BaseApp uses SetLoadFields on setup tables in only 1.8% of cases. Heuristic: single PK field, Code type, name matches "Primary Key"/"PrimaryKey" case-insensitive. Uses `TableHelper.IsSetupTable()` from ALCops.Common. Only `Get()` with no arguments suppressed; FindFirst/FindSet on setup tables still fire. See [#283](https://github.com/ALCops/Analyzers/issues/283). |
+| Exit statement escape | Retroactive-only clear of `UncoveredReads` on the current path; NO forward flow flag | `exit(Rec)` escapes the procedure scope, so the caller might need the full record. `exit` terminates the path, so forward state is unreachable; setting a flow flag would leak suppression past the enclosing branch via OR-merge, causing false negatives on reads after an early-exit guard (`if Cond then exit(Rec); Rec.Get(X);` must still fire). Only bare variable references suppress (`exit(Rec."No.")` does not). Sets method-level `EverPassedToFunction` for RecordRef SetTable suppression. See [#429](https://github.com/ALCops/Analyzers/issues/429). |
 
 ## Architecture
 
@@ -73,10 +74,11 @@ Uses `RegisterCodeBlockAction` (not `RegisterOperationAction`) to analyze entire
 4. **Read evaluation is immediate**: When a read (Get/Find/FindFirst/FindLast/FindSet) is encountered, the current flow state determines whether to flag it. If `!HasLoadFields && !HasFullRecordAccess && !PassedToFunction`, the read is added to `UncoveredReads`.
 5. **Retroactive clearing**: When a write/pass/record-assignment operation is encountered, `UncoveredReads` is cleared (reads before the operation are retroactively suppressed). This handles patterns like `Get(); Modify()` or `FindSet(); TempRec := Rec` where the full-record operation comes after the read.
 6. **Assignment detection**: `VisitAssignmentStatement` checks if the RHS of an assignment is a tracked record variable (unwrapping `IConversionExpression` if present). When matched, sets `HasFullRecordAccess` and clears `UncoveredReads`, same as write methods.
-6. **Control flow**: Override `VisitIfStatement`, `VisitCaseStatement`, and loop visit methods with fork/merge semantics.
-7. **Reset detection**: `Clear(var)`, `var.Reset()`, and `var.SetLoadFields()` with no arguments reset flow flags.
-8. Post-walk: `FinalizeResults()` deduplicates uncovered reads and copies them to `VariableState.UncoveredReadLocations`.
-9. For RecordRef variables with `SetTable(TargetRecord)` calls: suppress if any target is unresolvable, non-local, or has a suppression condition (uses method-level `EverHad*` flags).
+7. **Exit statement detection**: `VisitExitStatement` checks if the returned value is a bare tracked record variable (via `GetVariableNameFromOperation`, null-safe for plain `exit;`). When matched, clears `UncoveredReads` for that variable on the current path and sets the method-level `EverPassedToFunction` flag. No forward flow flag is set because the path terminates at `exit`. Field access returns (`exit(Rec."No.")`) do not suppress. `base.VisitExitStatement` (SDK default: `Visit(operation.ReturnedValue)`) still walks nested expressions like `exit(Rec.Get(X))`.
+8. **Control flow**: Override `VisitIfStatement`, `VisitCaseStatement`, and loop visit methods with fork/merge semantics.
+9. **Reset detection**: `Clear(var)`, `var.Reset()`, and `var.SetLoadFields()` with no arguments reset flow flags.
+10. Post-walk: `FinalizeResults()` deduplicates uncovered reads and copies them to `VariableState.UncoveredReadLocations`.
+11. For RecordRef variables with `SetTable(TargetRecord)` calls: suppress if any target is unresolvable, non-local, or has a suppression condition (uses method-level `EverHad*` flags).
 
 ### Control flow fork/merge semantics
 
@@ -184,11 +186,11 @@ AA0242 (CodeCop's `Rule0242PartialRecordsDetectJitLoads`) is the **complement** 
 
 ## Test coverage
 
-65 test cases total:
+73 test cases total:
 
-**HasDiagnostic (20 cases):** LocalRecordGet, LocalRecordGetBySystemId, LocalRecordFindFirst, LocalRecordFindSet, LocalRecordFindLast, LocalRecordFind, LocalRecordMultipleReads, LocalRecordRefFindFirst, SetLoadFieldsAfterGet, ClearBetweenSetLoadFieldsAndGet, ResetBetweenSetLoadFieldsAndGet, SetLoadFieldsNoArgsBetween, CaseBranchWithoutSetLoadFields, IfBranchWithoutSetLoadFields, ClearResetsWriteOp, ClearResetsPassedToFunction, ClearResetsRecordAssignment, LoopNoSetLoadFields, SetupTableGetWithArgs, SetupTableFindFirst.
+**HasDiagnostic (24 cases):** LocalRecordGet, LocalRecordGetBySystemId, LocalRecordFindFirst, LocalRecordFindSet, LocalRecordFindLast, LocalRecordFind, LocalRecordMultipleReads, LocalRecordRefFindFirst, SetLoadFieldsAfterGet, ClearBetweenSetLoadFieldsAndGet, ResetBetweenSetLoadFieldsAndGet, SetLoadFieldsNoArgsBetween, CaseBranchWithoutSetLoadFields, IfBranchWithoutSetLoadFields, ClearResetsWriteOp, ClearResetsPassedToFunction, ClearResetsRecordAssignment, LoopNoSetLoadFields, SetupTableGetWithArgs, SetupTableFindFirst, ExitInOtherBranchOnly, ExitGuardThenRead, ExitFieldAccess, ExitOtherVariable.
 
-**NoDiagnostic (34 cases):** HasSetLoadFields, HasSetLoadFieldsGetBySystemId, HasAddLoadFields, HasSetBaseLoadFields, HasModify, HasInsert, HasDelete, HasDeleteAll, HasModifyAll, HasRename, HasTransferFields, HasInit, HasCopy, PassedToFunction, PassedToEvent, PassedToPageRun, TemporaryTable, GlobalVariable, ParameterVariable, IsEmptyOnly, CDSTable, RecordRefSetTableWithModify, RecordRefSetTablePassedToFunction, DatabaseObjectReference, IfBothBranchesSetLoadFields, LoopSetLoadFieldsBefore, FindSetWithModifyInLoop, FindSetWithPassedToFunctionInLoop, GetWithConditionalModify, RecordAssignedToOther, RecordAssignedToOtherQuotedName, RecordAssignedBeforeRead, SetupTableGet, SetupTableGetNoSpace.
+**NoDiagnostic (38 cases):** HasSetLoadFields, HasSetLoadFieldsGetBySystemId, HasAddLoadFields, HasSetBaseLoadFields, HasModify, HasInsert, HasDelete, HasDeleteAll, HasModifyAll, HasRename, HasTransferFields, HasInit, HasCopy, PassedToFunction, PassedToEvent, PassedToPageRun, TemporaryTable, GlobalVariable, ParameterVariable, IsEmptyOnly, CDSTable, RecordRefSetTableWithModify, RecordRefSetTablePassedToFunction, DatabaseObjectReference, IfBothBranchesSetLoadFields, LoopSetLoadFieldsBefore, FindSetWithModifyInLoop, FindSetWithPassedToFunctionInLoop, GetWithConditionalModify, RecordAssignedToOther, RecordAssignedToOtherQuotedName, RecordAssignedBeforeRead, SetupTableGet, SetupTableGetNoSpace, ExitRecord, ExitRecordInIfBranch, ExitRecordInCaseBranch, ExitRecordInLoop.
 
 **HasFix (11 cases):** SingleField, MultipleFields, QuotedFieldName, NoFieldAccess, SetRangeFieldExcluded, SetFilterFieldExcluded, SetRangeValueArgIncluded, AllFieldsInFilters, TestFieldIncluded, SetCurrentKeyExcluded, MixedFilterAndConsume.
 

@@ -41,6 +41,10 @@ namespace ALCops.PlatformCop.Test
         [TestCase("LoopNoSetLoadFields")]
         [TestCase("SetupTableGetWithArgs")]
         [TestCase("SetupTableFindFirst")]
+        [TestCase("ExitInOtherBranchOnly")]
+        [TestCase("ExitGuardThenRead")]
+        [TestCase("ExitFieldAccess")]
+        [TestCase("ExitOtherVariable")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -84,6 +88,10 @@ namespace ALCops.PlatformCop.Test
         [TestCase("RecordAssignedBeforeRead")]
         [TestCase("SetupTableGet")]
         [TestCase("SetupTableGetNoSpace")]
+        [TestCase("ExitRecord")]
+        [TestCase("ExitRecordInIfBranch")]
+        [TestCase("ExitRecordInCaseBranch")]
+        [TestCase("ExitRecordInLoop")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

@@ -555,6 +555,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.Card)));
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _document =
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.Document)));
+        private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _headlinePart =
+            new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.HeadlinePart)));
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _list =
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.List)));
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _listPart =
@@ -567,6 +569,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PageTypeKind API => _api.Value;
         public static NavCodeAnalysis.PageTypeKind Card => _card.Value;
         public static NavCodeAnalysis.PageTypeKind Document => _document.Value;
+        public static NavCodeAnalysis.PageTypeKind HeadlinePart => _headlinePart.Value;
         public static NavCodeAnalysis.PageTypeKind List => _list.Value;
         public static NavCodeAnalysis.PageTypeKind ListPart => _listPart.Value;
         public static NavCodeAnalysis.PageTypeKind ListPlus => _listPlus.Value;
@@ -879,7 +882,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SymbolKind Change => _change.Value;
         public static NavCodeAnalysis.SymbolKind Class => _class.Value;
         public static NavCodeAnalysis.SymbolKind Codeunit => _codeunit.Value;
-		public static NavCodeAnalysis.SymbolKind ControlAddIn => _controlAddIn.Value;
+        public static NavCodeAnalysis.SymbolKind ControlAddIn => _controlAddIn.Value;
         public static NavCodeAnalysis.SymbolKind Control => _control.Value;
         public static NavCodeAnalysis.SymbolKind Entitlement => _entitlement.Value;
         public static NavCodeAnalysis.SymbolKind Enum => _enum.Value;
@@ -936,6 +939,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CloseBraceToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _closeParenToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CloseParenToken)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _commentTrivia =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CommentTrivia)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _codeunitKeyword =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CodeunitKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _codeunitObject =
@@ -1263,6 +1268,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind CaseStatement => _caseStatement.Value;
         public static NavCodeAnalysis.SyntaxKind CloseBraceToken => _closeBraceToken.Value;
         public static NavCodeAnalysis.SyntaxKind CloseParenToken => _closeParenToken.Value;
+        public static NavCodeAnalysis.SyntaxKind CommentTrivia => _commentTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind CodeunitKeyword => _codeunitKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind CodeunitObject => _codeunitObject.Value;
         public static NavCodeAnalysis.SyntaxKind ConditionalExpression => _conditionalExpression.Value;

@@ -99,6 +99,41 @@
       },
       "uniqueItems": true,
       "description": "Additional acronyms whose canonical casing is used when generating identifier fragments from all-lowercase source words. Original casing wins for the preferred name: if the source word already contains any uppercase character, its casing is preserved and the CodeFix always suggests that spelling. Only all-lowercase source words fall back to the registry, resolving e.g. 'vat' -> 'VAT', 'odata' -> 'OData', 'acme' -> 'Acme'. When the source word already carries uppercase and an entry with a different casing on the same case-insensitive key is registered here (e.g. source 'LCY' + entry 'Lcy'), that entry is additionally accepted alongside the original spelling; the CodeFix continues to suggest the original casing. Entries are matched case-insensitively. Merged with the built-in default list; user entries override built-ins on identical case-insensitive keys. If multiple entries resolve to the same case-insensitive key, exactly one canonical form is kept and the last entry wins."
+    },
+    "StatementBlockSpacing": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Configuration for FC0007 (Statement blocks should be separated by a blank line). Controls which spacing checks are performed around control-flow blocks and scope-leaving statements.",
+      "properties": {
+        "ControlFlowBefore": {
+          "type": "boolean",
+          "default": true,
+          "description": "Require a blank line before a multi-line control-flow block (if, case, repeat, while, for, foreach) when it follows another statement in the same block. Used by FC0007. Default: true"
+        },
+        "ControlFlowAfter": {
+          "type": "boolean",
+          "default": true,
+          "description": "Require a blank line after a multi-line control-flow block when a non-control-flow statement directly follows it in the same block. Used by FC0007. Default: true"
+        },
+        "ScopeLeavingMode": {
+          "type": "string",
+          "enum": ["Off", "ExitOnly", "ErrorOnly", "ExitAndError"],
+          "default": "ExitAndError",
+          "description": "Which scope-leaving statements require a blank line before them. 'Off' disables the check, 'ExitOnly' checks only 'exit', 'ErrorOnly' checks only built-in 'Error(...)', 'ExitAndError' checks both. Used by FC0007. Default: ExitAndError"
+        },
+        "ElseChainBeforeMode": {
+          "type": "string",
+          "enum": ["Off", "RequireBlank"],
+          "default": "Off",
+          "description": "Whether a blank line is required before the 'else' keyword of a multi-line 'if ... then begin ... end else ...' construct. 'Off' does not enforce, 'RequireBlank' reports when the closing 'end' and 'else' are not separated by a blank line. Used by FC0007. Default: Off"
+        },
+        "OneLinerMode": {
+          "type": "string",
+          "enum": ["None", "All"],
+          "default": "None",
+          "description": "Whether single-line control-flow statements (e.g. 'if Flag then Message(x);' fully on one source line) participate in the ControlFlowBefore/ControlFlowAfter checks. 'None' excludes one-liners, 'All' includes them. Used by FC0007. Default: None"
+        }
+      }
     }
   },
   "$defs": {

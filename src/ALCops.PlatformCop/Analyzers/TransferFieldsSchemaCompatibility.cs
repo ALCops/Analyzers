@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using ALCops.Common.Extensions;
+using ALCops.Common.Helpers;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -95,6 +96,18 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
+    // Cache mandatory affixes per Compilation (the SDK caches the AppSourceCop.json parse,
+    // but the merged affix list would otherwise be rebuilt on every TransferFields call)
+    private static string[] GetCachedAffixes(Compilation compilation)
+        => AffixesCache.GetValue(compilation, static c => new AffixesCacheEntry(c)).Affixes.Value;
+    private static readonly ConditionalWeakTable<Compilation, AffixesCacheEntry> AffixesCache = new();
+    private sealed class AffixesCacheEntry(Compilation compilation)
+    {
+        public Lazy<string[]> Affixes { get; } = new Lazy<string[]>(
+                () => MandatoryAffixes.GetAffixes(compilation),
+                LazyThreadSafetyMode.ExecutionAndPublication);
+    }
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
             DiagnosticDescriptors.TransferFieldsNameMismatch,
@@ -136,6 +149,11 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (sourceTable is null || targetTable is null)
             return;
 
+        // Removed (or moved) tables no longer participate in TransferFields at runtime,
+        // e.g. upgrade code transferring from a removed table. Pending tables still do.
+        if (sourceTable.IsRemoved() || targetTable.IsRemoved())
+            return;
+
         var tableExtensions = GetCachedTableExtensions(ctx.Compilation);
         var sourceFields = BuildEffectiveFields(sourceTable, tableExtensions);
         var targetFields = BuildEffectiveFields(targetTable, tableExtensions, IsInitPrimaryKeyFieldsEnabled(invocation));
@@ -154,7 +172,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         var targetDisplay = targetTable.GetFullyQualifiedObjectName(quoteIdentifierIfNeeded: true);
         var sourceDisplay = sourceTable.GetFullyQualifiedObjectName(quoteIdentifierIfNeeded: true);
 
-        var mismatches = FindFieldMismatches(sourceById, targetById);
+        var mismatches = FindFieldMismatches(sourceById, targetById, ctx.Compilation);
 
         var result = ReportMismatches(
             mismatches,
@@ -204,6 +222,11 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (tableExtension.Target is not ITableTypeSymbol sourceTable)
             return;
 
+        // Skip removed extensions and extensions of removed base tables; their fields
+        // no longer participate in TransferFields at runtime. Pending is still analyzed.
+        if (tableExtension.IsRemoved() || sourceTable.IsRemoved())
+            return;
+
         var relations = TryFindBySource(sourceTable);
         if (!relations.Any())
             return;
@@ -221,11 +244,13 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         var sourceTableExtensions =
             tableExtensions
                 .Where(te => te.Target is not null && SemanticFacts.IsSameName(te.Target.Name, relation.Source.Name))
+                .Where(te => !te.IsRemoved() && !te.Target!.IsRemoved())
                 .SelectMany(x => x.AddedFields);
 
         var targetTableExtensions =
             tableExtensions
                 .Where(te => te.Target is not null && SemanticFacts.IsSameName(te.Target.Name, relation.Target.Name))
+                .Where(te => !te.IsRemoved() && !te.Target!.IsRemoved())
                 .SelectMany(x => x.AddedFields);
 
         var sourceById = BuildFieldMapById(sourceTableExtensions);
@@ -234,7 +259,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (sourceById.Count == 0 || targetById.Count == 0)
             return;
 
-        var mismatches = FindFieldMismatches(sourceById, targetById);
+        var mismatches = FindFieldMismatches(sourceById, targetById, ctx.Compilation);
 
         ReportMismatches(
             mismatches,
@@ -249,9 +274,11 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
 
     private static List<FieldMismatch> FindFieldMismatches(
         Dictionary<int, IFieldSymbol> sourceById,
-        Dictionary<int, IFieldSymbol> targetById)
+        Dictionary<int, IFieldSymbol> targetById,
+        Compilation compilation)
     {
         var mismatches = new List<FieldMismatch>();
+        var affixes = GetCachedAffixes(compilation);
 
         foreach (var kvp in sourceById)
         {
@@ -265,7 +292,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
             if (!AreFieldTypesEquivalent(sourceField, targetField))
                 kind |= MismatchKind.Type;
 
-            if (!AreFieldNamesEquivalent(sourceField, targetField))
+            if (!AreFieldNamesEquivalent(sourceField, targetField, affixes, compilation))
                 kind |= MismatchKind.Name;
 
             if (kind != MismatchKind.None)
@@ -459,11 +486,49 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         return false;
     }
 
-    private static bool AreFieldNamesEquivalent(IFieldSymbol source, IFieldSymbol target)
+    private static bool AreFieldNamesEquivalent(
+        IFieldSymbol source,
+        IFieldSymbol target,
+        string[] affixes,
+        Compilation compilation)
     {
         var sourceName = (source.Name ?? string.Empty).UnquoteIdentifier();
         var targetName = (target.Name ?? string.Empty).UnquoteIdentifier();
-        return SemanticFacts.IsSameName(sourceName, targetName);
+
+        if (SemanticFacts.IsSameName(sourceName, targetName))
+            return true;
+
+        if (affixes.Length == 0)
+            return false;
+
+        // AppSource mandatory affixes only apply to fields added by table extensions declared
+        // in the current module; fields on own tables carry the affix on the table object
+        // instead (issue #436).
+        var effectiveSourceName = GetEffectiveFieldName(source, sourceName, affixes, compilation);
+        var effectiveTargetName = GetEffectiveFieldName(target, targetName, affixes, compilation);
+
+        return SemanticFacts.IsSameName(effectiveSourceName, effectiveTargetName);
+    }
+
+    private static string GetEffectiveFieldName(
+        IFieldSymbol field,
+        string unquotedName,
+        string[] affixes,
+        Compilation compilation)
+    {
+        if (field.ContainingSymbol is not ITableExtensionTypeSymbol)
+            return unquotedName;
+
+        if (!IsDeclaredInCurrentModule(field, compilation))
+            return unquotedName;
+
+        return MandatoryAffixes.StripAffixes(unquotedName, affixes);
+    }
+
+    private static bool IsDeclaredInCurrentModule(IFieldSymbol field, Compilation compilation)
+    {
+        var location = field.Location;
+        return location is not null && location.IsInSource && IsLocationInCompilation(location, compilation);
     }
 
     private static MismatchResult ReportMismatches(

@@ -1,4 +1,4 @@
-page 50100 MyPage
+page 50100 PageErrorInfoParameter
 {
     procedure MyProcedure([|ErrorInfo: ErrorInfo|])
     begin

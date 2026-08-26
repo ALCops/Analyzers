@@ -79,6 +79,7 @@ namespace ALCops.DocumentationCop.Test
 		[TestCase("CodeunitAccessInternal")]
 		[TestCase("CodeunitAccessInternalProcedureWithAttribute")]
 		[TestCase("CodeunitAccessInternalProcedureWithComment")]
+		[TestCase("InterfaceAccessInternal")]
 		[TestCase("InternalProcedure")]
 		[TestCase("InternalProcedureWithAttribute")]
 		[TestCase("InternalProcedureWithComment")]
@@ -94,6 +95,9 @@ namespace ALCops.DocumentationCop.Test
 		[TestCase("CodeunitAccessInternalProcedureDocumentationComment")]
 		[TestCase("CodeunitAccessInternalProcedureDocumentationCommentWithAttribute")]
 		[TestCase("CodeunitAccessInternalProcedureDocumentationCommentWithMultipleAttributes")]
+		[TestCase("ControlAddIn")]
+		[TestCase("Interface")]
+		[TestCase("InterfaceAccessInternalProcedureDocumentationComment")]
 		[TestCase("Procedure")]
 		[TestCase("ProcedureLocal")]
 		[TestCase("TestCodeunit")]
@@ -107,9 +111,11 @@ namespace ALCops.DocumentationCop.Test
 		}
 
 		[Test]
+		[TestCase("InterfaceProcedure")]
 		[TestCase("Procedure")]
 		[TestCase("ProcedureWithAttribute")]
 		[TestCase("ProcedureWithComment")]
+		[TestCase("ReportRequestPageProcedure")]
 		public async Task PublicHasDiagnostic(string testCase)
 		{
 			var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(PublicHasDiagnostic), $"{testCase}.al"))
@@ -120,6 +126,9 @@ namespace ALCops.DocumentationCop.Test
 
 		[Test]
 		[TestCase("CodeunitAccessInternal")]
+		[TestCase("ControlAddIn")]
+		[TestCase("InterfaceAccessInternal")]
+		[TestCase("InterfaceProcedureDocumentationComment")]
 		[TestCase("ProcedureDocumentationComment")]
 		[TestCase("ProcedureDocumentationCommentWithAttribute")]
 		[TestCase("ProcedureDocumentationCommentWithMultipleAttributes")]

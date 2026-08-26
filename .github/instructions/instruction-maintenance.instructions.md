@@ -86,22 +86,28 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `cicd` | `'.github/**'` | CI/CD workflows |
 | `release-strategy` | `'.github/**'` | Release channels, versioning, cleanup |
 | `get-bc-devtools` | `'.github/actions/get-bc-devtools/**'` | BC DevTools discovery and caching |
+| `ac0011-caption-required` | rule-scoped | AC0011 rule |
 | `ac0013-field-groups-required` | rule-scoped | AC0013 rule |
 | `ac0014-tooltip-must-end-with-punctuation` | rule-scoped | AC0014 rule |
 | `ac0026-allow-in-customizations-for-omitted-fields` | rule-scoped | AC0026 rule |
 | `ac0031-table-data-access-requires-permissions` | rule-scoped | AC0031 rule |
 | `ac0032-table-data-access-unused-permissions` | rule-scoped | AC0032 rule |
+| `dc0004-procedure-requires-documentation` | rule-scoped | DC0004/DC0006/DC0009/DC0010 rules (one analyzer, layered containing-object resolution) |
 | `sdk-analyzer-infrastructure` | `'src/ALCops.*/Analyzers/**'` | NAV SDK internals: callback ordering, incremental compilation, GetOperation perf |
 | `analyzer-exception-harness` | `'src/ALCops.Common/Diagnostics/**'` | XX0000 harness: base class + context decorators that convert analyzer exceptions into located diagnostics |
+| `fc0002-casing-mismatch` | rule-scoped | FC0002 rule (both analyzers, XmlPort casing matrix) |
+| `lc0054-interface-object-name-guide` | rule-scoped | LC0054 rule (shared MandatoryAffixes helper) |
 | `fc0004-permission-declaration-order` | rule-scoped | FC0004 rule |
 | `fc0005-use-parenthesis-for-method-assignment` | rule-scoped | FC0005 rule |
 | `fc0006-permission-values-should-be-lowercase` | rule-scoped | FC0006 rule |
+| `fc0007-statement-blocks-separated-by-blank-line` | rule-scoped | FC0007 rule |
 | `lc0083-built-in-date-time-method` | rule-scoped | LC0083 rule |
 | `lc0086-page-style-string-literal` | rule-scoped | LC0086 rule |
 | `lc0091-translatable-text-should-be-translated` | rule-scoped | LC0091 rule |
 | `lc0092-naming-pattern` | rule-scoped | LC0092 rule |
 | `lc0096-unnecessary-record-parameter` | rule-scoped | LC0096 rule |
 | `pc0029-use-sequential-guid` | rule-scoped | PC0029 rule |
+| `pc0020-pc0021-transferfields-schema-compatibility` | rule-scoped | PC0020/PC0021 rules (one analyzer, invocation + relation paths) |
 | `pc0030-use-partial-records-on-read` | rule-scoped | PC0030 rule |
 | `pc0031-partial-records-cause-jit-load` | rule-scoped | PC0031 rule |
 | `pc0032-report-layout-property-length` | rule-scoped | PC0032 rule |
@@ -109,6 +115,7 @@ Include: project structure, templates, step-by-step guides, API reference, commo
 | `pc0034-placeholder-argument-count-mismatch` | rule-scoped | PC0034 rule |
 | `pc0035-use-set-auto-calc-fields-for-loops` | rule-scoped | PC0035 rule |
 | `lc0095-parameter-not-referenced` | rule-scoped | LC0095 rule |
+| `lc0099-event-subscriber-parameter-not-referenced` | rule-scoped | LC0099 rule |
 | `ac0006-run-page-implement-page-management` | rule-scoped | AC0006 rule |
 | `pc0038-not-all-code-paths-return-value` | rule-scoped | PC0038 rule |
 | `lc0097-mixed-exit-and-named-return-assignment` | rule-scoped | LC0097 rule |

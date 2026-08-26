@@ -1,4 +1,4 @@
-codeunit 50100 MyCodeunit
+codeunit 50100 OneUnusedParameter
 {
     procedure MyProcedure(MyInteger: Integer; [|MyText: Text|])
     begin

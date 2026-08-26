@@ -46,7 +46,8 @@ Higher-level utilities that wrap SDK functionality.
 
 | File | Purpose |
 |------|---------|
-| `AppSourceCopConfigurationProvider.cs` | Adapter wrapping `Microsoft.Dynamics.Nav.Analyzers.Common.AppSourceCopConfiguration`. Exposes `MandatoryAffixes`, `MandatorySuffix`, `MandatoryPrefix`. Uses init-only setters on net8.0, regular setters on netstandard2.1. |
+| `AppSourceCopConfigurationProvider.cs` | Adapter wrapping `Microsoft.Dynamics.Nav.Analyzers.Common.AppSourceCopConfiguration`. Exposes `MandatoryAffixes`, `MandatorySuffix`, `MandatoryPrefix` via `GetAppSourceCopConfiguration(Compilation)` (SDK-cached per module spec) and the merged affix list via `GetMandatoryNameAffixes(Compilation)` (delegates to the SDK merge; NOT cached — re-reads AppSourceCop.json every call, so cache per compilation at the call site). Uses init-only setters on net8.0, regular setters on netstandard2.1. |
+| `MandatoryAffixes.cs` | Shared AppSourceCop mandatory-affix logic (loose SDK semantics: every configured value from `mandatoryPrefix`/`mandatorySuffix`/`mandatoryAffixes` is a candidate at either end of a name). `GetAffixes(Compilation)` (delegates to `AppSourceCopConfigurationProvider.GetMandatoryNameAffixes`; cache per compilation at the call site), `GetIndexAfterLeadingAffix(name, affixes)` (nullable index after a leading affix; requires a non-empty remainder), `StripAffixes(name, affixes)` (removes at most one affix per end, trims residual whitespace, never returns empty). Used by LC0054 (InterfaceObjectNameGuide) and PC0021 (TransferFieldsNameMismatch, issue #436). |
 | `ManifestHelper.cs` | `GetManifest(Compilation)` returning `NavAppManifest?`. On net8.0 delegates directly; on netstandard2.1 uses reflection to create a typed delegate, trying two different type paths for AL version compatibility. **Throws `FileNotFoundException` in test contexts** because `Microsoft.Dynamics.Nav.Analyzers.Common` assembly isn't available. Analyzers must catch this and treat as null manifest. |
 | `ODataNameHelper.cs` | `MangleIntoValidXmlIdentifier(string name)` returning `string?`. Accesses `NameTransformations.MangleIntoValidXmlIdentifier` in `Microsoft.Dynamics.Nav.AL.Common` via `Type.GetType()` + `GetMethod()` + `CreateDelegate()`. Returns null if the SDK method is unavailable (older SDK versions). Callers should check `IsAvailable` property to exit early. Used by PC0033 (DuplicateODataEntityName). |
 | `AcronymRegistry.cs` | Case-insensitive registry of canonical acronym casings (`LCY`, `OData`, `UoM`, `VAT`, ...). Exposes `DefaultAcronyms` (curated BC/web/data list as a flat array, excludes 2-letter abbreviations and `ID`), `Default` singleton, `Create(IEnumerable<string>?)` merge factory, `TryGetCanonical(word, out canonical)` (returns the preferred first-added variant), and `TryGetVariants(word, out variants)` (returns all registered variants for the case-insensitive key, ordered; first entry is canonical). Supports **multiple variants per key** — e.g. defaults list both `BoM`/`Bom` and `UoM`/`Uom`. User entries for a key **displace** built-in variants for that key (user list is authoritative per key; multiple user entries under the same key accumulate). Used by LC0098 (EventSubscriberNamingPattern); designed as shared infrastructure for future rules that render identifiers from natural-language input. |
@@ -71,8 +72,8 @@ Per-project analyzer configuration.
 
 | File | Purpose |
 |------|---------|
-| `ALCopsSettings.cs` | POCO with properties: `CognitiveComplexityThreshold` (default 15), `CyclomaticComplexityThreshold` (default 8), `MaintainabilityIndexThreshold` (default 20), `LanguagesToTranslate`, `NamingPatterns`, `SubscriberNamingPattern`, `UseSequentialGuidScope`, `ToolTipAllowedPunctuations`, `KnownAcronyms`. |
-| `ALCopsSettingsProvider.cs` | Static provider with `ConcurrentDictionary` cache keyed by directory path. Loads `alcops.json` using hierarchical lookup (see Settings System below). JSON parsing is case-insensitive, allows comments and trailing commas. Preferred API: `GetSettings(compilation.FileSystem)`. |
+| `ALCopsSettings.cs` | POCO with properties: `CognitiveComplexityThreshold` (default 15), `CyclomaticComplexityThreshold` (default 8), `MaintainabilityIndexThreshold` (default 20), `LanguagesToTranslate`, `NamingPatterns`, `SubscriberNamingPattern`, `UseSequentialGuidScope`, `ToolTipAllowedPunctuations`, `KnownAcronyms`, `StatementBlockSpacing`. |
+| `ALCopsSettingsProvider.cs` | Static provider with `ConcurrentDictionary` cache keyed by directory path. Loads `alcops.json` using hierarchical lookup (see Settings System below). JSON parsing is case-insensitive, allows comments and trailing commas. Malformed JSON (invalid syntax, unknown enum values, wrong types) falls back to defaults silently via a `JsonException` catch in `DeserializeSettings`. Preferred API: `GetSettings(compilation.FileSystem)`. |
 
 ### Constants.cs
 Three constants: `PermissionNodeXPath` (XPath for permission set XML), `Comment`, `Locked`, `MaxLength` (label property name strings matching the SDK's `LabelPropertyHelper`).
@@ -117,12 +118,9 @@ This allows a multi-root workspace to share a single `alcops.json` at the worksp
     └── app.json          ← inherits from workspace-level
 ```
 
-### Two overloads
+### Public API
 
-| Overload | Use when | Behavior |
-|---|---|---|
-| `GetSettings(IFileSystem?)` | **Preferred.** All analyzer code. | Virtual FS check → parent traversal → assembly fallback. Cached by `GetDirectoryPath()`. |
-| `GetSettings(string?)` | Legacy. Avoid in new code. | Physical FS check → parent traversal → assembly fallback. Cached by path. |
+`ALCopsSettingsProvider` exposes a single entry point: `GetSettings(IFileSystem?)`. All analyzer code obtains settings through `context.SemanticModel.Compilation.FileSystem`. Behavior: virtual FS check → parent traversal → assembly fallback. Results are cached by `IFileSystem.GetDirectoryPath()`; a `MemoryFileSystem` returning `""` bypasses the cache.
 
 ### Error handling
 
@@ -139,7 +137,7 @@ Users configure settings by placing an `alcops.json` file in their AL project ro
 }
 ```
 
-Settings are cached per directory path for the analyzer session lifetime. Call `ALCopsSettingsProvider.ClearCache()` only in tests.
+Settings are cached per directory path for the analyzer session lifetime. There is no public cache-invalidation API; tests inject an isolated `IFileSystem` (typically `MemoryFileSystem` or a purpose-built `RelativeFileSystem`) to avoid contaminating the cache.
 
 ## Coding Standards
 
@@ -171,8 +169,11 @@ Settings are cached per directory path for the analyzer session lifetime. Call `
 
 ### How to Add a New Setting
 1. Add a new property with a default value to `ALCopsSettings.cs`.
-2. No changes needed to `ALCopsSettingsProvider.cs` (JSON deserialization picks it up automatically).
-3. Document the new setting in the project README.
+2. No changes needed to `ALCopsSettingsProvider.cs` for scalar / string / list / dictionary properties — JSON deserialization picks them up automatically.
+3. **For enum-typed properties**, add a converter registration to `ALCopsSettingsProvider.cs`: `JsonStringEnumConverter` in `_jsonOptions.Converters` (net8+) and `StringEnumConverter` in `_jsonSettings.Converters` (netstandard2.1). Both are case-insensitive by default. Then add a schema-parity guard test that compares `Enum.GetNames(typeof(YourEnum))` with the `enum` array in `alcops.schema.json` (see `StatementBlockSpacingSchema` in `src/ALCops.FormattingCop.Test/Rules/StatementBlocksSeparatedByBlankLine/` for a template).
+4. **For nested-class properties with a default instance** (e.g. `public MySettings MyGroup { get; set; } = new();`): JSON deserializers ignore NRT annotations and happily set the property to `null` when the JSON contains `"MyGroup": null`, which then NREs on the first consumer access — violating the "malformed alcops.json → defaults" contract (see [issue #328](https://github.com/ALCops/Analyzers/issues/328)). Keep the public property non-nullable and normalize in `ALCopsSettingsProvider.DeserializeSettings` after the deserialize call: `settings.MyGroup ??= new MySettings();`. Consumers then use the property directly without `!` or a duplicate fallback.
+   - Add a regression fixture that injects `{"MyGroup": null}` and asserts the analyzer falls back to defaults without NRE (see `StatementBlockSpacingNull` test case in `StatementBlocksSeparatedByBlankLine.cs` for a template).
+5. Document the new setting in the project README.
 
 ### Backward Compatibility
 - Do not remove or rename public methods, properties, or classes.
