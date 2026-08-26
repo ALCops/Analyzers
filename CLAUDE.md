@@ -22,6 +22,9 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}"
 dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.HasDiagnostic"
 ```
 
+- Shared MSBuild settings live in `Directory.Build.props`; package versions in `Directory.Packages.props` (Central Package Management - no `Version=` on `PackageReference`).
+- Static analysis (NetAnalyzers, `Microsoft.CodeAnalysis.Analyzers`, Roslynator, `.editorconfig` code style) runs as warnings; `dotnet format ALCops.sln --verify-no-changes` checks formatting. See `.claude/rules/code-analysis.md`.
+
 - Requires BC Dev Tools at `../../Microsoft.Dynamics.BusinessCentral.Development.Tools` (repo-root relative) or `/p:BcDevToolsDir=<path>`. `.vscode/Setup-BCDevTools.ps1` downloads them.
 - Local builds target `net8.0` only. CI (`ContinuousIntegrationBuild=true`) builds `netstandard2.1;net8.0;net10.0` because BC ships the SDK in all three. Test projects target `net10.0` and switch via `NavTargetFramework`.
 - Nullable warnings `CS8600;CS8602;CS8603;CS8604;CS8605` are errors.

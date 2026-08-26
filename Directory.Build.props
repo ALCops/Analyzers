@@ -1,0 +1,33 @@
+<Project>
+    <!--
+        Shared build settings for every project in the repo.
+        Per-project csproj files keep only what differs: TargetFramework(s), NAV SDK references, resx wiring, pack layout.
+        See .claude/rules/code-analysis.md for the rationale behind the analysis settings.
+    -->
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <GenerateFullPaths>true</GenerateFullPaths>
+
+        <!-- Nullable-flow violations are the only warnings promoted to errors today. -->
+        <WarningsAsErrors>$(WarningsAsErrors);CS8600;CS8602;CS8603;CS8604;CS8605</WarningsAsErrors>
+    </PropertyGroup>
+
+    <!-- Static analysis: warnings-only baseline. Severities are tuned in .editorconfig, never here. -->
+    <PropertyGroup>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <AnalysisLevel>latest-recommended</AnalysisLevel>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
+
+        <!-- IDE0005 (unused usings) only reports during build when XML doc generation is on; CS1591 is silenced in .editorconfig. -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <!-- PrivateAssets="all" keeps analyzer packages out of the shipped ALCops.Analyzers NuGet. -->
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+        <PackageReference Include="Roslynator.Analyzers" PrivateAssets="all" />
+    </ItemGroup>
+</Project>

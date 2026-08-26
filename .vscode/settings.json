@@ -1,0 +1,5 @@
+{
+    "dotnet.defaultSolution": "ALCops.sln",
+    "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "fullSolution",
+    "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution"
+}

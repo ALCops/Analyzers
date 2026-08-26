@@ -1,0 +1,35 @@
+<Project>
+    <!-- Central Package Management: every PackageReference version lives here. -->
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+    </PropertyGroup>
+
+    <!-- Analyzers (build-time only) -->
+    <ItemGroup>
+        <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
+        <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />
+    </ItemGroup>
+
+    <!--
+        Runtime dependency, netstandard2.1 cops only (net8.0/net10.0 get it from the framework).
+        Deliberately pinned LOW: the cop DLLs are loaded into the AL compiler's process, so this reference must
+        bind against the System.Collections.Immutable version shipped by the oldest supported AL Language
+        extension. Bumping it breaks loading on older BC/AL versions. Do not "update" without testing against
+        the lowest netstandard2.1 BC DevTools version in the CI matrix.
+    -->
+    <ItemGroup>
+        <PackageVersion Include="System.Collections.Immutable" Version="5.0.0" />
+    </ItemGroup>
+
+    <!-- Test projects -->
+    <ItemGroup>
+        <PackageVersion Include="ALCops.RoslynTestKit" Version="1.4.0" />
+        <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="4.14.0" />
+        <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+        <PackageVersion Include="NUnit" Version="4.1.0" />
+        <PackageVersion Include="NUnit.Analyzers" Version="4.2.0" />
+        <PackageVersion Include="NUnit3TestAdapter" Version="5.1.0" />
+    </ItemGroup>
+</Project>

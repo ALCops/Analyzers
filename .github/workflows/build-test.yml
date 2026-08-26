@@ -118,6 +118,14 @@ jobs:
           target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net10.0
           tfm: net10.0
 
+      # Code style / formatting gate (warnings-only baseline: reports drift, does not fail the job yet)
+      - name: Restore solution
+        run: dotnet restore ALCops.sln
+
+      - name: Verify code formatting
+        run: dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"
+        continue-on-error: true
+
       # ALCops.Common
       - name: Restore ALCops.Common
         run: dotnet restore ./src/ALCops.Common/ALCops.Common.csproj
