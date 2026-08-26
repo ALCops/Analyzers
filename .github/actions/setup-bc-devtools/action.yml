@@ -40,7 +40,7 @@ runs:
             exit 1
         }
 
-        Write-Output "Selected source: $($selectedSource.version) from $($selectedSource.source)"
+        Write-Output "Selected source: $($selectedSource.version) (package $($selectedSource.packageVersion))"
         Write-Output "Package Type: $($selectedSource.packageType)"
 
         # Set outputs
@@ -83,9 +83,26 @@ runs:
           
           Write-Output "Initiating download..."
           $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-          
-          Invoke-WebRequest $env:ASSET_URI -OutFile $downloadFilePath -Verbose
-          
+
+          # Retry with backoff: nuget.org / CDN occasionally drops the connection mid-stream
+          # ("The response ended prematurely"). -MaximumRetryCount only retries on HTTP status
+          # codes, not on connection drops, so use an explicit loop.
+          $maxAttempts = 5
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            try {
+              Write-Output "Download attempt $attempt of $maxAttempts..."
+              Invoke-WebRequest $env:ASSET_URI -OutFile $downloadFilePath
+              break
+            }
+            catch {
+              if (Test-Path $downloadFilePath) { Remove-Item $downloadFilePath -Force }
+              if ($attempt -eq $maxAttempts) { throw }
+              $delay = [math]::Pow(2, $attempt) * 5   # 10s, 20s, 40s, 80s
+              Write-Warning "Download failed: $($_.Exception.Message). Retrying in $delay s..."
+              Start-Sleep -Seconds $delay
+            }
+          }
+
           $stopwatch.Stop()
           
           # Verify download
