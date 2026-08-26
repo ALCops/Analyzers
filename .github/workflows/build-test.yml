@@ -119,21 +119,18 @@ jobs:
           tfm: net10.0
 
       # Code style / formatting gate (warnings-only baseline: reports drift, does not fail the job yet).
-      # GITHUB_ACTIONS is masked for these two steps only. The csproj files derive ContinuousIntegrationBuild from
-      # it (a project-level assignment, so an env override of the property itself is ignored); with it on, the test
-      # projects reference the cop DLLs by HintPath, which do not exist before the builds below, and every
-      # test-project using then cascades into a bogus IDE0005 via CS0246. Masked, they use ProjectReference and the
-      # workspace compiles from source (net10.0 only, like a local build) so the check can run first and fail fast.
+      # GITHUB_ACTIONS is unset on the command line for these two steps only (the runner refuses to override
+      # GITHUB_* via `env:`). The csproj files derive ContinuousIntegrationBuild from it (a project-level
+      # assignment, so an env override of the property itself is ignored); with it on, the test projects reference
+      # the cop DLLs by HintPath, which do not exist before the builds below, and every test-project using then
+      # cascades into a bogus IDE0005 via CS0246. Unset, they use ProjectReference and the workspace compiles from
+      # source (net10.0 only, like a local build) so the check can run first and fail fast.
       - name: Restore solution
-        run: dotnet restore ALCops.sln
-        env:
-          GITHUB_ACTIONS: false
+        run: env -u GITHUB_ACTIONS dotnet restore ALCops.sln
 
       - name: Verify code formatting
-        run: dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"
+        run: env -u GITHUB_ACTIONS dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"
         continue-on-error: true
-        env:
-          GITHUB_ACTIONS: false
 
       # ALCops.Common
       - name: Restore ALCops.Common
