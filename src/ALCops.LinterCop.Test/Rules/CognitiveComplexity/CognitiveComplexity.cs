@@ -5,12 +5,21 @@ namespace ALCops.LinterCop.Test
     public class CognitiveComplexity : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
+        private AnalyzerTestFixture _errorTolerantFixture;
         private string _testCasePath;
 
         [SetUp]
         public void Setup()
         {
             _fixture = RoslynFixtureFactory.Create<Analyzers.CognitiveComplexity>();
+
+            // The unbound-argument regression fixtures reference variables that are never
+            // declared (AL0118), so they cannot compile cleanly by design.
+            _errorTolerantFixture = RoslynFixtureFactory.Create<Analyzers.CognitiveComplexity>(
+                new AnalyzerTestFixtureConfig
+                {
+                    ThrowsWhenInputDocumentContainsError = false
+                });
 
             _testCasePath = Path.Combine(
                 Directory.GetParent(
@@ -49,6 +58,16 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
+        [TestCase("UserDefinedErrorNotGuardClauseUnboundArgument")]
+        public async Task HasDiagnosticInDocumentWithErrors(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            _errorTolerantFixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.CognitiveComplexityThresholdExceeded);
+        }
+
+        [Test]
         [TestCase("CurrReportGuardClause")]
         [TestCase("CurrXMLportGuardClause")]
         [TestCase("IfStatement")]
@@ -70,6 +89,17 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.CognitiveComplexityThresholdExceeded);
+        }
+
+        [Test]
+        [TestCase("IfStatementGuardClauseErrorUnboundArgument")]
+        [TestCase("IfStatementGuardClauseFieldErrorUnboundArgument")]
+        public async Task NoDiagnosticInDocumentWithErrors(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            _errorTolerantFixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.CognitiveComplexityThresholdExceeded);
         }
     }
 }
