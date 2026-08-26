@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.Text;
 using ALCops.Common.Extensions;
 using ALCops.Common.Helpers;
