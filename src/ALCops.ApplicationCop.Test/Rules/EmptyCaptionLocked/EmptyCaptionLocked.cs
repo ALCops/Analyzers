@@ -1,5 +1,4 @@
 using ALCops.ApplicationCop.CodeFixes;
-using Microsoft.Dynamics.Nav.CodeAnalysis;
 using RoslynTestKit;
 
 namespace ALCops.ApplicationCop.Test

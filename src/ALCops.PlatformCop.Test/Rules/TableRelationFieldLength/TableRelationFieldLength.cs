@@ -1,4 +1,3 @@
-using ALCops.PlatformCop.CodeFixes;
 using RoslynTestKit;
 
 namespace ALCops.PlatformCop.Test
