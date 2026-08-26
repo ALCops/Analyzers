@@ -1,0 +1,29 @@
+<Project>
+    <!-- Central Package Management: every PackageReference version lives here. -->
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+    </PropertyGroup>
+
+    <!-- Analyzers (build-time only) -->
+    <ItemGroup>
+        <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
+        <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />
+    </ItemGroup>
+
+    <!-- Runtime (netstandard2.1 cops only) -->
+    <ItemGroup>
+        <PackageVersion Include="System.Collections.Immutable" Version="5.0.0" />
+    </ItemGroup>
+
+    <!-- Test projects -->
+    <ItemGroup>
+        <PackageVersion Include="ALCops.RoslynTestKit" Version="1.4.0" />
+        <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="4.14.0" />
+        <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+        <PackageVersion Include="NUnit" Version="4.1.0" />
+        <PackageVersion Include="NUnit.Analyzers" Version="4.2.0" />
+        <PackageVersion Include="NUnit3TestAdapter" Version="5.1.0" />
+    </ItemGroup>
+</Project>

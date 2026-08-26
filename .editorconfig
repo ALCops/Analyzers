@@ -1,0 +1,79 @@
+# ALCops Analyzers — editor and analyzer configuration
+# Severities here are a warnings-only baseline. Promote rules to `error` deliberately, one at a time,
+# once their occurrence count is zero. See .claude/rules/code-analysis.md.
+
+root = true
+
+[*]
+charset = utf-8
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+# AL test fixtures must stay byte-stable: they are the inputs to the analyzer tests.
+[src/**/Rules/**/*.al]
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+generated_code = true
+
+[*.{csproj,props,targets,resx}]
+indent_size = 4
+
+[*.cs]
+# --- Code style (IDE*) ------------------------------------------------------
+# Only styles the codebase already follows uniformly are enforced; the rest are suggestions.
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+csharp_prefer_braces = when_multiline:silent
+# Mixed today (221 file-scoped / 110 block-scoped). Do not enforce until unified.
+csharp_style_namespace_declarations = file_scoped:silent
+csharp_using_directive_placement = outside_namespace:suggestion
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+dotnet_diagnostic.IDE0005.severity = warning   # unused using directives
+dotnet_diagnostic.IDE0055.severity = warning   # formatting (whitespace/indent/newlines)
+dotnet_diagnostic.IDE0161.severity = none      # namespace style — see above
+
+# Missing XML doc comments: GenerateDocumentationFile is only on to make IDE0005 work in build.
+dotnet_diagnostic.CS1591.severity = none
+
+# --- .NET analyzers (CA*) ---------------------------------------------------
+# Analyzer callbacks receive non-null contexts from the host; validating every public parameter is pure noise.
+dotnet_diagnostic.CA1062.severity = none
+# AL identifiers are compared ordinally by design; culture-aware overloads are not wanted.
+dotnet_diagnostic.CA1304.severity = none
+dotnet_diagnostic.CA1305.severity = none
+dotnet_diagnostic.CA1307.severity = none
+dotnet_diagnostic.CA1309.severity = none
+dotnet_diagnostic.CA1310.severity = none
+# Localization of diagnostic messages is handled via resx; these rules target UI strings.
+dotnet_diagnostic.CA1303.severity = none
+# Analyzer types are instantiated by the host via attributes; "unused"/"could be static" heuristics misfire.
+dotnet_diagnostic.CA1812.severity = none
+
+# --- Analyzer-authoring rules (RS*) from Microsoft.CodeAnalysis.Analyzers -----
+# The NAV SDK is a fork of Roslyn (Microsoft.Dynamics.Nav.CodeAnalysis); most RS rules key on the
+# real Microsoft.CodeAnalysis types and will simply not fire. Those that do are kept as warnings.
+# Do NOT add a suppression here without documenting which NAV SDK type triggered it.
+
+# --- Roslynator (RCS*) -----------------------------------------------------
+# Defaults, warnings-only. Downgrade the noisiest rules here after inspecting counts — never in code.
+dotnet_diagnostic.RCS1123.severity = suggestion  # add parentheses when necessary — opinionated
+dotnet_diagnostic.RCS1163.severity = suggestion  # unused parameter — analyzer callbacks often have fixed signatures
+
+[src/*.Test/**.cs]
+# Test methods are discovered by attribute; naming and static-member rules do not apply.
+dotnet_diagnostic.CA1707.severity = none   # underscores in identifiers
+dotnet_diagnostic.CA1822.severity = none   # mark members as static
