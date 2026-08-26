@@ -42,7 +42,7 @@ csharp_using_directive_placement = outside_namespace:suggestion
 dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false
 
-dotnet_diagnostic.IDE0005.severity = warning   # unused using directives
+dotnet_diagnostic.IDE0005.severity = error     # unused using directives — count is 0 as of PR #477
 dotnet_diagnostic.IDE0055.severity = error     # formatting (whitespace/indent/newlines/using order) — count is 0 as of this PR
 dotnet_diagnostic.IDE0161.severity = none      # namespace style — see above
 

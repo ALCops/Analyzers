@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;

@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
+#if !NETSTANDARD2_1
 using System.Reflection;
+#endif
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;

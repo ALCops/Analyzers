@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
-using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 
 #if !NETSTANDARD2_1
+using Microsoft.Dynamics.Nav.CodeAnalysis;
 using System.Reflection;
 using System.Xml.Linq;
 using ALCops.Common.Extensions;

@@ -1,4 +1,3 @@
-using ALCops.FormattingCop.CodeFixes;
 using RoslynTestKit;
 
 namespace ALCops.FormattingCop.Test

@@ -1,4 +1,3 @@
-using Microsoft.Dynamics.Nav.CodeAnalysis;
 using RoslynTestKit;
 
 namespace ALCops.ApplicationCop.Test

@@ -1,7 +1,9 @@
 using System.Reflection;
-using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
+#if !NET10_0_OR_GREATER
+using ALCops.Common.Reflection;
+#endif
 
 namespace ALCops.Common.Extensions;
 
