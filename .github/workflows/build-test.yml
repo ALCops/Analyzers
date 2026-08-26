@@ -119,20 +119,21 @@ jobs:
           tfm: net10.0
 
       # Code style / formatting gate (warnings-only baseline: reports drift, does not fail the job yet).
-      # ContinuousIntegrationBuild is forced off for these two steps only: with it on (GITHUB_ACTIONS), the test
+      # GITHUB_ACTIONS is masked for these two steps only. The csproj files derive ContinuousIntegrationBuild from
+      # it (a project-level assignment, so an env override of the property itself is ignored); with it on, the test
       # projects reference the cop DLLs by HintPath, which do not exist before the builds below, and every
-      # test-project using then cascades into a bogus IDE0005 via CS0246. Off, they use ProjectReference and the
+      # test-project using then cascades into a bogus IDE0005 via CS0246. Masked, they use ProjectReference and the
       # workspace compiles from source (net10.0 only, like a local build) so the check can run first and fail fast.
       - name: Restore solution
         run: dotnet restore ALCops.sln
         env:
-          ContinuousIntegrationBuild: false
+          GITHUB_ACTIONS: false
 
       - name: Verify code formatting
         run: dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"
         continue-on-error: true
         env:
-          ContinuousIntegrationBuild: false
+          GITHUB_ACTIONS: false
 
       # ALCops.Common
       - name: Restore ALCops.Common
