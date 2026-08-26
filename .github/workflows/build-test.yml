@@ -402,7 +402,15 @@ jobs:
 
       - name: Merge Test Results
         if: always()
+        shell: bash
         run: |
+          # Every 'Run *.Test' step is continue-on-error, so this is the step that fails the job
+          # when tests never ran (e.g. BC DevTools download failed). Fail with a clear message
+          # instead of letting trx-merge crash on a missing directory.
+          if ! compgen -G "./TestResults/*.trx" > /dev/null; then
+            echo "::error::No .trx files found in ./TestResults - tests did not run. Check the 'Setup BC DevTools' and 'Run *.Test' steps above."
+            exit 1
+          fi
           trx-merge --dir ./TestResults/ --output ./TestResults_${{ matrix.version }}.trx
           
       - name: Upload Test Results
