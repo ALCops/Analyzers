@@ -7,21 +7,38 @@ disable-model-invocation: true
 
 # Release
 
-Target version: `$ARGUMENTS` (e.g. `v1.2.0`). Read `.claude/rules/release-strategy.md` for the channel model, GitVersion computation, tag hygiene, and the cleanup job before doing anything. Every push and every tag below is outward-facing: **show the exact command and wait for confirmation before running it.**
+**Not for:** hotfixes or ordinary changes — those go through normal `fix/` / `feat/` PRs (into `release/vX.Y.Z` while a release is being stabilized).
 
-## Pre-flight
+Target version: `$ARGUMENTS` (e.g. `v1.2.0`). Read `.claude/rules/release-strategy.md` (channels, GitVersion computation, cleanup job, prerelease-tag protection) and `references/procedure.md` (the exact commands) before doing anything.
 
-- `git status` clean, on `main`, `git pull` done, CI green on `main`.
-- Confirm `GitVersion.yml` produces the expected version (`dotnet gitversion` if installed, otherwise reason from the branch/tag rules in the strategy doc).
-- No local prerelease tags that could be pushed accidentally: `git tag -l "*-beta.*" "*-alpha.*"`; the workflow rejects prerelease tag pushes, but clean up anyway.
+## Gates
 
-## Procedure
+Every push, tag, and workflow dispatch is outward-facing and irreversible enough to deserve its own confirmation. **Show the exact command, wait for an explicit yes, run it, report the real output — one step at a time. Do not batch steps or confirm once for the whole release.** Violating the letter of the gates is violating the spirit of the gates.
 
-1. **Release branch:** `git checkout -b release/{version}` from `main`, push with `-u`. This bumps `main` to the next minor alpha automatically.
-2. **Stabilize:** bug fixes go to the release branch via PRs (`fix/...` branches targeting `release/{version}`).
-3. **Beta:** run the CI/CD workflow via `workflow_dispatch` on the release branch (`gh workflow run build-and-release.yml --ref release/{version}`); each run publishes a beta.
-4. **Stable:** on the release branch, `git tag {version}` then `git push origin {version}`. The tag push builds, tests, publishes to NuGet.org, creates the GitHub Release with changelog, and deletes the remote beta tags.
-5. **Local cleanup:** `git tag -d $(git tag -l "{version}-beta.*")` and `git fetch --prune --prune-tags`.
-6. **Merge back:** `git checkout main && git merge release/{version} && git push` (CI is skipped for release-to-main housekeeping merges).
+| Gate | Confirm before |
+|---|---|
+| 1 | Pushing `release/{version}` (this bumps `main` to the next minor alpha). |
+| 2 | Each beta `workflow_dispatch` on the release branch. |
+| 3 | Pushing the stable tag `{version}` (publishes to NuGet.org, creates the GitHub Release, deletes remote beta tags). |
+| 4 | Merging the release branch back into `main` and pushing. |
 
-Report which steps were executed and which were left for the user, with the commands.
+## Pre-flight (read-only, no confirmation needed)
+
+- Clean `git status`, on `main`, `git pull` done, CI green on `main`.
+- Expected version matches GitVersion's rules (`dotnet gitversion` if installed; otherwise reason from the strategy doc). A `release/v1.2.0` branch must produce `1.2.0-beta.N` and the tag `v1.2.0`.
+- `git tag -l "*-beta.*" "*-alpha.*"` is empty locally; if not, delete those tags first — the workflow rejects prerelease tag pushes, but do not rely on it.
+
+## Walkthrough
+
+Follow `references/procedure.md` step by step, applying the gate table: 1 branch → 2 stabilize/beta → 3 stable tag → local cleanup (`git tag -d`, `git fetch --prune --prune-tags`) → 4 merge-back. End with a list of executed steps, their output, and anything left for the user.
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---|---|
+| Confirming "the release" once and running all steps | One confirmation per gate; stop after each and report. |
+| Tagging from `main` instead of the release branch | `git checkout release/{version}` before `git tag`. |
+| `git push --tags` | Pushes local beta tags; push the single tag `git push origin {version}`. |
+| Forgetting local beta-tag cleanup after the stable tag | `git tag -d $(git tag -l "{version}-beta.*")` then `git fetch --prune --prune-tags`. |
+| Merging back via a PR | Direct merge + push; the pull-request workflow deliberately skips CI for release-to-main merges. |
+| Expecting a GitHub Release for a beta | Releases are created for stable tags only; alpha/beta are NuGet-only. |

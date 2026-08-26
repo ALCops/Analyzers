@@ -6,21 +6,52 @@ argument-hint: <ID> <RuleName> <Cop>   e.g. LC0100 AvoidFooBar LinterCop
 
 # New analyzer rule
 
-Arguments: `$ARGUMENTS` → `{ID}` (e.g. `LC0100`), `{RuleName}` (PascalCase, also the class/descriptor/test-folder name), `{Cop}` (`ApplicationCop` | `DocumentationCop` | `FormattingCop` | `LinterCop` | `PlatformCop` | `TestAutomationCop`). If any is missing, derive the next free ID from `src/ALCops.{Cop}/DiagnosticIds.cs` and ask for the rest.
+**Not for:** a wrong or missing diagnostic in an existing rule → `/fix-false-positive`; a fix for an existing rule → `/new-codefix`.
 
-Read `.claude/rules/analyzer-development.md`, `.claude/rules/sdk-analyzer-infrastructure.md` and `.claude/rules/testing.md` (they load automatically once you open files under `Analyzers/` and `*.Test/`).
+Arguments: `$ARGUMENTS` → `{ID}`, `{RuleName}` (PascalCase; also the class, descriptor, `DiagnosticIds` field and test-folder name), `{Cop}` (`ApplicationCop` | `DocumentationCop` | `FormattingCop` | `LinterCop` | `PlatformCop` | `TestAutomationCop`).
+
+Knowledge you need loads automatically when you open files under `Analyzers/` and `*.Test/`: `.claude/rules/analyzer-development.md`, `sdk-analyzer-infrastructure.md`, `netstandard21-compatibility.md`, `testing.md`.
+
+## Confirm rule parameters (hard gate)
+
+**STOP. Do not create or edit any file until the user has confirmed every parameter below.** Do not invent defaults for anything the user or the issue did not state. Ask once, as a single checklist (see `references/rule-parameters.md` for the allowed values):
+
+| Parameter | Propose or ask? |
+|---|---|
+| `{ID}` | **Propose** — computed as the next free sequential ID in `src/ALCops.{Cop}/DiagnosticIds.cs`; state it, verify it is unused. |
+| `{RuleName}` | Propose from the request; confirm. |
+| What is reported, and what is deliberately **not** (false-negative trade-offs) | **Ask** — one sentence each. |
+| `Category` | **Ask** |
+| `DefaultSeverity` | **Ask** |
+| `isEnabledByDefault` | **Ask** |
+| CodeFix now / later / never | **Ask** |
+| Configurable via `alcops.json`? (name + default) | **Ask** |
+| Minimum BC/SDK version (version gate) or net8.0-only SDK API | **Propose** after step 1 below; confirm. |
 
 ## Steps
 
-1. **Confirm scope.** Restate what the rule detects, what it deliberately does not (false-negative trade-offs), severity, default enabled/disabled, and whether it needs a setting in `ALCopsSettings` + `alcops.schema.json` (see `.claude/rules/settings-schema.md`). Check `DiagnosticIds.cs` that `{ID}` is unused and sequential.
-2. **Study the SDK first (mandatory).** Locate the relevant syntax kinds, operation kinds, and symbol members in the decompiled NAV SDK source before writing code; note any API that is absent in `netstandard2.1` (→ version gate or `#if NETSTANDARD2_1` stub, see `.claude/rules/netstandard21-compatibility.md`). Look for an existing analyzer with the same registration shape and reuse its pattern and `ALCops.Common` helpers.
-3. **Wire the diagnostic.**
-   - `DiagnosticIds.cs`: `public static readonly string {RuleName} = "{ID}";`
-   - `ALCops.{Cop}Analyzers.resx`: `{RuleName}Title`, `{RuleName}MessageFormat`, `{RuleName}Description`.
-   - `DiagnosticDescriptors.cs`: descriptor with category, severity, `isEnabledByDefault`, help URI `https://alcops.dev/docs/analyzers/{copslug}/{id}/`.
-4. **Write the analyzer** in `src/ALCops.{Cop}/Analyzers/{RuleName}.cs`: `[DiagnosticAnalyzer]`, extends `DiagnosticAnalyzer` (not the exception harness — see CLAUDE.md), narrowest `Register*Action`, no cross-callback state accumulation, `GetSymbolSafe` where applicable.
-5. **Write tests** in `src/ALCops.{Cop}.Test/Rules/{RuleName}/`: `{RuleName}.cs` from the class template in `testing.md`; `.al` fixtures in `HasDiagnostic/` and `NoDiagnostic/` with `[|...|]` markers in both; fixture names must equal `[TestCase]` names; each fixture self-contained (define referenced tables/enums). Cover every design decision from step 1 with at least one fixture, including the deliberate non-reports.
-6. **Build and run:** `dotnet build ALCops.sln` then `dotnet test src/ALCops.{Cop}.Test/ --filter "FullyQualifiedName~{RuleName}"`. Fix until green; report the real output.
-7. **Document.** Create `.claude/rules/diagnostics/{id-lowercase}-{kebab-slug}.md` from `.claude/skills/new-analyzer/templates/rule-doc.md`: fill Purpose, every design decision with rationale, Architecture, Known issues. Set `paths` to `src/ALCops.{Cop}/**/{RuleName}*`. No diagnostic-property table, no test-case list.
-8. **Remind about the docs site:** a page is required at `../alcops.dev/content/docs/analyzers/{copslug}/{ID}.md` (sibling repo, out of scope for this repo's PR unless asked).
-9. Commit as `feat({ID}): <summary>` on a `feat/{id}-<slug>` branch; never on `main`.
+1. **Study the SDK first (mandatory).** Locate the syntax kinds, operation kinds, and symbol members you need in the decompiled NAV SDK source; note any API absent on `netstandard2.1` (→ version gate or `#if NETSTANDARD2_1` stub). Find an existing analyzer with the same registration shape and reuse its pattern and `ALCops.Common` helpers. Feed the version-gate finding back into the gate above.
+2. **Wire the diagnostic.** `DiagnosticIds.cs` field → `ALCops.{Cop}Analyzers.resx` (`{RuleName}Title`, `{RuleName}MessageFormat`, `{RuleName}Description`) → `DiagnosticDescriptors.cs` entry with help URI `https://alcops.dev/docs/analyzers/{copslug}/{id}/`. If configurable: `ALCopsSettings.cs` + `alcops.schema.json` together (`.claude/rules/settings-schema.md`).
+3. **Write the analyzer** in `src/ALCops.{Cop}/Analyzers/{RuleName}.cs`: `[DiagnosticAnalyzer]`, `sealed`, extends plain `DiagnosticAnalyzer`, narrowest `Register*Action`, no state carried across callbacks, `IsObsolete()` check first, `GetSymbolSafe()` in operation callbacks, report at the most specific location.
+4. **Write tests** in `src/ALCops.{Cop}.Test/Rules/{RuleName}/`: class from `references/test-class-template.md`; `.al` fixtures in `HasDiagnostic/` and `NoDiagnostic/` with `[|...|]` markers in both; one fixture per confirmed design decision, including the deliberate non-reports.
+5. **Build and run:** `dotnet build ALCops.sln`, then `dotnet test src/ALCops.{Cop}.Test/ --filter "FullyQualifiedName~{RuleName}"`. Report the real output.
+6. **Document.** Create `.claude/rules/diagnostics/{id-lowercase}-{kebab-slug}.md` from `references/rule-doc.md` with `paths: src/ALCops.{Cop}/**/{RuleName}*`; every gate answer becomes a Design-decision row with its rationale.
+7. **Remind:** docs-site page required at `../alcops.dev/content/docs/analyzers/{copslug}/{ID}.md` (sibling repo; out of scope unless asked).
+8. Commit `feat({ID}): <summary>` on `feat/{id}-<slug>`; never on `main`.
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---|---|
+| Inventing severity / enabled-by-default / category because the issue did not say | Stop at the gate and ask; these are never derivable. |
+| `MessageFormat` placeholder count ≠ arguments passed to `Diagnostic.Create` (#415) | Count `{n}` in the resx and match the `messageArgs`; add a fixture whose message is asserted. |
+| Stray characters in resx text, e.g. an unbalanced backtick (#397) | Proofread the three resx entries; they render verbatim in the editor. |
+| Deriving from `ALCopsDiagnosticAnalyzer` / `{Cop}Analyzer` | Extend plain `DiagnosticAnalyzer`; the harness makes `alc` fail with `AL1003` (#389). |
+| Collecting in one callback and reporting in another (two-phase accumulator) | Incremental compilation skips callbacks; analyze and report inside the same callback (`sdk-analyzer-infrastructure.md`). |
+| `SemanticModel.GetSymbolInfo()` inside an operation callback, or comparing syntax text to identify symbols | Use `IOperation.GetSymbolSafe()` and compare symbols, not `ToString()` / `ValueText`. |
+| Raw `StringComparison.OrdinalIgnoreCase` for AL identifiers | Use the `SemanticFacts` name-comparison API. |
+| Using a net8.0-only SDK member without a guard | `#if NETSTANDARD2_1` stub or `VersionProvider` gate (`netstandard21-compatibility.md`). |
+| Handling only one temporary-table form (#379, #382, #384) | Cover `TableType = Temporary`, `Record X temporary` variables/parameters, and temporary page source tables. |
+| Name-keyed variable maps that ignore AL scoping (#448) | Consult the full local scope (locals, parameters, named return) before object scope; classify by symbol type, not name. |
+| `[TestCase("Foo")]` without a matching `Foo.al`, or `NoDiagnostic` fixtures without `[|...|]` markers | Names must match exactly; both fixture kinds need markers. |
+| Skipping the rule doc or the docs-site reminder | Steps 6 and 7 are part of "done". |

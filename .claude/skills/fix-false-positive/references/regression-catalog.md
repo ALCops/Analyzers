@@ -1,0 +1,19 @@
+# Regression catalog — check these first
+
+Recurring causes of false positives/negatives, mined from `fix(...)` commits. When a report arrives, test the AL against each row before reading the analyzer line by line. Add a row when a fix reveals a new class of cause.
+
+| Cause | What to check | Precedent |
+|---|---|---|
+| **Temporary tables come in three forms** | `TableType = Temporary` on the table, `Record X temporary` on variables/parameters/return values, and pages with a temporary `SourceTable`. Rules about DB access, permissions, or performance must treat all three alike. | PC0037 #379, AC0031/AC0032 #382, PC0035 #384 |
+| **`RecordRef` / `FieldRef` dynamic access** | A DB operation on a `RecordRef` can target any table → per-table reasoning is unsound for that object (bail out). `FieldRef.Value` / `FieldRef.Field` operate on the in-memory row and consume no permission → must *not* trigger table-level logic. | AC0032 #448, LC0083 #410 |
+| **AL scoping in name-keyed maps** | Locals, parameters, and named return values shadow object-scope variables of the same name. Consult the full local scope before object scope; classify by symbol type, never by variable name. | AC0032 #448 (audit tracked in #449) |
+| **AppSource mandatory affixes** | `mandatoryPrefix` / `mandatorySuffix` / `mandatoryAffixes` from `AppSourceCop.json` force names to differ from base objects. Strip via `ALCops.Common.Helpers.MandatoryAffixes` before comparing; beware coincidental "glued" prefixes that are part of the real name. | PC0021 #447, #459; LC0054 #460 |
+| **Removed / obsolete objects and members** | `ObsoleteState = Removed` tables, fields, and extensions must be skipped on both sides of a comparison; `Pending` still participates at runtime and must still be analyzed. Always call `IsObsolete()` first. | PC0020/PC0021 #445, #148 |
+| **Values escaping the procedure** | A record returned via `exit(Rec)`, passed `var`, or assigned to a global escapes local reasoning — the caller may need the whole record. Flow-sensitive rules need an escape check. | PC0030 #443 |
+| **Object kinds that implement `IObjectTypeSymbol` but not `IApplicationObjectTypeSymbol`** | Interfaces and control add-ins: `GetContainingApplicationObjectTypeSymbol()` returns `null` and silently defeats accessibility checks. Use layered resolution (application object first, then object type); request pages are `IObjectTypeSymbol` with hardcoded `Local` accessibility. | DC0004 #452 |
+| **Page types where the runtime ignores properties** | `HeadlinePart` field controls ignore `Caption`; other page types have similar implicit behaviour. Check the page type (and the target of a `pageextension`) before demanding a property. | AC0011 #450 |
+| **Namespace-aware identifiers across SDK versions** | Translation IDs, symbol names, and lookups changed with namespaces (SDK 18.0.38+). Compare via symbols, and gate or branch on `VersionProvider` when the shape differs per version. | LC0091 #391 |
+| **XML doc comment edge cases** | `<param>` without a `name` attribute, empty tags, and malformed comments must not throw or mis-attribute. | DC0005 (6aeffff) |
+| **Message placeholders vs. arguments** | A false "wrong message" report is often `{n}` placeholders that do not match `messageArgs`. | multiple rules #415 |
+| **Statement/blank-line interactions with control flow** | Formatting rules must reason about `begin`/`end` nesting, `else if`, and `case` branches together; a fix for one interaction easily regresses another. | FC0007 #457 |
+| **Version-scoped syntax** (`this`, newer keywords) | Fixtures need `SkipTestIfVersionIsTooLow("14.0")` or `RequireMinimumVersion(...)`; a rule may need a `VersionProvider` gate rather than a code change. | PC0035 fixtures, PC0029 |
