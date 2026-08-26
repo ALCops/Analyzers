@@ -57,9 +57,6 @@ nunit-*.xml
 # Specific files from the .vscode folder
 .vscode/**
 
-# Specific files from the .serena folder
-.serena/**
-
 # MSBuild-generated strongly-typed resource classes (resx → .cs)
 ALCops.*Analyzers.cs
 
@@ -68,3 +65,8 @@ ALCops.*Analyzers.cs
 
 # These file caches language service data to improve the performance of C# Dev Kit
 **.lscache
+
+# Claude Code: local (per-user) settings must not be committed
+.claude/settings.local.json
+# Skill folders are sources, not build output (un-ignore e.g. .claude/skills/release/ from [Rr]elease/)
+!.claude/skills/**

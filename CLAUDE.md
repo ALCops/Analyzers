@@ -1,0 +1,57 @@
+# ALCops Analyzers
+
+Six custom code analyzers for AL (Microsoft Dynamics 365 Business Central), built on the `Microsoft.Dynamics.Nav.CodeAnalysis` SDK (the "NAV SDK"). Each cop is a .NET project under `src/` with a sibling `*.Test` project; `ALCops.Common` is the shared library; `ALCops.Analyzers` is a CI-only NuGet meta-package (not in the `.sln`).
+
+| Project | Prefix | Help URI slug | CodeFixes |
+|---|---|---|---|
+| `ALCops.ApplicationCop` | `AC` | `applicationcop` | yes |
+| `ALCops.DocumentationCop` | `DC` | `documentationcop` | no |
+| `ALCops.FormattingCop` | `FC` | `formattingcop` | yes |
+| `ALCops.LinterCop` | `LC` | `lintercop` | yes |
+| `ALCops.PlatformCop` | `PC` | `platformcop` | yes |
+| `ALCops.TestAutomationCop` | `TA` | `testautomationCop` (sic, matches descriptors) | no |
+
+Per cop: `DiagnosticIds.cs`, `DiagnosticDescriptors.cs`, `ALCops.{Cop}Analyzers.resx` (messages; generates a strongly-typed class at build), `Analyzers/{RuleName}.cs`, `CodeFixes/{RuleName}CodeFixProvider.cs`. Tests: `src/ALCops.{Cop}.Test/Rules/{RuleName}/{RuleName}.cs` + `HasDiagnostic/`, `NoDiagnostic/`, `HasFix/` `.al` fixtures.
+
+## Build and test
+
+```bash
+dotnet build ALCops.sln
+dotnet test ALCops.sln
+dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}"
+dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.HasDiagnostic"
+```
+
+- Requires BC Dev Tools at `../../Microsoft.Dynamics.BusinessCentral.Development.Tools` (repo-root relative) or `/p:BcDevToolsDir=<path>`. `.vscode/Setup-BCDevTools.ps1` downloads them.
+- Local builds target `net8.0` only. CI (`ContinuousIntegrationBuild=true`) builds `netstandard2.1;net8.0;net10.0` because BC ships the SDK in all three. Test projects target `net10.0` and switch via `NavTargetFramework`.
+- Nullable warnings `CS8600;CS8602;CS8603;CS8604;CS8605` are errors.
+
+## Hard constraints
+
+- **Read the decompiled NAV SDK source before using any SDK API.** Syntax kinds, operation shapes, and symbol members are undocumented and version-dependent. See `.claude/rules/analyzer-development.md` (§NAV SDK Source Reference) and `.claude/rules/sdk-analyzer-infrastructure.md`.
+- **Every analyzer must compile on `netstandard2.1`.** Guard newer C# features and missing SDK APIs; net8.0-only analyzers compile as empty stubs under `#if NETSTANDARD2_1`. See `.claude/rules/netstandard21-compatibility.md`.
+- **Never assume analyzer callback ordering or that every callback runs** (incremental compilation skips them). No two-phase accumulator patterns. See `.claude/rules/sdk-analyzer-infrastructure.md`.
+- **Analyzers extend plain `DiagnosticAnalyzer`.** Do not switch them to the `ALCopsDiagnosticAnalyzer` / `{Cop}Analyzer` exception harness: deriving from a Common-based type makes `alc` fail with `AL1003` (issue #389). The harness stays test-only until a loader-safe approach exists. See `.claude/rules/analyzer-exception-harness.md`.
+- **`ALCopsSettings.cs` and `alcops.schema.json` must stay in sync**; a parity test enforces it. See `.claude/rules/settings-schema.md`.
+- Diagnostic IDs are `{Prefix}{4 digits}`, sequential per cop. Help URI: `https://alcops.dev/docs/analyzers/{copslug}/{id}/`. Every new rule needs a page in the sibling docs repo (`../alcops.dev`, `content/docs/analyzers/{copslug}/{ID}.md`).
+- Resx keys: `{RuleName}Title`, `{RuleName}MessageFormat`, `{RuleName}Description`. Descriptor field, `DiagnosticIds` field, analyzer class, and test folder all share the rule name.
+
+## Workflow
+
+- `main` is protected — never commit to it. Branch from `main`: `feat/<desc>`, `fix/<desc>`, `docs/<desc>`, `chore/<desc>`; `release/vX.Y.Z` for release stabilization. Open PRs with `gh pr create`; CI runs build + tests.
+- Commit messages: conventional commits scoped by rule ID — `feat(LC0095): …`, `fix(PC0021): …`, `test(FC0002): …`, `docs: …`, `chore: …`.
+- Bug fixes start with a failing regression fixture (`NoDiagnostic/` for false positives, `HasDiagnostic/` for false negatives) before touching the analyzer.
+- Releases use GitVersion with alpha/beta/stable channels. See `.claude/rules/release-strategy.md`; use `/release`.
+
+## Keeping `.claude/` in sync
+
+- New rule → create `.claude/rules/diagnostics/{id}-{slug}.md` from `.claude/skills/new-analyzer/templates/rule-doc.md`. New CodeFix → add a `## CodeFix` section to that file. Changed or added design decision, non-obvious workaround, or accepted limitation → update its Design decisions / Known issues table.
+- New shared component or convention → new `.claude/rules/<area>.md` with a `paths:` frontmatter scoped as narrowly as possible. Never add a rules file without `paths:` (it would load in every session).
+- Rules files document *why*, not *what*: no diagnostic-property tables, test-case lists, or file inventories — the code is the source of truth for those.
+- If none of this applies to a change, say "No `.claude` doc changes needed" in the plan.
+
+## Where to look
+
+- `.claude/rules/*.md` — path-scoped guides, auto-loaded when you touch matching files: analyzer development, SDK internals, CodeFixes, testing, Common library, exception harness, record-method classification, settings schema, netstandard2.1, release strategy, BC DevTools action.
+- `.claude/rules/diagnostics/{id}-{slug}.md` — one file per rule: purpose, design decisions, architecture, known issues, CodeFix decisions.
+- Skills: `/new-analyzer <ID> <ClassName> <Cop>`, `/new-codefix <ID>`, `/fix-false-positive <issue-or-description>`, `/release`.
