@@ -88,13 +88,14 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
             compilationContext.RegisterCodeBlockAction(codeBlockContext =>
             {
-                AnalyzeCognitiveComplexity(codeBlockContext, recursion);
+                AnalyzeCognitiveComplexity(codeBlockContext, compilation, recursion);
             });
         });
     }
 
     private void AnalyzeCognitiveComplexity(
         CodeBlockAnalysisContext context,
+        Compilation compilation,
         CognitiveComplexityRecursionGraphService recursion)
     {
         if (context.IsObsolete() || context.CodeBlock is not MethodOrTriggerDeclarationSyntax methodOrTrigger)
@@ -110,7 +111,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             methodOrTrigger.Attributes.Any(attr => eventPublisherDecoratorNames.Contains(attr.GetIdentifierOrLiteralValue() ?? string.Empty)))
             return;
 
-        var semanticModel = context.SemanticModel;
+        var semanticModel = compilation.GetSemanticModel(methodOrTrigger.SyntaxTree);
         int complexity = CalculateCognitiveComplexity(context, recursion, semanticModel, methodOrTrigger.Body);
         if (complexity >= complexityThreshold)
         {
@@ -259,19 +260,8 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         SemanticModel semanticModel,
         CancellationToken cancellationToken)
     {
-        // if not <condition> then Error(...); / Rec.FieldError(...); / FldRef.FieldError;
-        //
-        // A clean bind yields the built-in method. When an argument fails to bind (undefined variable,
-        // wrong arity, mid-edit), Binder.CreateBadCall synthesizes an ErrorMethodSymbol for the
-        // two-overload built-ins Dialog.Error, Table.FieldError and FieldRef.FieldError. That symbol has
-        // MethodKind.Method, so FlowTerminatingBuiltIns.IsFlowTerminatingCall would reject it and the
-        // guard clause would flicker between +0 and +1 while typing. Both the real built-in and the
-        // synthesized symbol carry the callee name and no DeclaringSyntaxReference; only user-defined
-        // procedures have one (AL has no user overloads, so a user procedure with bad arguments still
-        // binds to its own symbol and is correctly demoted).
-        if (semanticModel.GetOperation(codeExpression, cancellationToken) is IInvocationExpression { TargetMethod: IMethodSymbol target } &&
-            FlowTerminatingBuiltIns.MethodNames.Contains(target.Name) &&
-            target.DeclaringSyntaxReference is null)
+        if (semanticModel.GetOperation(codeExpression, cancellationToken) is IInvocationExpression operation &&
+            FlowTerminatingBuiltIns.IsFlowTerminatingCall(operation.TargetMethod as IMethodSymbol))
         {
             return true;
         }
@@ -293,7 +283,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         {
             MemberAccessExpressionSyntax memberAccess => IsGuardCommand(memberAccess),
 
-            // if not <condition> then Break(); / Continue(); / Quit(); / Skip();
+            // if not <condition> then error;
             IdentifierNameSyntax identifier when identifier.GetIdentifierOrLiteralValue() is { } value
                 => guardClauseExitCommands.Contains(value),
             _ => false
