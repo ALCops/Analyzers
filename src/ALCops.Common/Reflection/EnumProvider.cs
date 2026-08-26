@@ -316,8 +316,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.MethodKind>(nameof(NavCodeAnalysis.MethodKind.BuiltInMethod)));
         private static readonly Lazy<NavCodeAnalysis.MethodKind> _method =
             new(() => ParseEnum<NavCodeAnalysis.MethodKind>(nameof(NavCodeAnalysis.MethodKind.Method)));
-       private static readonly Lazy<NavCodeAnalysis.MethodKind> _trigger =
-            new(() => ParseEnum<NavCodeAnalysis.MethodKind>(nameof(NavCodeAnalysis.MethodKind.Trigger)));
+        private static readonly Lazy<NavCodeAnalysis.MethodKind> _trigger =
+             new(() => ParseEnum<NavCodeAnalysis.MethodKind>(nameof(NavCodeAnalysis.MethodKind.Trigger)));
         private static readonly Lazy<NavCodeAnalysis.MethodKind> _property =
             new(() => ParseEnum<NavCodeAnalysis.MethodKind>(nameof(NavCodeAnalysis.MethodKind.Property)));
 

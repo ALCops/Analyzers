@@ -1,6 +1,6 @@
+using ALCops.ApplicationCop;
 using ALCops.Common.Diagnostics;
 using ALCops.Common.Reflection;
-using ALCops.ApplicationCop;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using RoslynTestKit;

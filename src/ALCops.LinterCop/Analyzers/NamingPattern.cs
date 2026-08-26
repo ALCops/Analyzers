@@ -450,7 +450,7 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         private static readonly Dictionary<NamingTarget, (string? Allow, string? Disallow, string? AllowDesc, string? DisallowDesc)> BuiltInDefaults = new()
         {
             [NamingTarget.Procedure] = pascalCase,
-            [NamingTarget.Variable] =  pascalCaseUnderscoreNoSpecial,
+            [NamingTarget.Variable] = pascalCaseUnderscoreNoSpecial,
             [NamingTarget.LocalVariable] = pascalCaseUnderscoreNoSpecial,
             [NamingTarget.GlobalVariable] = pascalCaseUnderscoreNoSpecial,
             [NamingTarget.Parameter] = pascalCaseUnderscore,
@@ -509,9 +509,9 @@ public sealed class NamingPattern : DiagnosticAnalyzer
                 chain.Add(current);
 
                 if (!InheritanceMap.TryGetValue(current, out var next))
-                 {
+                {
                     break;
-                 }
+                }
 
                 current = next;
             }

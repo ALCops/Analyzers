@@ -21,6 +21,7 @@ The repo ships analyzers, so it dogfoods static analysis on itself: .NET analyze
 | Decision | Why |
 |---|---|
 | Warnings-only baseline; only `CS8600;CS8602;CS8603;CS8604;CS8605` are errors | The analyzers were introduced onto an existing codebase. The ratchet plan is: rules with zero occurrences → `error`; the rest fixed and promoted category by category in dedicated PRs. |
+| IDE0055 is the first rule promoted to `error` | It is fully machine-fixable, so the count went to 0 in one tool-executed PR. Isolate the fix with `dotnet format style ALCops.sln --diagnostics IDE0055` — the `whitespace` subcommand also rewrites CHARSET (strips the UTF-8 BOM from 23 files), which is out of scope. Note IDE0055 also covers using-directive order (`dotnet_sort_system_directives_first`). |
 | Severities live in `.editorconfig`, never in MSBuild or `#pragma` | One place to audit, and `dotnet format` honours it. `#pragma warning disable` inside an analyzer needs a justification comment. |
 | Analyzer packages use `PrivateAssets="all"` | They must not become dependencies of the shipped `ALCops.Analyzers` NuGet. |
 | `GenerateDocumentationFile=true` + `CS1591` silenced | IDE0005 (unused usings) only reports in a command-line build when XML doc generation is on. The doc files are not packed (`ALCops.Analyzers.csproj` packs explicit DLL paths only). |
@@ -33,7 +34,9 @@ The repo ships analyzers, so it dogfoods static analysis on itself: .NET analyze
 
 ## Baseline snapshot (2026-08-26, local net10.0 build)
 
-Approximate warning counts at introduction, for the ratchet plan: IDE0055 formatting ~340 (17 files, mostly tab indentation in DocumentationCop — `dotnet format whitespace ALCops.sln` fixes all of them), CA1725 (parameter names vs base) ~44, CA1852 (seal internal types) ~36, IDE0005 (unused usings) ~26, CA1861 ~14, CA2263 ~13, CA1859 ~10, CA1720/CA1311/CA1822 ~6 each, CA1711 ~5, CA1068/CA2249 ~4, RCS1075/RCS1102 <5, CS1570/CS1573 (malformed XML docs) ~5. Everything else <3.
+Approximate warning counts at introduction, for the ratchet plan: IDE0055 formatting **0** (was ~340 in 17 files, mostly tab indentation in DocumentationCop; fixed and promoted to `error`), CA1725 (parameter names vs base) ~44, CA1852 (seal internal types) ~36, IDE0005 (unused usings) ~26, CA1861 ~14, CA2263 ~13, CA1859 ~10, CA1720/CA1311/CA1822 ~6 each, CA1711 ~5, CA1068/CA2249 ~4, RCS1075/RCS1102 <5, CS1570/CS1573 (malformed XML docs) ~5. Everything else <3.
+
+Remaining `dotnet format --verify-no-changes` work: CHARSET, 23 files (UTF-8 BOM) — still makes the CI format step red (`continue-on-error`). The 5 IMPORTS findings went away with IDE0055, which also enforces using order.
 
 ## Known issues / limitations
 

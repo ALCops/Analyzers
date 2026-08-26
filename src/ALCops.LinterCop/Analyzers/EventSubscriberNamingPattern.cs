@@ -225,21 +225,21 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
         private static readonly Dictionary<string, (TokenKind Kind, IdentifierCaseStyle Style)> KnownPlaceholders =
             new Dictionary<string, (TokenKind, IdentifierCaseStyle)>(StringComparer.Ordinal)
             {
-                ["{EventSource}"]  = (TokenKind.EventSource,  IdentifierCaseStyle.Pascal),
-                ["{eventSource}"]  = (TokenKind.EventSource,  IdentifierCaseStyle.Camel),
-                ["{event_source}"] = (TokenKind.EventSource,  IdentifierCaseStyle.Snake),
-                ["{event-source}"] = (TokenKind.EventSource,  IdentifierCaseStyle.Kebab),
-                ["{Event Source}"] = (TokenKind.EventSource,  IdentifierCaseStyle.Raw),
-                ["{EventName}"]    = (TokenKind.EventName,    IdentifierCaseStyle.Pascal),
-                ["{eventName}"]    = (TokenKind.EventName,    IdentifierCaseStyle.Camel),
-                ["{event_name}"]   = (TokenKind.EventName,    IdentifierCaseStyle.Snake),
-                ["{event-name}"]   = (TokenKind.EventName,    IdentifierCaseStyle.Kebab),
-                ["{Event Name}"]   = (TokenKind.EventName,    IdentifierCaseStyle.Raw),
-                ["{ElementName}"]  = (TokenKind.ElementName,  IdentifierCaseStyle.Pascal),
-                ["{elementName}"]  = (TokenKind.ElementName,  IdentifierCaseStyle.Camel),
-                ["{element_name}"] = (TokenKind.ElementName,  IdentifierCaseStyle.Snake),
-                ["{element-name}"] = (TokenKind.ElementName,  IdentifierCaseStyle.Kebab),
-                ["{Element Name}"] = (TokenKind.ElementName,  IdentifierCaseStyle.Raw),
+                ["{EventSource}"] = (TokenKind.EventSource, IdentifierCaseStyle.Pascal),
+                ["{eventSource}"] = (TokenKind.EventSource, IdentifierCaseStyle.Camel),
+                ["{event_source}"] = (TokenKind.EventSource, IdentifierCaseStyle.Snake),
+                ["{event-source}"] = (TokenKind.EventSource, IdentifierCaseStyle.Kebab),
+                ["{Event Source}"] = (TokenKind.EventSource, IdentifierCaseStyle.Raw),
+                ["{EventName}"] = (TokenKind.EventName, IdentifierCaseStyle.Pascal),
+                ["{eventName}"] = (TokenKind.EventName, IdentifierCaseStyle.Camel),
+                ["{event_name}"] = (TokenKind.EventName, IdentifierCaseStyle.Snake),
+                ["{event-name}"] = (TokenKind.EventName, IdentifierCaseStyle.Kebab),
+                ["{Event Name}"] = (TokenKind.EventName, IdentifierCaseStyle.Raw),
+                ["{ElementName}"] = (TokenKind.ElementName, IdentifierCaseStyle.Pascal),
+                ["{elementName}"] = (TokenKind.ElementName, IdentifierCaseStyle.Camel),
+                ["{element_name}"] = (TokenKind.ElementName, IdentifierCaseStyle.Snake),
+                ["{element-name}"] = (TokenKind.ElementName, IdentifierCaseStyle.Kebab),
+                ["{Element Name}"] = (TokenKind.ElementName, IdentifierCaseStyle.Raw),
             };
 
         public static IReadOnlyList<TemplateSegment> Parse(string template)

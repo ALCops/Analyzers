@@ -58,8 +58,8 @@ namespace ALCops.LinterCop.Test
             </xliff>
             """);
 
-		// "Page 2931038265 - Control 1296262074 - Property 1295455071"
-		// "Page 2931038265 - Control 2674903734 - Property 1295455071"
+        // "Page 2931038265 - Control 1296262074 - Property 1295455071"
+        // "Page 2931038265 - Control 2674903734 - Property 1295455071"
         private static readonly byte[] TranslatedPageControlToolTipXliffContent = System.Text.Encoding.UTF8.GetBytes(
             """
             <?xml version="1.0" encoding="utf-8"?>

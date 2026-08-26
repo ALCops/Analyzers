@@ -15,12 +15,12 @@ namespace ALCops.DocumentationCop.Test
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
                     Path.Combine("Rules", nameof(ObjectRequiresDocumentation)));
 
-		    _fixture = RoslynFixtureFactory.Create<Analyzers.ObjectRequiresDocumentation>(
-				// Inject a ruleset to enable testing for rules, that are not enabled by default (isEnabledByDefault: false).
-				new AnalyzerTestFixtureConfig
-				{
-					RuleSetPath = Path.Combine(_testCasePath, $"{nameof(ObjectRequiresDocumentation)}.ruleset.json")
-				});
+            _fixture = RoslynFixtureFactory.Create<Analyzers.ObjectRequiresDocumentation>(
+                // Inject a ruleset to enable testing for rules, that are not enabled by default (isEnabledByDefault: false).
+                new AnalyzerTestFixtureConfig
+                {
+                    RuleSetPath = Path.Combine(_testCasePath, $"{nameof(ObjectRequiresDocumentation)}.ruleset.json")
+                });
         }
 
         [Test]
@@ -42,8 +42,8 @@ namespace ALCops.DocumentationCop.Test
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.PublicObjectRequiresDocumentation);
         }
- 
-         [Test]
+
+        [Test]
         [TestCase("InternalCodeunit")]
         public async Task InternalHasDiagnostic(string testCase)
         {
@@ -53,7 +53,7 @@ namespace ALCops.DocumentationCop.Test
             _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.InternalObjectRequiresDocumentation);
         }
 
-         [Test]
+        [Test]
         [TestCase("InternalCodeunit")]
         public async Task InternalNoDiagnostic(string testCase)
         {
@@ -62,5 +62,5 @@ namespace ALCops.DocumentationCop.Test
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.InternalObjectRequiresDocumentation);
         }
-  }
+    }
 }

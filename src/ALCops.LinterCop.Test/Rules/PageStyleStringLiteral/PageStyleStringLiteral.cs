@@ -49,7 +49,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("LockedLabelUppercase")]
         [TestCase("Page")]
         [TestCase("RecordMethodInvocation")]
-		[TestCase("TableFieldCaptions")]
+        [TestCase("TableFieldCaptions")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

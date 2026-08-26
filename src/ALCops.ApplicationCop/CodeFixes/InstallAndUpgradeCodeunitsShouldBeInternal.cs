@@ -2,10 +2,10 @@ using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
+using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeFixes;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
-using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 
 namespace ALCops.ApplicationCop.CodeFixes;
 

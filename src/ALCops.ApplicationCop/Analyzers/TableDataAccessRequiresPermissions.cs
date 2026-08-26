@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
-using ALCops.Common.Permissions;
 using ALCops.Common.Extensions;
+using ALCops.Common.Permissions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;

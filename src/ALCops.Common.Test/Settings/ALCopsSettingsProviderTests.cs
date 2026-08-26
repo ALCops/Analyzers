@@ -206,7 +206,7 @@ public class ALCopsSettingsProviderTests
 
         File.WriteAllText(
             Path.Combine(appFolder, "alcops.json"),
-			@"{
+            @"{
 	""ToolTipAllowedPunctuations"": [
 		{
 			""Character"": ""."",
@@ -219,25 +219,25 @@ public class ALCopsSettingsProviderTests
 	]
 }");
 
-		List<Punctuation>? expectedPunctuations = [
-			new Punctuation { Character = ".", Name = "dot" },
-			new Punctuation { Character = "!", Name = "exclamation mark" }
-		];
+        List<Punctuation>? expectedPunctuations = [
+            new Punctuation { Character = ".", Name = "dot" },
+            new Punctuation { Character = "!", Name = "exclamation mark" }
+        ];
 
         var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
 
-		Assert.That(settings.ToolTipAllowedPunctuations?.Count, Is.EqualTo(2));
+        Assert.That(settings.ToolTipAllowedPunctuations?.Count, Is.EqualTo(2));
 
-		if (settings.ToolTipAllowedPunctuations != null)
-		{
-			foreach(Punctuation punctuation in settings.ToolTipAllowedPunctuations)
-			{
-				var expected = expectedPunctuations.FirstOrDefault(p => p.Character == punctuation.Character);
+        if (settings.ToolTipAllowedPunctuations != null)
+        {
+            foreach (Punctuation punctuation in settings.ToolTipAllowedPunctuations)
+            {
+                var expected = expectedPunctuations.FirstOrDefault(p => p.Character == punctuation.Character);
 
-		        Assert.That(punctuation.Character, Is.EqualTo(expected?.Character));
-		        Assert.That(punctuation.Name, Is.EqualTo(expected?.Name));
-			}
-		}
+                Assert.That(punctuation.Character, Is.EqualTo(expected?.Character));
+                Assert.That(punctuation.Name, Is.EqualTo(expected?.Name));
+            }
+        }
     }
 
     [Test]

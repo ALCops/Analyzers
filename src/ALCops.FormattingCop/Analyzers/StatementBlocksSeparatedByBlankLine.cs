@@ -21,11 +21,11 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
     // Adding a new kind here is enough.
     private static readonly Dictionary<SyntaxKind, string> ControlFlowStatementNames = new()
     {
-        [EnumProvider.SyntaxKind.IfStatement]      = "if",
-        [EnumProvider.SyntaxKind.CaseStatement]    = "case",
-        [EnumProvider.SyntaxKind.RepeatStatement]  = "repeat",
-        [EnumProvider.SyntaxKind.WhileStatement]   = "while",
-        [EnumProvider.SyntaxKind.ForStatement]     = "for",
+        [EnumProvider.SyntaxKind.IfStatement] = "if",
+        [EnumProvider.SyntaxKind.CaseStatement] = "case",
+        [EnumProvider.SyntaxKind.RepeatStatement] = "repeat",
+        [EnumProvider.SyntaxKind.WhileStatement] = "while",
+        [EnumProvider.SyntaxKind.ForStatement] = "for",
         [EnumProvider.SyntaxKind.ForEachStatement] = "foreach",
     };
 
