@@ -21,12 +21,14 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
     // Adding a new kind here is enough.
     private static readonly Dictionary<SyntaxKind, string> ControlFlowStatementNames = new()
     {
+#pragma warning disable IDE0055 // Aligned lookup table; the formatter has no aligned-assignment option
         [EnumProvider.SyntaxKind.IfStatement]      = "if",
         [EnumProvider.SyntaxKind.CaseStatement]    = "case",
         [EnumProvider.SyntaxKind.RepeatStatement]  = "repeat",
         [EnumProvider.SyntaxKind.WhileStatement]   = "while",
         [EnumProvider.SyntaxKind.ForStatement]     = "for",
         [EnumProvider.SyntaxKind.ForEachStatement] = "foreach",
+#pragma warning restore IDE0055
     };
 
     private static readonly SyntaxKind[] ControlFlowStatementKindsArray =

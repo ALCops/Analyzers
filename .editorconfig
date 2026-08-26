@@ -43,7 +43,7 @@ dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false
 
 dotnet_diagnostic.IDE0005.severity = warning   # unused using directives
-dotnet_diagnostic.IDE0055.severity = warning   # formatting (whitespace/indent/newlines)
+dotnet_diagnostic.IDE0055.severity = error     # formatting (whitespace/indent/newlines/using order) — count is 0 as of this PR
 dotnet_diagnostic.IDE0161.severity = none      # namespace style — see above
 
 # Missing XML doc comments: GenerateDocumentationFile is only on to make IDE0005 work in build.

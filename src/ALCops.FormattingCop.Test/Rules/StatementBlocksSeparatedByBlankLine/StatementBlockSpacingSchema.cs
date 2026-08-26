@@ -1,11 +1,9 @@
 using System.Text.Json;
-
 using RoslynTestKit;
-
-using StatementBlockSpacingSettings = ALCops.Common.Settings.StatementBlockSpacingSettings;
-using ScopeLeavingMode = ALCops.Common.Settings.ScopeLeavingMode;
 using ElseChainBeforeMode = ALCops.Common.Settings.ElseChainBeforeMode;
 using OneLinerMode = ALCops.Common.Settings.OneLinerMode;
+using ScopeLeavingMode = ALCops.Common.Settings.ScopeLeavingMode;
+using StatementBlockSpacingSettings = ALCops.Common.Settings.StatementBlockSpacingSettings;
 
 namespace ALCops.FormattingCop.Test
 {

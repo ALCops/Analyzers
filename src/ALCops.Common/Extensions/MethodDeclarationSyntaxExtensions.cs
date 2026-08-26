@@ -21,9 +21,9 @@ public static class MethodDeclarationSyntaxExtensions
             var attributeName = attribute.GetIdentifierOrLiteralValue();
 
             if (attributeName is not null && SemanticFacts.IsSameName(attributeName, TryFunctionAttributeName))
-			{
+            {
                 return true;
-			}
+            }
         }
 
         return false;

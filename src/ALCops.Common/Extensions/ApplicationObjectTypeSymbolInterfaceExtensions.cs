@@ -49,10 +49,10 @@ public static class ApplicationObjectTypeSymbolInterfaceExtensions
     /// </summary>
     public static bool IsTestCodeunitWithPermissionsDisabled(this IApplicationObjectTypeSymbol? containingObject)
     {
-		if (!containingObject.IsTestCodeunit())
-		{
-			return false;
-		}
+        if (!containingObject.IsTestCodeunit())
+        {
+            return false;
+        }
 
         var testPermissions = (containingObject as ICodeunitTypeSymbol)?.GetEnumPropertyValue<TestPermissionsKind>(EnumProvider.PropertyKind.TestPermissions);
 
@@ -63,16 +63,16 @@ public static class ApplicationObjectTypeSymbolInterfaceExtensions
     /// Returns true if the object is a test codeunit.
     /// </summary>
 	public static bool IsTestCodeunit(this IApplicationObjectTypeSymbol? objectSymbol)
-	{
+    {
         if (objectSymbol is not ICodeunitTypeSymbol codeunit)
-		{
+        {
             return false;
-		}
+        }
 
         var subtype = codeunit.GetEnumPropertyValue<CodeunitSubtypeKind>(EnumProvider.PropertyKind.Subtype);
 
         return (subtype is not null) && (subtype == EnumProvider.CodeunitSubtypeKind.Test);
-	}
+    }
 
     /// <summary>
     /// Returns true if the object is a codeunit with accessability internal.

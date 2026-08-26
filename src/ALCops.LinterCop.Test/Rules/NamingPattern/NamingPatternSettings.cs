@@ -1,8 +1,8 @@
-using RoslynTestKit;
 using System.Text.Json;
-using NamingPatternTarget = ALCops.LinterCop.Analyzers.NamingPattern.NamingTarget;
+using RoslynTestKit;
 using NamingPatternConfig = ALCops.LinterCop.Analyzers.NamingPattern.NamingPatternConfig;
 using NamingPatternSetting = ALCops.Common.Settings.NamingPattern;
+using NamingPatternTarget = ALCops.LinterCop.Analyzers.NamingPattern.NamingTarget;
 
 namespace ALCops.LinterCop.Test
 {
@@ -77,8 +77,8 @@ namespace ALCops.LinterCop.Test
             Assert.That(File.Exists(schemaPath), Is.True, $"Schema file not found: {schemaPath}");
 
             using JsonDocument document = JsonDocument.Parse(File.ReadAllText(schemaPath));
-            
-			JsonElement enumValues = document.RootElement
+
+            JsonElement enumValues = document.RootElement
                 .GetProperty("properties")
                 .GetProperty("NamingPatterns")
                 .GetProperty("propertyNames")
@@ -118,9 +118,9 @@ namespace ALCops.LinterCop.Test
             while (current is not null)
             {
                 if (File.Exists(Path.Combine(current.FullName, "ALCops.sln")))
-				{
-					return current.FullName;
-				}
+                {
+                    return current.FullName;
+                }
 
                 current = current.Parent;
             }

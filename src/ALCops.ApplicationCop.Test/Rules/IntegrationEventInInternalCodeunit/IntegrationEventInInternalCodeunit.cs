@@ -1,10 +1,10 @@
-using ALCops.ApplicationCop.CodeFixes;
-using RoslynTestKit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using ALCops.ApplicationCop.CodeFixes;
 using NUnit.Framework;
+using RoslynTestKit;
 
 namespace ALCops.ApplicationCop.Test
 {

@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using System.Reflection;
-using ALCops.Common.Reflection;
 using ALCops.Common.Extensions;
+using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;

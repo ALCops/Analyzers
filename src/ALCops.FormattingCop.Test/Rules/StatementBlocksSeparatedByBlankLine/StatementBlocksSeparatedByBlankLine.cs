@@ -11,6 +11,7 @@ namespace ALCops.FormattingCop.Test
         // TestCase parameter below; null means "no alcops.json — use defaults".
         private static readonly Dictionary<string, byte[]> Settings = new()
         {
+#pragma warning disable IDE0055 // Aligned lookup table; the formatter has no aligned-assignment option
             ["OneLinerAll"]           = Utf8("""{"StatementBlockSpacing":{"OneLinerMode":"All"}}"""),
             ["ControlFlowOff"]        = Utf8("""{"StatementBlockSpacing":{"ControlFlowBefore":false,"ControlFlowAfter":false}}"""),
             ["ScopeLeavingOff"]       = Utf8("""{"StatementBlockSpacing":{"ScopeLeavingMode":"Off"}}"""),
@@ -28,6 +29,7 @@ namespace ALCops.FormattingCop.Test
             // deserializes without JsonException (deserializers ignore NRT). Provider must
             // normalize null back to defaults so the analyzer does not NRE on property access.
             ["StatementBlockSpacingNull"] = Utf8("""{"StatementBlockSpacing":null}"""),
+#pragma warning restore IDE0055
         };
 
         private string _testCasePath;
