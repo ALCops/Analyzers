@@ -118,6 +118,22 @@ jobs:
           target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net10.0
           tfm: net10.0
 
+      # Code style / formatting gate (warnings-only baseline: reports drift, does not fail the job yet).
+      # ContinuousIntegrationBuild is forced off for these two steps only: with it on (GITHUB_ACTIONS), the test
+      # projects reference the cop DLLs by HintPath, which do not exist before the builds below, and every
+      # test-project using then cascades into a bogus IDE0005 via CS0246. Off, they use ProjectReference and the
+      # workspace compiles from source (net10.0 only, like a local build) so the check can run first and fail fast.
+      - name: Restore solution
+        run: dotnet restore ALCops.sln
+        env:
+          ContinuousIntegrationBuild: false
+
+      - name: Verify code formatting
+        run: dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"
+        continue-on-error: true
+        env:
+          ContinuousIntegrationBuild: false
+
       # ALCops.Common
       - name: Restore ALCops.Common
         run: dotnet restore ./src/ALCops.Common/ALCops.Common.csproj
@@ -208,22 +224,6 @@ jobs:
         with:
           name: ALCops.TestAutomationCop
           path: ./src/ALCops.TestAutomationCop/bin/Release/
-
-      # Code style / formatting gate (warnings-only baseline: reports drift, does not fail the job yet).
-      # Runs after the cop builds: under ContinuousIntegrationBuild the test projects reference the cop DLLs
-      # by HintPath (bin/$(Configuration)/<tfm>/), so formatting before the build leaves 262 CS0246 errors and
-      # every test-project using cascades into a bogus IDE0005. dotnet format has no --configuration switch and
-      # defaults to Debug; the Configuration env var makes MSBuild resolve the Release DLLs built above.
-      - name: Restore solution
-        run: dotnet restore ALCops.sln
-        env:
-          Configuration: Release
-
-      - name: Verify code formatting
-        run: dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"
-        continue-on-error: true
-        env:
-          Configuration: Release
 
   test:
     if: ${{ !inputs.draft-check || github.event.pull_request.draft == false }}
