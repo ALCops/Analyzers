@@ -7,6 +7,9 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeFixes;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
+#if NETSTANDARD2_1
+using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
+#endif
 
 namespace ALCops.PlatformCop.CodeFixes;
 
