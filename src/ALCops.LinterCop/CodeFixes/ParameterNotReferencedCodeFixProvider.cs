@@ -24,7 +24,7 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
         public Dictionary<ParameterSyntax, List<SyntaxTrivia>> PragmasByClosingParen { get; } = [];
     }
 
-    private class ParameterNotReferencedCodeAction : CodeAction.DocumentChangeAction
+    private sealed class ParameterNotReferencedCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

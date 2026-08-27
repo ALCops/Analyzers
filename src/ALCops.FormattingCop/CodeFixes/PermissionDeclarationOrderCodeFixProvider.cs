@@ -12,7 +12,7 @@ namespace ALCops.FormattingCop.CodeFixes;
 [CodeFixProvider(nameof(PermissionDeclarationOrderCodeFixProvider))]
 public sealed class PermissionDeclarationOrderCodeFixProvider : CodeFixProvider
 {
-    private class PermissionDeclarationOrderCodeAction : CodeAction.DocumentChangeAction
+    private sealed class PermissionDeclarationOrderCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

@@ -16,7 +16,7 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
     private const string IsolationLevelEnumName = "IsolationLevel";
     private const string IsolationLevelEnumValue = "UpdLock";
 
-    private class RecordInstanceIsolationLevelCodeAction : CodeAction.DocumentChangeAction
+    private sealed class RecordInstanceIsolationLevelCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

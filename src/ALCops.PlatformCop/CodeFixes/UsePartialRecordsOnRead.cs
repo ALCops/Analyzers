@@ -16,7 +16,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(UsePartialRecordsOnReadCodeFixProvider))]
 public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
 {
-    private class UsePartialRecordsOnReadCodeAction : CodeAction.DocumentChangeAction
+    private sealed class UsePartialRecordsOnReadCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

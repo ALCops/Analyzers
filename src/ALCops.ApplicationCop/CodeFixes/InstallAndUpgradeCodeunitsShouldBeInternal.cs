@@ -15,7 +15,7 @@ public sealed class InstallAndUpgradeCodeunitsShouldBeInternalCodeFixProvider : 
     private const string AccessPropertyName = "Access";
     private const string InternalAccessValue = "Internal";
 
-    private class InstallAndUpgradeCodeunitsShouldBeInternalCodeAction : CodeAction.DocumentChangeAction
+    private sealed class InstallAndUpgradeCodeunitsShouldBeInternalCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

@@ -12,7 +12,7 @@ namespace ALCops.ApplicationCop.CodeFixes;
 [CodeFixProvider(nameof(PublicEventPublisherCodeFixProvider))]
 public sealed class PublicEventPublisherCodeFixProvider : CodeFixProvider
 {
-    private class PublicEventPublisherCodeAction : CodeAction.DocumentChangeAction
+    private sealed class PublicEventPublisherCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

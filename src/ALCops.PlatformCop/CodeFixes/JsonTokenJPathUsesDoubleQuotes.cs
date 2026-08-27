@@ -11,7 +11,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(JsonTokenJPathUsesDoubleQuotesCodeFix))]
 public sealed class JsonTokenJPathUsesDoubleQuotesCodeFix : CodeFixProvider
 {
-    private class JsonTokenJPathUsesDoubleQuotesCodeAction : CodeAction.DocumentChangeAction
+    private sealed class JsonTokenJPathUsesDoubleQuotesCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

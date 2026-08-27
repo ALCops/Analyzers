@@ -12,7 +12,7 @@ namespace ALCops.FormattingCop.CodeFixes;
 [CodeFixProvider(nameof(UseParenthesisForFunctionCallCodeFix))]
 public sealed class UseParenthesisForFunctionCallCodeFix : CodeFixProvider
 {
-    private class UseParenthesisForFunctionCallCodeAction : CodeAction.DocumentChangeAction
+    private sealed class UseParenthesisForFunctionCallCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

@@ -9,7 +9,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 namespace ALCops.ApplicationCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class UseReturnValueForDatabaseReadMethods : DiagnosticAnalyzer
+public sealed class UseReturnValueForDatabaseReadMethods : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

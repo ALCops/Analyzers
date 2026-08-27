@@ -18,7 +18,7 @@ public sealed class MandatoryFieldMissingOnApiPageCodeFix : CodeFixProvider
             (RecField: "SystemId", ControlName: "id"),
             (RecField: "SystemModifiedAt", ControlName: "lastModifiedDateTime"));
 
-    private class MandatoryFieldMissingOnApiPageCodeAction : CodeAction.DocumentChangeAction
+    private sealed class MandatoryFieldMissingOnApiPageCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

@@ -12,7 +12,7 @@ namespace ALCops.FormattingCop.CodeFixes;
 [CodeFixProvider(nameof(PermissionValuesShouldBeLowercaseCodeFixProvider))]
 public sealed class PermissionValuesShouldBeLowercaseCodeFixProvider : CodeFixProvider
 {
-    private class PermissionValuesShouldBeLowercaseCodeAction : CodeAction.DocumentChangeAction
+    private sealed class PermissionValuesShouldBeLowercaseCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

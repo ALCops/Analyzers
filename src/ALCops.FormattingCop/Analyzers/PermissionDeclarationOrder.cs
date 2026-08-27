@@ -8,7 +8,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 namespace ALCops.FormattingCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class PermissionDeclarationOrder : DiagnosticAnalyzer
+public sealed class PermissionDeclarationOrder : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.PermissionDeclarationOrder);

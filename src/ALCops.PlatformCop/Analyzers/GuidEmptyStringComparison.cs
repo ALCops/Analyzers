@@ -7,7 +7,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 namespace ALCops.PlatformCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class GuidEmptyStringComparison : DiagnosticAnalyzer
+public sealed class GuidEmptyStringComparison : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

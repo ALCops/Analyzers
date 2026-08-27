@@ -12,7 +12,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(EventSubscriberVarKeywordCodeFix))]
 public sealed class EventSubscriberVarKeywordCodeFix : CodeFixProvider
 {
-    private class EventSubscriberVarKeywordCodeAction : CodeAction.DocumentChangeAction
+    private sealed class EventSubscriberVarKeywordCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

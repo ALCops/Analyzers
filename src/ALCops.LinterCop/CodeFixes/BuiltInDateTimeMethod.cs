@@ -52,7 +52,7 @@ public sealed class BuiltInDateTimeMethodCodeFixProvider : CodeFixProvider
     }
 #endif
 
-    private class BuiltInDateTimeMethodCodeAction : CodeAction.DocumentChangeAction
+    private sealed class BuiltInDateTimeMethodCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

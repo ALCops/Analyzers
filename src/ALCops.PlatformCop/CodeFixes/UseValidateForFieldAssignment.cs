@@ -11,7 +11,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(UseValidateForFieldAssignmentCodeFixProvider))]
 public sealed class UseValidateForFieldAssignmentCodeFixProvider : CodeFixProvider
 {
-    private class UseValidateForFieldAssignmentCodeAction : CodeAction.DocumentChangeAction
+    private sealed class UseValidateForFieldAssignmentCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

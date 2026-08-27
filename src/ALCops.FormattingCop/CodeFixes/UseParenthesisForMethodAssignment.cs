@@ -11,7 +11,7 @@ namespace ALCops.FormattingCop.CodeFixes;
 [CodeFixProvider(nameof(UseParenthesisForMethodAssignmentCodeFix))]
 public sealed class UseParenthesisForMethodAssignmentCodeFix : CodeFixProvider
 {
-    private class UseParenthesisForMethodAssignmentCodeAction : CodeAction.DocumentChangeAction
+    private sealed class UseParenthesisForMethodAssignmentCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

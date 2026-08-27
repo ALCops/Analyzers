@@ -14,7 +14,7 @@ public sealed class ApplicationAreaOnApiPageCodeFix : CodeFixProvider
 {
     private const string ApplicationAreaPropertyName = "ApplicationArea";
 
-    private class ApplicationAreaOnApiPageCodeAction : CodeAction.DocumentChangeAction
+    private sealed class ApplicationAreaOnApiPageCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

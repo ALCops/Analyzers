@@ -15,7 +15,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(EditableFlowFieldCodeFix))]
 public sealed class EditableFlowFieldCodeFix : CodeFixProvider
 {
-    private class EditableFlowFieldCodeAction : CodeAction.DocumentChangeAction
+    private sealed class EditableFlowFieldCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

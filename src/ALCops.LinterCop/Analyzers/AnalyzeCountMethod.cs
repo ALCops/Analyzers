@@ -9,7 +9,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 namespace ALCops.LinterCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class AnalyzeCountMethod : DiagnosticAnalyzer
+public sealed class AnalyzeCountMethod : DiagnosticAnalyzer
 {
     private const string CountMethodName = "Count";
     private const int Zero = 0;
