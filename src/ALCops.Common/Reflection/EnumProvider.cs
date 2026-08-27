@@ -41,7 +41,7 @@ public static class EnumProvider
         {
             try
             {
-                return (T)Enum.Parse(typeof(T), value);
+                return Enum.Parse<T>(value);
             }
 #if DEBUG
             catch (ArgumentException ex)
