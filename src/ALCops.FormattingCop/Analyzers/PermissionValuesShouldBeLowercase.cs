@@ -28,6 +28,11 @@ public sealed class PermissionValuesShouldBeLowercase : DiagnosticAnalyzer
         if (IsInPermissionSetObject(permissionValue))
             return;
 
+        // AccessByPermission reuses the PermissionPropertyValue node but is a UI-visibility
+        // mask, not an indirect-permission grant; uppercase is its documented form (issue #474).
+        if (IsAccessByPermissionProperty(permissionValue))
+            return;
+
         if (!HasUppercasePermissionValue(permissionValue))
             return;
 
@@ -38,6 +43,10 @@ public sealed class PermissionValuesShouldBeLowercase : DiagnosticAnalyzer
             DiagnosticDescriptors.PermissionValuesShouldBeLowercase,
             location));
     }
+
+    private static bool IsAccessByPermissionProperty(PermissionPropertyValueSyntax permissionValue) =>
+        permissionValue.Parent is PropertySyntax property &&
+        property.Name?.Identifier.ValueText.IsSameName("AccessByPermission") == true;
 
     private static bool IsInPermissionSetObject(SyntaxNode node)
     {

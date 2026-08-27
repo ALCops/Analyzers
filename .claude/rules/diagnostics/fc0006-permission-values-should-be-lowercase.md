@@ -17,6 +17,7 @@ Detects uppercase permission values (e.g. `RIMD`, `Rimd`, `X`) in the `Permissio
 | One diagnostic per property, not per entry | Matches FC0004; the fix lowercases the whole list |
 | Diagnostic on `PropertySyntax` node | Ensures CodeFix can find the node via `FindNode` + ancestor/descendant traversal (same as FC0004) |
 | Exclude permissionset(extension) via syntax ancestors | Deterministic, no semantic model lookup needed |
+| Exclude `AccessByPermission` by parent property name (denylist) | It shares the `PermissionPropertyValue` node kind (`ParseAccessByPermission`), but is a UI-visibility mask with no direct/indirect semantics; uppercase is the Microsoft-documented form. Denylist keeps the diff small and preserves behaviour for every other property. Issue #474 |
 | Skip obsolete objects | Standard convention (`ctx.IsObsolete()`) |
 | `ContainsUppercase` is `internal static` on the analyzer | Shared with the CodeFix within the assembly |
 | Execute (`X`) coverage via generic uppercase check, tested with error-tolerant fixtures | `X` in scope only occurs in code with a compile error (AL0195); test methods `*InDocumentWithErrors` use `ThrowsWhenInputDocumentContainsError = false` (same pattern as `ApplicationCop.Test/TestHelper.cs`) |
@@ -36,14 +37,16 @@ src/ALCops.FormattingCop/
 1. `RegisterSyntaxNodeAction` on `EnumProvider.SyntaxKind.PermissionPropertyValue` (rare node; cheap pre-filter, covers requestpages nested in reports/xmlports which `GetDeclaredApplicationObjectSymbols()` cannot reach)
 2. Skip obsolete symbols via `ctx.IsObsolete()`
 3. Skip when any ancestor is a `PermissionSet`/`PermissionSetExtension` object (casing is semantic there: uppercase = direct, lowercase = indirect)
-4. Flag when any `PermissionSyntax.Permissions` token text contains an uppercase char
-5. Report one diagnostic per property on the `PropertySyntax` node (parent of the value node)
+4. Skip when the parent `PropertySyntax` is named `AccessByPermission` (same node kind, different property; see SDK facts)
+5. Flag when any `PermissionSyntax.Permissions` token text contains an uppercase char
+6. Report one diagnostic per property on the `PropertySyntax` node (parent of the value node)
 
 ## SDK facts (verified against nav-sdk-source and empirically)
 
 - The `Permissions` property exists on: Codeunit, Table, Page, Report, RequestPage, XmlPort, Query, PermissionSet, PermissionSetExtension (`PropertyInfoLookup`). Extension objects do not support it.
 - **The object-level `Permissions` property only accepts `tabledata` entries.** Non-`tabledata` entries (`codeunit X = X` etc.) are rejected with `AL0104: Syntax error, 'tabledata' expected`, despite Microsoft Learn docs showing such examples. Only permissionset objects accept other object types (parsed via `ParsePermissionSetPermissionListPropertyValue`).
 - Both object-level and permissionset permission lists produce `PermissionPropertyValueSyntax` (same `SyntaxKind.PermissionPropertyValue`), hence the explicit permissionset ancestor exclusion.
+- **`AccessByPermission` also produces `PermissionPropertyValueSyntax`** (a single entry, built by `ObjectParser.ParseAccessByPermission`), so registering on the node kind alone does not scope the rule to `Permissions`. It exists on table fields, page fields/parts/actions, pages and reports (`PropertyInfoLookup`) and needs an explicit parent-property-name exclusion.
 - `InherentPermissions` produces a different node kind (`InherentPermissionsPropertyValue`), so it is naturally excluded by the registration.
 - The parser uppercases permission values before validation (`GetPermissionValuesTokenWithError`), so any casing parses cleanly.
 - **Execute permission (`X`/`x`) reachability**: on object-level `Permissions`, `tabledata Foo = X` parses into the tree but carries `AL0195: Invalid permission kind. Expected: 'RIMD'` — the analyzer still sees the token and flags it. Non-`tabledata` entries (`codeunit Foo = X`) are dropped entirely by parser error recovery (`SkipBadPermissionSyntaxToken`); their `X` token never reaches a `PermissionSyntax` node, so the analyzer cannot see it (verified empirically). Since the analyzer checks every `PermissionSyntax.Permissions` token for any uppercase char, a future SDK that legalizes non-tabledata entries is covered automatically.
