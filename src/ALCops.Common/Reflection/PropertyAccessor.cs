@@ -42,11 +42,13 @@ public static class PropertyAccessor
                 baseType = baseType.BaseType;
             }
         }
+#pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception
         catch (Exception)
         {
             // Silently ignore if property doesn't exist or can't be set
             // This maintains compatibility across different API versions
         }
+#pragma warning restore RCS1075 // Avoid empty catch clause that catches System.Exception
 
         return false;
     }
@@ -87,11 +89,13 @@ public static class PropertyAccessor
                 baseType = baseType.BaseType;
             }
         }
+#pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception
         catch (Exception)
         {
             // Silently ignore if property doesn't exist or can't be read
             // This maintains compatibility across different API versions
         }
+#pragma warning restore RCS1075 // Avoid empty catch clause that catches System.Exception
 
         return defaultValue;
     }

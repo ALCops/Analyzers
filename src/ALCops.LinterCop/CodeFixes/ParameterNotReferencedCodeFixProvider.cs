@@ -99,7 +99,7 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
 
         return new ParameterNotReferencedCodeAction(
             title,
-            ct => RemoveUnreferencedParameter(document, node, ct, procedureKind),
+            ct => RemoveUnreferencedParameter(document, node, procedureKind, ct),
             equivalenceKey,
             generateFixAll);
     }
@@ -112,7 +112,7 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
     }
 
     private static async Task<Document> RemoveUnreferencedParameter(Document document, SyntaxNode node,
-        CancellationToken cancellationToken, ProcedureKind procedureKind)
+        ProcedureKind procedureKind, CancellationToken cancellationToken)
     {
         SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 

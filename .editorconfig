@@ -76,6 +76,12 @@ dotnet_diagnostic.CA1854.severity = error
 dotnet_diagnostic.CA1862.severity = error
 dotnet_diagnostic.CA1864.severity = error
 dotnet_diagnostic.CA2249.severity = error
+# Behavioural rules, count is 0 as of PR #483. CA1311: help-URI slugs must not depend on the OS culture (ToLowerInvariant).
+dotnet_diagnostic.CA1068.severity = error
+dotnet_diagnostic.CA1311.severity = error
+dotnet_diagnostic.CA2012.severity = error
+# CA1859 (use concrete types): 10 sites, no code fix available, several cascade through call chains — decision pending.
+dotnet_diagnostic.CA1859.severity = warning
 
 # [NETSTANDARD2_1-BLOCKED] Suppressed ONLY because every analyzer must compile for netstandard2.1 and the API
 # each rule suggests does not exist there. They are fully valid on net8.0/net10.0 and should be re-enabled
@@ -95,6 +101,10 @@ dotnet_diagnostic.CA2263.severity = none
 # Do NOT add a suppression here without documenting which NAV SDK type triggered it.
 
 # --- Roslynator (RCS*) -----------------------------------------------------
+# RCS1075: PropertyAccessor's reflection catch blocks are intentional (version-tolerant NAV SDK access) and carry a
+#          #pragma with that reason; everywhere else an empty catch is an error.
+dotnet_diagnostic.RCS1075.severity = error
+dotnet_diagnostic.RCS1102.severity = error
 # Defaults, warnings-only. Downgrade the noisiest rules here after inspecting counts — never in code.
 dotnet_diagnostic.RCS1123.severity = suggestion  # add parentheses when necessary — opinionated
 dotnet_diagnostic.RCS1163.severity = suggestion  # unused parameter — analyzer callbacks often have fixed signatures

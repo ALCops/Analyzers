@@ -1,6 +1,6 @@
 namespace ALCops.Common;
 
-public class Constants
+public static class Constants
 {
     // Matches Microsoft.Dynamics.Nav.Analyzers.Common.Constants.PermissionNodeXPath;
     public const string PermissionNodeXPath = "//PermissionSets/PermissionSet/Permission";
