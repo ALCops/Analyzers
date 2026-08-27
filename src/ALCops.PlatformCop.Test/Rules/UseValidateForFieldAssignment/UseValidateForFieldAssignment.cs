@@ -29,6 +29,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("OnValidateXRecSameField")]
         [TestCase("OnValidateOtherRecordSameField")]
         [TestCase("InherentlyTemporaryTable")]
+        [TestCase("InherentlyTemporaryTableTemporaryVariable")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
