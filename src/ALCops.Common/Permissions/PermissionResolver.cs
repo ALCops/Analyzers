@@ -15,6 +15,11 @@ namespace ALCops.Common.Permissions;
 /// </summary>
 public static class PermissionResolver
 {
+    // Separators for parsing an inline permission declaration such as `Permissions = tabledata "Customer" = R;`
+    // out of its syntax text: argument delimiters, then the `ObjectType::Name` qualifier.
+    private static readonly char[] ArgumentSeparators = ['(', ')', ','];
+    private static readonly string[] TypeQualifierSeparator = ["::"];
+
     /// <summary>
     /// Checks whether a required permission is covered by any declared permission source.
     /// </summary>
@@ -125,7 +130,7 @@ public static class PermissionResolver
             return false;
 
         // Split by comma to get the three arguments
-        var parts = syntaxText.Split(new[] { '(', ')', ',' }, StringSplitOptions.RemoveEmptyEntries);
+        var parts = syntaxText.Split(ArgumentSeparators, StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length < 4)
             return false;
 
@@ -138,7 +143,7 @@ public static class PermissionResolver
             return false;
 
         var typeAndName = parts[2].Trim();
-        var typeParts = typeAndName.Split(new[] { "::" }, StringSplitOptions.RemoveEmptyEntries);
+        var typeParts = typeAndName.Split(TypeQualifierSeparator, StringSplitOptions.RemoveEmptyEntries);
         if (typeParts.Length < 2)
             return false;
 

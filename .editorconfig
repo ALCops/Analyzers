@@ -81,6 +81,7 @@ dotnet_diagnostic.CA1068.severity = error
 dotnet_diagnostic.CA1311.severity = error
 dotnet_diagnostic.CA2012.severity = error
 dotnet_diagnostic.CA1859.severity = error
+dotnet_diagnostic.CA1861.severity = error
 
 # Won't fix: BCL-authoring naming conventions that clash with this repo's domain vocabulary. Stays suppressed
 # regardless of target frameworks (this is NOT the [NETSTANDARD2_1-BLOCKED] block).
@@ -123,3 +124,6 @@ dotnet_diagnostic.RCS1163.severity = suggestion  # unused parameter — analyzer
 # Test methods are discovered by attribute; naming and static-member rules do not apply.
 dotnet_diagnostic.CA1707.severity = none   # underscores in identifiers
 dotnet_diagnostic.CA1822.severity = none   # mark members as static
+# Constant array arguments in assertions (Is.EquivalentTo(new[] { ... })) are the readable form; a static readonly
+# field per expected value would only move the literal away from the assert it belongs to.
+dotnet_diagnostic.CA1861.severity = none
