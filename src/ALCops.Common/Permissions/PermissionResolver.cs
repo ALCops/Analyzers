@@ -83,7 +83,7 @@ public static class PermissionResolver
             : permissionText.Trim();
 
         var requiredChar = MethodOperationMap.ToPermissionChar(operation);
-        return permissionChars.IndexOf(requiredChar.ToString(), StringComparison.OrdinalIgnoreCase) >= 0;
+        return permissionChars.Contains(requiredChar.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool MethodHasInherentPermission(IMethodSymbol method, ITypeSymbol variableType, DatabaseOperation operation)
@@ -100,7 +100,7 @@ public static class PermissionResolver
                 continue;
 
             var requiredChar = MethodOperationMap.ToPermissionChar(operation);
-            if (permissions.IndexOf(requiredChar.ToString(), StringComparison.OrdinalIgnoreCase) >= 0)
+            if (permissions.Contains(requiredChar.ToString(), StringComparison.OrdinalIgnoreCase))
                 return true;
         }
 
@@ -193,7 +193,7 @@ public static class PermissionResolver
                 return false;
 
             var requiredChar = MethodOperationMap.ToPermissionChar(operation);
-            return permissionsText.IndexOf(requiredChar.ToString(), StringComparison.OrdinalIgnoreCase) >= 0;
+            return permissionsText.Contains(requiredChar.ToString(), StringComparison.OrdinalIgnoreCase);
         }
 
         return false;

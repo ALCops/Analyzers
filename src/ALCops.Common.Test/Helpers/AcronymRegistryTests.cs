@@ -64,7 +64,7 @@ public class AcronymRegistryTests
     [Test]
     public void Create_MergesUserAcronymsWithDefaults()
     {
-        var firstDefault = AcronymRegistry.DefaultAcronyms.First();
+        var firstDefault = AcronymRegistry.DefaultAcronyms[0];
         const string userEntry = "MyCoDomainAcronym";
 
         var registry = AcronymRegistry.Create(new[] { userEntry });
@@ -80,7 +80,7 @@ public class AcronymRegistryTests
     public void Create_UserEntryOverridesBuiltInCanonicalCasing()
     {
         // Pick the first default entry and override its casing with a lower-first variant.
-        var firstDefault = AcronymRegistry.DefaultAcronyms.First();
+        var firstDefault = AcronymRegistry.DefaultAcronyms[0];
         var overriddenCasing = firstDefault.ToLowerInvariant();
 
         Assume.That(overriddenCasing, Is.Not.EqualTo(firstDefault));

@@ -17,12 +17,12 @@ namespace ALCops.Common.Reflection;
 /// 
 /// To add new enum values:
 /// 1. Add the property to the appropriate nested class
-/// 2. Follow the naming convention: PropertyName => ParseEnum<NavCodeAnalysis.EnumType>(nameof(NavCodeAnalysis.EnumType.EnumValue))
+/// 2. Follow the naming convention: <c>PropertyName => ParseEnum&lt;NavCodeAnalysis.EnumType&gt;(nameof(NavCodeAnalysis.EnumType.EnumValue))</c>
 ///
 /// PERFORMANCE BENEFITS:
 /// - First access: Parses enum using reflection (~1000ns) - one-time cost per enum value
 /// - Subsequent access: Returns cached value (~50ns) - 20x faster
-/// - Thread-safe lazy initialization with no contention using Lazy<T>
+/// - Thread-safe lazy initialization with no contention using <see cref="Lazy{T}"/>
 /// - Zero extra memory allocations after initialization
 /// </summary>
 public static class EnumProvider

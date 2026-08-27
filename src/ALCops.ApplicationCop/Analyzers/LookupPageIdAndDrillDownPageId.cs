@@ -32,7 +32,7 @@ public sealed class LookupPageIdAndDrillDownPageId : DiagnosticAnalyzer
         AnalyzeRelatedTable(pageTypeSymbol.RelatedTable, ctx);
     }
 
-    private void AnalyzeRelatedTable(ITableTypeSymbol table, SymbolAnalysisContext context)
+    private static void AnalyzeRelatedTable(ITableTypeSymbol table, SymbolAnalysisContext context)
     {
         if (table.IsTemporary() ||
             !table.GetLocation().IsInSource ||

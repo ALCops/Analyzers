@@ -15,6 +15,8 @@ public static class RequiredPermissionDetector
     /// Determines if an invocation expression requires a database permission.
     /// Returns null if the invocation doesn't require a permission (not a DB method, temporary record, system table, etc.).
     /// </summary>
+    /// <param name="invocation">The invocation expression to inspect.</param>
+    /// <param name="containingSymbol">The symbol whose body contains the invocation; its containing type is used as the record when the call has no explicit instance.</param>
     /// <param name="includeSystemTables">
     /// When true, system tables (ID &gt; 2,000,000,000) are included in the results.
     /// AC0031 uses false (default) to avoid suggesting permissions on virtual tables, like for example the Integer table

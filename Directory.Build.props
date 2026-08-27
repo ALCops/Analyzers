@@ -10,8 +10,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GenerateFullPaths>true</GenerateFullPaths>
 
-        <!-- Nullable-flow violations are the only warnings promoted to errors today. -->
-        <WarningsAsErrors>$(WarningsAsErrors);CS8600;CS8602;CS8603;CS8604;CS8605</WarningsAsErrors>
+        <!-- Nullable-flow violations and malformed/incomplete XML doc comments (CS1570, CS1573) are errors. -->
+        <WarningsAsErrors>$(WarningsAsErrors);CS8600;CS8602;CS8603;CS8604;CS8605;CS1570;CS1573</WarningsAsErrors>
     </PropertyGroup>
 
     <!-- Static analysis: warnings-only baseline. Severities are tuned in .editorconfig, never here. -->

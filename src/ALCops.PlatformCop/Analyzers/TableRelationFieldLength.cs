@@ -38,7 +38,7 @@ public sealed class TableRelationFieldLength : DiagnosticAnalyzer
         AnalyzeTableRelations(ctx, field, tableRelation);
     }
 
-    private void AnalyzeTableRelations(SymbolAnalysisContext ctx, IFieldSymbol field, TableRelationPropertyValueSyntax? tableRelation)
+    private static void AnalyzeTableRelations(SymbolAnalysisContext ctx, IFieldSymbol field, TableRelationPropertyValueSyntax? tableRelation)
     {
         while (tableRelation is not null)
         {
@@ -75,7 +75,7 @@ public sealed class TableRelationFieldLength : DiagnosticAnalyzer
 #endif
     }
 
-    private IFieldSymbol? ResolveRelatedField(SymbolAnalysisContext ctx, TableRelationPropertyValueSyntax tableRelation)
+    private static IFieldSymbol? ResolveRelatedField(SymbolAnalysisContext ctx, TableRelationPropertyValueSyntax tableRelation)
     {
         return tableRelation.RelatedTableField switch
         {

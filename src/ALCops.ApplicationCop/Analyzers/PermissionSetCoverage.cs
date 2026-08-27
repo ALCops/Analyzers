@@ -119,7 +119,7 @@ public sealed class PermissionSetCoverage : DiagnosticAnalyzer
         return immutableHashSet;
     }
 
-    private bool XmlPermissionExistsForObject(IEnumerable<XDocument> permissionSetDocuments, PermissionObjectKind objectType, int objectId)
+    private static bool XmlPermissionExistsForObject(IEnumerable<XDocument> permissionSetDocuments, PermissionObjectKind objectType, int objectId)
     {
         using (IEnumerator<XDocument> permSetEnumerator = permissionSetDocuments.GetEnumerator())
         {

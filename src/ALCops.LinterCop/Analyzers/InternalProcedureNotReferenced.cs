@@ -47,7 +47,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
             }
         }
 
-        private bool MethodNeedsReferenceCheck(IMethodSymbol methodSymbol)
+        private static bool MethodNeedsReferenceCheck(IMethodSymbol methodSymbol)
         {
             if (methodSymbol.MethodKind != EnumProvider.MethodKind.Method)
             {
@@ -148,7 +148,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
 
                                 if (
                                     (methodObjectSymbolName == objectSyntaxName) &&
-                                    (objectSyntax.Kind.ToString().Replace("Object", "").ToLowerInvariant() == methodObjectSymbol?.Kind.ToString().ToLowerInvariant())
+                                    (objectSyntax.Kind.ToString().Replace("Object", "").Equals(methodObjectSymbol?.Kind.ToString().ToLowerInvariant(), StringComparison.InvariantCultureIgnoreCase))
                                 )
                                 {
                                     internalMethodsUsedInCurrentObject[methodSymbol] = methodSymbol.Name.ToLowerInvariant();
