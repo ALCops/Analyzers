@@ -34,11 +34,11 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
     public sealed override FixAllProvider GetFixAllProvider() =>
          WellKnownFixAllProviders.BatchFixer;
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -52,9 +52,9 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
         if (FindInsertionTarget(invocation) is null)
             return;
 
-        ctx.RegisterCodeFix(
+        context.RegisterCodeFix(
             CreateCodeAction(node, document, generateFixAll: true),
-            ctx.Diagnostics[0]);
+            context.Diagnostics[0]);
     }
 
     private static UseSetAutoCalcFieldsForLoopsCodeAction CreateCodeAction(

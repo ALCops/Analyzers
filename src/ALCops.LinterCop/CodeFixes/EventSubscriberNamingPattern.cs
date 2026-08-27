@@ -75,15 +75,15 @@ public sealed class EventSubscriberNamingPatternCodeFixProvider : CodeFixProvide
     public sealed override FixAllProvider GetFixAllProvider() =>
          WellKnownFixAllProviders.BatchFixer;
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken)
             .ConfigureAwait(false);
-        RegisterInstanceCodeFix(ctx, span, document);
+        RegisterInstanceCodeFix(context, span, document);
     }
 
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, TextSpan span, Document document)
