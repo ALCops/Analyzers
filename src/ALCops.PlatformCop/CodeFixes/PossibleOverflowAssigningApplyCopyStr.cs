@@ -154,21 +154,21 @@ public sealed class PossibleOverflowAssigningApplyCopyStrCodeFixProvider : CodeF
         return fieldExpression;
     }
 
-    private static ExpressionSyntax CreateCopyStrExpressionWithMaxStrLen(ExpressionSyntax sourceExpression, ExpressionSyntax targetExpression)
+    private static InvocationExpressionSyntax CreateCopyStrExpressionWithMaxStrLen(ExpressionSyntax sourceExpression, ExpressionSyntax targetExpression)
     {
         // Create: Text.CopyStr(sourceExpression, 1, Text.MaxStrLen(targetExpression))
         var maxStrLenExpression = CreateMaxStrLenExpression(targetExpression);
         return CreateCopyStrExpression(sourceExpression, maxStrLenExpression);
     }
 
-    private static ExpressionSyntax CreateCopyStrExpressionWithLength(ExpressionSyntax sourceExpression, int length)
+    private static InvocationExpressionSyntax CreateCopyStrExpressionWithLength(ExpressionSyntax sourceExpression, int length)
     {
         // Create: Text.CopyStr(sourceExpression, 1, length)
         var lengthLiteral = CreateIntegerLiteral(length);
         return CreateCopyStrExpression(sourceExpression, lengthLiteral);
     }
 
-    private static ExpressionSyntax CreateCopyStrExpression(ExpressionSyntax sourceExpression, ExpressionSyntax lengthExpression)
+    private static InvocationExpressionSyntax CreateCopyStrExpression(ExpressionSyntax sourceExpression, ExpressionSyntax lengthExpression)
     {
         // Create: Text.CopyStr(sourceExpression, 1, lengthExpression)
         var textIdentifier = CreateTextIdentifier();

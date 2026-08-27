@@ -142,7 +142,7 @@ public sealed class ExtensiblePropertyExplicitlySetCodeFix : CodeFixProvider
         return propertyList.WithProperties(newProperties);
     }
 
-    private static PropertyValueSyntax CreateBooleanPropertyValueTrue() =>
+    private static BooleanPropertyValueSyntax CreateBooleanPropertyValueTrue() =>
         SyntaxFactory.BooleanPropertyValue(
             SyntaxFactory.BooleanLiteralValue(
                 SyntaxFactory.Token(EnumProvider.SyntaxKind.TrueKeyword)));

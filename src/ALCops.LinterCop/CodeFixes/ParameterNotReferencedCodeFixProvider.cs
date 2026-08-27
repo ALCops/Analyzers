@@ -415,7 +415,7 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
         return pragmaTransferPlan;
     }
 
-    private static IEnumerable<SyntaxTrivia> GetPragmaTransferTrivia(ParameterSyntax parameter,
+    private static List<SyntaxTrivia> GetPragmaTransferTrivia(ParameterSyntax parameter,
         SyntaxTrivia pragma)
     {
         var leadingTrivia = parameter.GetLeadingTrivia();

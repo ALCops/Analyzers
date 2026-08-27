@@ -32,7 +32,7 @@ public sealed class FieldGroupsRequired : DiagnosticAnalyzer
         });
     }
 
-    private static void AnalyzeFieldgroups(SymbolAnalysisContext ctx, ISet<ITableTypeSymbol> tablesReferencedByPages)
+    private static void AnalyzeFieldgroups(SymbolAnalysisContext ctx, HashSet<ITableTypeSymbol> tablesReferencedByPages)
     {
         if (ctx.IsObsolete() || ctx.Symbol is not ITableTypeSymbol table)
             return;
