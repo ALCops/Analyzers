@@ -63,6 +63,18 @@ dotnet_diagnostic.CA1303.severity = none
 # Analyzer types are instantiated by the host via attributes; "unused"/"could be static" heuristics misfire.
 dotnet_diagnostic.CA1812.severity = none
 
+# [NETSTANDARD2_1-BLOCKED] Suppressed ONLY because every analyzer must compile for netstandard2.1 and the API
+# each rule suggests does not exist there. They are fully valid on net8.0/net10.0 and should be re-enabled
+# (delete these lines) the day netstandard2.1 support is dropped; the sites then resurface by themselves.
+# #if guards were rejected: dual code paths at ~15 sites for zero functional gain.
+#   CA1510  ArgumentNullException.ThrowIfNull            .NET 6+   (1 site)
+#   CA1863  CompositeFormat                              .NET 8+   (2 sites; each formats a code-action title once)
+#   CA2263  Enum.GetNames<T>/GetValues<T>, MethodInfo.CreateDelegate<T>   .NET 5+   (12 sites)
+#           Enum.Parse<T>(string) IS on netstandard2.1 and was fixed instead (EnumProvider).
+dotnet_diagnostic.CA1510.severity = none
+dotnet_diagnostic.CA1863.severity = none
+dotnet_diagnostic.CA2263.severity = none
+
 # --- Analyzer-authoring rules (RS*) from Microsoft.CodeAnalysis.Analyzers -----
 # The NAV SDK is a fork of Roslyn (Microsoft.Dynamics.Nav.CodeAnalysis); most RS rules key on the
 # real Microsoft.CodeAnalysis types and will simply not fire. Those that do are kept as warnings.
