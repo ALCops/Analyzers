@@ -15,7 +15,7 @@ public sealed class IntegrationEventInInternalCodeunitConvertToInternalEventFixP
     private const string IntegrationEventAttributeName = "IntegrationEvent";
     private const string InternalEventAttributeName = "InternalEvent";
 
-    private class IntegrationEventInInternalCodeunitAction : CodeAction.DocumentChangeAction
+    private sealed class IntegrationEventInInternalCodeunitAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.Refactor;
         public override bool SupportsFixAll { get; }

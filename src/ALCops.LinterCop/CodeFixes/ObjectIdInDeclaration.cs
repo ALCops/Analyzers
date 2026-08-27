@@ -63,7 +63,7 @@ public sealed class ObjectIdInDeclarationCodeFixProvider : CodeFixProvider
     }
 #endif
 
-    private class ObjectIdInDeclarationCodeAction : CodeAction.DocumentChangeAction
+    private sealed class ObjectIdInDeclarationCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

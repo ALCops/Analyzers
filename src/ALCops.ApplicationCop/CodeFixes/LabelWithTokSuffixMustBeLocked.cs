@@ -13,7 +13,7 @@ namespace ALCops.ApplicationCop.CodeFixes;
 [CodeFixProvider(nameof(LabelWithTokSuffixMustBeLockedFixProvider))]
 public sealed class LabelWithTokSuffixMustBeLockedFixProvider : CodeFixProvider
 {
-    private class LabelWithTokSuffixMustBeLockedAction : CodeAction.DocumentChangeAction
+    private sealed class LabelWithTokSuffixMustBeLockedAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

@@ -12,7 +12,7 @@ namespace ALCops.ApplicationCop.CodeFixes;
 [CodeFixProvider(nameof(NotBlankNotAllowedOnPrimaryKeyFieldCodeFixProvider))]
 public sealed class NotBlankNotAllowedOnPrimaryKeyFieldCodeFixProvider : CodeFixProvider
 {
-    private class NotBlankNotAllowedOnPrimaryKeyFieldCodeAction : CodeAction.DocumentChangeAction
+    private sealed class NotBlankNotAllowedOnPrimaryKeyFieldCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

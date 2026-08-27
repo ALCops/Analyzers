@@ -62,6 +62,9 @@ dotnet_diagnostic.CA1310.severity = none
 dotnet_diagnostic.CA1303.severity = none
 # Analyzer types are instantiated by the host via attributes; "unused"/"could be static" heuristics misfire.
 dotnet_diagnostic.CA1812.severity = none
+# Analyzer, CodeFixProvider and CodeAction types are leaves by construction; count is 0 as of PR #480.
+# Note: CA1852 cannot see public types or assemblies with InternalsVisibleTo (LinterCop) — seal those by convention.
+dotnet_diagnostic.CA1852.severity = error
 
 # [NETSTANDARD2_1-BLOCKED] Suppressed ONLY because every analyzer must compile for netstandard2.1 and the API
 # each rule suggests does not exist there. They are fully valid on net8.0/net10.0 and should be re-enabled

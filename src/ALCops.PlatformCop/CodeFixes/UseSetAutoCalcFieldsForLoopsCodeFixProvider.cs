@@ -12,7 +12,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(UseSetAutoCalcFieldsForLoopsCodeFixProvider))]
 public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvider
 {
-    private class UseSetAutoCalcFieldsForLoopsCodeAction : CodeAction.DocumentChangeAction
+    private sealed class UseSetAutoCalcFieldsForLoopsCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

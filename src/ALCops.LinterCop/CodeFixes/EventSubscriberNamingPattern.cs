@@ -53,7 +53,7 @@ public sealed class EventSubscriberNamingPatternCodeFixProvider : CodeFixProvide
     }
 #endif
 
-    private class EventSubscriberNamingPatternCodeAction : CodeAction.DocumentChangeAction
+    private sealed class EventSubscriberNamingPatternCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

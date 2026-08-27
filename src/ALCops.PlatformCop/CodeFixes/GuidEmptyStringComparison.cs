@@ -15,7 +15,7 @@ public sealed class GuidEmptyStringComparisonCodeFix : CodeFixProvider
     private const string SystemClassName = "System";
     private const string IsNullGuidFunctionName = "IsNullGuid";
 
-    private class GuidEmptyStringComparisonCodeAction : CodeAction.DocumentChangeAction
+    private sealed class GuidEmptyStringComparisonCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

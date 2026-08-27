@@ -21,7 +21,7 @@ public sealed class RunPageImplementPageManagementCodeFixProvider : CodeFixProvi
     private const string PageRunModalMethodName = "PageRunModal";
     private const string PageRunAtFieldMethodName = "PageRunAtField";
 
-    private class RunPageImplementPageManagementCodeAction : CodeAction.DocumentChangeAction
+    private sealed class RunPageImplementPageManagementCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.Refactor;
         public override bool SupportsFixAll { get; }

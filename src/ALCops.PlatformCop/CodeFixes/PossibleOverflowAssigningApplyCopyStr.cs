@@ -17,7 +17,7 @@ public sealed class PossibleOverflowAssigningApplyCopyStrCodeFixProvider : CodeF
     private const string MaxStrLenMethodName = "MaxStrLen";
     private const int StartPositionForCopyStr = 1;
 
-    private class PossibleOverflowAssigningApplyCopyStrCodeAction : CodeAction.DocumentChangeAction
+    private sealed class PossibleOverflowAssigningApplyCopyStrCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.Refactor;
         public override bool SupportsFixAll { get; }

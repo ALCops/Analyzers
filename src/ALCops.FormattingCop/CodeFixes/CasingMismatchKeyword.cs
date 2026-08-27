@@ -53,7 +53,7 @@ public sealed class CasingMismatchCodeFix : CodeFixProvider
     }
 #endif
 
-    private class CasingMismatchCodeAction : CodeAction.DocumentChangeAction
+    private sealed class CasingMismatchCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

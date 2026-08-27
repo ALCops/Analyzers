@@ -20,7 +20,7 @@ public sealed class GlobalLanguageImplementTranslationHelperCodeFixProvider : Co
     private const string SetGlobalLanguageByIdMethodName = "SetGlobalLanguageById";
     private const string SetGlobalLanguageToDefaultMethodName = "SetGlobalLanguageToDefault";
 
-    private class GlobalLanguageImplementTranslationHelperCodeAction : CodeAction.DocumentChangeAction
+    private sealed class GlobalLanguageImplementTranslationHelperCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.Refactor;
         public override bool SupportsFixAll { get; }

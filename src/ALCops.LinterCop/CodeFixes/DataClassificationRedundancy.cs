@@ -15,7 +15,7 @@ public sealed class DataClassificationRedundancyCodeFixProvider : CodeFixProvide
     private static readonly string DataClassificationName =
         EnumProvider.PropertyKind.DataClassification.ToString();
 
-    private class DataClassificationRedundancyCodeAction : CodeAction.DocumentChangeAction
+    private sealed class DataClassificationRedundancyCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

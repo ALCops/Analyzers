@@ -15,7 +15,7 @@ public sealed class AllowInCustomizationsRedundancyCodeFixProvider : CodeFixProv
     private static readonly string AllowInCustomizationsName =
         EnumProvider.PropertyKind.AllowInCustomizations.ToString();
 
-    private class AllowInCustomizationsRedundancyCodeAction : CodeAction.DocumentChangeAction
+    private sealed class AllowInCustomizationsRedundancyCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

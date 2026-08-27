@@ -11,7 +11,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(UseSequentialGuidCodeFixProvider))]
 public sealed class UseSequentialGuidCodeFixProvider : CodeFixProvider
 {
-    private class UseSequentialGuidCodeAction : CodeAction.DocumentChangeAction
+    private sealed class UseSequentialGuidCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

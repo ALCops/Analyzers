@@ -64,7 +64,7 @@ public sealed class TableDataAccessUnusedPermissionsCodeFixProvider : CodeFixPro
     }
 #endif
 
-    private class TableDataAccessUnusedPermissionsCodeAction : CodeAction.DocumentChangeAction
+    private sealed class TableDataAccessUnusedPermissionsCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

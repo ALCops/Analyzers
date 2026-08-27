@@ -14,7 +14,7 @@ public sealed class FilterStringSingleQuoteEscapingCodeFix : CodeFixProvider
     private const string InvalidNotEmptyFilterLiteralTokenText = "'<>'''";
     private const string NonEmptyFilterStringLiteralText = "<>''";
 
-    private class FilterStringSingleQuoteEscapingCodeAction : CodeAction.DocumentChangeAction
+    private sealed class FilterStringSingleQuoteEscapingCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

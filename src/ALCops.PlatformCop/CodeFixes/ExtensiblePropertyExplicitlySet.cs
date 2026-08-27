@@ -13,7 +13,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(ExtensiblePropertyExplicitlySetCodeFix))]
 public sealed class ExtensiblePropertyExplicitlySetCodeFix : CodeFixProvider
 {
-    private class ExtensiblePropertyExplicitlySetCodeAction : CodeAction.DocumentChangeAction
+    private sealed class ExtensiblePropertyExplicitlySetCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

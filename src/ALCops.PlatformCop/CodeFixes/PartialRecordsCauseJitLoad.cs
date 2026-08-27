@@ -11,7 +11,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(PartialRecordsCauseJitLoadCodeFixProvider))]
 public sealed class PartialRecordsCauseJitLoadCodeFixProvider : CodeFixProvider
 {
-    private class PartialRecordsCauseJitLoadCodeAction : CodeAction.DocumentChangeAction
+    private sealed class PartialRecordsCauseJitLoadCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

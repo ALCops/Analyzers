@@ -13,7 +13,7 @@ namespace ALCops.ApplicationCop.CodeFixes;
 [CodeFixProvider(nameof(EmptyCaptionLockedCodeFixProvider))]
 public sealed class EmptyCaptionLockedCodeFixProvider : CodeFixProvider
 {
-    private class EmptyCaptionLockedCodeAction : CodeAction.DocumentChangeAction
+    private sealed class EmptyCaptionLockedCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

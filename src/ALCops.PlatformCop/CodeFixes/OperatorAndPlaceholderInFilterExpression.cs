@@ -14,7 +14,7 @@ public sealed class OperatorAndPlaceholderInFilterExpressionCodeFix : CodeFixPro
     private const string StrSubstNoMethodName = "StrSubstNo";
     private static readonly string SetFilterMethodName = "SetFilter";
 
-    private class OperatorAndPlaceholderInFilterExpressionCodeAction : CodeAction.DocumentChangeAction
+    private sealed class OperatorAndPlaceholderInFilterExpressionCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

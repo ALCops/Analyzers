@@ -15,7 +15,7 @@ public sealed class ApplicationAreaRedundancyCodeFixProvider : CodeFixProvider
     private static readonly string ApplicationAreaName =
         EnumProvider.PropertyKind.ApplicationArea.ToString();
 
-    private class ApplicationAreaRedundancyCodeAction : CodeAction.DocumentChangeAction
+    private sealed class ApplicationAreaRedundancyCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

@@ -9,7 +9,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 namespace ALCops.PlatformCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class UseValidateForFieldAssignment : DiagnosticAnalyzer
+public sealed class UseValidateForFieldAssignment : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

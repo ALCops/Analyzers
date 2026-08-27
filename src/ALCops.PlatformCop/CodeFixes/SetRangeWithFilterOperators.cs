@@ -12,7 +12,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(SetRangeWithFilterOperatorsCodeFix))]
 public sealed class SetRangeWithFilterOperatorsCodeFix : CodeFixProvider
 {
-    private class SetRangeWithFilterOperatorsCodeAction : CodeAction.DocumentChangeAction
+    private sealed class SetRangeWithFilterOperatorsCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

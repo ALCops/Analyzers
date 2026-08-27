@@ -62,7 +62,7 @@ public sealed class PossibleOverflowAssigningAppendMaxLengthToLabelCodeFix : Cod
     }
 #endif
 
-    private class PossibleOverflowAssigningAppendMaxLengthToLabelCodeAction : CodeAction.DocumentChangeAction
+    private sealed class PossibleOverflowAssigningAppendMaxLengthToLabelCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

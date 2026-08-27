@@ -13,7 +13,7 @@ namespace ALCops.LinterCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
 {
-    private class MethodSymbolAnalyzer : IDisposable
+    private sealed class MethodSymbolAnalyzer : IDisposable
     {
         private readonly PooledDictionary<IMethodSymbol, string> methodSymbols = PooledDictionary<IMethodSymbol, string>.GetInstance();
         private readonly PooledDictionary<IMethodSymbol, string> internalMethodsUnused = PooledDictionary<IMethodSymbol, string>.GetInstance();

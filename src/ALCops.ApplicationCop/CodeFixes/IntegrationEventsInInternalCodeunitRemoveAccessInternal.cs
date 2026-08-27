@@ -14,7 +14,7 @@ public sealed class IntegrationEventInInternalCodeunitRemoveAccessInternalFixPro
     private const string AccessPropertyName = "Access";
     private const string EnumPropertyIdentifierName = "Internal";
 
-    private class IntegrationEventInInternalCodeunitAction : CodeAction.DocumentChangeAction
+    private sealed class IntegrationEventInInternalCodeunitAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.Refactor;
         public override bool SupportsFixAll { get; }

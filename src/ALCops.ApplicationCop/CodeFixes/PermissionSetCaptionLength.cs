@@ -15,7 +15,7 @@ public sealed class PermissionSetCaptionLengthCodeFixProvider : CodeFixProvider
 {
     private const int MaxCaptionLength = 30;
 
-    private class PermissionSetCaptionLengthCodeAction : CodeAction.DocumentChangeAction
+    private sealed class PermissionSetCaptionLengthCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }

@@ -69,7 +69,7 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
     }
 #endif
 
-    private class TableDataAccessRequiresPermissionsCodeAction : CodeAction.DocumentChangeAction
+    private sealed class TableDataAccessRequiresPermissionsCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
