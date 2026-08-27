@@ -118,14 +118,6 @@ jobs:
           target-path: Microsoft.Dynamics.BusinessCentral.Development.Tools/net10.0
           tfm: net10.0
 
-      # Code style / formatting gate (warnings-only baseline: reports drift, does not fail the job yet)
-      - name: Restore solution
-        run: dotnet restore ALCops.sln
-
-      - name: Verify code formatting
-        run: dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"
-        continue-on-error: true
-
       # ALCops.Common
       - name: Restore ALCops.Common
         run: dotnet restore ./src/ALCops.Common/ALCops.Common.csproj
@@ -215,7 +207,23 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ALCops.TestAutomationCop
-          path: ./src/ALCops.TestAutomationCop/bin/Release/          
+          path: ./src/ALCops.TestAutomationCop/bin/Release/
+
+      # Code style / formatting gate (warnings-only baseline: reports drift, does not fail the job yet).
+      # Runs after the cop builds: under ContinuousIntegrationBuild the test projects reference the cop DLLs
+      # by HintPath (bin/$(Configuration)/<tfm>/), so formatting before the build leaves 262 CS0246 errors and
+      # every test-project using cascades into a bogus IDE0005. dotnet format has no --configuration switch and
+      # defaults to Debug; the Configuration env var makes MSBuild resolve the Release DLLs built above.
+      - name: Restore solution
+        run: dotnet restore ALCops.sln
+        env:
+          Configuration: Release
+
+      - name: Verify code formatting
+        run: dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"
+        continue-on-error: true
+        env:
+          Configuration: Release
 
   test:
     if: ${{ !inputs.draft-check || github.event.pull_request.draft == false }}
