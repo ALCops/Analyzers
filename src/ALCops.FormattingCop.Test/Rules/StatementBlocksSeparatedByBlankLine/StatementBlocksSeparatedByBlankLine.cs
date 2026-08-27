@@ -166,6 +166,7 @@ namespace ALCops.FormattingCop.Test
                 var document = CreateDocumentFromCode(markup.Code);
                 var compilation = document.Project
                     .GetCompilationAsync(CancellationToken.None)
+                    .AsTask()
                     .GetAwaiter()
                     .GetResult();
 

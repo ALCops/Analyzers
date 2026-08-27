@@ -95,7 +95,7 @@ public sealed class GuidEmptyStringComparisonCodeFix : CodeFixProvider
         return document.WithSyntaxRoot(newRoot);
     }
 
-    private static CodeExpressionSyntax PrependNotKeyword(CodeExpressionSyntax expr, SyntaxNode triviaSource)
+    private static UnaryExpressionSyntax PrependNotKeyword(CodeExpressionSyntax expr, SyntaxNode triviaSource)
     {
         // not <expr>
         SyntaxToken notToken =

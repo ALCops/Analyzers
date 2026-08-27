@@ -103,6 +103,6 @@ public sealed class EditableFlowFieldCodeFix : CodeFixProvider
         return propertyList.WithProperties(SyntaxFactory.List(newProperties));
     }
 
-    private static PropertyValueSyntax GetBooleanFalsePropertyValue() =>
+    private static BooleanPropertyValueSyntax GetBooleanFalsePropertyValue() =>
         SyntaxFactory.BooleanPropertyValue(SyntaxFactory.BooleanLiteralValue(SyntaxFactory.Token(EnumProvider.SyntaxKind.FalseKeyword)));
 }

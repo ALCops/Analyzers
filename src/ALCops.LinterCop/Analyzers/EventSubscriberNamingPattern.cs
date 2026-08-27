@@ -108,7 +108,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
             preferredForMessage));
     }
 
-    private static IReadOnlyList<string>? TryBuildAcceptedFor(
+    private static List<string>? TryBuildAcceptedFor(
         IMethodSymbol method,
         IReadOnlyList<TemplateSegment> segments,
         AcronymRegistry acronyms)
@@ -244,7 +244,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
 #pragma warning restore IDE0055
             };
 
-        public static IReadOnlyList<TemplateSegment> Parse(string template)
+        public static List<TemplateSegment> Parse(string template)
         {
             int pos = 0;
             var segments = new List<TemplateSegment>();
@@ -346,7 +346,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
         /// acronym with a different casing — those variants are accepted alongside the
         /// preferred spelling. See <see cref="IdentifierNameRenderer.RenderAccepted"/>.
         /// </summary>
-        public static IReadOnlyList<string> BuildAccepted(
+        public static List<string> BuildAccepted(
             IReadOnlyList<TemplateSegment> segments,
             string eventSource,
             string eventName,

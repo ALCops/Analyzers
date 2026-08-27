@@ -82,7 +82,7 @@ public static class IdentifierNameRenderer
     }
 
     private static IReadOnlyList<string> RenderStyleAccepted(
-        IReadOnlyList<string> words,
+        List<string> words,
         IdentifierCaseStyle style,
         AcronymRegistry acronyms)
     {
@@ -111,7 +111,7 @@ public static class IdentifierNameRenderer
         }
     }
 
-    private static string JoinLowered(IReadOnlyList<string> words, char separator)
+    private static string JoinLowered(List<string> words, char separator)
     {
         var lowered = new List<string>(words.Count);
 
@@ -193,7 +193,7 @@ public static class IdentifierNameRenderer
         return new[] { EnsureUpperFirst(word) };
     }
 
-    private static IReadOnlyList<string> CrossProduct(
+    private static List<string> CrossProduct(
         IReadOnlyList<IReadOnlyList<string>> buckets)
     {
         // Start with a single empty accumulator. Extend once per bucket; when the bucket
