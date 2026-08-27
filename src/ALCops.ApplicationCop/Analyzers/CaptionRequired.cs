@@ -164,7 +164,7 @@ public sealed class CaptionRequired : DiagnosticAnalyzer
         }
     }
 
-    private bool CaptionIsMissing(ISymbol Symbol, SymbolAnalysisContext context)
+    private static bool CaptionIsMissing(ISymbol Symbol, SymbolAnalysisContext context)
     {
         if (Symbol.ContainingType?.Kind == EnumProvider.SymbolKind.Table)
         {
@@ -208,7 +208,7 @@ public sealed class CaptionRequired : DiagnosticAnalyzer
         return pageBase?.PageType == EnumProvider.PageTypeKind.HeadlinePart;
     }
 
-    private void RaiseDiagnostic(SymbolAnalysisContext context)
+    private static void RaiseDiagnostic(SymbolAnalysisContext context)
     {
         context.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.CaptionRequired,

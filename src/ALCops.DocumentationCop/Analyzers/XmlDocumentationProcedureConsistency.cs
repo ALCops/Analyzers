@@ -52,9 +52,7 @@ public sealed class XmlDocumentationProcedureConsistency : DiagnosticAnalyzer
                     var nameAttribute = (XmlNameAttributeSyntax)nameAttributeSyntax;
                     var parameterName = nameAttribute.Identifier.GetText().ToString();
 
-                    if (!docCommentParameters.ContainsKey(parameterName))
-                        docCommentParameters.Add(parameterName, element);
-                    else
+                    if (!docCommentParameters.TryAdd(parameterName, element))
                         // report diagnostic for duplicate parameter documentation
                         ctx.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.XmlDocumentationProcedureConsistency, element.GetLocation()));
                     break;

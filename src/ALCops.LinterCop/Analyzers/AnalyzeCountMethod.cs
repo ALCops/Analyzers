@@ -149,7 +149,7 @@ public sealed class AnalyzeCountMethod : DiagnosticAnalyzer
 
     private static bool IsEligibleUseQueryOrFindWithNext(IRecordTypeSymbol record)
     {
-        if (possibleLargeTableIdentifierKeywords.Any(keyword => record.Name.IndexOf(keyword, SemanticFacts.NameEqualityComparison) >= 0))
+        if (possibleLargeTableIdentifierKeywords.Any(keyword => record.Name.Contains(keyword, SemanticFacts.NameEqualityComparison)))
             return true;
 
         // Tables with a field "Entry No." could possible have a large amount of records

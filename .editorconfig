@@ -68,6 +68,14 @@ dotnet_diagnostic.CA1852.severity = error
 # Override parameter names match the base declaration; count is 0 as of PR #481. NOTE: dotnet format only applies
 # NetAnalyzers fixers for rules with an explicit severity here (it ignores the SDK analysislevel globalconfig).
 dotnet_diagnostic.CA1725.severity = error
+# Micro-fix rules, applied with dotnet format; count is 0 as of PR #482.
+dotnet_diagnostic.CA1822.severity = error
+dotnet_diagnostic.CA1826.severity = error
+dotnet_diagnostic.CA1827.severity = error
+dotnet_diagnostic.CA1854.severity = error
+dotnet_diagnostic.CA1862.severity = error
+dotnet_diagnostic.CA1864.severity = error
+dotnet_diagnostic.CA2249.severity = error
 
 # [NETSTANDARD2_1-BLOCKED] Suppressed ONLY because every analyzer must compile for netstandard2.1 and the API
 # each rule suggests does not exist there. They are fully valid on net8.0/net10.0 and should be re-enabled
