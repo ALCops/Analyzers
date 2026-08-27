@@ -39,6 +39,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("QueryUppercase")]
         [TestCase("RequestPageUppercase")]
         [TestCase("MultipleEntriesOneUppercase")]
+        [TestCase("AccessByPermissionWithUppercasePermissions")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -64,6 +65,9 @@ namespace ALCops.FormattingCop.Test
         [TestCase("InherentPermissionsUppercase")]
         [TestCase("NoPermissionsProperty")]
         [TestCase("ObsoleteCodeunit")]
+        [TestCase("AccessByPermissionPageAction")]
+        [TestCase("AccessByPermissionTableField")]
+        [TestCase("AccessByPermissionPageObject")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
