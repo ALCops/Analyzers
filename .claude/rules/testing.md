@@ -5,7 +5,7 @@ paths:
 
 # Testing Guide for ALCops Analyzers
 
-Tests use **NUnit 4.1.0** with **ALCops.RoslynTestKit 0.4.1** to test AL code analyzers for Business Central. All test projects target **net8.0**. Each of the 6 analyzer/test project pairs follows the namespace pattern `ALCops.{Cop}.Test`.
+Tests use **NUnit 4.1.0** with **ALCops.RoslynTestKit** (version in `Directory.Packages.props`) to test AL code analyzers for Business Central. All test projects target **net10.0**; CI additionally runs them against the netstandard2.1 and net8.0 analyzer binaries via `NavTargetFramework`. Each of the 6 analyzer/test project pairs follows the namespace pattern `ALCops.{Cop}.Test`.
 
 For running tests and the step-by-step flow for a new rule: use `/new-analyzer` / see CLAUDE.md for `dotnet test` filters.
 
@@ -169,7 +169,7 @@ public async Task HasDiagnostic(string testCase)
 
 ### Why `#if` pragmas don't work in test projects
 
-Test projects always compile as `net8.0`, so `NETSTANDARD2_1` is never defined. The version difference is a runtime property of which SDK DLL gets loaded (CI tests against both netstandard2.1 and net8.0 analyzer binaries), so it must be a runtime check.
+Test projects always compile as `net10.0`, so `NETSTANDARD2_1` is never defined. The version difference is a runtime property of which SDK DLL gets loaded (CI tests against the netstandard2.1, net8.0 and net10.0 analyzer binaries), so it must be a runtime check.
 
 ## Testing Analyzers with File System Dependencies
 
