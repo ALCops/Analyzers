@@ -43,6 +43,19 @@ public static class OperationSafeExtensions
         return operation.GetSymbol();
     }
 
+    /// <summary>
+    /// Peels off the <see cref="IConversionExpression"/> wrappers the SDK inserts around a bound
+    /// expression (an implicit widening on an argument, for example) and returns the innermost
+    /// operand, so callers can resolve the symbol or type the source code actually named.
+    /// </summary>
+    public static IOperation UnwrapConversions(this IOperation operation)
+    {
+        while (operation is IConversionExpression conversion)
+            operation = conversion.Operand;
+
+        return operation;
+    }
+
     public static bool IsNamedReturnTarget(this IOperation? target, string returnVariableName)
     {
         if (target is null)

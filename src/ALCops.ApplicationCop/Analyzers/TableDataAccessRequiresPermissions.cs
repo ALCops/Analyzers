@@ -38,7 +38,8 @@ public sealed class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         var containingObject = ctx.ContainingSymbol.GetContainingApplicationObjectTypeSymbol();
 
         if (containingObject?.Kind == EnumProvider.SymbolKind.PermissionSet
-            || containingObject?.Kind == EnumProvider.SymbolKind.PermissionSetExtension)
+            || containingObject?.Kind == EnumProvider.SymbolKind.PermissionSetExtension
+            || containingObject.IsTestCodeunitWithPermissionsDisabled())
             return;
 
         if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression invocation)
@@ -46,18 +47,52 @@ public sealed class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
 
         var required = RequiredPermissionDetector.TryGetFromInvocation(invocation, ctx.ContainingSymbol);
         if (required is null)
+        {
+            AnalyzeDataTransferInvocation(ctx, containingObject, invocation);
+            return;
+        }
+
+        ReportIfNotCovered(ctx, containingObject, required.Value);
+    }
+
+    /// <summary>
+    /// A <c>DataTransfer</c> executor (<c>CopyFields</c>/<c>CopyRows</c>) reads and writes the
+    /// tables named by <c>SetTables</c>, not the receiver, so it never resolves through
+    /// <see cref="RequiredPermissionDetector.TryGetFromInvocation"/>. When those tables cannot
+    /// be resolved the rule stays silent rather than guessing which table is accessed.
+    /// </summary>
+    private static void AnalyzeDataTransferInvocation(
+        OperationAnalysisContext ctx,
+        IApplicationObjectTypeSymbol? containingObject,
+        IInvocationExpression invocation)
+    {
+        if (invocation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod
+            || invocation.Instance?.Type?.NavTypeKind != EnumProvider.NavTypeKind.DataTransfer
+            || !DataTransferOperations.IsExecutor(invocation.TargetMethod.Name))
             return;
 
-        if (containingObject.IsTestCodeunitWithPermissionsDisabled())
+        var semanticModel = ctx.Compilation.GetSemanticModel(invocation.Syntax.SyntaxTree);
+        var required = new List<RequiredPermission>();
+
+        if (!RequiredPermissionDetector.TryGetFromDataTransfer(invocation, semanticModel, includeSystemTables: false, required))
             return;
 
+        foreach (var permission in required)
+            ReportIfNotCovered(ctx, containingObject, permission);
+    }
+
+    private static void ReportIfNotCovered(
+        OperationAnalysisContext ctx,
+        IApplicationObjectTypeSymbol? containingObject,
+        RequiredPermission required)
+    {
         var pageContext = PermissionResolver.GetPageContext(containingObject);
         var containingMethod = ctx.ContainingSymbol as IMethodSymbol;
 
-        if (PermissionResolver.IsCovered(required.Value, containingObject, containingMethod, pageContext))
+        if (PermissionResolver.IsCovered(required, containingObject, containingMethod, pageContext))
             return;
 
-        ReportDiagnostic(ctx.ReportDiagnostic, required.Value);
+        ReportDiagnostic(ctx.ReportDiagnostic, required);
     }
 
     private void AnalyzeReportDataItem(SymbolAnalysisContext ctx)

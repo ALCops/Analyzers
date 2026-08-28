@@ -1,0 +1,31 @@
+codeunit 50000 MyCodeunit
+{
+
+    internal procedure CopyValues(SourceTableNo: Integer; DestinationTableNo: Integer)
+    var
+        MyDataTransfer: DataTransfer;
+    begin
+        MyDataTransfer.SetTables(SourceTableNo, DestinationTableNo);
+        MyDataTransfer.AddFieldValue(1, 2);
+        [|MyDataTransfer.CopyFields();|]
+    end;
+}
+
+table 50000 MyTable
+{
+    Caption = '', Locked = true;
+
+    fields
+    {
+        field(1; MyField; Integer)
+        {
+            Caption = '', Locked = true;
+            DataClassification = ToBeClassified;
+        }
+        field(2; MyOtherField; Integer)
+        {
+            Caption = '', Locked = true;
+            DataClassification = ToBeClassified;
+        }
+    }
+}

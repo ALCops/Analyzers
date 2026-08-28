@@ -32,10 +32,15 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("Reports")]
         [TestCase("DottedTableName")]
         [TestCase("NextWithoutPermissions")]
+        [TestCase("DataTransferCopyFieldsMissingModify")]
+        [TestCase("DataTransferCopyRowsMissingInsert")]
+        [TestCase("DataTransferMissingReadOnSource")]
+        [TestCase("DataTransferMultipleSetTablesMissing")]
+        [TestCase("DataTransferThisKeywordMissingModify")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["ThisKeywordSelfCallInTable"],
+                ["ThisKeywordSelfCallInTable", "DataTransferThisKeywordMissingModify"],
                 testCase,
                 "14.0",
                 "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
@@ -76,6 +81,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("NextWithPermissions")]
         [TestCase("PageSourceTableNext")]
         [TestCase("TemporaryRecordNext")]
+        [TestCase("DataTransferCopyFieldsWithPermissions")]
+        [TestCase("DataTransferCopyRowsWithPermissions")]
+        [TestCase("DataTransferUnresolvable")]
+        [TestCase("DataTransferInherentPermissions")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
