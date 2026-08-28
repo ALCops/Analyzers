@@ -38,13 +38,19 @@ public sealed class PermissionDeclarationOrder : DiagnosticAnalyzer
             if (declaredEntries.Count <= 1)
                 continue;
 
-            if (PermissionSyntaxHelper.ArePermissionsSorted(declaredEntries))
+            if (permissionsSyntax.Parent is not PropertySyntax propertySyntax)
+                continue;
+
+            // Mirrors AZ AL Dev Tools: sort within #region groups; leave lists with other
+            // directives or unbalanced regions alone.
+            if (!PermissionSyntaxHelper.TryBuildRegionTree(propertySyntax, out var root, out _))
+                continue;
+
+            if (!PermissionSyntaxHelper.NeedsReordering(permissionsSyntax, root))
                 continue;
 
             // Report on the PropertySyntax so the CodeFix can find it
-            var location = permissionsSyntax.Parent?.GetLocation() ?? permissionsProperty.GetLocation();
-            if (location is null)
-                continue;
+            var location = propertySyntax.GetLocation();
 
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.PermissionDeclarationOrder,

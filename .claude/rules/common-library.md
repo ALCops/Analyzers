@@ -18,7 +18,7 @@ Target frameworks, LangVersion, nullable enforcement and conditional package ref
 - `Reflection/` — Runtime access to internal/version-dependent SDK types; the most sensitive area of Common. `EnumProvider` wraps 60+ Nav.CodeAnalysis enums — never reference Nav.CodeAnalysis enum values directly, always go through `EnumProvider`.
 - `Settings/` — Per-project analyzer configuration: `ALCopsSettings` (POCO with defaults) and `ALCopsSettingsProvider` (hierarchical `alcops.json` lookup, see Settings System). Schema parity rules: `.claude/rules/settings-schema.md`.
 - `Diagnostics/` — Analyzer exception harness (`XX0000`); see `.claude/rules/analyzer-exception-harness.md`.
-- `Permissions/` — Shared permission model for AC0031 (missing) and AC0032 (unused): `DatabaseOperation`, `RequiredPermissionDetector`, `PermissionResolver`, and the deliberately separate `DataTransferOperations`. Why the two method maps stay disjoint: the `DataTransferOperations.cs` XML doc; what an *unresolvable* `TryGetFromDataTransfer` obliges each cop to do: `.claude/rules/diagnostics/ac0032-table-data-access-unused-permissions.md`.
+- `Permissions/` — Shared permission model for AC0031 (missing) and AC0032 (unused): `DatabaseOperation`, `RequiredPermissionDetector`, `PermissionResolver`, and the deliberately separate `DataTransferOperations`; plus the AZ AL Dev Tools-compatible ordering used by FC0004 and the AC0031 fix (`PermissionEntryComparer`, `NaturalStringComparer`, `PermissionRegionGroup`, see `.claude/rules/diagnostics/fc0004-permission-declaration-order.md`). Why the two method maps stay disjoint: the `DataTransferOperations.cs` XML doc; what an *unresolvable* `TryGetFromDataTransfer` obliges each cop to do: `.claude/rules/diagnostics/ac0032-table-data-access-unused-permissions.md`.
 - `Constants.cs` — `PermissionNodeXPath` (XPath for permission set XML) plus `Comment`, `Locked`, `MaxLength` label property name strings matching the SDK's `LabelPropertyHelper`.
 - `RecordMethodClassification.cs` — see `.claude/rules/record-method-classification.md`.
 
@@ -126,7 +126,7 @@ Settings are cached per directory path for the analyzer session lifetime. There 
 - When adding reflection for a new SDK version, keep the fallback path for older versions.
 
 ### Testing
-ALCops.Common has **no dedicated test project**. It is tested indirectly through the 6 cop test projects. When modifying Common:
+`src/ALCops.Common.Test` holds unit tests for pure helpers (settings provider, acronym registry, `NaturalStringComparer`); everything that needs an AL compilation is tested through the 6 cop test projects. When modifying Common:
 - Run the full test suite (`dotnet test` at the solution level) to verify no regressions.
 - If adding a new utility, write tests in the cop test project that will use it.
 - Pay special attention to conditional compilation paths; CI builds both `net8.0` and `netstandard2.1`.

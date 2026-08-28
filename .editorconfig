@@ -51,7 +51,8 @@ dotnet_diagnostic.CS1591.severity = none
 # --- .NET analyzers (CA*) ---------------------------------------------------
 # Analyzer callbacks receive non-null contexts from the host; validating every public parameter is pure noise.
 dotnet_diagnostic.CA1062.severity = none
-# AL identifiers are compared ordinally by design; culture-aware overloads are not wanted.
+# AL identifiers are compared ordinally by design; culture-aware overloads are not wanted
+# (the one deliberate culture compare, NaturalStringComparer, mirrors AZ AL Dev Tools).
 dotnet_diagnostic.CA1304.severity = none
 dotnet_diagnostic.CA1305.severity = none
 dotnet_diagnostic.CA1307.severity = none

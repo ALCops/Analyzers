@@ -1,10 +1,3 @@
-codeunit 50100 "My Codeunit"
-{
-    [|Permissions = tabledata Alpha = R,
-                  tabledata Bravo = R,
-                  tabledata Charlie = R|];
-}
-
 table 50100 Alpha
 {
     Caption = '', Locked = true;
@@ -30,4 +23,14 @@ table 50102 Charlie
     {
         field(1; MyField; Integer) { }
     }
+}
+
+permissionset 50100 "My Permission Set"
+{
+    Assignable = true;
+    [|Permissions = tabledata Charlie = R,
+#pragma warning disable AA0123
+                  tabledata Bravo = R,
+#pragma warning restore AA0123
+                  tabledata Alpha = R|];
 }

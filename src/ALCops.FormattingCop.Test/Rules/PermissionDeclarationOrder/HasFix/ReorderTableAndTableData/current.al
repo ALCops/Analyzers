@@ -2,15 +2,7 @@ codeunit 50101 "My Codeunit"
 {
 }
 
-page 50100 "My Page"
-{
-}
-
-report 50100 "My Report"
-{
-}
-
-table 50100 "My Table"
+table 50100 Alpha
 {
     Caption = '', Locked = true;
     fields
@@ -23,7 +15,6 @@ permissionset 50100 "My Permission Set"
 {
     Assignable = true;
     [|Permissions = codeunit "My Codeunit" = X,
-                  page "My Page" = X,
-                  report "My Report" = X,
-                  tabledata "My Table" = R|];
+                  tabledata Alpha = R,
+                  table Alpha = X|];
 }

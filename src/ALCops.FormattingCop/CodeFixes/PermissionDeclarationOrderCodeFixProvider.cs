@@ -81,21 +81,23 @@ public sealed class PermissionDeclarationOrderCodeFixProvider : CodeFixProvider
         if (permissions.Count <= 1)
             return document;
 
-        var sorted = PermissionSyntaxHelper.GetSortedPermissions(permissions);
-        var indentation = PermissionSyntaxHelper.GetEntryIndentation(permissionValue);
+        if (!PermissionSyntaxHelper.TryBuildRegionTree(propertySyntax, out var regionRoot, out var hasDirectives))
+            return document;
 
-        PermissionPropertyValueSyntax newPermissionValue;
-        if (sorted.Count >= 2)
+        PropertySyntax newProperty;
+        if (PermissionSyntaxHelper.IsMultiLineFormat(permissionValue) || hasDirectives)
         {
-            // Always use multi-line format for 2+ entries
-            newPermissionValue = PermissionSyntaxHelper.BuildMultiLinePermissionValue(sorted, indentation);
+            // Keep the existing layout (indentation, comments, #region blocks); only the entries move.
+            newProperty = PermissionSyntaxHelper.ReorderPreservingLayout(propertySyntax, regionRoot);
         }
         else
         {
-            newPermissionValue = permissionValue;
+            // Single-line lists become multi-line for readability.
+            var sorted = PermissionSyntaxHelper.GetSortedPermissions(permissions);
+            var indentation = PermissionSyntaxHelper.GetEntryIndentation(permissionValue);
+            newProperty = propertySyntax.WithValue(
+                PermissionSyntaxHelper.BuildMultiLinePermissionValue(sorted, indentation));
         }
-
-        var newProperty = propertySyntax.WithValue(newPermissionValue);
 
         var root = await syntaxRootTask.ConfigureAwait(false);
         if (root is null)

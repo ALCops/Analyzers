@@ -38,24 +38,12 @@ table 50100 Alpha
     }
 }
 
-table 50101 Bravo
-{
-    Caption = '', Locked = true;
-    fields
-    {
-        field(1; MyField; Integer) { }
-    }
-}
-
 permissionset 50100 "My Permission Set"
 {
     Assignable = true;
-    [|Permissions = table Alpha = X,
-                  tabledata Alpha = R,
-                  tabledata Bravo = R,
-                  codeunit "My Codeunit" = X,
-                  page "My Page" = X,
-                  query "My Query" = X,
+    [|Permissions = xmlport "My XmlPort" = X,
                   report "My Report" = X,
-                  xmlport "My XmlPort" = X|];
+                  query "My Query" = X,
+                  page "My Page" = X,
+                  codeunit "My Codeunit" = X|];
 }

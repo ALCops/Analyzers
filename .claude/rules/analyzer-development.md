@@ -706,6 +706,7 @@ private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
   - Non-AL text (diagnostic IDs, translation keys, manifest metadata, punctuation)
   - User-configured strings (affix lists from alcops.json settings)
   - Permission character strings (e.g., searching "RIMD" for a permission char)
+  - Permission sort keys (`NaturalStringComparer` deliberately uses `InvariantCultureIgnoreCase` to match AZ AL Dev Tools; see the FC0004 rule doc)
 
   ```csharp
   // Direct equality - comparing AL method name (both non-null)

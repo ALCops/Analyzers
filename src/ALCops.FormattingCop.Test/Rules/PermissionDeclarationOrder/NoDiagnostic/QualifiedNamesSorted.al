@@ -1,9 +1,4 @@
-codeunit 50100 "My Codeunit"
-{
-    [|Permissions = tabledata Alpha = R,
-                  tabledata Bravo = R,
-                  tabledata Charlie = R|];
-}
+namespace MyNs;
 
 table 50100 Alpha
 {
@@ -23,11 +18,19 @@ table 50101 Bravo
     }
 }
 
-table 50102 Charlie
+table 50102 "Zulu Table"
 {
     Caption = '', Locked = true;
     fields
     {
         field(1; MyField; Integer) { }
     }
+}
+
+permissionset 50100 "My Permission Set"
+{
+    Assignable = true;
+    [|Permissions = tabledata MyNs."Zulu Table" = R,
+                  tabledata MyNs.Alpha = R,
+                  tabledata MyNs.Bravo = R|];
 }

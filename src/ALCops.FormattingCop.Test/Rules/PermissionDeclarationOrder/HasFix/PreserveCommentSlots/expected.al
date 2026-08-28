@@ -1,10 +1,3 @@
-codeunit 50100 "My Codeunit"
-{
-    [|Permissions = tabledata Alpha = R,
-                  tabledata Bravo = R,
-                  tabledata Charlie = R|];
-}
-
 table 50100 Alpha
 {
     Caption = '', Locked = true;
@@ -30,4 +23,12 @@ table 50102 Charlie
     {
         field(1; MyField; Integer) { }
     }
+}
+
+codeunit 50100 "My Codeunit"
+{
+    Permissions = tabledata Alpha = R,
+                  // read access is enough here
+                  tabledata Bravo = R,
+                  tabledata Charlie = R;
 }

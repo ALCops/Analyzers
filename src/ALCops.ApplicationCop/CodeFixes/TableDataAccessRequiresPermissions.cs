@@ -275,14 +275,9 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         var isSorted = PermissionSyntaxHelper.ArePermissionsSorted(permissions);
         var isMultiLine = PermissionSyntaxHelper.IsMultiLineFormat(permissionValue);
 
-        // FindInsertionIndex compares against GetObjectNameFromPermission output (unquoted).
-        var sortName = resolved.QualifyingNamespace is not null
-            ? $"{resolved.QualifyingNamespace}.{rawTableName}"
-            : rawTableName;
-        var insertIndex = PermissionSyntaxHelper.FindInsertionIndex(permissions, sortName, isSorted);
-
         var newEntry = PermissionSyntaxHelper.CreatePermissionSyntax(
             resolved.TableName, resolved.QualifyingNamespace, permissionChar.ToString());
+        var insertIndex = PermissionSyntaxHelper.FindInsertionIndex(permissions, newEntry, isSorted);
 
         SeparatedSyntaxList<PermissionSyntax> newPermissions;
         if (isMultiLine)
