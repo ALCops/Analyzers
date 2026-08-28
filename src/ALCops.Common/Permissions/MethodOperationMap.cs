@@ -21,6 +21,7 @@ public static class MethodOperationMap
                 new KeyValuePair<string, DatabaseOperation>("GetBySystemId", DatabaseOperation.Read),
                 new KeyValuePair<string, DatabaseOperation>("IsEmpty", DatabaseOperation.Read),
                 new KeyValuePair<string, DatabaseOperation>("Count", DatabaseOperation.Read),
+                new KeyValuePair<string, DatabaseOperation>("Next", DatabaseOperation.Read),
 
                 // Insert operations
                 new KeyValuePair<string, DatabaseOperation>("Insert", DatabaseOperation.Insert),
