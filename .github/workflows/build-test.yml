@@ -219,7 +219,9 @@ jobs:
           Configuration: Release
 
       - name: Verify code formatting
-        run: dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"
+        # --verbosity detailed makes the log show what was checked ("Running N analyzers on <project>",
+        # "Formatted 0 of N files"); at the default level a clean run prints only the workspace-load warning.
+        run: dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al" --verbosity detailed
         env:
           Configuration: Release
 
