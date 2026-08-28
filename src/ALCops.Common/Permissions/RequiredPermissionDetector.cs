@@ -2,6 +2,8 @@ using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 
 namespace ALCops.Common.Permissions;
 
@@ -49,6 +51,131 @@ public static class RequiredPermissionDetector
             return null;
 
         return new RequiredPermission(tableType, recordType, operation, invocation.Syntax.GetLocation());
+    }
+
+    /// <summary>
+    /// Collects the permissions required by a <c>DataTransfer</c> executor
+    /// (<c>CopyFields</c> / <c>CopyRows</c>).
+    /// <para>
+    /// The tables are not on the receiver but come from the <c>SetTables(Database::X, Database::Y)</c>
+    /// calls on the same variable, within the same method or trigger body. Every resolvable
+    /// <c>SetTables</c> pair in that body is attributed to the executor (union, no order or branch
+    /// analysis): AL allows a transfer to be reconfigured before each execution, and picking one
+    /// pair would be a guess.
+    /// </para>
+    /// </summary>
+    /// <param name="executor">The <c>CopyFields</c>/<c>CopyRows</c> invocation.</param>
+    /// <param name="semanticModel">Semantic model for the executor's syntax tree.</param>
+    /// <param name="includeSystemTables">See <see cref="TryGetFromInvocation"/>.</param>
+    /// <param name="results">Receives the required permissions; only written when this returns true.</param>
+    /// <returns>
+    /// <c>false</c> when the invocation is a <c>DataTransfer</c> executor whose tables cannot be
+    /// resolved (no <c>SetTables</c> in the body, a non-literal table argument, or a receiver that
+    /// is not a plain identifier). Callers must then treat the access as targeting an unknown table.
+    /// <c>true</c> when the tables were resolved, and also when the invocation is not a
+    /// <c>DataTransfer</c> executor at all (no results are added in that case).
+    /// </returns>
+    public static bool TryGetFromDataTransfer(
+        IInvocationExpression executor,
+        SemanticModel semanticModel,
+        bool includeSystemTables,
+        List<RequiredPermission> results)
+    {
+        if (executor.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod
+            || executor.Instance?.Type?.NavTypeKind != EnumProvider.NavTypeKind.DataTransfer
+            || !DataTransferOperations.TryGetOperations(executor.TargetMethod.Name, out var sourceOperation, out var destinationOperation))
+            return true;
+
+        var receiverName = GetReceiverIdentifierName(executor.Syntax);
+        if (receiverName is null)
+            return false;
+
+        var body = executor.Syntax.FirstAncestorOrSelf<MethodOrTriggerDeclarationSyntax>()?.Body;
+        if (body is null)
+            return false;
+
+        var location = executor.Syntax.GetLocation();
+        bool resolvedAny = false;
+
+        foreach (var node in body.DescendantNodes())
+        {
+            if (node is not InvocationExpressionSyntax invocation
+                || invocation.Expression is not MemberAccessExpressionSyntax memberAccess
+                || !SemanticFacts.IsSameName(memberAccess.Name.Identifier.ValueText ?? string.Empty, DataTransferOperations.SetTablesMethodName))
+                continue;
+
+            if (memberAccess.Expression is not IdentifierNameSyntax setTablesReceiver
+                || setTablesReceiver.Identifier.ValueText?.UnquoteIdentifier() is not { } setTablesReceiverName
+                || !string.Equals(setTablesReceiverName, receiverName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (semanticModel.GetOperation(invocation) is not IInvocationExpression setTablesOperation
+                || setTablesOperation.Arguments.Length != 2)
+                return false;
+
+            var sourceTable = ResolveTableArgument(setTablesOperation.Arguments[0].Value);
+            var destinationTable = ResolveTableArgument(setTablesOperation.Arguments[1].Value);
+            if (sourceTable is null || destinationTable is null)
+                return false;
+
+            resolvedAny = true;
+            AddDataTransferPermission(sourceTable, sourceOperation, location, includeSystemTables, results);
+            AddDataTransferPermission(destinationTable, destinationOperation, location, includeSystemTables, results);
+        }
+
+        return resolvedAny;
+    }
+
+    /// <summary>
+    /// Extracts the receiver of a member-access call from either syntax form: with parentheses
+    /// (<c>dt.CopyFields()</c>) or without (<c>dt.CopyFields;</c>). Returns null when the receiver
+    /// is not a plain identifier, which puts the DataTransfer variable out of reach of the
+    /// same-body <c>SetTables</c> lookup.
+    /// </summary>
+    private static string? GetReceiverIdentifierName(SyntaxNode syntax)
+    {
+        var memberAccess = syntax switch
+        {
+            InvocationExpressionSyntax invocation => invocation.Expression as MemberAccessExpressionSyntax,
+            MemberAccessExpressionSyntax bare => bare,
+            _ => null
+        };
+
+        if (memberAccess?.Expression is not IdentifierNameSyntax identifier)
+            return null;
+
+        return identifier.Identifier.ValueText?.UnquoteIdentifier();
+    }
+
+    /// <summary>
+    /// Resolves a <c>SetTables</c> argument to the table it names. Only object-access literals
+    /// (<c>Database::"My Table"</c>) resolve; integer variables and expressions do not.
+    /// </summary>
+    private static ITableTypeSymbol? ResolveTableArgument(IOperation argument)
+    {
+        while (argument is IConversionExpression conversion)
+            argument = conversion.Operand;
+
+        return argument.GetSymbolSafe() as ITableTypeSymbol;
+    }
+
+    private static void AddDataTransferPermission(
+        ITableTypeSymbol table,
+        DatabaseOperation operation,
+        Microsoft.Dynamics.Nav.CodeAnalysis.Text.Location location,
+        bool includeSystemTables,
+        List<RequiredPermission> results)
+    {
+        if (table.IsTemporary() || (!includeSystemTables && IsSystemTable(table)))
+            return;
+
+        foreach (var existing in results)
+        {
+            if (existing.Operation == operation && existing.Table.Id == table.Id)
+                return;
+        }
+
+        results.Add(new RequiredPermission(table, table, operation, location));
     }
 
     /// <summary>

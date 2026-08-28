@@ -40,6 +40,12 @@ Detects `Permissions` property entries that have no corresponding table data acc
 | Skip permissionset/permissionsetextension objects | These objects declare permissions as their core purpose |
 | RecordRef whole-object bailout (issue #420) | A DB operation (any `MethodOperationMap` entry, reads included) on a `RecordRef` receiver can target any table at runtime; static analysis cannot tell which declared permission it consumes. AC0032 is therefore disabled for the entire object (silent, no diagnostic). Operation-granular suppression (only suppress the matching permission char) was considered and rejected in favor of simplicity. Detection: RecordRef-typed globals/locals/params/named returns tracked by name (fast path, `NavTypeKind == RecordRef`), complex receivers via `IOperation.Type.NavTypeKind`, plus the `GetSymbolInfo` fallback. Without this, the FixAll CodeFix removed permissions that were required at runtime |
 | Fast-path lookup honors AL scoping | Variables are classified by symbol type, never by name, so `RecordRef: Record Customer` tracks Customer normally. Because locals shadow globals, the receiver lookup consults the full local scope (RecordRef name set, then record map) before the object scope; otherwise a global `RecordRef: RecordRef` shadowed by a local record variable of the same name would falsely trigger the bailout |
+| `DataTransfer` executors count as table operations (issue #465) | `CopyFields` reads the source and modifies the destination, `CopyRows` reads the source and inserts into the destination — real database work that the object needs `r`/`m`/`i` for. Because the tables are arguments to `SetTables` and not the receiver, the whole construct was invisible to the receiver-keyed resolution and every permission held only for a `DataTransfer` was reported as unused. The other seven `DataTransfer` methods only build the transfer definition and are not operations. |
+| Separate `DataTransferOperations`, not `MethodOperationMap` | `MethodOperationMap` is keyed on built-in methods invoked *on a record receiver* and is mirrored by `RecordMethodClassification`; adding `CopyFields`/`CopyRows` there would make any same-named call on a record look like a DB operation and would leak into the record-method classification. The `DataTransfer` set is consulted only after the receiver is confirmed to be a `DataTransfer`. |
+| Resolution scope is the same method or trigger body | The `SetTables` call must sit in the same body as the executor. Following the variable across procedures would need call-graph analysis and cross-callback state, which the no-shared-state design rules out. A `DataTransfer` configured in one procedure and executed in another therefore falls to the bailout rather than being resolved. |
+| Pairing is the union of all `SetTables` calls on that variable | AL allows a transfer to be reconfigured before each execution, so textual order says nothing about which pair is live and branch analysis would still be a guess. Every executor in the body is attributed to every resolvable `(source, destination)` pair; over-attributing keeps AC0032 conservative (it can only make a permission look used, never unused). |
+| Only `Database::"X"` literals resolve | The argument operation is an `IApplicationObjectAccess` (optionally wrapped in `IConversionExpression`), which names the table directly. Constant propagation of integer locals was rejected: it is unbounded and the bailout already covers the case safely. |
+| Unresolvable `DataTransfer` triggers the whole-object bailout | Same reasoning as the RecordRef bailout (#420): zero `SetTables` in the body, a non-literal table argument, or a receiver that is not a plain identifier all mean the executor may touch any table, so no declared permission in the object can be proven unused. Silent, no diagnostic. |
 | Handle `MemberAccessExpressionSyntax` without parent `InvocationExpressionSyntax` | AL allows method calls without parentheses (e.g., `MyTable.Count`); the parser produces `MemberAccessExpressionSyntax` instead of `InvocationExpressionSyntax`. Unified in `TryGetPermissionFromDbAccess` which pattern-matches both forms at entry, then uses a single resolution path. The `HasPossibleDbInvocation` pre-filter also checks both forms. |
 
 ## Architecture
@@ -55,7 +61,8 @@ src/ALCops.ApplicationCop/
 
 src/ALCops.Common/
 └── Permissions/
-    └── RequiredPermissionDetector.cs   # Shared detection logic (also used by AC0031)
+    ├── RequiredPermissionDetector.cs   # Shared detection logic (also used by AC0031)
+    └── DataTransferOperations.cs       # DataTransfer executors, kept out of MethodOperationMap
 ```
 
 ### Analysis flow
@@ -93,7 +100,8 @@ src/ALCops.Common/
 | `TryGetPermissionViaSymbolInfo` | Fallback for complex receivers: uses GetSymbolInfo on the node and receiver expression to resolve method and receiver type |
 | `CollectFromDataItems` | Iterates report/query FlattenedDataItems and xmlport FlattenedXmlPortNodes (all via reflection) for implicit read permissions |
 | `AddXmlPortNodeToVarMap` | Adds an xmlport table element to the object-scope record map if it references a non-temporary table |
-| `HasPossibleDbInvocation` | Syntax pre-filter: checks if body has any invocation name matching a DB operation (handles both syntax forms) |
+| `HasPossibleDbInvocation` | Syntax pre-filter: checks if body has any invocation name matching a DB operation or a `DataTransfer` executor (handles both syntax forms) |
+| `IsDataTransferReceiver` | Decides whether a `CopyFields`/`CopyRows` receiver is a `DataTransfer`, honoring AL scoping (a local record shadows an object-scope `DataTransfer` of the same name); anything that is not a `DataTransfer` keeps flowing through the normal record path |
 | `AnalyzePermissionEntry` | Compares one declared entry against collected required permissions |
 | `PermissionMatchesTable` | Matches identifier/qualified/objectId syntax against `ITableTypeSymbol` |
 
@@ -108,7 +116,8 @@ Each `SyntaxNodeAction` callback is self-contained with no shared mutable state.
 3. **InherentPermissions overlap**: Table-level `InherentPermissions` may make an object-level entry redundant, but the analyzer does not flag this (different concern from unused)
 4. **Cross-object calls**: If codeunit A calls codeunit B, and B accesses a table, A's permission for that table appears unused (correct, because permissions don't flow through the call stack). The reverse is not a limitation: when A iterates a set that B positioned (`Rec.Next()` in A), A's `r` is counted as used, because `Next` itself reads the database in A
 5. **RecordRef bailout hides true positives**: When the whole-object bailout triggers, genuinely unused permissions in that object are no longer reported (accepted trade-off; see design decisions)
-6. **FieldRef access is not a DB operation**: `FieldRef.Value`/`Field`/`Caption` operate on the in-memory current row and neither consume a permission nor trigger the RecordRef bailout (verified: only mapped DB methods on the RecordRef itself count). `FieldRef.CalcField` does read the database but is not traced, consistent with limitation 2
+6. **DataTransfer bailout hides true positives**: a `CopyFields`/`CopyRows` whose `SetTables` lives in another procedure, or whose table arguments are not `Database::X` literals, silences AC0032 for the whole object — genuinely unused entries there go unreported (same trade-off as the RecordRef bailout)
+7. **FieldRef access is not a DB operation**: `FieldRef.Value`/`Field`/`Caption` operate on the in-memory current row and neither consume a permission nor trigger the RecordRef bailout (verified: only mapped DB methods on the RecordRef itself count). `FieldRef.CalcField` does read the database but is not traced, consistent with limitation 2
 
 ## CodeFix: TableDataAccessUnusedPermissionsCodeFixProvider
 

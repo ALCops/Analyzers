@@ -32,6 +32,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("Reports")]
         [TestCase("DottedTableName")]
         [TestCase("NextWithoutPermissions")]
+        [TestCase("DataTransferCopyFieldsMissingModify")]
+        [TestCase("DataTransferCopyRowsMissingInsert")]
+        [TestCase("DataTransferMissingReadOnSource")]
+        [TestCase("DataTransferMultipleSetTablesMissing")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -76,6 +80,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("NextWithPermissions")]
         [TestCase("PageSourceTableNext")]
         [TestCase("TemporaryRecordNext")]
+        [TestCase("DataTransferCopyFieldsWithPermissions")]
+        [TestCase("DataTransferCopyRowsWithPermissions")]
+        [TestCase("DataTransferUnresolvable")]
+        [TestCase("DataTransferInherentPermissions")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

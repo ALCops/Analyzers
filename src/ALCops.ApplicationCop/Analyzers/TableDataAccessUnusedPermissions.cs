@@ -90,6 +90,7 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         // and the set of object-scope RecordRef variable names
         Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap = null;
         HashSet<string>? objectScopeRecordRefNames = null;
+        HashSet<string>? objectScopeDataTransferNames = null;
         foreach (var member in containingObject.GetMembers())
         {
             if (member is not IVariableSymbol globalVar)
@@ -105,6 +106,11 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             {
                 objectScopeRecordRefNames ??= new(StringComparer.OrdinalIgnoreCase);
                 objectScopeRecordRefNames.Add(globalVar.Name);
+            }
+            else if (globalVar.Type?.NavTypeKind == EnumProvider.NavTypeKind.DataTransfer)
+            {
+                objectScopeDataTransferNames ??= new(StringComparer.OrdinalIgnoreCase);
+                objectScopeDataTransferNames.Add(globalVar.Name);
             }
         }
 
@@ -147,6 +153,7 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             // Build per-method record variable map and RecordRef name set from locals + parameters
             Dictionary<string, IRecordTypeSymbol>? localRecordVarMap = null;
             HashSet<string>? localRecordRefNames = null;
+            HashSet<string>? localDataTransferNames = null;
 
             foreach (var local in methodSymbol.LocalVariables)
             {
@@ -159,6 +166,11 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 {
                     localRecordRefNames ??= new(StringComparer.OrdinalIgnoreCase);
                     localRecordRefNames.Add(local.Name);
+                }
+                else if (local.Type?.NavTypeKind == EnumProvider.NavTypeKind.DataTransfer)
+                {
+                    localDataTransferNames ??= new(StringComparer.OrdinalIgnoreCase);
+                    localDataTransferNames.Add(local.Name);
                 }
             }
 
@@ -173,6 +185,11 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 {
                     localRecordRefNames ??= new(StringComparer.OrdinalIgnoreCase);
                     localRecordRefNames.Add(param.Name);
+                }
+                else if (param.ParameterType?.NavTypeKind == EnumProvider.NavTypeKind.DataTransfer)
+                {
+                    localDataTransferNames ??= new(StringComparer.OrdinalIgnoreCase);
+                    localDataTransferNames.Add(param.Name);
                 }
             }
 
@@ -190,6 +207,11 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     localRecordRefNames ??= new(StringComparer.OrdinalIgnoreCase);
                     localRecordRefNames.Add(returnValue.Name);
                 }
+                else if (returnValue.ReturnType?.NavTypeKind == EnumProvider.NavTypeKind.DataTransfer)
+                {
+                    localDataTransferNames ??= new(StringComparer.OrdinalIgnoreCase);
+                    localDataTransferNames.Add(returnValue.Name);
+                }
             }
 
             // Walk method body for DB invocations (handles both with and without parentheses)
@@ -198,6 +220,24 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 if (descendant is InvocationExpressionSyntax
                     || (descendant is MemberAccessExpressionSyntax ma && ma.Parent is not InvocationExpressionSyntax))
                 {
+                    // DataTransfer executors take their tables from SetTables arguments instead of
+                    // the receiver, so they resolve through their own path. An unresolvable one
+                    // triggers the same whole-object bailout as a RecordRef access.
+                    if (TryGetMethodCall(descendant, out var callName, out var callReceiver, out _)
+                        && callName is not null
+                        && DataTransferOperations.IsExecutor(callName)
+                        && IsDataTransferReceiver(
+                            callReceiver, localDataTransferNames, objectScopeDataTransferNames,
+                            localRecordVarMap, localRecordRefNames, ctx))
+                    {
+                        if (ctx.SemanticModel.GetOperation(descendant, ctx.CancellationToken) is not IInvocationExpression dataTransferOperation
+                            || !RequiredPermissionDetector.TryGetFromDataTransfer(
+                                dataTransferOperation, ctx.SemanticModel, includeSystemTables: true, requiredPermissions))
+                            return true;
+
+                        continue;
+                    }
+
                     var permission = TryGetPermissionFromDbAccess(
                         descendant, containingObject, localRecordVarMap, objectScopeRecordMap,
                         localRecordRefNames, objectScopeRecordRefNames, ctx,
@@ -234,40 +274,9 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         out bool isRecordRefAccess)
     {
         isRecordRefAccess = false;
-        // Extract method name, receiver expression, and location from either syntax form
-        string? methodName;
-        ExpressionSyntax? receiverExpression;
-        bool hasImplicitSelf = false;
 
-        if (node is InvocationExpressionSyntax invocation)
-        {
-            if (invocation.Expression is MemberAccessExpressionSyntax invMemberAccess)
-            {
-                methodName = invMemberAccess.Name.Identifier.ValueText;
-                receiverExpression = invMemberAccess.Expression;
-            }
-            else if (invocation.Expression is IdentifierNameSyntax simpleName)
-            {
-                methodName = simpleName.Identifier.ValueText;
-                receiverExpression = null;
-                hasImplicitSelf = true;
-            }
-            else
-            {
-                return null;
-            }
-        }
-        else if (node is MemberAccessExpressionSyntax memberAccess)
-        {
-            methodName = memberAccess.Name.Identifier.ValueText;
-            receiverExpression = memberAccess.Expression;
-        }
-        else
-        {
-            return null;
-        }
-
-        if (methodName is null)
+        if (!TryGetMethodCall(node, out var methodName, out var receiverExpression, out var hasImplicitSelf)
+            || methodName is null)
             return null;
 
         var operation = MethodOperationMap.GetOperation(methodName);
@@ -343,6 +352,81 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
         // Fallback: complex receiver or unresolved name (use GetSymbolInfo)
         return TryGetPermissionViaSymbolInfo(node, receiverExpression, containingObject, ctx, out isRecordRefAccess);
+    }
+
+    /// <summary>
+    /// Normalizes a call node into method name plus receiver, for either syntax form:
+    /// with parentheses (<c>MyTable.Find()</c>, bare <c>Find()</c>) or without (<c>MyTable.Count</c>).
+    /// <paramref name="hasImplicitSelf"/> marks a bare call, where the receiver is the containing object.
+    /// </summary>
+    private static bool TryGetMethodCall(
+        SyntaxNode node,
+        out string? methodName,
+        out ExpressionSyntax? receiverExpression,
+        out bool hasImplicitSelf)
+    {
+        methodName = null;
+        receiverExpression = null;
+        hasImplicitSelf = false;
+
+        switch (node)
+        {
+            case InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax invMemberAccess }:
+                methodName = invMemberAccess.Name.Identifier.ValueText;
+                receiverExpression = invMemberAccess.Expression;
+                return true;
+
+            case InvocationExpressionSyntax { Expression: IdentifierNameSyntax simpleName }:
+                methodName = simpleName.Identifier.ValueText;
+                hasImplicitSelf = true;
+                return true;
+
+            case MemberAccessExpressionSyntax memberAccess:
+                methodName = memberAccess.Name.Identifier.ValueText;
+                receiverExpression = memberAccess.Expression;
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Determines whether the receiver of a <c>CopyFields</c>/<c>CopyRows</c> call is a
+    /// <c>DataTransfer</c> variable. Identifiers resolve through the name sets, honoring AL
+    /// scoping: a local record or RecordRef of the same name shadows an object-scope
+    /// <c>DataTransfer</c>. Anything else falls back to the receiver's bound type, so a
+    /// user-defined <c>CopyRows</c> procedure on a record keeps flowing through the normal path.
+    /// </summary>
+    private static bool IsDataTransferReceiver(
+        ExpressionSyntax? receiverExpression,
+        HashSet<string>? localDataTransferNames,
+        HashSet<string>? objectScopeDataTransferNames,
+        Dictionary<string, IRecordTypeSymbol>? localRecordVarMap,
+        HashSet<string>? localRecordRefNames,
+        SyntaxNodeAnalysisContext ctx)
+    {
+        if (receiverExpression is null)
+            return false;
+
+        if (receiverExpression is IdentifierNameSyntax identifierName)
+        {
+            var receiverName = identifierName.Identifier.ValueText?.UnquoteIdentifier();
+            if (receiverName is null)
+                return false;
+
+            if (localDataTransferNames is not null && localDataTransferNames.Contains(receiverName))
+                return true;
+
+            if ((localRecordVarMap is not null && localRecordVarMap.ContainsKey(receiverName))
+                || (localRecordRefNames is not null && localRecordRefNames.Contains(receiverName)))
+                return false;
+
+            return objectScopeDataTransferNames is not null && objectScopeDataTransferNames.Contains(receiverName);
+        }
+
+        return ctx.SemanticModel.GetOperation(receiverExpression, ctx.CancellationToken)?.Type?.NavTypeKind
+            == EnumProvider.NavTypeKind.DataTransfer;
     }
 
     /// <summary>
@@ -486,20 +570,24 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     _ => null
                 };
 
-                if (methodName is not null && MethodOperationMap.GetOperation(methodName) != DatabaseOperation.None)
+                if (IsPossibleDbMethodName(methodName))
                     return true;
             }
             else if (node is MemberAccessExpressionSyntax memberAccessNode
                 && memberAccessNode.Parent is not InvocationExpressionSyntax)
             {
-                string? methodName = memberAccessNode.Name.Identifier.ValueText;
-                if (methodName is not null && MethodOperationMap.GetOperation(methodName) != DatabaseOperation.None)
+                if (IsPossibleDbMethodName(memberAccessNode.Name.Identifier.ValueText))
                     return true;
             }
         }
 
         return false;
     }
+
+    private static bool IsPossibleDbMethodName(string? methodName) =>
+        methodName is not null
+        && (MethodOperationMap.GetOperation(methodName) != DatabaseOperation.None
+            || DataTransferOperations.IsExecutor(methodName));
 
     private static void AnalyzePermissionEntry(
         PermissionSyntax entry,

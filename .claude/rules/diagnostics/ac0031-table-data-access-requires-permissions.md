@@ -22,6 +22,9 @@ Detects table data access (reads, inserts, modifies, deletes) that is not covere
 | `TestPermissions = Disabled` suppresses diagnostic | Test codeunits with disabled permissions are intentionally testing without permission checks |
 | Skip permissionset/permissionsetextension objects | These objects declare permissions as their core purpose, not code that accesses tables; skipping improves performance |
 | `Next` is a Read (issue #466) | `Next()` advances the server-side cursor and fetches the next row, so it reads the database in the object that calls it. Permissions do not flow through the call stack, which means a set positioned by another object's `FindSet` still needs `r` in the iterating object. Consequence: AC0031 now reports `repeat … until Rec.Next() = 0` in objects that never call `FindSet` themselves - a true positive that was previously missed. No repeat/until shape analysis: a stand-alone `Next()` / `Next(-1)` counts the same. |
+| `DataTransfer` executors require permissions (issue #465) | `CopyFields` needs `r` on the source and `m` on the destination, `CopyRows` needs `r` and `i`; the tables come from the `SetTables(Database::X, Database::Y)` calls in the same method or trigger body (union of all of them, no order or branch analysis). Resolution lives in `RequiredPermissionDetector.TryGetFromDataTransfer` so AC0031 and AC0032 stay symmetric. Detection is a separate `DataTransferOperations` set rather than `MethodOperationMap`, which is keyed on record receivers — see the AC0032 rule doc. |
+| Diagnostics anchor on the executor, not on `SetTables` | The executor is the statement that performs the database work and the one a developer would look at; anchoring there also keeps every permission a single transfer needs on one location, which the CodeFix already merges into one `Permissions` entry. |
+| Unresolvable `DataTransfer` is silent | When no `SetTables` is in the body, a table argument is not a `Database::X` literal, or the receiver is not a plain identifier, AC0031 reports nothing. Guessing a table would produce a permission the developer cannot verify; the mirror-image case in AC0032 bails out of the whole object for the same reason. |
 | Temporary tables never require permissions (all implementations) | Per Microsoft docs, temporary tables never touch the database, so no permission is required regardless of implementation. Detection is centralized in the `IRecordTypeSymbol.IsTemporary()` / `ITableTypeSymbol.IsTemporary()` extensions (`ALCops.Common.Extensions`). It covers: the `temporary` keyword (`IRecordTypeSymbol.Temporary`), `TableType = Temporary` on the table object (`ITableTypeSymbol.TableType`), report/xmlport `UseTemporary`. `IRecordTypeSymbol.Temporary` reflects ONLY the `temporary` keyword (`Binder` uses `syntax.Temporary.Kind == TemporaryKeyword`), so the `TableType = Temporary` case needs the explicit `TableType` check. XMLPort `UseTemporary` makes the node record `Temporary`, but `GetFromXmlPortNode` must check it explicitly (it does not go through a variable). Page `SourceTableTemporary` is already covered by the page SourceTable exemption. |
 
 ## Architecture
@@ -32,7 +35,8 @@ The analyzer uses a shared `Permissions/` module in `ALCops.Common`:
 src/ALCops.Common/
 └── Permissions/
     ├── DatabaseOperation.cs                     # Enum: None, Read, Insert, Modify, Delete
-    ├── MethodOperationMap.cs                    # Maps method names → DatabaseOperation
+    ├── MethodOperationMap.cs                    # Maps record method names → DatabaseOperation
+    ├── DataTransferOperations.cs                # DataTransfer executors → (source op, destination op)
     ├── RequiredPermission.cs                    # Record struct holding table + operation + location
     ├── DeclaredPermissionSet.cs                 # Tracks granted ops per table
     ├── PermissionResolver.cs                    # Static class: IsCovered(), permission source resolution
@@ -80,6 +84,7 @@ Maps AL built-in record methods to `DatabaseOperation`:
 - **CalcFields/CalcSums** are not yet covered (out of scope for initial implementation)
 - **CodeFix: blank line formatting** When creating a new Permissions property on an object that has no properties, no blank line is inserted between the new property and the first member (trigger/procedure)
 - **CodeFix: cross-namespace test** The single-file test framework cannot test qualified table name resolution; both objects must be in the same file
+- **DataTransfer with an unresolvable `SetTables`** (in another procedure, or with non-literal table arguments) is not reported at all, so a genuinely missing permission there is missed
 - **Inverted rule** (permissions declared but not needed) is planned as a separate diagnostic
 
 ## CodeFix: TableDataAccessRequiresPermissionsCodeFixProvider

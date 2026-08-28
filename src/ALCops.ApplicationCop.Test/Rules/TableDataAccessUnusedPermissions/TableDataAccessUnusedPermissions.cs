@@ -38,6 +38,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("RecordRefFieldRefValueOnly")]
         [TestCase("RecordRefNameShadowedByLocalRecord")]
         [TestCase("NextPartialUnused")]
+        [TestCase("DataTransferPartialUnused")]
+        [TestCase("DataTransferCopyRowsDestinationPartialUnused")]
+        [TestCase("DataTransferOnlyBuilderCalls")]
+        [TestCase("DataTransferUnrelatedRecordMethodNamedCopyRows")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -90,6 +94,15 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("NextWithoutParentheses")]
         [TestCase("NextStandAlone")]
         [TestCase("RecordRefNext")]
+        [TestCase("DataTransferCopyFieldsSameTable")]
+        [TestCase("DataTransferCopyFieldsTwoTables")]
+        [TestCase("DataTransferCopyRowsTwoTables")]
+        [TestCase("DataTransferGlobalVariable")]
+        [TestCase("DataTransferParameter")]
+        [TestCase("DataTransferMultipleSetTables")]
+        [TestCase("DataTransferWithoutParentheses")]
+        [TestCase("DataTransferUnresolvableSetTables")]
+        [TestCase("DataTransferSetTablesInOtherProcedure")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
