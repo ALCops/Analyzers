@@ -136,7 +136,9 @@ public sealed class TableRelationFieldLength : DiagnosticAnalyzer
             return null;
 
 #if NETSTANDARD2_1
+#pragma warning disable CS0618 // Obsolete only in the netstandard2.1 SDK; the namespace-aware replacement does not exist there
         var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModules(EnumProvider.SymbolKind.Table, tableName);
+#pragma warning restore CS0618
 #else
         var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModulesAndNamespaces(EnumProvider.SymbolKind.Table, tableName);
 #endif
@@ -148,7 +150,9 @@ public sealed class TableRelationFieldLength : DiagnosticAnalyzer
     private static IFieldSymbol? GetFieldFromTable(string tableName, string fieldName, Compilation compilation)
     {
 #if NETSTANDARD2_1
+#pragma warning disable CS0618 // Obsolete only in the netstandard2.1 SDK; the namespace-aware replacement does not exist there
         var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModules(EnumProvider.SymbolKind.Table, tableName);
+#pragma warning restore CS0618
 #else
         var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModulesAndNamespaces(EnumProvider.SymbolKind.Table, tableName);
 #endif

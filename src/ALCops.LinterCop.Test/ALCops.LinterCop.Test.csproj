@@ -88,4 +88,8 @@
             <Private>True</Private>
         </Reference>
     </ItemGroup>
+    <!-- Convention tests shared by every cop test project (source-linked from ALCops.Common.Test) -->
+    <ItemGroup>
+        <Compile Include="../ALCops.Common.Test/Conventions/*.cs" Link="Conventions/%(Filename)%(Extension)" />
+    </ItemGroup>
 </Project>

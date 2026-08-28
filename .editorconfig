@@ -1,6 +1,8 @@
 # ALCops Analyzers — editor and analyzer configuration
-# Severities here are a warnings-only baseline. Promote rules to `error` deliberately, one at a time,
-# once their occurrence count is zero. See .claude/rules/code-analysis.md.
+# Every analyzer warning is a build error (CodeAnalysisTreatWarningsAsErrors in Directory.Build.props). This file
+# holds the code-style settings and the exceptions: every suppression carries its reason. See
+# .claude/rules/code-analysis.md. Note for fixing with `dotnet format analyzers --diagnostics CAxxxx`: the tool only
+# acts on a CA rule that has an explicit dotnet_diagnostic severity line in the matching section.
 
 root = true
 
@@ -36,14 +38,11 @@ dotnet_style_qualification_for_property = false:suggestion
 dotnet_style_qualification_for_method = false:suggestion
 dotnet_style_qualification_for_event = false:suggestion
 csharp_prefer_braces = when_multiline:silent
-# Mixed today (221 file-scoped / 110 block-scoped). Do not enforce until unified.
+# Mixed today (file-scoped and block-scoped). Do not enforce until unified.
 csharp_style_namespace_declarations = file_scoped:silent
 csharp_using_directive_placement = outside_namespace:suggestion
 dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false
-
-dotnet_diagnostic.IDE0005.severity = error     # unused using directives — count is 0 as of PR #477
-dotnet_diagnostic.IDE0055.severity = error     # formatting (whitespace/indent/newlines/using order) — count is 0 as of this PR
 dotnet_diagnostic.IDE0161.severity = none      # namespace style — see above
 
 # Missing XML doc comments: GenerateDocumentationFile is only on to make IDE0005 work in build.
@@ -62,26 +61,8 @@ dotnet_diagnostic.CA1310.severity = none
 dotnet_diagnostic.CA1303.severity = none
 # Analyzer types are instantiated by the host via attributes; "unused"/"could be static" heuristics misfire.
 dotnet_diagnostic.CA1812.severity = none
-# Analyzer, CodeFixProvider and CodeAction types are leaves by construction; count is 0 as of PR #480.
-# Note: CA1852 cannot see public types or assemblies with InternalsVisibleTo (LinterCop) — seal those by convention.
-dotnet_diagnostic.CA1852.severity = error
-# Override parameter names match the base declaration; count is 0 as of PR #481. NOTE: dotnet format only applies
-# NetAnalyzers fixers for rules with an explicit severity here (it ignores the SDK analysislevel globalconfig).
-dotnet_diagnostic.CA1725.severity = error
-# Micro-fix rules, applied with dotnet format; count is 0 as of PR #482.
-dotnet_diagnostic.CA1822.severity = error
-dotnet_diagnostic.CA1826.severity = error
-dotnet_diagnostic.CA1827.severity = error
-dotnet_diagnostic.CA1854.severity = error
-dotnet_diagnostic.CA1862.severity = error
-dotnet_diagnostic.CA1864.severity = error
-dotnet_diagnostic.CA2249.severity = error
-# Behavioural rules, count is 0 as of PR #484. CA1311: help-URI slugs must not depend on the OS culture (ToLowerInvariant).
-dotnet_diagnostic.CA1068.severity = error
-dotnet_diagnostic.CA1311.severity = error
-dotnet_diagnostic.CA2012.severity = error
-dotnet_diagnostic.CA1859.severity = error
-dotnet_diagnostic.CA1861.severity = error
+# CA1852 (seal internal types) cannot see public types or assemblies with InternalsVisibleTo (LinterCop); the
+# AnalyzerTypesAreSealed convention test in every *.Test project covers those.
 
 # Won't fix: BCL-authoring naming conventions that clash with this repo's domain vocabulary. Stays suppressed
 # regardless of target frameworks (this is NOT the [NETSTANDARD2_1-BLOCKED] block).
@@ -94,29 +75,20 @@ dotnet_diagnostic.CA1861.severity = error
 dotnet_diagnostic.CA1711.severity = none
 dotnet_diagnostic.CA1720.severity = none
 
-# [NETSTANDARD2_1-BLOCKED] Suppressed ONLY because every analyzer must compile for netstandard2.1 and the API
-# each rule suggests does not exist there. They are fully valid on net8.0/net10.0 and should be re-enabled
-# (delete these lines) the day netstandard2.1 support is dropped; the sites then resurface by themselves.
-# #if guards were rejected: dual code paths at ~15 sites for zero functional gain.
-#   CA1510  ArgumentNullException.ThrowIfNull            .NET 6+   (1 site)
-#   CA1863  CompositeFormat                              .NET 8+   (2 sites; each formats a code-action title once)
-#   CA2263  Enum.GetNames<T>/GetValues<T>, MethodInfo.CreateDelegate<T>   .NET 5+   (12 sites)
-#           Enum.Parse<T>(string) IS on netstandard2.1 and was fixed instead (EnumProvider).
-dotnet_diagnostic.CA1510.severity = none
-dotnet_diagnostic.CA1863.severity = none
-dotnet_diagnostic.CA2263.severity = none
+# [NETSTANDARD2_1-BLOCKED] Suppressed only because every analyzer must compile for netstandard2.1 and the suggested
+# API does not exist there. Delete these lines the day netstandard2.1 support is dropped.
+dotnet_diagnostic.CA1510.severity = none   # ArgumentNullException.ThrowIfNull is not on netstandard2.1
+dotnet_diagnostic.CA1863.severity = none   # CompositeFormat is not on netstandard2.1
+dotnet_diagnostic.CA2263.severity = none   # Enum.GetNames<T>/GetValues<T>, MethodInfo.CreateDelegate<T> are not on netstandard2.1
 
 # --- Analyzer-authoring rules (RS*) from Microsoft.CodeAnalysis.Analyzers -----
 # The NAV SDK is a fork of Roslyn (Microsoft.Dynamics.Nav.CodeAnalysis); most RS rules key on the
-# real Microsoft.CodeAnalysis types and will simply not fire. Those that do are kept as warnings.
+# real Microsoft.CodeAnalysis types and will simply not fire.
 # Do NOT add a suppression here without documenting which NAV SDK type triggered it.
 
 # --- Roslynator (RCS*) -----------------------------------------------------
-# RCS1075: PropertyAccessor's reflection catch blocks are intentional (version-tolerant NAV SDK access) and carry a
-#          #pragma with that reason; everywhere else an empty catch is an error.
-dotnet_diagnostic.RCS1075.severity = error
-dotnet_diagnostic.RCS1102.severity = error
-# Defaults, warnings-only. Downgrade the noisiest rules here after inspecting counts — never in code.
+# RCS1075 (empty catch of System.Exception) is an error; the two intentional catches in PropertyAccessor
+# (version-tolerant reflection against the NAV SDK) carry a #pragma with that reason.
 dotnet_diagnostic.RCS1123.severity = suggestion  # add parentheses when necessary — opinionated
 dotnet_diagnostic.RCS1163.severity = suggestion  # unused parameter — analyzer callbacks often have fixed signatures
 
@@ -127,3 +99,6 @@ dotnet_diagnostic.CA1822.severity = none   # mark members as static
 # Constant array arguments in assertions (Is.EquivalentTo(new[] { ... })) are the readable form; a static readonly
 # field per expected value would only move the literal away from the assert it belongs to.
 dotnet_diagnostic.CA1861.severity = none
+# Fixture fields are assigned in [SetUp]. The build already suppresses this through NUnit.Analyzers' suppressor;
+# dotnet format does not run suppressors and would otherwise offer to make every fixture field nullable.
+dotnet_diagnostic.CS8618.severity = none

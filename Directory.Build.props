@@ -10,16 +10,17 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GenerateFullPaths>true</GenerateFullPaths>
 
-        <!-- Nullable-flow violations and malformed/incomplete XML doc comments (CS1570, CS1573) are errors. -->
-        <WarningsAsErrors>$(WarningsAsErrors);CS8600;CS8602;CS8603;CS8604;CS8605;CS1570;CS1573</WarningsAsErrors>
+        <!-- Compiler warnings promoted to errors: nullable-flow violations and malformed/incomplete XML doc comments.
+             Analyzer warnings are all errors via CodeAnalysisTreatWarningsAsErrors below. -->
+        <WarningsAsErrors>$(WarningsAsErrors);CS8600;CS8602;CS8603;CS8604;CS8605;CS1570;CS1572;CS1573;CS1574</WarningsAsErrors>
     </PropertyGroup>
 
-    <!-- Static analysis: warnings-only baseline. Severities are tuned in .editorconfig, never here. -->
+    <!-- Static analysis: every analyzer warning is an error. Exceptions (suppressions) live in .editorconfig, never here. -->
     <PropertyGroup>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <AnalysisLevel>latest-recommended</AnalysisLevel>
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-        <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
+        <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
 
         <!-- IDE0005 (unused usings) only reports during build when XML doc generation is on; CS1591 is silenced in .editorconfig. -->
         <GenerateDocumentationFile>true</GenerateDocumentationFile>

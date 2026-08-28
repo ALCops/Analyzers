@@ -83,12 +83,10 @@ internal static class TransferFieldsRelations
 
     /// <summary>
     /// Represents a TransferFields relation between a source and target table,
-    /// with version range indicating in which BC versions this relation was found.
+    /// with version range indicating in which BC versions this relation was found:
+    /// <c>Source</c> is the record passed to TransferFields, <c>Target</c> the instance calling it,
+    /// <c>MinVersion</c>/<c>MaxVersion</c> the bounds of the BC versions where the relation was found (null = unbounded).
     /// </summary>
-    /// <param name="Source">The source table (record passed to TransferFields)</param>
-    /// <param name="Target">The target table (instance calling TransferFields)</param>
-    /// <param name="MinVersion">Minimum BC version where this relation was found (null = no lower bound)</param>
-    /// <param name="MaxVersion">Maximum BC version where this relation was found (null = no upper bound)</param>
 #if NETSTANDARD2_1
     // C# 9 records require 'System.Runtime.CompilerServices.IsExternalInit' which doesn't exist in netstandard2.1.
     // We use a regular class for netstandard2.1 and a record for .NET 8+ to maintain compatibility with both targets.
