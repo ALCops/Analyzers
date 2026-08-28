@@ -51,7 +51,6 @@ The repo ships analyzers, so it dogfoods static analysis on itself: .NET analyze
 |---|---|
 | RS rules from `Microsoft.CodeAnalysis.Analyzers` mostly key on the real `Microsoft.CodeAnalysis` types; the NAV SDK is a fork (`Microsoft.Dynamics.Nav.CodeAnalysis`), so many RS rules never fire on the cops. | Accepted. Record any RS rule that *does* fire against a NAV type in the Design decisions table before suppressing it. |
 | `MSB3277` assembly-version conflicts on test projects (NAV SDK vs `Microsoft.Extensions.*` transitive refs). | Pre-existing, unrelated to analyzers. |
-| `NU1903`: transitive `System.Data.SqlClient 4.8.5` (via NAV SDK / test packages) has a known vulnerability. | Pre-existing. Candidate for `CentralPackageTransitivePinningEnabled` or an explicit `PackageVersion` override. |
 
 ## Adding a suppression
 
