@@ -21,6 +21,7 @@ Detects table data access (reads, inserts, modifies, deletes) that is not covere
 | InherentPermissions attribute parsed via syntax text splitting | The attribute's syntax is well-defined; avoids complex semantic analysis |
 | `TestPermissions = Disabled` suppresses diagnostic | Test codeunits with disabled permissions are intentionally testing without permission checks |
 | Skip permissionset/permissionsetextension objects | These objects declare permissions as their core purpose, not code that accesses tables; skipping improves performance |
+| `Next` is a Read (issue #466) | `Next()` advances the server-side cursor and fetches the next row, so it reads the database in the object that calls it. Permissions do not flow through the call stack, which means a set positioned by another object's `FindSet` still needs `r` in the iterating object. Consequence: AC0031 now reports `repeat … until Rec.Next() = 0` in objects that never call `FindSet` themselves - a true positive that was previously missed. No repeat/until shape analysis: a stand-alone `Next()` / `Next(-1)` counts the same. |
 | Temporary tables never require permissions (all implementations) | Per Microsoft docs, temporary tables never touch the database, so no permission is required regardless of implementation. Detection is centralized in the `IRecordTypeSymbol.IsTemporary()` / `ITableTypeSymbol.IsTemporary()` extensions (`ALCops.Common.Extensions`). It covers: the `temporary` keyword (`IRecordTypeSymbol.Temporary`), `TableType = Temporary` on the table object (`ITableTypeSymbol.TableType`), report/xmlport `UseTemporary`. `IRecordTypeSymbol.Temporary` reflects ONLY the `temporary` keyword (`Binder` uses `syntax.Temporary.Kind == TemporaryKeyword`), so the `TableType = Temporary` case needs the explicit `TableType` check. XMLPort `UseTemporary` makes the node record `Temporary`, but `GetFromXmlPortNode` must check it explicitly (it does not go through a variable). Page `SourceTableTemporary` is already covered by the page SourceTable exemption. |
 
 ## Architecture
@@ -58,7 +59,7 @@ Table matching uses namespace-aware name matching (primary) and object ID matchi
 ### MethodOperationMap
 
 Maps AL built-in record methods to `DatabaseOperation`:
-- Read: Find, FindFirst, FindLast, FindSet, Get, GetBySystemId, IsEmpty, Count
+- Read: Find, FindFirst, FindLast, FindSet, Get, GetBySystemId, IsEmpty, Count, Next
 - Insert: Insert
 - Modify: Modify, ModifyAll, Rename
 - Delete: Delete, DeleteAll

@@ -37,6 +37,7 @@ All properties are `ImmutableHashSet<string>` with `StringComparer.OrdinalIgnore
 | WriteMethods includes non-RIMD methods | Yes (TransferFields, Init, Copy) | These mutate the record buffer even though they don't require RIMD permissions |
 | SingleRecordReadMethods excludes FindSet | Yes | FindSet is used with repeat..until Next loops; different return value semantics |
 | ReadMethods includes IsEmpty and Count | Yes | These perform SQL reads even though they don't load record buffers |
+| ReadMethods excludes Next, although `MethodOperationMap` maps it to Read (issue #466) | Yes, intentional divergence | The two classifications answer different questions. For permissions, `Next` reads the database and needs `r`. The consumers of `ReadMethods` reason about the record buffer a call *fills*: AC0030 inspects the read's return value, and the partial-record analysis matches a read against the fields loaded by it. Neither applies to `Next`, which continues a set positioned by an earlier read, so adding it here would produce false positives. Do not "synchronize" the two sets. |
 | Case sensitivity | OrdinalIgnoreCase | AL method names are case-insensitive |
 
 ## Adding new methods
@@ -45,7 +46,7 @@ When Microsoft adds a new record built-in method:
 
 1. Determine its behavioral category (read, write, trigger, etc.)
 2. Add it to the appropriate set(s) in `RecordMethodClassification.cs`
-3. If it requires RIMD permissions, also add it to `MethodOperationMap.cs`
+3. If it requires RIMD permissions, also add it to `MethodOperationMap.cs`. Membership is not symmetric: a method can belong in `MethodOperationMap` but not here (see the `Next` row above), so decide each set on its own consumers
 4. Run all tests to verify no regressions
 5. Check if any analyzer needs specific handling beyond the set membership
 

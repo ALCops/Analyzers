@@ -31,6 +31,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("Queries")]
         [TestCase("Reports")]
         [TestCase("DottedTableName")]
+        [TestCase("NextWithoutPermissions")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -72,6 +73,9 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("TableTypeTemporaryVariable")]
         [TestCase("TableTypeTemporaryImplicitSelf")]
         [TestCase("XmlPortUseTemporary")]
+        [TestCase("NextWithPermissions")]
+        [TestCase("PageSourceTableNext")]
+        [TestCase("TemporaryRecordNext")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

@@ -37,6 +37,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("RecordRefNoDbOperation")]
         [TestCase("RecordRefFieldRefValueOnly")]
         [TestCase("RecordRefNameShadowedByLocalRecord")]
+        [TestCase("NextPartialUnused")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -85,6 +86,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("RecordRefWithoutParensCount")]
         [TestCase("RecordRefFindWithArgument")]
         [TestCase("RecordRefNamedRecordVariable")]
+        [TestCase("NextOnVarParameterFilledElsewhere")]
+        [TestCase("NextWithoutParentheses")]
+        [TestCase("NextStandAlone")]
+        [TestCase("RecordRefNext")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
