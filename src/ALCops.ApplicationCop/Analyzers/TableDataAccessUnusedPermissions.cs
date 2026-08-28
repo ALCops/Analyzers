@@ -223,7 +223,7 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     // DataTransfer executors take their tables from SetTables arguments instead of
                     // the receiver, so they resolve through their own path. An unresolvable one
                     // triggers the same whole-object bailout as a RecordRef access.
-                    if (TryGetMethodCall(descendant, out var callName, out var callReceiver, out _)
+                    if (descendant.TryGetMethodCall(out var callName, out var callReceiver, out _)
                         && callName is not null
                         && DataTransferOperations.IsExecutor(callName)
                         && IsDataTransferReceiver(
@@ -275,7 +275,7 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
     {
         isRecordRefAccess = false;
 
-        if (!TryGetMethodCall(node, out var methodName, out var receiverExpression, out var hasImplicitSelf)
+        if (!node.TryGetMethodCall(out var methodName, out var receiverExpression, out var hasImplicitSelf)
             || methodName is null)
             return null;
 
@@ -352,43 +352,6 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
         // Fallback: complex receiver or unresolved name (use GetSymbolInfo)
         return TryGetPermissionViaSymbolInfo(node, receiverExpression, containingObject, ctx, out isRecordRefAccess);
-    }
-
-    /// <summary>
-    /// Normalizes a call node into method name plus receiver, for either syntax form:
-    /// with parentheses (<c>MyTable.Find()</c>, bare <c>Find()</c>) or without (<c>MyTable.Count</c>).
-    /// <paramref name="hasImplicitSelf"/> marks a bare call, where the receiver is the containing object.
-    /// </summary>
-    private static bool TryGetMethodCall(
-        SyntaxNode node,
-        out string? methodName,
-        out ExpressionSyntax? receiverExpression,
-        out bool hasImplicitSelf)
-    {
-        methodName = null;
-        receiverExpression = null;
-        hasImplicitSelf = false;
-
-        switch (node)
-        {
-            case InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax invMemberAccess }:
-                methodName = invMemberAccess.Name.Identifier.ValueText;
-                receiverExpression = invMemberAccess.Expression;
-                return true;
-
-            case InvocationExpressionSyntax { Expression: IdentifierNameSyntax simpleName }:
-                methodName = simpleName.Identifier.ValueText;
-                hasImplicitSelf = true;
-                return true;
-
-            case MemberAccessExpressionSyntax memberAccess:
-                methodName = memberAccess.Name.Identifier.ValueText;
-                receiverExpression = memberAccess.Expression;
-                return true;
-
-            default:
-                return false;
-        }
     }
 
     /// <summary>
@@ -560,25 +523,8 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
     {
         foreach (var node in body.DescendantNodes())
         {
-            if (node.IsKind(EnumProvider.SyntaxKind.InvocationExpression))
-            {
-                var invocationSyntax = (InvocationExpressionSyntax)node;
-                string? methodName = invocationSyntax.Expression switch
-                {
-                    MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.ValueText,
-                    IdentifierNameSyntax identifierName => identifierName.Identifier.ValueText,
-                    _ => null
-                };
-
-                if (IsPossibleDbMethodName(methodName))
-                    return true;
-            }
-            else if (node is MemberAccessExpressionSyntax memberAccessNode
-                && memberAccessNode.Parent is not InvocationExpressionSyntax)
-            {
-                if (IsPossibleDbMethodName(memberAccessNode.Name.Identifier.ValueText))
-                    return true;
-            }
+            if (node.TryGetMethodCall(out var methodName, out _, out _) && IsPossibleDbMethodName(methodName))
+                return true;
         }
 
         return false;

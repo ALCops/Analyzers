@@ -1,16 +1,19 @@
 codeunit 50000 MyCodeunit
 {
-    Permissions = [|tabledata MyTable = rm|];
+    Permissions = tabledata MyTable = rm,
+                  [|tabledata MyOtherTable = d|];
 
     internal procedure CopyValues()
     var
-        MyHelper: Record HelperTable;
+        MyDataTransfer: DataTransfer;
     begin
-        MyHelper.CopyRows();
+        MyDataTransfer.SetTables(Database::MyTable, Database::MyTable);
+        MyDataTransfer.AddFieldValue(1, 2);
+        MyDataTransfer.CopyFields;
     end;
 }
 
-table 50001 HelperTable
+table 50000 MyTable
 {
     Caption = '', Locked = true;
 
@@ -21,14 +24,15 @@ table 50001 HelperTable
             Caption = '', Locked = true;
             DataClassification = ToBeClassified;
         }
+        field(2; MyOtherField; Integer)
+        {
+            Caption = '', Locked = true;
+            DataClassification = ToBeClassified;
+        }
     }
-
-    internal procedure CopyRows()
-    begin
-    end;
 }
 
-table 50000 MyTable
+table 50001 MyOtherTable
 {
     Caption = '', Locked = true;
 

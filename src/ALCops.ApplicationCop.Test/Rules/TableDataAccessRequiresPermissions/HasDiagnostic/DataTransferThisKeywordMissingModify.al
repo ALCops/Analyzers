@@ -1,16 +1,19 @@
 codeunit 50000 MyCodeunit
 {
-    Permissions = [|tabledata MyTable = rm|];
+    Permissions = tabledata MyTable = r;
 
     internal procedure CopyValues()
-    var
-        MyHelper: Record HelperTable;
     begin
-        MyHelper.CopyRows();
+        this.GlobalDataTransfer.SetTables(Database::MyTable, Database::MyTable);
+        this.GlobalDataTransfer.AddFieldValue(1, 2);
+        [|this.GlobalDataTransfer.CopyFields();|]
     end;
+
+    var
+        GlobalDataTransfer: DataTransfer;
 }
 
-table 50001 HelperTable
+table 50000 MyTable
 {
     Caption = '', Locked = true;
 
@@ -21,20 +24,7 @@ table 50001 HelperTable
             Caption = '', Locked = true;
             DataClassification = ToBeClassified;
         }
-    }
-
-    internal procedure CopyRows()
-    begin
-    end;
-}
-
-table 50000 MyTable
-{
-    Caption = '', Locked = true;
-
-    fields
-    {
-        field(1; MyField; Integer)
+        field(2; MyOtherField; Integer)
         {
             Caption = '', Locked = true;
             DataClassification = ToBeClassified;

@@ -42,10 +42,15 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferCopyRowsDestinationPartialUnused")]
         [TestCase("DataTransferOnlyBuilderCalls")]
         [TestCase("DataTransferUnrelatedRecordMethodNamedCopyRows")]
+        [TestCase("DataTransferGlobalVariableUnrelatedUnused")]
+        [TestCase("DataTransferParameterUnrelatedUnused")]
+        [TestCase("DataTransferWithoutParenthesesUnrelatedUnused")]
+        [TestCase("DataTransferMultipleSetTablesUnrelatedUnused")]
+        [TestCase("DataTransferThisKeywordPartialUnused")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["ThisKeywordPartialUnused"],
+                ["ThisKeywordPartialUnused", "DataTransferThisKeywordPartialUnused"],
                 testCase,
                 "14.0",
                 "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");

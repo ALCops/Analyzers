@@ -38,7 +38,8 @@ public sealed class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         var containingObject = ctx.ContainingSymbol.GetContainingApplicationObjectTypeSymbol();
 
         if (containingObject?.Kind == EnumProvider.SymbolKind.PermissionSet
-            || containingObject?.Kind == EnumProvider.SymbolKind.PermissionSetExtension)
+            || containingObject?.Kind == EnumProvider.SymbolKind.PermissionSetExtension
+            || containingObject.IsTestCodeunitWithPermissionsDisabled())
             return;
 
         if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression invocation)
@@ -65,7 +66,9 @@ public sealed class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         IApplicationObjectTypeSymbol? containingObject,
         IInvocationExpression invocation)
     {
-        if (!DataTransferOperations.IsExecutor(invocation.TargetMethod.Name))
+        if (invocation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod
+            || invocation.Instance?.Type?.NavTypeKind != EnumProvider.NavTypeKind.DataTransfer
+            || !DataTransferOperations.IsExecutor(invocation.TargetMethod.Name))
             return;
 
         var semanticModel = ctx.Compilation.GetSemanticModel(invocation.Syntax.SyntaxTree);
@@ -83,9 +86,6 @@ public sealed class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         IApplicationObjectTypeSymbol? containingObject,
         RequiredPermission required)
     {
-        if (containingObject.IsTestCodeunitWithPermissionsDisabled())
-            return;
-
         var pageContext = PermissionResolver.GetPageContext(containingObject);
         var containingMethod = ctx.ContainingSymbol as IMethodSymbol;
 

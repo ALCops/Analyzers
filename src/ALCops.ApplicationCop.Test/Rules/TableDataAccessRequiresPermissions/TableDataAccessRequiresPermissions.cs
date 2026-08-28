@@ -36,10 +36,11 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferCopyRowsMissingInsert")]
         [TestCase("DataTransferMissingReadOnSource")]
         [TestCase("DataTransferMultipleSetTablesMissing")]
+        [TestCase("DataTransferThisKeywordMissingModify")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["ThisKeywordSelfCallInTable"],
+                ["ThisKeywordSelfCallInTable", "DataTransferThisKeywordMissingModify"],
                 testCase,
                 "14.0",
                 "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
