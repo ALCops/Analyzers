@@ -102,7 +102,7 @@ public static class ApplicationObjectTypeSymbolInterfaceExtensions
 
     /// <summary>
     /// Gets the flattened list of all data items (including nested) for report and query objects.
-    /// For reports on net8.0+, uses the public <see cref="IReportTypeSymbol.FlattenedDataItems"/> property.
+    /// For reports on net8.0+, uses the public <c>IReportTypeSymbol.FlattenedDataItems</c> property (not present in the netstandard2.1 SDK).
     /// For queries (and reports on netstandard2.1), uses reflection to access the internal FlattenedDataItems.
     /// Returns an empty enumerable for non-report/query objects or if the property is unavailable.
     /// </summary>

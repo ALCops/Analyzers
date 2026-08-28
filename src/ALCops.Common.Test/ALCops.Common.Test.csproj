@@ -50,4 +50,9 @@
             <Private>True</Private>
         </Reference>
     </ItemGroup>
+    <!-- Conventions/ is a shared source folder linked into every cop test project; Common itself ships no analyzers
+         and does not reference the Workspaces assembly those tests need. -->
+    <ItemGroup>
+        <Compile Remove="Conventions/**" />
+    </ItemGroup>
 </Project>
