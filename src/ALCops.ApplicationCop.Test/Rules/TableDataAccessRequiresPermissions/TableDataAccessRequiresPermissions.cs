@@ -38,6 +38,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferMultipleSetTablesMissing")]
         [TestCase("DataTransferThisKeywordMissingModify")]
         [TestCase("DataTransferSequentialSetTablesMissing")]
+        [TestCase("DataTransferLoopCarriedSetTablesMissing")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

@@ -113,15 +113,13 @@ public static class RequiredPermissionDetector
             return false;
 
         var location = executor.Syntax.GetLocation();
-        var staged = new List<RequiredPermission>();
 
         foreach (var pair in pairs)
         {
-            AddDataTransferPermission(pair.Source, sourceOperation, location, includeSystemTables, results, staged);
-            AddDataTransferPermission(pair.Destination, destinationOperation, location, includeSystemTables, results, staged);
+            AddDataTransferPermission(pair.Source, sourceOperation, location, includeSystemTables, results);
+            AddDataTransferPermission(pair.Destination, destinationOperation, location, includeSystemTables, results);
         }
 
-        results.AddRange(staged);
         return true;
     }
 
@@ -130,15 +128,13 @@ public static class RequiredPermissionDetector
         DatabaseOperation operation,
         Microsoft.Dynamics.Nav.CodeAnalysis.Text.Location location,
         bool includeSystemTables,
-        List<RequiredPermission> alreadyCollected,
-        List<RequiredPermission> staged)
+        List<RequiredPermission> results)
     {
         if (!IsPermissionRelevant(table, includeSystemTables)
-            || Contains(alreadyCollected, table, operation)
-            || Contains(staged, table, operation))
+            || Contains(results, table, operation))
             return;
 
-        staged.Add(new RequiredPermission(table, table, operation, location));
+        results.Add(new RequiredPermission(table, table, operation, location));
     }
 
     private static bool Contains(List<RequiredPermission> permissions, ITableTypeSymbol table, DatabaseOperation operation)
