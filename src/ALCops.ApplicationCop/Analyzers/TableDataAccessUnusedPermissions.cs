@@ -214,8 +214,7 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 }
             }
 
-            // Built on the first DataTransfer executor in this body and reused for the rest:
-            // one flow-sensitive walk per body, held in a callback-local (no shared state).
+            // One walk per body, built on the first executor, callback-local (no shared state).
             DataTransferTableResolver? dataTransferResolver = null;
 
             // Walk method body for DB invocations (handles both with and without parentheses)
@@ -224,9 +223,8 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 if (descendant is InvocationExpressionSyntax
                     || (descendant is MemberAccessExpressionSyntax ma && ma.Parent is not InvocationExpressionSyntax))
                 {
-                    // DataTransfer executors take their tables from SetTables arguments instead of
-                    // the receiver, so they resolve through their own path. An unresolvable one
-                    // triggers the same whole-object bailout as a RecordRef access.
+                    // Executors resolve through their own path; an unresolvable one triggers
+                    // the same whole-object bailout as a RecordRef access.
                     if (descendant.TryGetMethodCall(out var callName, out var callReceiver, out _)
                         && callName is not null
                         && DataTransferOperations.IsExecutor(callName)

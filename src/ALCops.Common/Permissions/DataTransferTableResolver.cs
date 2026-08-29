@@ -13,43 +13,23 @@ using TableTransfer = (Microsoft.Dynamics.Nav.CodeAnalysis.ITableTypeSymbol Sour
 namespace ALCops.Common.Permissions;
 
 /// <summary>
-/// Resolves which tables a <c>DataTransfer</c> executor (<c>CopyFields</c>/<c>CopyRows</c>)
-/// actually transfers, by walking the enclosing method or trigger body in flow order and
-/// pairing every executor with the <c>SetTables(Database::X, Database::Y)</c> calls that
-/// reach it.
+/// Resolves the tables a <c>DataTransfer</c> executor (<c>CopyFields</c>/<c>CopyRows</c>)
+/// transfers, by walking the enclosing method or trigger body in flow order.
 /// <para>
-/// State is kept per <c>DataTransfer</c> variable (by the name the receiver resolves to).
-/// A <c>SetTables</c> <em>replaces</em> the pending pair for that variable on the current path,
-/// because AL code commonly reconfigures one transfer variable for several sequential copies.
-/// An executor consumes the pending pairs without clearing them, so
-/// <c>SetTables; CopyRows; CopyFields</c> attributes both executors to the same pair.
-/// Branches fork and merge like PC0030's <c>SetLoadFieldsWalker</c>; a merge is the
-/// <em>union</em> of the branches' pending pairs, and <c>break</c> contributes the state at
-/// the jump to the states after the loop.
+/// Per <c>DataTransfer</c> variable: a <c>SetTables</c> replaces the pending pair on the path,
+/// an executor consumes the pending pairs without clearing them, and branches merge as a union
+/// (<c>break</c> included). Loop bodies are visited twice so a <c>SetTables</c> written after an
+/// executor still reaches it through the back edge.
 /// </para>
 /// <para>
-/// Loop bodies are visited twice: a <c>SetTables</c> written after an executor inside the body
-/// reaches that executor through the loop's back edge, and the second pass (started from the
-/// merge of the first) lets the executor see it. Per variable the transfer function is
-/// "constant, or pass the incoming state through", so the union lattice converges in that one
-/// extra pass for a single loop; deeply nested loops could in principle need more.
-/// </para>
-/// <para>
-/// One accepted imprecision remains: <c>exit</c> does not terminate a path, so state from
-/// before an early exit still flows forward and an executor can be attributed a table the
-/// path never reaches. That over-attribution is conservative for AC0032 (a permission can only
-/// look used, never unused), but it can make AC0031 ask for a permission the code does not
-/// need.
+/// Accepted imprecision: <c>exit</c> does not terminate a path, so state from before an early
+/// exit still flows forward. That over-attributes, which is conservative for AC0032 but can make
+/// AC0031 ask for a permission the code does not need.
 /// </para>
 /// </summary>
 public sealed class DataTransferTableResolver
 {
-    /// <summary>
-    /// The single encoding of "unresolvable": a default (uninitialized) <see cref="ImmutableArray{T}"/>.
-    /// Every resolved state is built with <c>Create</c>/<c>ToImmutable</c> and is therefore never
-    /// default, so <see cref="ImmutableArray{T}.IsDefault"/> distinguishes the two without a
-    /// separate flag, sentinel instance or nullable wrapper.
-    /// </summary>
+    /// <summary>The one encoding of "unresolvable"; a resolved state is never default.</summary>
     private static ImmutableArray<TableTransfer> Unresolvable => default;
 
     private readonly Dictionary<int, ImmutableArray<TableTransfer>> _executorResults;
@@ -57,10 +37,7 @@ public sealed class DataTransferTableResolver
     private DataTransferTableResolver(Dictionary<int, ImmutableArray<TableTransfer>> executorResults) =>
         _executorResults = executorResults;
 
-    /// <summary>
-    /// Walks a method or trigger body once and records the tables reaching every
-    /// <c>DataTransfer</c> executor in it. Returns null when the body has no operation tree.
-    /// </summary>
+    /// <summary>Walks a method or trigger body once; null when it has no operation tree.</summary>
     public static DataTransferTableResolver? Create(
         SyntaxNode body,
         SemanticModel semanticModel,
@@ -79,10 +56,7 @@ public sealed class DataTransferTableResolver
         return new DataTransferTableResolver(walker.ExecutorResults);
     }
 
-    /// <summary>
-    /// Convenience overload for callers that hold only the executor: walks the method or
-    /// trigger body the executor sits in. Returns null when the executor is not inside one.
-    /// </summary>
+    /// <summary>Walks the body the executor sits in; null when it is not inside one.</summary>
     public static DataTransferTableResolver? CreateForEnclosingBody(
         IInvocationExpression executor,
         SemanticModel semanticModel,
@@ -95,14 +69,11 @@ public sealed class DataTransferTableResolver
         return body is null ? null : Create(body, semanticModel, cancellationToken);
     }
 
-    /// <summary>
-    /// Gets the <c>(source, destination)</c> pairs the executor transfers.
-    /// </summary>
+    /// <summary>Gets the <c>(source, destination)</c> pairs the executor transfers.</summary>
     /// <returns>
-    /// <c>false</c> when the tables are unresolvable: the executor was not reached by the walk,
-    /// its receiver is neither a plain identifier nor <c>this.&lt;variable&gt;</c>, no
-    /// <c>SetTables</c> reaches it on any path, or a <c>SetTables</c> that reaches it does not
-    /// name both tables with a <c>Database::X</c> literal.
+    /// <c>false</c> when unresolvable: the executor was not reached by the walk, its receiver is
+    /// neither a plain identifier nor <c>this.&lt;variable&gt;</c>, no <c>SetTables</c> reaches
+    /// it, or one that does names a table with something other than a <c>Database::X</c> literal.
     /// </returns>
     public bool TryGetTables(IInvocationExpression executor, out ImmutableArray<TableTransfer> pairs)
     {
@@ -123,16 +94,11 @@ public sealed class DataTransferTableResolver
         private readonly SemanticModel _semanticModel;
         private readonly CancellationToken _cancellationToken;
 
-        /// <summary>
-        /// Pending <c>SetTables</c> state per variable name on the current path. A missing key
-        /// means nothing is pending; a default value means unresolvable.
-        /// </summary>
+        /// <summary>Pending pairs per variable; key missing = none, default value = unresolvable.</summary>
         private readonly Dictionary<string, ImmutableArray<TableTransfer>> _state =
             new(SemanticFacts.NameEqualityComparer);
 
-        /// <summary>
-        /// States captured at <c>break</c> statements, one list per enclosing loop body pass.
-        /// </summary>
+        /// <summary>States captured at <c>break</c>, one list per loop body pass in progress.</summary>
         private readonly Stack<List<Dictionary<string, ImmutableArray<TableTransfer>>>> _breakStates = new();
 
         public Walker(SemanticModel semanticModel, CancellationToken cancellationToken)
@@ -141,10 +107,7 @@ public sealed class DataTransferTableResolver
             _cancellationToken = cancellationToken;
         }
 
-        /// <summary>
-        /// Result per executor, keyed by the start of its syntax span; a default value means
-        /// unresolvable.
-        /// </summary>
+        /// <summary>Keyed by the executor's syntax span start; a default value is unresolvable.</summary>
         public Dictionary<int, ImmutableArray<TableTransfer>> ExecutorResults { get; } = [];
 
         public override void VisitInvocationExpression(IInvocationExpression operation)
@@ -165,10 +128,7 @@ public sealed class DataTransferTableResolver
             base.VisitInvocationExpression(operation);
         }
 
-        /// <summary>
-        /// A <c>SetTables</c> replaces whatever was pending for that variable on this path
-        /// (strict reset), so each executor sees only the configuration that reaches it.
-        /// </summary>
+        /// <summary>Strict reset: replaces whatever was pending for that variable on this path.</summary>
         private void RecordSetTables(IInvocationExpression operation)
         {
             var receiverName = GetReceiverIdentifierName(operation.Syntax);
@@ -183,11 +143,7 @@ public sealed class DataTransferTableResolver
                     : Unresolvable;
         }
 
-        /// <summary>
-        /// An executor consumes the pending pairs but does not clear them: a second executor
-        /// after the same <c>SetTables</c> transfers the same tables again. A later pass over a
-        /// loop body overwrites the result with the state that also carries the loop's back edge.
-        /// </summary>
+        /// <summary>Consumes the pending pairs without clearing them; a later loop pass overwrites.</summary>
         private void RecordExecutor(IInvocationExpression operation)
         {
             var receiverName = GetReceiverIdentifierName(operation.Syntax);
@@ -251,8 +207,6 @@ public sealed class DataTransferTableResolver
         {
             if (operation.LoopKind == EnumProvider.LoopKind.Repeat)
             {
-                // repeat-until: the body always executes at least once, so the state from
-                // before the loop is not on its own a possible state after it.
                 VisitLoopBody(operation.Body, bodyAlwaysExecutes: true);
                 Visit(operation.Condition);
             }
@@ -278,8 +232,7 @@ public sealed class DataTransferTableResolver
 
         public override void VisitBreakStatement(IBreakStatement operation)
         {
-            // `break` jumps to just after the loop, so the state here is one of the states the
-            // code after the loop can see. Outside a loop there is nothing to contribute to.
+            // The state at the jump is one the code after the loop sees; ignored outside a loop.
             if (_breakStates.Count > 0)
                 _breakStates.Peek().Add(SaveState());
 
@@ -287,11 +240,9 @@ public sealed class DataTransferTableResolver
         }
 
         /// <summary>
-        /// Visits a loop body twice, so that a <c>SetTables</c> written after an executor inside
-        /// the body still reaches that executor through the loop's back edge. The merge is a
-        /// union and every per-variable transfer function is either a constant or a
-        /// pass-through, so one extra pass is the fixed point for a single loop; deeply nested
-        /// loops could in principle need more.
+        /// Two passes: the second starts at the loop head, so a <c>SetTables</c> written after an
+        /// executor still reaches it through the back edge. Constant-or-passthrough transfer
+        /// functions over a union lattice make that the fixed point for a single loop.
         /// </summary>
         private void VisitLoopBody(IOperation loopBody, bool bodyAlwaysExecutes)
         {
@@ -300,16 +251,13 @@ public sealed class DataTransferTableResolver
             var firstPassBreaks = VisitLoopBodyOnce(loopBody);
             var afterFirstPass = SaveState();
 
-            // The loop head, entered either from before the loop or from the end of the
-            // previous pass. Starting the second pass here is what lets an executor inside the
-            // body see the SetTables calls written after it, which reach it via the back edge.
+            // Loop head: entered from before the loop, or from the end of the previous pass.
             Merge([preLoopState, afterFirstPass]);
 
             var secondPassBreaks = VisitLoopBodyOnce(loopBody);
             var afterSecondPass = SaveState();
 
-            // Leaving the loop: falling out of the body after either pass, or any `break`.
-            // A loop whose body may not run at all can also be left with the pre-loop state.
+            // Leaving: falling out of either pass, any break, or never entering the body.
             var exitStates = new List<Dictionary<string, ImmutableArray<TableTransfer>>>(firstPassBreaks);
             exitStates.AddRange(secondPassBreaks);
             exitStates.Add(afterFirstPass);
@@ -320,10 +268,7 @@ public sealed class DataTransferTableResolver
             Merge(exitStates);
         }
 
-        /// <summary>
-        /// Visits the body once and returns the states captured at the <c>break</c> statements
-        /// that belong to this loop (a stack, so nested loops keep theirs apart).
-        /// </summary>
+        /// <summary>Returns this pass's <c>break</c> states; the stack keeps nested loops apart.</summary>
         private List<Dictionary<string, ImmutableArray<TableTransfer>>> VisitLoopBodyOnce(IOperation loopBody)
         {
             _breakStates.Push([]);
@@ -340,17 +285,13 @@ public sealed class DataTransferTableResolver
 
         private void RestoreState(Dictionary<string, ImmutableArray<TableTransfer>> saved)
         {
-            // Cleared first: unlike PC0030 the keys are discovered during the walk instead of
-            // being pre-seeded, so a branch can introduce keys the saved state never had.
+            // Cleared first: keys appear during the walk, so a branch can add keys saved lacks.
             _state.Clear();
             foreach (var kvp in saved)
                 _state[kvp.Key] = kvp.Value;
         }
 
-        /// <summary>
-        /// Merges the branch states: a variable is unresolvable when any branch left it
-        /// unresolvable, and its pairs are the union over all branches (deduped by table id).
-        /// </summary>
+        /// <summary>Union of the branch pairs per variable; unresolvable if any branch is.</summary>
         private void Merge(List<Dictionary<string, ImmutableArray<TableTransfer>>> branchStates)
         {
             var merged = new Dictionary<string, ImmutableArray<TableTransfer>>(SemanticFacts.NameEqualityComparer);
@@ -376,9 +317,7 @@ public sealed class DataTransferTableResolver
 
             foreach (var branchState in branchStates)
             {
-                // A branch that never touched this variable contributes an empty state; that is
-                // the correct reading here, because a state entry only exists once a SetTables
-                // on that path created it.
+                // A branch without the key has nothing pending, not "unchanged".
                 if (!branchState.TryGetValue(key, out var pending))
                     continue;
 
@@ -398,12 +337,9 @@ public sealed class DataTransferTableResolver
         #endregion
 
         /// <summary>
-        /// Names the variable a member-access call is made on, from either syntax form: with
-        /// parentheses (<c>dt.CopyFields()</c>) or without (<c>dt.CopyFields;</c>), and whether the
-        /// variable is addressed bare (<c>dt</c>) or through the self-reference (<c>this.dt</c>).
-        /// Both forms yield the bare variable name, so a <c>SetTables</c> written one way still
-        /// matches an executor written the other. Returns null for any other receiver, which puts
-        /// the DataTransfer variable out of reach of the same-body <c>SetTables</c> lookup.
+        /// The variable a call is made on, bare (<c>dt.CopyFields()</c>) or self-qualified
+        /// (<c>this.dt.CopyFields</c>); both yield the bare name, so a <c>SetTables</c> written
+        /// one way matches an executor written the other. Null for any other receiver.
         /// </summary>
         private string? GetReceiverIdentifierName(SyntaxNode syntax)
         {
@@ -413,11 +349,9 @@ public sealed class DataTransferTableResolver
             if (receiver is IdentifierNameSyntax identifier)
                 return identifier.Identifier.ValueText?.UnquoteIdentifier();
 
-            // `this.MyDataTransfer.CopyFields()`: the variable sits one level below the receiver.
-            // The self-reference is recognized through the operation tree, NOT ThisExpressionSyntax
-            // or SyntaxKind.ThisExpression: both are absent from the netstandard2.1 compile floor
-            // (see .claude/rules/netstandard21-compatibility.md). The OperationKind member resolves
-            // to default on SDKs without it, where no `this` code can exist anyway.
+            // Self-reference via the operation tree, never ThisExpressionSyntax /
+            // SyntaxKind.ThisExpression: both are absent at the netstandard2.1 compile floor
+            // (.claude/rules/netstandard21-compatibility.md).
             var thisReferenceKind = EnumProvider.OperationKind.ThisReference;
             if (thisReferenceKind != default
                 && receiver is MemberAccessExpressionSyntax qualified
@@ -427,10 +361,7 @@ public sealed class DataTransferTableResolver
             return null;
         }
 
-        /// <summary>
-        /// Resolves a <c>SetTables</c> argument to the table it names. Only object-access literals
-        /// (<c>Database::"My Table"</c>) resolve; integer variables and expressions do not.
-        /// </summary>
+        /// <summary>Only <c>Database::"X"</c> object-access literals resolve.</summary>
         private static ITableTypeSymbol? ResolveTableArgument(IOperation argument) =>
             argument.UnwrapConversions().GetSymbolSafe() as ITableTypeSymbol;
     }

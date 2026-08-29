@@ -56,10 +56,9 @@ public sealed class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
     }
 
     /// <summary>
-    /// A <c>DataTransfer</c> executor (<c>CopyFields</c>/<c>CopyRows</c>) reads and writes the
-    /// tables named by the <c>SetTables</c> call that reaches it, not the receiver, so it never
-    /// resolves through <see cref="RequiredPermissionDetector.TryGetFromInvocation"/>. When those
-    /// tables cannot be resolved the rule stays silent rather than guessing which table is accessed.
+    /// A <c>DataTransfer</c> executor takes its tables from <c>SetTables</c>, not the receiver,
+    /// so it never resolves through <see cref="RequiredPermissionDetector.TryGetFromInvocation"/>.
+    /// Silent when they are unresolvable, rather than guessing a table.
     /// </summary>
     private static void AnalyzeDataTransferInvocation(
         OperationAnalysisContext ctx,
