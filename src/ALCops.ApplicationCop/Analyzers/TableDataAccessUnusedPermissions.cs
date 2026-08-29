@@ -214,15 +214,17 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 }
             }
 
+            // One walk per body, built on the first executor, callback-local (no shared state).
+            DataTransferTableResolver? dataTransferResolver = null;
+
             // Walk method body for DB invocations (handles both with and without parentheses)
             foreach (var descendant in body.DescendantNodes())
             {
                 if (descendant is InvocationExpressionSyntax
                     || (descendant is MemberAccessExpressionSyntax ma && ma.Parent is not InvocationExpressionSyntax))
                 {
-                    // DataTransfer executors take their tables from SetTables arguments instead of
-                    // the receiver, so they resolve through their own path. An unresolvable one
-                    // triggers the same whole-object bailout as a RecordRef access.
+                    // Executors resolve through their own path; an unresolvable one triggers
+                    // the same whole-object bailout as a RecordRef access.
                     if (descendant.TryGetMethodCall(out var callName, out var callReceiver, out _)
                         && callName is not null
                         && DataTransferOperations.IsExecutor(callName)
@@ -230,9 +232,14 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                             callReceiver, localDataTransferNames, objectScopeDataTransferNames,
                             localRecordVarMap, localRecordRefNames, ctx))
                     {
-                        if (ctx.SemanticModel.GetOperation(descendant, ctx.CancellationToken) is not IInvocationExpression dataTransferOperation
+                        dataTransferResolver ??= DataTransferTableResolver.Create(
+                            body, ctx.SemanticModel, ctx.CancellationToken);
+
+                        if (dataTransferResolver is null
+                            || ctx.SemanticModel.GetOperation(descendant, ctx.CancellationToken) is not IInvocationExpression dataTransferOperation
                             || !RequiredPermissionDetector.TryGetFromDataTransfer(
-                                dataTransferOperation, ctx.SemanticModel, includeSystemTables: true, requiredPermissions))
+                                dataTransferOperation, ctx.SemanticModel, includeSystemTables: true, requiredPermissions,
+                                ctx.CancellationToken, dataTransferResolver))
                             return true;
 
                         continue;

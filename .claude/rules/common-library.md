@@ -7,7 +7,7 @@ paths:
 
 ## Project Role
 
-ALCops.Common is the shared foundation library referenced by **all 13 projects** in the ALCops solution: 6 cop analyzers, their 6 test projects, and the aggregator project (ALCops.Analyzers). Any change here affects every analyzer. Treat backward compatibility as a hard requirement.
+ALCops.Common is the shared foundation library referenced by **all 13 projects** in the ALCops solution: 6 cop analyzers, their 6 test projects, and the aggregator project (ALCops.Analyzers). Any change here affects every analyzer; update all callers in the same change.
 
 Target frameworks, LangVersion, nullable enforcement and conditional package references are defined in the csproj (the csproj is the source of truth). Always use `#if NETSTANDARD2_1` / `#if NET8_0_OR_GREATER` guards when APIs differ between target frameworks (e.g. `System.Text.Json` for net8.0, `Newtonsoft.Json` for netstandard2.1). See `.claude/rules/netstandard21-compatibility.md`.
 
@@ -18,7 +18,7 @@ Target frameworks, LangVersion, nullable enforcement and conditional package ref
 - `Reflection/` — Runtime access to internal/version-dependent SDK types; the most sensitive area of Common. `EnumProvider` wraps 60+ Nav.CodeAnalysis enums — never reference Nav.CodeAnalysis enum values directly, always go through `EnumProvider`.
 - `Settings/` — Per-project analyzer configuration: `ALCopsSettings` (POCO with defaults) and `ALCopsSettingsProvider` (hierarchical `alcops.json` lookup, see Settings System). Schema parity rules: `.claude/rules/settings-schema.md`.
 - `Diagnostics/` — Analyzer exception harness (`XX0000`); see `.claude/rules/analyzer-exception-harness.md`.
-- `Permissions/` — Shared permission model for AC0031 (missing) and AC0032 (unused): `DatabaseOperation`, `RequiredPermissionDetector`, `PermissionResolver`, and the deliberately separate `DataTransferOperations`; plus the AZ AL Dev Tools-compatible ordering used by FC0004 and the AC0031 fix (`PermissionEntryComparer`, `NaturalStringComparer`, `PermissionRegionGroup`, see `.claude/rules/diagnostics/fc0004-permission-declaration-order.md`). Why the two method maps stay disjoint: the `DataTransferOperations.cs` XML doc; what an *unresolvable* `TryGetFromDataTransfer` obliges each cop to do: `.claude/rules/diagnostics/ac0032-table-data-access-unused-permissions.md`.
+- `Permissions/` — Shared permission model for AC0031 (missing) and AC0032 (unused): `DatabaseOperation`, `RequiredPermissionDetector`, `PermissionResolver`, the deliberately separate `DataTransferOperations`, and `DataTransferTableResolver` (the flow-sensitive `SetTables` ↔ executor pairing both cops rely on; build it once per body and pass it in when a caller inspects several executors); plus the AZ AL Dev Tools-compatible ordering used by FC0004 and the AC0031 fix (`PermissionEntryComparer`, `NaturalStringComparer`, `PermissionRegionGroup`, see `.claude/rules/diagnostics/fc0004-permission-declaration-order.md`). Why the two method maps stay disjoint: the `DataTransferOperations.cs` XML doc; what an *unresolvable* `TryGetFromDataTransfer` obliges each cop to do: `.claude/rules/diagnostics/ac0032-table-data-access-unused-permissions.md`.
 - `Constants.cs` — `PermissionNodeXPath` (XPath for permission set XML) plus `Comment`, `Locked`, `MaxLength` label property name strings matching the SDK's `LabelPropertyHelper`.
 - `RecordMethodClassification.cs` — see `.claude/rules/record-method-classification.md`.
 
@@ -119,9 +119,10 @@ Settings are cached per directory path for the analyzer session lifetime. There 
    - Add a regression fixture that injects `{"MyGroup": null}` and asserts the analyzer falls back to defaults without NRE (see `StatementBlockSpacingNull` test case in `StatementBlocksSeparatedByBlankLine.cs` for a template).
 5. Document the new setting in the project README and update `alcops.schema.json` (`.claude/rules/settings-schema.md`).
 
-### Backward Compatibility
-- Do not remove or rename public methods, properties, or classes.
-- Do not change method signatures. Add new overloads instead.
+### Changing the Public API
+
+Common is a **private dependency**: it is compiled into every cop package and ALCops does not support third parties extending or consuming it. Public methods, properties and classes may therefore be removed, renamed, or have their signatures changed freely, as long as every in-repo caller is updated in the same change - no compatibility overloads, no deprecation cycle. Revisit this if ALCops.Common ever ships as a package external consumers depend on.
+
 - Do not change default values in `ALCopsSettings` without discussion (users may depend on them).
 - When adding reflection for a new SDK version, keep the fallback path for older versions.
 
