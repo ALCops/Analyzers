@@ -56,10 +56,9 @@ public sealed class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
     }
 
     /// <summary>
-    /// A <c>DataTransfer</c> executor (<c>CopyFields</c>/<c>CopyRows</c>) reads and writes the
-    /// tables named by <c>SetTables</c>, not the receiver, so it never resolves through
-    /// <see cref="RequiredPermissionDetector.TryGetFromInvocation"/>. When those tables cannot
-    /// be resolved the rule stays silent rather than guessing which table is accessed.
+    /// A <c>DataTransfer</c> executor takes its tables from <c>SetTables</c>, not the receiver,
+    /// so it never resolves through <see cref="RequiredPermissionDetector.TryGetFromInvocation"/>.
+    /// Silent when they are unresolvable, rather than guessing a table.
     /// </summary>
     private static void AnalyzeDataTransferInvocation(
         OperationAnalysisContext ctx,
@@ -74,7 +73,8 @@ public sealed class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         var semanticModel = ctx.Compilation.GetSemanticModel(invocation.Syntax.SyntaxTree);
         var required = new List<RequiredPermission>();
 
-        if (!RequiredPermissionDetector.TryGetFromDataTransfer(invocation, semanticModel, includeSystemTables: false, required))
+        if (!RequiredPermissionDetector.TryGetFromDataTransfer(
+                invocation, semanticModel, includeSystemTables: false, required, ctx.CancellationToken))
             return;
 
         foreach (var permission in required)
