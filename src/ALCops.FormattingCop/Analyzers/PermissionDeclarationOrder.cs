@@ -43,10 +43,10 @@ public sealed class PermissionDeclarationOrder : DiagnosticAnalyzer
 
             // Mirrors AZ AL Dev Tools: sort within #region groups; leave lists with other
             // directives or unbalanced regions alone.
-            if (!PermissionSyntaxHelper.TryBuildRegionTree(propertySyntax, out var root, out _))
+            if (!PermissionSyntaxHelper.TryBuildRegionTree(propertySyntax, out var root))
                 continue;
 
-            if (!PermissionSyntaxHelper.NeedsReordering(permissionsSyntax, root))
+            if (!PermissionSyntaxHelper.NeedsReordering(root))
                 continue;
 
             // Report on the PropertySyntax so the CodeFix can find it

@@ -61,6 +61,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("CaseInsensitiveSorted")]
         [TestCase("QualifiedNamesSorted")]
         [TestCase("SpacesIgnoredInCompare")]
+        [TestCase("QuotedNamespaceSegment")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
@@ -81,6 +82,8 @@ namespace ALCops.FormattingCop.Test
         [TestCase("ReorderNaturalNumeric")]
         [TestCase("PreserveFirstEntryOnOwnLine")]
         [TestCase("PreserveCommentSlots")]
+        [TestCase("SingleLineInsideRegion")]
+        [TestCase("EmptyRegionStaysInPlace")]
         public async Task HasFix(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))

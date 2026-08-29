@@ -50,11 +50,12 @@ public sealed class PermissionEntryComparer : IComparer<PermissionSyntax>
     }
 
     /// <summary>
-    /// Gets the name key AZ sorts on: the object reference text (without surrounding trivia); when it
-    /// starts with a quote the outer quotes are removed and doubled quotes unescaped, otherwise the
-    /// text is used verbatim (so <c>MyNs."My Table"</c> keeps namespace and quotes, and an object id
-    /// stays numeric text). A wildcard entry (<c>tabledata * = RIMD</c>) has no reference and yields
-    /// an empty key, which sorts last.
+    /// Gets the name key AZ sorts on: the object reference text (without surrounding trivia). A fully
+    /// quoted reference loses its outer quotes and has doubled quotes unescaped; any other text is used
+    /// verbatim, so <c>MyNs."My Table"</c> keeps namespace and quotes and the quote character takes part
+    /// in the comparison. A wildcard entry (<c>tabledata * = RIMD</c>) has no reference and yields an
+    /// empty key, which sorts last. (AZ also strips the leading quote of <c>"MyNs".Item</c>, leaving the
+    /// closing one in the middle of the key; that mangling is not reproduced.)
     /// </summary>
     public static string GetSortKey(PermissionSyntax permission)
     {
@@ -63,14 +64,20 @@ public sealed class PermissionEntryComparer : IComparer<PermissionSyntax>
             return string.Empty;
 
         var text = identifier.ToString().Trim();
-        if (text.Length == 0 || text[0] != '"')
+        if (text.Length < 2 || text[0] != '"' || text[text.Length - 1] != '"')
             return text;
 
-        text = text.Substring(1);
-        if (text.Length > 0 && text[text.Length - 1] == '"')
-            text = text.Substring(0, text.Length - 1);
+        return text.Substring(1, text.Length - 2).Replace("\"\"", "\"");
+    }
 
-        return text.Replace("\"\"", "\"");
+    /// <summary>
+    /// True when both entries belong to the same sort group: both table types, or the same priority.
+    /// </summary>
+    public static bool IsSameGroup(PermissionSyntax x, PermissionSyntax y)
+    {
+        int xPriority = GetTypePriority(x);
+        int yPriority = GetTypePriority(y);
+        return xPriority == yPriority || (IsTableType(xPriority) && IsTableType(yPriority));
     }
 
     public int Compare(PermissionSyntax? x, PermissionSyntax? y)
@@ -78,14 +85,20 @@ public sealed class PermissionEntryComparer : IComparer<PermissionSyntax>
         if (x is null || y is null)
             return x is null ? (y is null ? 0 : 1) : -1;
 
-        int xPriority = GetTypePriority(x);
-        int yPriority = GetTypePriority(y);
+        return Compare(GetTypePriority(x), GetSortKey(x), GetTypePriority(y), GetSortKey(y));
+    }
+
+    /// <summary>
+    /// Compares two entries by their precomputed priority and sort key (AZ's exact branch structure).
+    /// </summary>
+    public static int Compare(int xPriority, string xKey, int yPriority, string yKey)
+    {
         bool bothTableTypes = IsTableType(xPriority) && IsTableType(yPriority);
 
         if (!bothTableTypes && xPriority != yPriority)
             return xPriority - yPriority;
 
-        int nameResult = NaturalStringComparer.Instance.Compare(GetSortKey(x), GetSortKey(y));
+        int nameResult = NaturalStringComparer.Instance.Compare(xKey, yKey);
         if (!bothTableTypes || nameResult != 0)
             return nameResult;
 

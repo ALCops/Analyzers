@@ -108,6 +108,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("AddEntrySingleLine")]
         [TestCase("AddEntryAlphabetical")]
         [TestCase("AddEntryAlphabeticalFirst")]
+        [TestCase("AddEntryOtherTypesFirst")]
         [TestCase("AddEntryAppend")]
         [TestCase("AddNewPermissionsPropertyDottedName")]
         [TestCase("MergePermissionCharDottedName")]

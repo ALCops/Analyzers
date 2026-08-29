@@ -81,13 +81,15 @@ public sealed class PermissionDeclarationOrderCodeFixProvider : CodeFixProvider
         if (permissions.Count <= 1)
             return document;
 
-        if (!PermissionSyntaxHelper.TryBuildRegionTree(propertySyntax, out var regionRoot, out var hasDirectives))
+        if (!PermissionSyntaxHelper.TryBuildRegionTree(propertySyntax, out var regionRoot))
             return document;
 
         PropertySyntax newProperty;
-        if (PermissionSyntaxHelper.IsMultiLineFormat(permissionValue) || hasDirectives)
+        if (PermissionSyntaxHelper.IsMultiLineFormat(permissionValue) || regionRoot.ContainsDirectives)
         {
             // Keep the existing layout (indentation, comments, #region blocks); only the entries move.
+            // A single-line list wrapped in #region has no newline separator but must not be rebuilt
+            // (BuildMultiLinePermissionValue would drop the directives).
             newProperty = PermissionSyntaxHelper.ReorderPreservingLayout(propertySyntax, regionRoot);
         }
         else

@@ -169,7 +169,7 @@
     <value>The Permissions property entries are not sorted in the standard order (table/tabledata by name, then codeunit, page, query, report, xmlport).</value>
   </data>
   <data name="PermissionDeclarationOrderDescription" xml:space="preserve">
-    <value>Permission entries should follow the order produced by the AZ AL Dev Tools "Sort Permissions" command: table and tabledata entries first, interleaved by object name (a table entry precedes the tabledata entry of the same name), followed by codeunit, page, query, report and xmlport entries, each type sorted by object name. Names compare naturally (Item 2 before Item 10), case-insensitively and ignoring spaces. Entries inside #region blocks are sorted within their region. A consistent order improves readability and reduces merge conflicts.</value>
+    <value>Permission entries should follow the order produced by the AZ AL Dev Tools "Sort Permissions" command: table and tabledata entries first, interleaved by object name (a table entry precedes the tabledata entry of the same name), followed by codeunit, page, query, report and xmlport entries, each type sorted by object name. Names compare naturally (Item 2 before Item 10), case-insensitively and ignoring spaces. Entries inside #region blocks are sorted within their region; lists that contain other directives (#if, #pragma) or unbalanced #region directives are not checked. A consistent order improves readability and reduces merge conflicts.</value>
   </data>
   <data name="PermissionDeclarationOrderCodeAction" xml:space="preserve">
     <value>ALCops: Sort permission declarations</value>

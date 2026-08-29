@@ -272,12 +272,11 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         string rawTableName, char permissionChar)
     {
         var permissions = permissionValue.PermissionProperties;
-        var isSorted = PermissionSyntaxHelper.ArePermissionsSorted(permissions);
         var isMultiLine = PermissionSyntaxHelper.IsMultiLineFormat(permissionValue);
 
         var newEntry = PermissionSyntaxHelper.CreatePermissionSyntax(
             resolved.TableName, resolved.QualifyingNamespace, permissionChar.ToString());
-        var insertIndex = PermissionSyntaxHelper.FindInsertionIndex(permissions, newEntry, isSorted);
+        var insertIndex = PermissionSyntaxHelper.FindInsertionIndex(permissions, newEntry);
 
         SeparatedSyntaxList<PermissionSyntax> newPermissions;
         if (isMultiLine)

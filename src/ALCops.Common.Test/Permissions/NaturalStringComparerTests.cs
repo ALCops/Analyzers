@@ -39,6 +39,16 @@ public class NaturalStringComparerTests
         Assert.That(Compare("AA", "A B"), Is.LessThan(0));
     }
 
+    [Test]
+    public void Compare_IsTransitive_WhenSpacesSplitChunksDifferently()
+    {
+        // "x 1" vs "x1y" and "x 1" vs "x1z" compare equal chunk-wise; the tie-break must not
+        // make them equal while "x1y" < "x1z", or sorting would never converge.
+        Assert.That(Compare("x 1", "x1y"), Is.LessThan(0));
+        Assert.That(Compare("x 1", "x1z"), Is.LessThan(0));
+        Assert.That(Compare("x1y", "x1z"), Is.LessThan(0));
+    }
+
     [TestCase("alpha", "ALPHA")]
     [TestCase("Item 10", "item 10")]
     public void Compare_IsCaseInsensitive(string x, string y)
