@@ -7,7 +7,7 @@ paths:
 
 ## Project Role
 
-ALCops.Common is the shared foundation library referenced by **all 13 projects** in the ALCops solution: 6 cop analyzers, their 6 test projects, and the aggregator project (ALCops.Analyzers). Any change here affects every analyzer. Treat backward compatibility as a hard requirement.
+ALCops.Common is the shared foundation library referenced by **all 13 projects** in the ALCops solution: 6 cop analyzers, their 6 test projects, and the aggregator project (ALCops.Analyzers). Any change here affects every analyzer; update all callers in the same change.
 
 Target frameworks, LangVersion, nullable enforcement and conditional package references are defined in the csproj (the csproj is the source of truth). Always use `#if NETSTANDARD2_1` / `#if NET8_0_OR_GREATER` guards when APIs differ between target frameworks (e.g. `System.Text.Json` for net8.0, `Newtonsoft.Json` for netstandard2.1). See `.claude/rules/netstandard21-compatibility.md`.
 
@@ -119,9 +119,10 @@ Settings are cached per directory path for the analyzer session lifetime. There 
    - Add a regression fixture that injects `{"MyGroup": null}` and asserts the analyzer falls back to defaults without NRE (see `StatementBlockSpacingNull` test case in `StatementBlocksSeparatedByBlankLine.cs` for a template).
 5. Document the new setting in the project README and update `alcops.schema.json` (`.claude/rules/settings-schema.md`).
 
-### Backward Compatibility
-- Do not remove or rename public methods, properties, or classes.
-- Do not change method signatures. Add new overloads instead.
+### Changing the Public API
+
+Common is a **private dependency**: it is compiled into every cop package and ALCops does not support third parties extending or consuming it. Public methods, properties and classes may therefore be removed, renamed, or have their signatures changed freely, as long as every in-repo caller is updated in the same change - no compatibility overloads, no deprecation cycle. Revisit this if ALCops.Common ever ships as a package external consumers depend on.
+
 - Do not change default values in `ALCopsSettings` without discussion (users may depend on them).
 - When adding reflection for a new SDK version, keep the fallback path for older versions.
 

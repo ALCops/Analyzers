@@ -54,46 +54,17 @@ public static class RequiredPermissionDetector
     }
 
     /// <summary>
-    /// Collects the permissions required by a <c>DataTransfer</c> executor
-    /// (<c>CopyFields</c> / <c>CopyRows</c>). Equivalent to the overload taking a
-    /// <see cref="CancellationToken"/>, which callers should prefer.
+    /// Collects into <paramref name="results"/> the permissions a <c>DataTransfer</c> executor
+    /// (<c>CopyFields</c> / <c>CopyRows</c>) requires. The tables are not on the receiver: they
+    /// come from the <c>SetTables</c> calls that reach the executor in flow order, resolved by
+    /// <see cref="DataTransferTableResolver"/> - pass a <paramref name="resolver"/> already built
+    /// for the enclosing body when inspecting several executors in it.
+    /// For <paramref name="includeSystemTables"/> see <see cref="TryGetFromInvocation"/>.
     /// </summary>
-    public static bool TryGetFromDataTransfer(
-        IInvocationExpression executor,
-        SemanticModel semanticModel,
-        bool includeSystemTables,
-        List<RequiredPermission> results) =>
-        TryGetFromDataTransfer(executor, semanticModel, includeSystemTables, results, CancellationToken.None);
-
-    /// <summary>
-    /// Collects the permissions required by a <c>DataTransfer</c> executor
-    /// (<c>CopyFields</c> / <c>CopyRows</c>).
-    /// <para>
-    /// The tables are not on the receiver but come from the <c>SetTables(Database::X, Database::Y)</c>
-    /// call on the same variable that reaches the executor in flow order, within the same method
-    /// or trigger body: a later <c>SetTables</c> replaces an earlier one, so the sequential
-    /// "configure, copy, reconfigure, copy" pattern attributes each executor only to its own
-    /// pair. When branches configure the variable differently the merge is the union of their
-    /// pairs, which keeps the result conservative. See <see cref="DataTransferTableResolver"/>.
-    /// </para>
-    /// </summary>
-    /// <param name="executor">The <c>CopyFields</c>/<c>CopyRows</c> invocation.</param>
-    /// <param name="semanticModel">Semantic model for the executor's syntax tree.</param>
-    /// <param name="includeSystemTables">See <see cref="TryGetFromInvocation"/>.</param>
-    /// <param name="results">Receives the required permissions; only written when this returns true.</param>
-    /// <param name="cancellationToken">Cancellation token for the body walk.</param>
-    /// <param name="resolver">
-    /// A resolver already built for the enclosing body, so callers that inspect several
-    /// executors in one body walk it only once. Built on demand when null.
-    /// </param>
     /// <returns>
-    /// <c>false</c> when the invocation is a <c>DataTransfer</c> executor whose tables cannot be
-    /// resolved: no <c>SetTables</c> reaches it on any path, a <c>SetTables</c> that reaches it
-    /// names a table with something other than a <c>Database::X</c> literal, or the receiver is
-    /// neither a plain identifier nor <c>this.&lt;variable&gt;</c>. Callers must then treat the
-    /// access as targeting an unknown table.
-    /// <c>true</c> when the tables were resolved, and also when the invocation is not a
-    /// <c>DataTransfer</c> executor at all (no results are added in that case).
+    /// <c>false</c> when the executor's tables are unresolvable; callers must then treat the
+    /// access as targeting an unknown table. <c>true</c> when they resolved, and also when the
+    /// invocation is not a <c>DataTransfer</c> executor at all (nothing is added then).
     /// </returns>
     public static bool TryGetFromDataTransfer(
         IInvocationExpression executor,
