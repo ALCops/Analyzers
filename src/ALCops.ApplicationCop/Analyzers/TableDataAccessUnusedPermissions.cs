@@ -214,6 +214,10 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 }
             }
 
+            // Built on the first DataTransfer executor in this body and reused for the rest:
+            // one flow-sensitive walk per body, held in a callback-local (no shared state).
+            DataTransferTableResolver? dataTransferResolver = null;
+
             // Walk method body for DB invocations (handles both with and without parentheses)
             foreach (var descendant in body.DescendantNodes())
             {
@@ -230,9 +234,14 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                             callReceiver, localDataTransferNames, objectScopeDataTransferNames,
                             localRecordVarMap, localRecordRefNames, ctx))
                     {
-                        if (ctx.SemanticModel.GetOperation(descendant, ctx.CancellationToken) is not IInvocationExpression dataTransferOperation
+                        dataTransferResolver ??= DataTransferTableResolver.Create(
+                            body, ctx.SemanticModel, ctx.CancellationToken);
+
+                        if (dataTransferResolver is null
+                            || ctx.SemanticModel.GetOperation(descendant, ctx.CancellationToken) is not IInvocationExpression dataTransferOperation
                             || !RequiredPermissionDetector.TryGetFromDataTransfer(
-                                dataTransferOperation, ctx.SemanticModel, includeSystemTables: true, requiredPermissions))
+                                dataTransferOperation, ctx.SemanticModel, includeSystemTables: true, requiredPermissions,
+                                ctx.CancellationToken, dataTransferResolver))
                             return true;
 
                         continue;

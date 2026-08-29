@@ -47,6 +47,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferWithoutParenthesesUnrelatedUnused")]
         [TestCase("DataTransferMultipleSetTablesUnrelatedUnused")]
         [TestCase("DataTransferThisKeywordPartialUnused")]
+        [TestCase("DataTransferSequentialSetTablesPartialUnused")]
+        [TestCase("DataTransferSequentialSetTablesFirstGroupPartialUnused")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -108,6 +110,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferWithoutParentheses")]
         [TestCase("DataTransferUnresolvableSetTables")]
         [TestCase("DataTransferSetTablesInOtherProcedure")]
+        [TestCase("DataTransferSequentialSetTables")]
+        [TestCase("DataTransferCopyRowsAndCopyFieldsAfterOneSetTables")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

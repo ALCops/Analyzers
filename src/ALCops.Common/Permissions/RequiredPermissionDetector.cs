@@ -55,25 +55,43 @@ public static class RequiredPermissionDetector
 
     /// <summary>
     /// Collects the permissions required by a <c>DataTransfer</c> executor
+    /// (<c>CopyFields</c> / <c>CopyRows</c>). Equivalent to the overload taking a
+    /// <see cref="CancellationToken"/>, which callers should prefer.
+    /// </summary>
+    public static bool TryGetFromDataTransfer(
+        IInvocationExpression executor,
+        SemanticModel semanticModel,
+        bool includeSystemTables,
+        List<RequiredPermission> results) =>
+        TryGetFromDataTransfer(executor, semanticModel, includeSystemTables, results, CancellationToken.None);
+
+    /// <summary>
+    /// Collects the permissions required by a <c>DataTransfer</c> executor
     /// (<c>CopyFields</c> / <c>CopyRows</c>).
     /// <para>
     /// The tables are not on the receiver but come from the <c>SetTables(Database::X, Database::Y)</c>
-    /// calls on the same variable, within the same method or trigger body. The executor takes the
-    /// union of those pairs (no order or branch analysis): AL allows a transfer to be reconfigured
-    /// before each execution, and picking one pair would be a guess. The union only holds when
-    /// <em>every</em> such <c>SetTables</c> resolves — a single unresolvable one makes the whole
-    /// executor unresolvable, because the pairs that did resolve no longer describe it fully.
+    /// call on the same variable that reaches the executor in flow order, within the same method
+    /// or trigger body: a later <c>SetTables</c> replaces an earlier one, so the sequential
+    /// "configure, copy, reconfigure, copy" pattern attributes each executor only to its own
+    /// pair. When branches configure the variable differently the merge is the union of their
+    /// pairs, which keeps the result conservative. See <see cref="DataTransferTableResolver"/>.
     /// </para>
     /// </summary>
     /// <param name="executor">The <c>CopyFields</c>/<c>CopyRows</c> invocation.</param>
     /// <param name="semanticModel">Semantic model for the executor's syntax tree.</param>
     /// <param name="includeSystemTables">See <see cref="TryGetFromInvocation"/>.</param>
     /// <param name="results">Receives the required permissions; only written when this returns true.</param>
+    /// <param name="cancellationToken">Cancellation token for the body walk.</param>
+    /// <param name="resolver">
+    /// A resolver already built for the enclosing body, so callers that inspect several
+    /// executors in one body walk it only once. Built on demand when null.
+    /// </param>
     /// <returns>
     /// <c>false</c> when the invocation is a <c>DataTransfer</c> executor whose tables cannot be
-    /// resolved (no <c>SetTables</c> in the body, any <c>SetTables</c> on the variable with a
-    /// non-literal table argument, or a receiver that is neither a plain identifier nor
-    /// <c>this.&lt;variable&gt;</c>). Callers must then treat the access as targeting an unknown table.
+    /// resolved: no <c>SetTables</c> reaches it on any path, a <c>SetTables</c> that reaches it
+    /// names a table with something other than a <c>Database::X</c> literal, or the receiver is
+    /// neither a plain identifier nor <c>this.&lt;variable&gt;</c>. Callers must then treat the
+    /// access as targeting an unknown table.
     /// <c>true</c> when the tables were resolved, and also when the invocation is not a
     /// <c>DataTransfer</c> executor at all (no results are added in that case).
     /// </returns>
@@ -81,91 +99,31 @@ public static class RequiredPermissionDetector
         IInvocationExpression executor,
         SemanticModel semanticModel,
         bool includeSystemTables,
-        List<RequiredPermission> results)
+        List<RequiredPermission> results,
+        CancellationToken cancellationToken,
+        DataTransferTableResolver? resolver = null)
     {
         if (executor.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod
             || executor.Instance?.Type?.NavTypeKind != EnumProvider.NavTypeKind.DataTransfer
             || !DataTransferOperations.TryGetOperations(executor.TargetMethod.Name, out var sourceOperation, out var destinationOperation))
             return true;
 
-        var receiverName = GetReceiverIdentifierName(executor.Syntax, semanticModel);
-        if (receiverName is null)
-            return false;
-
-        var body = executor.Syntax.FirstAncestorOrSelf<MethodOrTriggerDeclarationSyntax>()?.Body;
-        if (body is null)
+        resolver ??= DataTransferTableResolver.CreateForEnclosingBody(executor, semanticModel, cancellationToken);
+        if (resolver is null || !resolver.TryGetTables(executor, out var pairs))
             return false;
 
         var location = executor.Syntax.GetLocation();
         var staged = new List<RequiredPermission>();
-        bool resolvedAny = false;
 
-        foreach (var node in body.DescendantNodes())
+        foreach (var pair in pairs)
         {
-            if (node is not InvocationExpressionSyntax invocation
-                || !invocation.TryGetMethodCall(out var setTablesName, out _, out _)
-                || !SemanticFacts.IsSameName(setTablesName ?? string.Empty, DataTransferOperations.SetTablesMethodName)
-                || GetReceiverIdentifierName(invocation, semanticModel) is not { } setTablesReceiverName
-                || !string.Equals(setTablesReceiverName, receiverName, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            if (semanticModel.GetOperation(invocation) is not IInvocationExpression setTablesOperation
-                || setTablesOperation.Arguments.Length != 2)
-                return false;
-
-            var sourceTable = ResolveTableArgument(setTablesOperation.Arguments[0].Value);
-            var destinationTable = ResolveTableArgument(setTablesOperation.Arguments[1].Value);
-            if (sourceTable is null || destinationTable is null)
-                return false;
-
-            resolvedAny = true;
-            AddDataTransferPermission(sourceTable, sourceOperation, location, includeSystemTables, results, staged);
-            AddDataTransferPermission(destinationTable, destinationOperation, location, includeSystemTables, results, staged);
+            AddDataTransferPermission(pair.Source, sourceOperation, location, includeSystemTables, results, staged);
+            AddDataTransferPermission(pair.Destination, destinationOperation, location, includeSystemTables, results, staged);
         }
-
-        if (!resolvedAny)
-            return false;
 
         results.AddRange(staged);
         return true;
     }
-
-    /// <summary>
-    /// Names the variable a member-access call is made on, from either syntax form: with
-    /// parentheses (<c>dt.CopyFields()</c>) or without (<c>dt.CopyFields;</c>), and whether the
-    /// variable is addressed bare (<c>dt</c>) or through the self-reference (<c>this.dt</c>).
-    /// Both forms yield the bare variable name, so a <c>SetTables</c> written one way still
-    /// matches an executor written the other. Returns null for any other receiver, which puts
-    /// the DataTransfer variable out of reach of the same-body <c>SetTables</c> lookup.
-    /// </summary>
-    private static string? GetReceiverIdentifierName(SyntaxNode syntax, SemanticModel semanticModel)
-    {
-        if (!syntax.TryGetMethodCall(out _, out var receiver, out _))
-            return null;
-
-        if (receiver is IdentifierNameSyntax identifier)
-            return identifier.Identifier.ValueText?.UnquoteIdentifier();
-
-        // `this.MyDataTransfer.CopyFields()`: the variable sits one level below the receiver.
-        // The self-reference is recognized through the operation tree, NOT ThisExpressionSyntax
-        // or SyntaxKind.ThisExpression: both are absent from the netstandard2.1 compile floor
-        // (see .claude/rules/netstandard21-compatibility.md). The OperationKind member resolves
-        // to default on SDKs without it, where no `this` code can exist anyway.
-        var thisReferenceKind = EnumProvider.OperationKind.ThisReference;
-        if (thisReferenceKind != default
-            && receiver is MemberAccessExpressionSyntax qualified
-            && semanticModel.GetOperation(qualified.Expression)?.Kind == thisReferenceKind)
-            return qualified.Name.Identifier.ValueText?.UnquoteIdentifier();
-
-        return null;
-    }
-
-    /// <summary>
-    /// Resolves a <c>SetTables</c> argument to the table it names. Only object-access literals
-    /// (<c>Database::"My Table"</c>) resolve; integer variables and expressions do not.
-    /// </summary>
-    private static ITableTypeSymbol? ResolveTableArgument(IOperation argument) =>
-        argument.UnwrapConversions().GetSymbolSafe() as ITableTypeSymbol;
 
     private static void AddDataTransferPermission(
         ITableTypeSymbol table,
