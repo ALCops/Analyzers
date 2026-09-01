@@ -31,6 +31,7 @@ Detects redundant record parameters passed to methods where the same record vari
 | Rec matching: `IsSynthesized` + `SemanticFacts.IsSameName` | Matches only the compiler-generated Rec variable (not user-declared globals). Name check discriminates Rec from xRec (both synthesized). |
 | Implicit `with`: not affected | Implicit with only adds `Rec.` as a scope prefix for field/method lookup. It does NOT inject `Rec` as a method argument. `MyProcedure(Rec)` requires explicit mention of `Rec` regardless of implicit with. |
 | Category: Usage | Incorrect/discouraged use of AL constructs |
+| Local procedure called with both `Rec` and other record instances: still flagged (issue #323) | By design — original rule author confirmed. Resolution is a parameterless overload that assigns `Rec` to a local variable and delegates (the delegating argument is a local variable, not the synthesized `Rec`, so it doesn't re-trigger). Documented on the alcops.dev LC0096 page. |
 | netstandard2.1: full support | No net8.0-only APIs used |
 
 ## Architecture
