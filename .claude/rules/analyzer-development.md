@@ -700,12 +700,13 @@ private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
 
   **Nullable inputs:** When comparing values from `SyntaxToken.ValueText` (`string?`), use the `IsSameName` extension from `ALCops.Common.Extensions.StringExtensions`. It returns `false` when either argument is null, avoiding the verbose `is { } varName &&` pattern.
 
-  **When NOT to use SemanticFacts (keep OrdinalIgnoreCase):**
+  **When NOT to use SemanticFacts (keep OrdinalIgnoreCase, or the documented culture compare below):**
   - Property value comparisons (enum values like "Always", "Never", "#All")
   - File path or assembly location comparisons
   - Non-AL text (diagnostic IDs, translation keys, manifest metadata, punctuation)
   - User-configured strings (affix lists from alcops.json settings)
   - Permission character strings (e.g., searching "RIMD" for a permission char)
+  - Permission sort keys (`NaturalStringComparer` deliberately uses `InvariantCultureIgnoreCase` to match AZ AL Dev Tools; see the FC0004 rule doc)
 
   ```csharp
   // Direct equality - comparing AL method name (both non-null)

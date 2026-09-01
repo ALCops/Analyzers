@@ -1,4 +1,4 @@
-codeunit 50100 "My Codeunit"
+codeunit 50101 "My Codeunit"
 {
 }
 
@@ -21,11 +21,9 @@ table 50100 "My Table"
 
 permissionset 50100 "My Permission Set"
 {
-    Assignable = false;
-    Access = Public;
-
-    [|Permissions = tabledata "My Table" = R,
-                  codeunit "My Codeunit" = X,
+    Assignable = true;
+    [|Permissions = codeunit "My Codeunit" = X,
                   page "My Page" = X,
-                  report "My Report" = X|];
+                  report "My Report" = X,
+                  tabledata "My Table" = R|];
 }

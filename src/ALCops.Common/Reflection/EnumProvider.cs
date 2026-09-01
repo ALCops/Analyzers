@@ -1163,6 +1163,10 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Parameter)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pragmaWarningDirectiveTrivia =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PragmaWarningDirectiveTrivia)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _regionDirectiveTrivia =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.RegionDirectiveTrivia)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _endRegionDirectiveTrivia =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EndRegionDirectiveTrivia)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _permissionPropertyValue =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PermissionPropertyValue)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _permissionSet =
@@ -1368,6 +1372,8 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind PermissionSetExtension => _permissionSetExtension.Value;
         public static NavCodeAnalysis.SyntaxKind PermissionValue => _permissionValue.Value;
         public static NavCodeAnalysis.SyntaxKind PragmaWarningDirectiveTrivia => _pragmaWarningDirectiveTrivia.Value;
+        public static NavCodeAnalysis.SyntaxKind RegionDirectiveTrivia => _regionDirectiveTrivia.Value;
+        public static NavCodeAnalysis.SyntaxKind EndRegionDirectiveTrivia => _endRegionDirectiveTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind ProfileExtensionObject => _profileExtensionObject.Value;
         public static NavCodeAnalysis.SyntaxKind ProfileObject => _profileObject.Value;
         public static NavCodeAnalysis.SyntaxKind Property => _property.Value;

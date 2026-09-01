@@ -98,8 +98,8 @@ The `TableDataAccessRequiresPermissionsCodeFixProvider` adds missing permissions
 |---|---|
 | No `Permissions` property | Creates `Permissions = tabledata {Table} = {op};` |
 | Table already listed | Merges the missing char in canonical `rimd` order |
-| Table not listed, single-line format | Appends `, tabledata {Table} = {op}` (or inserts alphabetically if sorted) |
-| Table not listed, multi-line format | Appends with `\n` + matching indentation (or inserts alphabetically if sorted) |
+| Table not listed, single-line format | Appends `, tabledata {Table} = {op}` (or inserts at its `PermissionEntryComparer` position when the tabledata group is in order) |
+| Table not listed, multi-line format | Appends with `\n` + matching indentation (or inserts at its `PermissionEntryComparer` position when the tabledata group is in order) |
 | Extension objects | CodeFix is skipped (extensions cannot declare Permissions) |
 
 ### Table name resolution
@@ -119,7 +119,7 @@ Uses C#-like namespace resolution (`PermissionTableNameResolver`):
 | Passes TableName, TableNamespace, PermissionChar via `ImmutableDictionary` properties | Standard CodeFix data passing pattern |
 | Permission chars preserve existing casing convention | If existing permissions use uppercase (e.g. `RM`), added chars match (`RIM`). Defaults to lowercase for new entries. |
 | `ApplyFix` re-finds ObjectSyntax by kind+name from current tree | BatchFixer applies fixes sequentially; using captured node references causes stale-reference bugs (phantom entries, wrong merges) |
-| Sorted detection uses case-insensitive string comparison | AL identifiers are case-insensitive |
+| Insertion uses the shared `PermissionEntryComparer` (FC0004 order) and only requires the table/tabledata *group* to be in order | Lists written in the pre-AZ FC0004 order (codeunit first, tabledata sorted) still get their new entry inserted by name instead of appended; the fix never adds a *new* FC0004 violation. The check is flat (region-unaware): in a `#region`-grouped list whose tabledata entries are not globally in order it appends |
 | Multi-line separator fix via `ReplaceToken` | Avoids need for internal `SeparatedSyntaxList` constructor |
 | `FixAllTitle` uses a separate generic resx string (`TableDataAccessRequiresPermissionsFixAllCodeAction`) | FixAll applies across multiple permissions/tables, so the title must not reference a specific permission or table |
 | `insertIndex == 0` gets special trivia handling in multi-line lists | First entry sits on the `Permissions = ` line with no leading indentation; displaced entries need indentation added |
