@@ -20,13 +20,14 @@ Reports when the casing of a keyword or identifier reference differs from its ca
 | Generic type arguments (`List of [...]`, `Dictionary of [...]`) walked by pushing the `GenericNamedDataTypeSyntax` node onto the existing stack | `ChildNodes()` yields only the type-argument `DataTypeSyntax` nodes (TypeName/`of`/brackets are tokens, never revisited), so the outer type name is not double-reported and nested generics recurse for free. Issue #255. |
 | Object references after subtyped data types (`Record MyTable`, `Interface "IMyInterface"`) resolved via `GetSymbolInfo` on the inner `IdentifierNameSyntax` | The SDK's `GetSemanticInfoSymbolInNonMemberContext` derives the `SymbolKind` from the enclosing `SubtypedDataTypeSyntax.TypeName`, so one call returns the referenced object's canonical `Name` — no member model needed for declaration nodes. |
 | Object references batched in a dedicated `objectReferences` list keyed by the `(TypeName, name)` tuple, NOT the `identifiers` list | The `identifiers` list groups by (text, method scope); `Record Customer` and a variable named `Customer` would share a group and cross-contaminate the canonical text (false positive + wrong fix). Kind must be in the key because `Record Foo` and `Codeunit Foo` resolve to different symbols. The type name is captured at the collection site in `WalkNode` (not re-derived via parent traversal), and the default case-sensitive tuple comparer matches `ResolveIdentifiers` — differently-cased duplicates just cost one extra `GetSymbolInfo`. |
-| `ObjectIdSyntax` (`Record 18`) and namespace-qualified `QualifiedNameSyntax` subtypes are not collected | IDs have no casing; a namespace-aware compare doesn't fit the batched resolution and is deferred. |
+| `ObjectIdSyntax` (`Record 18`) subtypes are not collected | IDs have no casing. |
+| Namespace-qualified subtypes (`Record Ns.Path.MyTable`) resolved in a separate `ResolveQualifiedObjectReferences` pass | `GetSymbolInfo` on the `QualifiedNameSyntax` routes through the SDK's `GetSymbolFromObjectReference`, which has an explicit `QualifiedName` case (`LookupObjectTypeSymbol`). Namespace-part casing is compared right-aligned against `GetContainingNamespaceQualifiedNameWithReflection()` split on `.` (the reflection helper works on all TFMs; a null result skips namespace parts but still checks the object name). Not fed into `ResolveQualifiedNames` — its `Left.Kind == IdentifierName` branch assumes a field-in-object shape and early-returns. |
 
 ## Architecture
 
 - Two analyzers share the descriptor `DiagnosticDescriptors.CasingMismatch`: `CasingMismatchKeyword` (keyword tokens) and `CasingMismatchIdentifier` (identifiers, data types, properties, option/object access).
 - `CasingMismatchKeyword`: `RegisterSymbolAction` per object kind; walks descendant tokens, compares keyword tokens against `SyntaxFactory.Token(kind).ValueText`. Skips tokens whose parent is a `*DataType` node or `IdentifierName`.
-- `CasingMismatchIdentifier`: single iterative tree walk per object symbol. Dictionary-resolvable nodes are handled inline (fast); identifiers, qualified names, triggers, and subtyped object references are batched for semantic-model resolution (`ResolveIdentifiers`/`ResolveQualifiedNames`/`ResolveTriggers`/`ResolveObjectReferences`), grouped so `GetSymbolInfo` runs once per group. `GenericDataType` is in the stack-push allow-list alongside `EnumDataType`/`LabelDataType` so type arguments are walked.
+- `CasingMismatchIdentifier`: single iterative tree walk per object symbol. Dictionary-resolvable nodes are handled inline (fast); identifiers, qualified names, triggers, and subtyped object references (simple and namespace-qualified) are batched for semantic-model resolution (`ResolveIdentifiers`/`ResolveQualifiedNames`/`ResolveTriggers`/`ResolveObjectReferences`/`ResolveQualifiedObjectReferences`), grouped so `GetSymbolInfo` runs once per group. `GenericDataType` is in the stack-push allow-list alongside `EnumDataType`/`LabelDataType` so type arguments are walked.
 
 Key dictionaries (all `OrdinalIgnoreCase` keyed, value = canonical text):
 
@@ -52,7 +53,6 @@ Key dictionaries (all `OrdinalIgnoreCase` keyed, value = canonical text):
 
 - `Xmlport.Run` receiver with wrong casing (`XMLPORT.Run`) is not flagged (keyword-named identifier filter, see design decisions).
 - Option members of platform table fields (e.g. `"Object Type"::XMLport`) resolve via semantic model to the platform's own casing.
-- Namespace-qualified object references (`Record Ns.MyTable`) are not casing-checked (deliberately skipped, see design decisions).
 
 ## CodeFix: CasingMismatchKeyword
 

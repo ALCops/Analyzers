@@ -43,6 +43,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("XmlPortObjectAccess")]
         [TestCase("GenericDataType")]
         [TestCase("SubtypedObjectReference")]
+        [TestCase("NamespacedObjectReference")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -103,6 +104,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("XmlPortObjectAccess")]
         [TestCase("GenericDataType")]
         [TestCase("SubtypedObjectReference")]
+        [TestCase("NamespacedObjectReference")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -138,6 +140,7 @@ namespace ALCops.FormattingCop.Test
         [Test]
         [TestCase("GenericTypeArgument")]
         [TestCase("QuotedObjectReference")]
+        [TestCase("QualifiedObjectReference")]
         public async Task HasFix(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
