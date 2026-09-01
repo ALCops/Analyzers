@@ -63,6 +63,12 @@ namespace ALCops.FormattingCop.Test
                 "14.0"
             );
 
+            SkipTestIfVersionIsTooLow(
+                ["GenericDataType", "SubtypedObjectReference"],
+                testCase,
+                "14.0",
+                "No support for Interface as a generic type argument before version 14.0");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -116,6 +122,12 @@ namespace ALCops.FormattingCop.Test
                 testCase,
                 "14.0"
             );
+
+            SkipTestIfVersionIsTooLow(
+                ["GenericDataType", "SubtypedObjectReference"],
+                testCase,
+                "14.0",
+                "No support for Interface as a generic type argument before version 14.0");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
