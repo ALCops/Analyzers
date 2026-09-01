@@ -1017,6 +1017,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Field)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _fieldGroup =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.FieldGroup)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _genericDataType =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.GenericDataType)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _globalVarSection =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.GlobalVarSection)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _identifierName =
@@ -1307,6 +1309,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind ForStatement => _forStatement.Value;
         public static NavCodeAnalysis.SyntaxKind Field => _field.Value;
         public static NavCodeAnalysis.SyntaxKind FieldGroup => _fieldGroup.Value;
+        public static NavCodeAnalysis.SyntaxKind GenericDataType => _genericDataType.Value;
         public static NavCodeAnalysis.SyntaxKind GlobalVarSection => _globalVarSection.Value;
         public static NavCodeAnalysis.SyntaxKind IdentifierName => _identifierName.Value;
         public static NavCodeAnalysis.SyntaxKind IdentifierEqualsLiteral => _identifierEqualsLiteral.Value;

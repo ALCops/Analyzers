@@ -52,12 +52,14 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
         var identifiers = new List<(IdentifierNameSyntax Node, SyntaxNode? Scope)>();
         var qualifiedNames = new List<(QualifiedNameSyntax Node, SyntaxNode? Scope)>();
         var triggers = new List<TriggerDeclarationSyntax>();
+        var objectReferences = new List<IdentifierNameSyntax>();
 
-        WalkNode(ctx, root, identifiers, qualifiedNames, triggers);
+        WalkNode(ctx, root, identifiers, qualifiedNames, triggers, objectReferences);
 
         ResolveIdentifiers(ctx, semanticModel, identifiers);
         ResolveQualifiedNames(ctx, semanticModel, qualifiedNames);
         ResolveTriggers(ctx, semanticModel, triggers);
+        ResolveObjectReferences(ctx, semanticModel, objectReferences);
     }
 
     #region Tree Walk
@@ -73,6 +75,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
         List<(IdentifierNameSyntax Node, SyntaxNode? Scope)> identifiers,
         List<(QualifiedNameSyntax Node, SyntaxNode? Scope)> qualifiedNames,
         List<TriggerDeclarationSyntax> triggers,
+        List<IdentifierNameSyntax> objectReferences,
         bool skipChildIdentifiers = false)
     {
         var stack = new Stack<(SyntaxNode node, bool skipIds, SyntaxNode? scope)>();
@@ -98,7 +101,11 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 if (child is SubtypedDataTypeSyntax subtyped)
                 {
                     if (subtyped.Subtype.Kind == EnumProvider.SyntaxKind.ObjectReference)
+                    {
                         CompareAgainstDictionary(ctx, subtyped.TypeName, _navTypeKindDictionary);
+                        if (subtyped.Subtype.Identifier is IdentifierNameSyntax subtypeName)
+                            objectReferences.Add(subtypeName);
+                    }
                     continue;
                 }
 
@@ -106,7 +113,8 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 {
                     CompareAgainstDictionary(ctx, dataType.TypeName, _navTypeKindDictionary);
                     if (kind == EnumProvider.SyntaxKind.EnumDataType ||
-                        kind == EnumProvider.SyntaxKind.LabelDataType)
+                        kind == EnumProvider.SyntaxKind.LabelDataType ||
+                        kind == EnumProvider.SyntaxKind.GenericDataType)
                         stack.Push((child, false, currentScope));
                     continue;
                 }
@@ -538,6 +546,40 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 continue;
 
             CompareIdentifier(ctx, trigger.Name.Identifier, symbol.Name);
+        }
+    }
+
+    private static void ResolveObjectReferences(
+        SymbolAnalysisContext ctx,
+        SemanticModel semanticModel,
+        List<IdentifierNameSyntax> objectReferences)
+    {
+        var groups = objectReferences
+            .ToLookup(node =>
+            {
+                var subtypedDataType = (SubtypedDataTypeSyntax)node.Parent!.Parent!;
+                return subtypedDataType.TypeName.ValueText + "\0" + node.Identifier.ValueText;
+            }, SemanticFacts.NameEqualityComparer);
+
+        foreach (var group in groups)
+        {
+            ctx.CancellationToken.ThrowIfCancellationRequested();
+
+            IdentifierNameSyntax? representative = null;
+            foreach (var item in group)
+            {
+                if (representative is null || item.Position > representative.Position)
+                    representative = item;
+            }
+
+            if (representative is null)
+                continue;
+
+            if (semanticModel.GetSymbolInfo(representative, ctx.CancellationToken).Symbol is not ISymbol symbol)
+                continue;
+
+            foreach (var item in group)
+                CompareIdentifier(ctx, item.Identifier, symbol.Name);
         }
     }
 

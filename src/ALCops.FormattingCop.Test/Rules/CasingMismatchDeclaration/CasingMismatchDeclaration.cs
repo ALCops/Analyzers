@@ -1,3 +1,4 @@
+using ALCops.FormattingCop.CodeFixes;
 using RoslynTestKit;
 
 namespace ALCops.FormattingCop.Test
@@ -40,6 +41,8 @@ namespace ALCops.FormattingCop.Test
         [TestCase("GlobalVarAndLocalVar")]
         [TestCase("XmlPortDataType")]
         [TestCase("XmlPortObjectAccess")]
+        [TestCase("GenericDataType")]
+        [TestCase("SubtypedObjectReference")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -92,6 +95,8 @@ namespace ALCops.FormattingCop.Test
         [TestCase("GlobalVarAndLocalVar")]
         [TestCase("XmlPortDataType")]
         [TestCase("XmlPortObjectAccess")]
+        [TestCase("GenericDataType")]
+        [TestCase("SubtypedObjectReference")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -116,6 +121,26 @@ namespace ALCops.FormattingCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.CasingMismatch);
+        }
+
+        [Test]
+        [TestCase("GenericTypeArgument")]
+        [TestCase("QuotedObjectReference")]
+        public async Task HasFix(string testCase)
+        {
+            var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
+                .ConfigureAwait(false);
+
+            var expectedCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "expected.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<CasingMismatchCodeFix>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.CasingMismatch);
         }
     }
 }
