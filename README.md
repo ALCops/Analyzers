@@ -22,6 +22,21 @@ A collection of custom code analyzers for the AL programming language of Microso
 
 Browse the complete rules reference at [alcops.dev/docs/analyzers](https://alcops.dev/docs/analyzers/).
 
+## Configuration
+
+Analyzer-specific settings are configured in `alcops.json`. A project can inherit a centrally maintained base configuration from one anonymously accessible HTTP(S) URL or absolute local file path and override only the values it needs:
+
+```json
+{
+  "Extends": {
+    "Source": "https://example.com/company.alcops.json"
+  },
+  "SubscriberNamingPattern": "{Event Source}_{Event Name}[_{Element Name}]"
+}
+```
+
+Local scalar values and arrays replace inherited values. Nested objects are merged property by property. Inheritance chains are deliberately not supported. See the [configuration guide](https://alcops.dev/docs/getting-started/configuration/) for all settings and precedence rules.
+
 ## Contributing
 
 Contributions are welcome! Whether it's a new rule idea, a bug report, or a pull request — all input helps improve ALCops for the community.

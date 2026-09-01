@@ -11,6 +11,19 @@
       "format": "uri",
       "description": "URL to the ALCops settings JSON schema. Adding this property enables IntelliSense in editors that support JSON Schema without the ALCops VS Code extension."
     },
+    "Extends": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Source"],
+      "description": "Loads one external ALCops configuration as a base. Local scalar and array values replace inherited values, while nested objects are merged property by property. Inheritance chains are not supported.",
+      "properties": {
+        "Source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "An anonymously accessible HTTP(S) URL or an absolute local file path to the base alcops.json configuration."
+        }
+      }
+    },
     "CognitiveComplexityThreshold": {
       "type": "integer",
       "default": 15,

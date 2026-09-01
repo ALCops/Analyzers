@@ -17,7 +17,7 @@ namespace ALCops.Common.Settings;
 /// </summary>
 public static class ALCopsSettingsProvider
 {
-    private static readonly ConcurrentDictionary<string, ALCopsSettings> _cache = new();
+    private static readonly ConcurrentDictionary<string, Lazy<ALCopsSettings>> _cache = new();
 #if NETSTANDARD2_1
     private static readonly JsonSerializerSettings _jsonSettings = new()
     {
@@ -51,7 +51,11 @@ public static class ALCopsSettingsProvider
         if (string.IsNullOrEmpty(directoryPath))
             return LoadSettingsFromFileSystem(fileSystem, directoryPath);
 
-        return _cache.GetOrAdd(directoryPath, _ => LoadSettingsFromFileSystem(fileSystem, directoryPath));
+        return _cache.GetOrAdd(
+            directoryPath,
+            _ => new Lazy<ALCopsSettings>(
+                () => LoadSettingsFromFileSystem(fileSystem, directoryPath),
+                LazyThreadSafetyMode.ExecutionAndPublication)).Value;
     }
 
     private static ALCopsSettings LoadSettingsFromFileSystem(IFileSystem fileSystem, string directoryPath)
@@ -93,21 +97,44 @@ public static class ALCopsSettingsProvider
         // returns defaults" and github.com/ALCops/Analyzers/issues/328.
         try
         {
-#if NETSTANDARD2_1
-            var settings = JsonConvert.DeserializeObject<ALCopsSettings>(json, _jsonSettings) ?? new ALCopsSettings();
-#else
-            var settings = JsonSerializer.Deserialize<ALCopsSettings>(json, _jsonOptions) ?? new ALCopsSettings();
-#endif
-            // Explicit `null` on nested settings deserializes without JsonException; restore defaults
-            // so consumers can rely on the property being non-null.
-            settings.StatementBlockSpacing ??= new StatementBlockSpacingSettings();
+            if (ALCopsSettingsInheritanceResolver.TryResolve(
+                    json,
+                    out string inheritedJson,
+                    out string effectiveJson))
+            {
+                try
+                {
+                    // Validate the inherited document independently. Otherwise an invalid inherited
+                    // value hidden by a local override could make a broken base configuration appear valid.
+                    _ = DeserializeSettingsCore(inheritedJson);
+                    return DeserializeSettingsCore(effectiveJson);
+                }
+                catch (JsonException)
+                {
+                    // Invalid inherited settings are ignored; the local document remains authoritative.
+                }
+            }
 
-            return settings;
+            return DeserializeSettingsCore(json);
         }
         catch (JsonException)
         {
             return new ALCopsSettings();
         }
+    }
+
+    private static ALCopsSettings DeserializeSettingsCore(string json)
+    {
+#if NETSTANDARD2_1
+        var settings = JsonConvert.DeserializeObject<ALCopsSettings>(json, _jsonSettings) ?? new ALCopsSettings();
+#else
+        var settings = JsonSerializer.Deserialize<ALCopsSettings>(json, _jsonOptions) ?? new ALCopsSettings();
+#endif
+        // Explicit `null` on nested settings deserializes without JsonException; restore defaults
+        // so consumers can rely on the property being non-null.
+        settings.StatementBlockSpacing ??= new StatementBlockSpacingSettings();
+
+        return settings;
     }
 
     private static string? FindSettingsFileInParentOrAssemblyDirectory(string directoryPath)

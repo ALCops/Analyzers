@@ -44,12 +44,14 @@ int threshold = settings.CognitiveComplexityThreshold;
 
 ### Lookup hierarchy
 
-Settings are resolved using `.editorconfig`-style upward traversal. The first `alcops.json` found wins (no merging):
+Settings are resolved using `.editorconfig`-style upward traversal. The first local `alcops.json` found wins:
 
 1. **App folder** (where `app.json` lives) — checked via `IFileSystem.OpenRead("alcops.json")`
 2. **Parent directories** — walks up the physical filesystem indefinitely until root or an inaccessible directory
 3. **Assembly location** — directory where `ALCops.Common.dll` is located
 4. **Defaults** — built-in default values from `ALCopsSettings`
+
+The selected local file can declare an external base through `Extends.Source`. Exactly one anonymously accessible HTTP(S) URL or absolute local file path is supported. `ALCopsSettingsInheritanceResolver` merges the referenced JSON before deserialization: local scalar values and arrays replace inherited values, while nested objects merge property by property. A referenced configuration that declares `Extends` is rejected, so inheritance chains are not followed. Unavailable or invalid external configurations fall back to the local file.
 
 This allows a multi-root workspace to share a single `alcops.json` at the workspace root:
 ```
@@ -64,12 +66,13 @@ This allows a multi-root workspace to share a single `alcops.json` at the worksp
 
 ### Public API
 
-`ALCopsSettingsProvider` exposes a single entry point: `GetSettings(IFileSystem?)`. Behavior: virtual FS check → parent traversal → assembly fallback. Results are cached in a `ConcurrentDictionary` keyed by `IFileSystem.GetDirectoryPath()`; a `MemoryFileSystem` returning `""` bypasses the cache. JSON parsing is case-insensitive and allows comments and trailing commas.
+`ALCopsSettingsProvider` exposes a single entry point: `GetSettings(IFileSystem?)`. Behavior: virtual FS check → parent traversal → assembly fallback → optional external-base resolution. Results are cached as `Lazy<ALCopsSettings>` values in a `ConcurrentDictionary` keyed by `IFileSystem.GetDirectoryPath()`, which guarantees that an external source is loaded at most once for each workspace path; a `MemoryFileSystem` returning `""` bypasses the cache. JSON parsing is case-insensitive and allows comments and trailing commas.
 
 ### Error handling
 
 - Inaccessible directory during parent traversal: stops traversal (treats as boundary)
 - Unreadable/malformed `alcops.json` (invalid syntax, unknown enum values, wrong types): silently returns defaults via a `JsonException` catch in `DeserializeSettings` (see #328 for planned improvement)
+- Unavailable, unreadable, chained, or invalid `Extends.Source`: silently ignores the external base and applies the local configuration; HTTP requests time out after five seconds
 - `MemoryFileSystem` (in tests, `GetDirectoryPath()` returns `""`): only checks virtual FS, no parent traversal
 
 Users configure settings by placing an `alcops.json` file in their AL project root or any parent directory:
