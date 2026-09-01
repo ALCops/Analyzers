@@ -12,9 +12,6 @@ namespace ALCops.LinterCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class CognitiveComplexity : DiagnosticAnalyzer
 {
-    private int complexityThreshold;
-    private bool IsIncrementDiagnosticsEnabled;
-
     // Flow-Breaking Structures: These disrupt the linear execution of the code.
     // Each occurrence of these structures adds +1 complexity to the score.
     private static readonly HashSet<SyntaxKind> flowBreakingKinds = new()
@@ -81,19 +78,18 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         context.RegisterCompilationStartAction(compilationContext =>
         {
             var compilation = compilationContext.Compilation;
-            this.complexityThreshold = LoadCognitiveComplexityThreshold(compilation);
-            this.IsIncrementDiagnosticsEnabled = compilation.IsDiagnosticEnabled(DiagnosticDescriptors.CognitiveComplexityIncrement);
+            var complexityThreshold = LoadCognitiveComplexityThreshold(compilation);
+            var isIncrementDiagnosticsEnabled = compilation.IsDiagnosticEnabled(DiagnosticDescriptors.CognitiveComplexityIncrement);
             var recursion = new CognitiveComplexityRecursionGraphService(compilation);
-
 
             compilationContext.RegisterCodeBlockAction(codeBlockContext =>
             {
-                AnalyzeCognitiveComplexity(codeBlockContext, recursion);
+                AnalyzeCognitiveComplexity(codeBlockContext, recursion, complexityThreshold, isIncrementDiagnosticsEnabled);
             });
         });
     }
 
-    private void AnalyzeCognitiveComplexity(CodeBlockAnalysisContext context, CognitiveComplexityRecursionGraphService recursion)
+    private static void AnalyzeCognitiveComplexity(CodeBlockAnalysisContext context, CognitiveComplexityRecursionGraphService recursion, int complexityThreshold, bool isIncrementDiagnosticsEnabled)
     {
         if (context.IsObsolete() || context.CodeBlock is not MethodOrTriggerDeclarationSyntax methodOrTrigger)
             return;
@@ -108,7 +104,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             methodOrTrigger.Attributes.Any(attr => eventPublisherDecoratorNames.Contains(attr.GetIdentifierOrLiteralValue() ?? string.Empty)))
             return;
 
-        int complexity = CalculateCognitiveComplexity(context, recursion, methodOrTrigger.Body);
+        int complexity = CalculateCognitiveComplexity(context, recursion, methodOrTrigger.Body, isIncrementDiagnosticsEnabled);
         if (complexity >= complexityThreshold)
         {
             context.ReportDiagnostic(Diagnostic.Create(
@@ -125,7 +121,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             complexityThreshold));
     }
 
-    private int CalculateCognitiveComplexity(CodeBlockAnalysisContext context, CognitiveComplexityRecursionGraphService recursion, SyntaxNode root)
+    private static int CalculateCognitiveComplexity(CodeBlockAnalysisContext context, CognitiveComplexityRecursionGraphService recursion, SyntaxNode root, bool isIncrementDiagnosticsEnabled)
     {
         int complexity = 0;
         var stack = new Stack<(SyntaxNode node, int nestingLevel)>();
@@ -137,14 +133,14 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
             if (node.IsKind(EnumProvider.SyntaxKind.IfStatement))
             {
-                ProcessIfStatement(context, ref stack, node, ref complexity, ref nestingLevel);
+                ProcessIfStatement(context, ref stack, node, ref complexity, ref nestingLevel, isIncrementDiagnosticsEnabled);
                 continue; // Skip further processing for this IF node
             }
 
             if (IsFlowBreakingStructure(node) && !IsGuardClause(node))
             {
                 complexity += 1 + nestingLevel;
-                RaiseIncrementDiagnostic(context, GetKeywordLocation(node, node.SpanStart), node.Kind.ToString(), nestingLevel);
+                RaiseIncrementDiagnostic(context, GetKeywordLocation(node, node.SpanStart), node.Kind.ToString(), nestingLevel, isIncrementDiagnosticsEnabled);
 
                 if (IsNestedStructure(node))
                     nestingLevel++;
@@ -158,7 +154,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
         if (context.CodeBlock.IsKind(EnumProvider.SyntaxKind.MethodDeclaration))
         {
-            complexity += CalculateRecursionComplexity(context, recursion, root);
+            complexity += CalculateRecursionComplexity(context, recursion, root, isIncrementDiagnosticsEnabled);
         }
 
         return complexity;
@@ -168,7 +164,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     // In the AL Language 'else if' is an 'else" keyword followed by an 'if' node (not a single 'elsif' node).
     // If we increment for both 'else' and 'if' kinds the number will be too high.
     // So we'll increment for 'else' nodes not followed by an 'if' and rely on the 'if' to increment 'else if' statements.
-    private void ProcessIfStatement(CodeBlockAnalysisContext context, ref Stack<(SyntaxNode, int)> stack, SyntaxNode node, ref int complexity, ref int nestingLevel)
+    private static void ProcessIfStatement(CodeBlockAnalysisContext context, ref Stack<(SyntaxNode, int)> stack, SyntaxNode node, ref int complexity, ref int nestingLevel, bool isIncrementDiagnosticsEnabled)
     {
         if (node is not IfStatementSyntax ifStatement)
             return;
@@ -177,7 +173,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         {
             // Increment for the 'if' statement
             complexity += 1 + nestingLevel;
-            RaiseIncrementDiagnostic(context, GetKeywordLocation(node, node.SpanStart), node.Kind.ToString(), nestingLevel);
+            RaiseIncrementDiagnostic(context, GetKeywordLocation(node, node.SpanStart), node.Kind.ToString(), nestingLevel, isIncrementDiagnosticsEnabled);
         }
 
         // Push the condition of the 'if' statement back to the stack
@@ -195,7 +191,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             {
                 // Increment for the 'else' statement
                 complexity += 1 + nestingLevel;
-                RaiseIncrementDiagnostic(context, ifStatement.ElseKeywordToken.GetLocation(), "ElseStatement", nestingLevel);
+                RaiseIncrementDiagnostic(context, ifStatement.ElseKeywordToken.GetLocation(), "ElseStatement", nestingLevel, isIncrementDiagnosticsEnabled);
 
                 // increment nesting for subsequent statements
                 nestingLevel += 1;
@@ -276,7 +272,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
     #region Recursion
 
-    private int CalculateRecursionComplexity(CodeBlockAnalysisContext context, CognitiveComplexityRecursionGraphService recursion, SyntaxNode root)
+    private static int CalculateRecursionComplexity(CodeBlockAnalysisContext context, CognitiveComplexityRecursionGraphService recursion, SyntaxNode root, bool isIncrementDiagnosticsEnabled)
     {
         if (recursion is null)
             return 0;
@@ -311,7 +307,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             if (IsPathTo(recursion, invokedMethod.Id, currentId, visited))
             {
                 increment++;
-                RaiseIncrementDiagnostic(context, GetKeywordLocation(target, target.SpanStart), "RecursionCycle", 0);
+                RaiseIncrementDiagnostic(context, GetKeywordLocation(target, target.SpanStart), "RecursionCycle", 0, isIncrementDiagnosticsEnabled);
             }
         }
 
@@ -348,9 +344,9 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         return settings.CognitiveComplexityThreshold;
     }
 
-    private void RaiseIncrementDiagnostic(CodeBlockAnalysisContext context, Location location, string category, int nestingPenalty)
+    private static void RaiseIncrementDiagnostic(CodeBlockAnalysisContext context, Location location, string category, int nestingPenalty, bool isIncrementDiagnosticsEnabled)
     {
-        if (!this.IsIncrementDiagnosticsEnabled)
+        if (!isIncrementDiagnosticsEnabled)
             return;
 
         context.ReportDiagnostic(

@@ -34,7 +34,7 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.H
 
 - **Read the decompiled NAV SDK source before using any SDK API.** Syntax kinds, operation shapes, and symbol members are undocumented and version-dependent. See `.claude/rules/analyzer-development.md` (§NAV SDK Source Reference) and `.claude/rules/sdk-analyzer-infrastructure.md`.
 - **Every analyzer must compile on `netstandard2.1`.** Guard newer C# features and missing SDK APIs; net8.0-only analyzers compile as empty stubs under `#if NETSTANDARD2_1`. See `.claude/rules/netstandard21-compatibility.md`.
-- **Never assume analyzer callback ordering or that every callback runs** (incremental compilation skips them). No two-phase accumulator patterns. See `.claude/rules/sdk-analyzer-infrastructure.md`.
+- **Never assume analyzer callback ordering or that every callback runs** (the host's partial-analysis module pass skips all per-declaration callbacks). No two-phase accumulator patterns. See `.claude/rules/sdk-analyzer-infrastructure.md`.
 - **Analyzers extend plain `DiagnosticAnalyzer`.** Do not switch them to the `ALCopsDiagnosticAnalyzer` / `{Cop}Analyzer` exception harness: deriving from a Common-based type makes `alc` fail with `AL1003` (issue #389). The harness stays test-only until a loader-safe approach exists. See `.claude/rules/analyzer-exception-harness.md`.
 - **`ALCopsSettings.cs` and `alcops.schema.json` must stay in sync**; a parity test enforces it. See `.claude/rules/settings-schema.md`.
 - Diagnostic IDs are `{Prefix}{4 digits}`, sequential per cop. Help URI: `https://alcops.dev/docs/analyzers/{copslug}/{id}/`. Every new rule needs a page in the sibling docs repo (`../alcops.dev`, `content/docs/analyzers/{copslug}/{ID}.md`).

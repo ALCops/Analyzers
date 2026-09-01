@@ -19,31 +19,29 @@ Source: `AnalyzerDriver.cs` lines 284-365 (`TryExecuteDeclaringReferenceActions`
 
 Consequence: `GetOperation(body)` called from a `SyntaxNodeAction` runs BEFORE the SDK pre-computes operation trees, while `GetOperation(body)` in a `CodeBlockAction` benefits from pre-computation (effectively a cache hit).
 
-## Incremental compilation and callback skipping
+## Partial-analysis pass and callback scope filtering
 
-The SDK uses `AnalysisState.declarationAnalysisDataMap` to cache which declarations have been analyzed. During incremental compilation (e.g., editing a file in VS Code):
+The SDK's `AnalysisState.declarationAnalysisDataMap` (declaration-level diagnostic caching and replay) exists in the source but is **dead code in all shipping paths**. `CompilationWithAnalyzers` — the only owner of `AnalysisState` — is never instantiated anywhere in the SDK tree. Both driver entry points (`AnalyzerDriverBase.cs:371-379` whole-project, `:381-394` per-file) pass a **null** `AnalysisState` and a fresh `CompilationData`. Every skip gate evaluates `analysisStateOpt?.TryStartAnalyzingDeclaration(...) ?? true` (`AnalyzerExecutor.cs:996-1001`) → always execute. `declarationAnalysisDataMap` lives on `CompilationData` (not `AnalysisState`), holds only syntax-shape data (no diagnostics), and its `cacheAnalysisData` flag evaluates false on every real path (`AnalyzerDriver.cs:274-275`). There is **no per-declaration action-kind asymmetry**: SyntaxNode, Operation, OperationBlock, and CodeBlock actions all gate on the identical `TryStartAnalyzingDeclaration` call (`AnalyzerExecutor.cs:983 / 1086 / 1110 / 1128`); if skipping were ever activated they'd be skipped in lockstep.
 
-- **`CodeBlockAction`** callbacks are SKIPPED for cached (unchanged) declarations
-- **`CodeBlockStartAction`** callbacks are ALSO SKIPPED (same cache mechanism)
-- **`CompilationEndAction`** ALWAYS fires regardless of what was skipped
-- **`SyntaxNodeAction`** tracks per-node via `ProcessedNodes` (lines 641-645): if the object node is skipped, no analysis runs and no stale results exist
+The real mechanism that filters callbacks is host-level partial-analysis scope:
 
-Source: `AnalyzerExecutor.cs` lines 527-530 (`ShouldExecuteAction`), 881-887.
+- **Per-file keystroke pass:** the host builds an `AnalysisScope` with `FilterTreeOpt` = the edited file. `ShouldAnalyze(ISymbol)` (`AnalysisScope.cs:80-100`) rejects every declaration outside that file — for **all** per-declaration action kinds uniformly — while compilation-level events still complete.
+- **Module-only pass:** when `BackgroundCodeAnalysisScope == File` and doc count exceeds `PartialDiagnosticsDocumentThreshold`, `GetPerModuleAnalyzerDiagnostics` enqueues only a module `SymbolDeclaredCompilationEvent` (`AnalyzersHelper.cs:70-78`) — no per-declaration action of any kind fires; compilation-level actions still complete.
+- **Hash-suppressor staleness:** `vsCodeDiagnosticState` in `EditorServices.Protocol/DiagnosticService.cs:715-736` drops the response when the file hash is unchanged; `moduleAnalyzerDiagnosticsCache` is invalidated on Start/Stop/DocumentRemoved but not on settings/ruleset changes.
+
+Source: verified against the decompiled SDK at the current tag (18.0.x, net10.0 tree).
 
 ### Implications for analyzer patterns
 
-| Pattern | Correct under incremental? | Notes |
+| Pattern | Correct under partial analysis? | Notes |
 |---|---|---|
-| `RegisterSyntaxNodeAction` on object kinds | ✅ Yes | Either full analysis runs or none; no partial state |
+| Self-contained per-declaration action (any kind) | ✅ Yes | SyntaxNode, Operation, CodeBlock actions are equally safe when each callback reports only about its own declaration |
 | `RegisterSymbolAction` | ✅ Yes | Symbol-level, self-contained |
-| `RegisterOperationAction` | ✅ Yes | Per-invocation, self-contained |
-| `RegisterCodeBlockAction` | ⚠️ Risky | Can be skipped for cached declarations |
-| `RegisterCodeBlockStartAction` + `CodeBlockEndAction` | ⚠️ Risky | Same skipping mechanism as CodeBlockAction |
-| `CompilationStart` + accumulator + `CompilationEnd` | ❌ Broken | Accumulator is incomplete when CodeBlockActions are skipped |
+| `CompilationStart` + per-declaration accumulator + `CompilationEnd` | ❌ Broken | Under per-file or module-only passes, per-declaration callbacks run only for the edited file (or none); `CompilationEnd` fires with an incomplete/empty accumulator |
 
 ### The two-phase accumulator anti-pattern
 
-**NEVER** use this pattern for analyzers that need per-object completeness:
+**NEVER** use this pattern for analyzers that need cross-declaration completeness:
 
 ```csharp
 // BROKEN PATTERN - DO NOT USE
@@ -53,19 +51,26 @@ context.RegisterCompilationStartAction(startCtx =>
 
     startCtx.RegisterCodeBlockAction(blockCtx =>
     {
-        // This callback is SKIPPED for cached declarations!
+        // Under per-file pass: only fires for declarations in the edited file
+        // Under module-only pass: never fires at all
         accumulator.TryAdd(...);
     });
 
     startCtx.RegisterCompilationEndAction(endCtx =>
     {
-        // This ALWAYS fires, even with incomplete accumulator!
+        // Always fires, but accumulator is incomplete or empty
         foreach (var entry in accumulator) { ... }
     });
 });
 ```
 
-Microsoft's own analyzers never use this pattern for the same reason. Their `Rule175` uses `CodeBlockStartAction` + scoped `RegisterSyntaxNodeAction` + `CodeBlockEndAction` for per-method analysis, but only reports within that method (no cross-method accumulation).
+This is what caused #243/#253: AC0032's old accumulator contained only the edited file's usages when `CompilationEnd` fired under the per-file pass, so permission entries from other files were flagged as "unused". A `SyntaxNodeAction`-based accumulator would have failed identically — the fix worked because each object became self-contained, not because of an action-kind difference.
+
+Microsoft's own analyzers never use this pattern. Their `Rule175` uses `CodeBlockStartAction` + scoped `RegisterSyntaxNodeAction` + `CodeBlockEndAction` for per-method analysis, but only reports within that method (no cross-method accumulation).
+
+### Analyzer instances are shared — no mutable instance fields
+
+Analyzer instances are materialized once per project (`ProjectInfo.cs:113`) and shared across passes. Per-compilation state (settings, thresholds, enablement flags) must live in `CompilationStart` closures or be threaded as parameters, never stored in instance fields. An overlapping pass or different project with a different `alcops.json` or ruleset would overwrite instance fields mid-analysis. See also `analyzer-development.md` ("Pass loaded data via lambda captures or a state object, not instance fields").
 
 ## GetOperation performance characteristics
 
@@ -201,12 +206,15 @@ It is NOT safe for accumulating mutable state across `CodeBlockAction` callbacks
 
 | File | Key content |
 |---|---|
-| `AnalyzerExecutor.cs:527-530` | `ShouldExecuteAction` - skipping cached declarations |
-| `AnalyzerExecutor.cs:641-645` | SyntaxNodeAction per-node tracking |
-| `AnalyzerExecutor.cs:881-887` | `ShouldExecuteAction` method definition |
+| `AnalyzerExecutor.cs:996-1001` | `TryStartAnalyzingDeclaration` skip gate (null `AnalysisState` → always execute) |
+| `AnalyzerExecutor.cs:983 / 1086 / 1110 / 1128` | Identical skip gate for SyntaxNode, Operation, OperationBlock, CodeBlock actions |
+| `AnalyzerDriverBase.cs:371-394` | Both driver entry points pass null `AnalysisState` |
+| `AnalyzerDriver.cs:274-275` | `cacheAnalysisData` flag evaluates false on all real paths |
 | `AnalyzerDriver.cs:284-365` | Guaranteed execution order (SyntaxNode → Operation → CodeBlock) |
 | `AnalyzerDriver.cs:504-518` | `GetOperationBlocksToAnalyze` pre-computation |
-| `AnalysisState.cs` | `declarationAnalysisDataMap` cache |
+| `AnalysisScope.cs:80-100` | `ShouldAnalyze(ISymbol)` per-file scope filtering |
+| `AnalyzersHelper.cs:70-78` | Module-only pass: enqueues only `SymbolDeclaredCompilationEvent` |
+| `ProjectInfo.cs:113` | Analyzer instances materialized once per project (shared across passes) |
 | `SemanticModel.cs:43-45` | `GetSymbolInfo(SyntaxNode)` public API |
 | `SemanticModel.cs:302` | `GetSymbolInfo(ExpressionSyntax)` public API |
 | `SemanticModel.cs:1130` | `GetOperation(SyntaxNode)` public API |
