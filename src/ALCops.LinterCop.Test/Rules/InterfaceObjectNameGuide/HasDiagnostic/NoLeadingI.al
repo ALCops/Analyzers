@@ -1,0 +1,4 @@
+interface [|Customer|]
+{
+    procedure DoSomething();
+}

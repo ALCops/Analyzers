@@ -49,10 +49,10 @@ public static class ApplicationObjectTypeSymbolInterfaceExtensions
     /// </summary>
     public static bool IsTestCodeunitWithPermissionsDisabled(this IApplicationObjectTypeSymbol? containingObject)
     {
-		if (!containingObject.IsTestCodeunit())
-		{
-			return false;
-		}
+        if (!containingObject.IsTestCodeunit())
+        {
+            return false;
+        }
 
         var testPermissions = (containingObject as ICodeunitTypeSymbol)?.GetEnumPropertyValue<TestPermissionsKind>(EnumProvider.PropertyKind.TestPermissions);
 
@@ -63,16 +63,16 @@ public static class ApplicationObjectTypeSymbolInterfaceExtensions
     /// Returns true if the object is a test codeunit.
     /// </summary>
 	public static bool IsTestCodeunit(this IApplicationObjectTypeSymbol? objectSymbol)
-	{
+    {
         if (objectSymbol is not ICodeunitTypeSymbol codeunit)
-		{
+        {
             return false;
-		}
+        }
 
         var subtype = codeunit.GetEnumPropertyValue<CodeunitSubtypeKind>(EnumProvider.PropertyKind.Subtype);
 
         return (subtype is not null) && (subtype == EnumProvider.CodeunitSubtypeKind.Test);
-	}
+    }
 
     /// <summary>
     /// Returns true if the object is a codeunit with accessability internal.
@@ -102,7 +102,7 @@ public static class ApplicationObjectTypeSymbolInterfaceExtensions
 
     /// <summary>
     /// Gets the flattened list of all data items (including nested) for report and query objects.
-    /// For reports on net8.0+, uses the public <see cref="IReportTypeSymbol.FlattenedDataItems"/> property.
+    /// For reports on net8.0+, uses the public <c>IReportTypeSymbol.FlattenedDataItems</c> property (not present in the netstandard2.1 SDK).
     /// For queries (and reports on netstandard2.1), uses reflection to access the internal FlattenedDataItems.
     /// Returns an empty enumerable for non-report/query objects or if the property is unavailable.
     /// </summary>

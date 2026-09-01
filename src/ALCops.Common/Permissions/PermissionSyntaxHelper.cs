@@ -13,42 +13,6 @@ public static class PermissionSyntaxHelper
     private const string CanonicalOrder = MethodOperationMap.CanonicalOrder;
 
     /// <summary>
-    /// Checks whether the permission entries are sorted alphabetically by
-    /// (type keyword, object name), both case-insensitive.
-    /// Returns true if 0 or 1 entries (trivially sorted).
-    /// </summary>
-    public static bool ArePermissionsSorted(SeparatedSyntaxList<PermissionSyntax> permissions)
-    {
-        if (permissions.Count <= 1)
-            return true;
-
-        string? previousType = null;
-        string? previousName = null;
-        foreach (var permission in permissions)
-        {
-            var type = GetPermissionTypeText(permission);
-            var name = GetObjectNameFromPermission(permission);
-            if (name is null || type is null)
-                continue;
-
-            if (previousType is not null && previousName is not null)
-            {
-                int typeCompare = string.Compare(previousType, type, StringComparison.OrdinalIgnoreCase);
-                if (typeCompare > 0)
-                    return false;
-                if (typeCompare == 0 &&
-                    string.Compare(previousName, name, StringComparison.OrdinalIgnoreCase) > 0)
-                    return false;
-            }
-
-            previousType = type;
-            previousName = name;
-        }
-
-        return true;
-    }
-
-    /// <summary>
     /// Detects whether the permission list uses multi-line format by checking
     /// if any comma separator has trailing newline trivia.
     /// </summary>
@@ -127,32 +91,42 @@ public static class PermissionSyntaxHelper
     }
 
     /// <summary>
-    /// Finds the insertion index for a new entry in a sorted permission list,
-    /// comparing by (type keyword, object name). The new entry type defaults to "tabledata"
-    /// since AC0031 only inserts tabledata entries.
-    /// If not sorted, returns the count (append).
+    /// Finds the index at which <paramref name="newEntry"/> belongs: the first position, among the
+    /// entries of its own sort group (table/tabledata form one group), whose entry sorts after it
+    /// according to <see cref="PermissionEntryComparer"/>, or right after the group's last entry.
+    /// Only the group has to be in order for this to apply, so a list that keeps other types first
+    /// (the pre-AZ FC0004 order) still gets its tabledata entry inserted by name. When the group is
+    /// not in order, or the list has no entry of that group, the count (append) is returned.
     /// </summary>
-    public static int FindInsertionIndex(SeparatedSyntaxList<PermissionSyntax> permissions, string tableName, bool isSorted)
+    public static int FindInsertionIndex(SeparatedSyntaxList<PermissionSyntax> permissions, PermissionSyntax newEntry)
     {
-        if (!isSorted)
-            return permissions.Count;
-
-        const string newType = "tabledata";
+        int lastInGroup = -1;
+        PermissionSyntax? previous = null;
         for (int i = 0; i < permissions.Count; i++)
         {
-            var entryType = GetPermissionTypeText(permissions[i]);
-            var entryName = GetObjectNameFromPermission(permissions[i]);
-            if (entryType is null || entryName is null)
+            if (!PermissionEntryComparer.IsSameGroup(newEntry, permissions[i]))
                 continue;
 
-            int typeCompare = string.Compare(newType, entryType, StringComparison.OrdinalIgnoreCase);
-            if (typeCompare < 0)
-                return i;
-            if (typeCompare == 0 && string.Compare(tableName, entryName, StringComparison.OrdinalIgnoreCase) < 0)
-                return i;
+            if (previous is not null && PermissionEntryComparer.Instance.Compare(previous, permissions[i]) > 0)
+                return permissions.Count;
+
+            previous = permissions[i];
+            lastInGroup = i;
         }
 
-        return permissions.Count;
+        if (lastInGroup < 0)
+            return permissions.Count;
+
+        for (int i = 0; i <= lastInGroup; i++)
+        {
+            if (PermissionEntryComparer.IsSameGroup(newEntry, permissions[i])
+                && PermissionEntryComparer.Instance.Compare(newEntry, permissions[i]) < 0)
+            {
+                return i;
+            }
+        }
+
+        return lastInGroup + 1;
     }
 
     /// <summary>
@@ -328,30 +302,212 @@ public static class PermissionSyntaxHelper
     }
 
     /// <summary>
-    /// Sorts the permission entries by (type keyword, object name), both case-insensitive.
-    /// Returns a new list with the entries in sorted order, stripping leading trivia from
-    /// all entries (callers are responsible for applying formatting).
+    /// Sorts the permission entries with <see cref="PermissionEntryComparer"/> (stable sort, so
+    /// duplicate entries keep their relative order). Returns a new list; trivia is left untouched
+    /// (callers are responsible for applying formatting).
     /// </summary>
-    public static List<PermissionSyntax> GetSortedPermissions(SeparatedSyntaxList<PermissionSyntax> permissions)
+    public static List<PermissionSyntax> GetSortedPermissions(SeparatedSyntaxList<PermissionSyntax> permissions) =>
+        permissions.OrderBy(permission => permission, PermissionEntryComparer.Instance).ToList();
+
+    /// <summary>
+    /// Builds the sorted <c>#region</c> tree of a Permissions property the way AZ AL Dev Tools does:
+    /// <c>#region</c>/<c>#endregion</c> directives in an entry's leading trivia open and close groups,
+    /// and the trivia run up to and including the directive travels with the group. An empty region
+    /// (<c>#region</c> immediately followed by <c>#endregion</c>) stays with the entry that carried it.
+    /// Returns false - and callers must leave the property alone - when the list contains any other
+    /// directive (<c>#if</c>, <c>#pragma</c>, ...) or the regions are unbalanced. Directives in the
+    /// leading trivia of the closing <c>;</c> only take part in the balance check and are never moved.
+    /// </summary>
+    public static bool TryBuildRegionTree(PropertySyntax permissionsProperty, out PermissionRegionGroup root)
     {
-        var entries = new List<PermissionSyntax>(permissions.Count);
-        foreach (var permission in permissions)
-            entries.Add(permission);
+        root = new PermissionRegionGroup(null);
 
-        entries.Sort((a, b) =>
+        if (permissionsProperty.Value is not PermissionPropertyValueSyntax value)
+            return false;
+
+        var current = root;
+        var cache = new List<SyntaxTrivia>();
+        var entries = value.PermissionProperties;
+        for (int i = 0; i < entries.Count; i++)
         {
-            var typeA = GetPermissionTypeText(a) ?? string.Empty;
-            var typeB = GetPermissionTypeText(b) ?? string.Empty;
-            int typeCompare = string.Compare(typeA, typeB, StringComparison.OrdinalIgnoreCase);
-            if (typeCompare != 0)
-                return typeCompare;
+            cache.Clear();
+            if (!WalkDirectives(entries[i].GetLeadingTrivia(), cache, root, ref current, captureTrivia: true))
+                return false;
 
-            var nameA = GetObjectNameFromPermission(a) ?? string.Empty;
-            var nameB = GetObjectNameFromPermission(b) ?? string.Empty;
-            return string.Compare(nameA, nameB, StringComparison.OrdinalIgnoreCase);
-        });
+            current.Entries.Add(new PermissionRegionEntry(i, entries[i].WithLeadingTrivia(SyntaxFactory.TriviaList(cache))));
+        }
 
-        return entries;
+        cache.Clear();
+        if (!WalkDirectives(permissionsProperty.SemicolonToken.LeadingTrivia, cache, root, ref current, captureTrivia: false))
+            return false;
+
+        if (current.Parent is not null)
+            return false;
+
+        root.Sort();
+        return true;
+    }
+
+    /// <summary>
+    /// Walks one trivia list, opening a child group on <c>#region</c> and closing the current one on
+    /// <c>#endregion</c>. With <paramref name="captureTrivia"/> the trivia run up to each directive is
+    /// moved onto the group (leaving the entry's own trivia in <paramref name="cache"/>); without it the
+    /// trivia stays where it is and only the balance is tracked. Returns false on any other directive
+    /// or a stray <c>#endregion</c>.
+    /// </summary>
+    private static bool WalkDirectives(SyntaxTriviaList triviaList, List<SyntaxTrivia> cache,
+        PermissionRegionGroup root, ref PermissionRegionGroup current, bool captureTrivia)
+    {
+        foreach (var trivia in triviaList)
+        {
+            cache.Add(trivia);
+            if (!trivia.IsDirective)
+                continue;
+
+            root.ContainsDirectives = true;
+            if (trivia.Kind == EnumProvider.SyntaxKind.RegionDirectiveTrivia)
+            {
+                current = new PermissionRegionGroup(current);
+                if (captureTrivia)
+                {
+                    current.LeadingTrivia.AddRange(cache);
+                    cache.Clear();
+                }
+            }
+            else if (trivia.Kind == EnumProvider.SyntaxKind.EndRegionDirectiveTrivia)
+            {
+                var parent = current.Parent;
+                if (parent is null)
+                    return false;
+
+                if (captureTrivia)
+                {
+                    if (current.Entries.Count == 0 && current.Children.Count == 0)
+                    {
+                        // Empty region: nothing to sort inside it, so keep its directives anchored
+                        // to the entry that follows instead of moving the region around.
+                        parent.Children.Remove(current);
+                        cache.InsertRange(0, current.LeadingTrivia);
+                    }
+                    else
+                    {
+                        current.TrailingTrivia.AddRange(cache);
+                        cache.Clear();
+                    }
+                }
+
+                current = parent;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Reports whether the sorted order of <paramref name="root"/> (from <see cref="TryBuildRegionTree"/>)
+    /// differs from the source order, i.e. whether <see cref="ReorderPreservingLayout"/> would move an entry.
+    /// </summary>
+    public static bool NeedsReordering(PermissionRegionGroup root)
+    {
+        var flattened = new List<PermissionRegionEntry>();
+        root.Flatten(flattened, null, new List<SyntaxTrivia>());
+
+        for (int i = 0; i < flattened.Count; i++)
+        {
+            if (flattened[i].Index != i)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Rewrites the Permissions property with its entries in <see cref="PermissionEntryComparer"/>
+    /// order while keeping the existing layout: position <c>i</c> receives the <c>i</c>-th sorted entry
+    /// but keeps the indentation and comments that were at position <c>i</c>, separators are untouched,
+    /// and <c>#region</c>/<c>#endregion</c> directives are re-emitted where their group now starts and
+    /// ends (a group's own entries are emitted before its nested regions, as AZ AL Dev Tools does).
+    /// </summary>
+    public static PropertySyntax ReorderPreservingLayout(PropertySyntax permissionsProperty, PermissionRegionGroup root)
+    {
+        if (permissionsProperty.Value is not PermissionPropertyValueSyntax permissionValue)
+            return permissionsProperty;
+
+        var original = permissionValue.PermissionProperties;
+        var flattened = new List<PermissionRegionEntry>(original.Count);
+        var directiveTrivia = new List<List<SyntaxTrivia>>(original.Count);
+        var pending = new List<SyntaxTrivia>();
+        root.Flatten(flattened, directiveTrivia, pending);
+        if (flattened.Count != original.Count)
+            return permissionsProperty;
+
+        // The non-directive trivia each slot keeps, indexed by source position.
+        var slotTrivia = new SyntaxTriviaList[original.Count];
+        foreach (var entry in flattened)
+            slotTrivia[entry.Index] = entry.Node.GetLeadingTrivia();
+
+        var newLine = GetNewLineTrivia(permissionValue);
+        var replacements = new PermissionSyntax[original.Count];
+        for (int i = 0; i < original.Count; i++)
+        {
+            var slot = original[i];
+            var leadingTrivia = new List<SyntaxTrivia>();
+
+            if (directiveTrivia[i].Count > 0)
+            {
+                // A directive must start on its own line; the slot only guarantees that when it
+                // carried a directive itself.
+                var firstToken = slot.GetFirstToken();
+                if (!firstToken.ContainsDirectives && !HasNewlineTrivia(firstToken.GetPreviousToken().TrailingTrivia))
+                    leadingTrivia.Add(newLine);
+
+                leadingTrivia.AddRange(directiveTrivia[i]);
+            }
+
+            leadingTrivia.AddRange(slotTrivia[i]);
+
+            replacements[i] = flattened[i].Node
+                .WithLeadingTrivia(SyntaxFactory.TriviaList(leadingTrivia))
+                .WithTrailingTrivia(slot.GetTrailingTrivia());
+        }
+
+        var newValue = permissionValue.ReplaceNodes(
+            original,
+            (oldNode, _) => replacements[original.IndexOf(oldNode)]);
+        var newProperty = permissionsProperty.WithValue(newValue);
+
+        if (pending.Count > 0)
+        {
+            var semicolon = permissionsProperty.SemicolonToken;
+            var semicolonLeading = new List<SyntaxTrivia>();
+            if (!HasNewlineTrivia(original[original.Count - 1].GetTrailingTrivia()))
+                semicolonLeading.Add(newLine);
+            semicolonLeading.AddRange(pending);
+            semicolonLeading.AddRange(semicolon.LeadingTrivia);
+            newProperty = newProperty.WithSemicolonToken(
+                semicolon.WithLeadingTrivia(SyntaxFactory.TriviaList(semicolonLeading)));
+        }
+
+        return newProperty;
+    }
+
+    /// <summary>
+    /// Returns an end-of-line trivia already used inside the list (so CRLF files stay CRLF), falling
+    /// back to <see cref="Environment.NewLine"/>.
+    /// </summary>
+    private static SyntaxTrivia GetNewLineTrivia(PermissionPropertyValueSyntax permissionValue)
+    {
+        foreach (var trivia in permissionValue.DescendantTrivia())
+        {
+            if (trivia.Kind == EnumProvider.SyntaxKind.EndOfLineTrivia)
+                return trivia;
+        }
+
+        return SyntaxFactory.EndOfLine(Environment.NewLine);
     }
 
     /// <summary>

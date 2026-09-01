@@ -40,13 +40,13 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
       - name: Restore TargetFramework.json cache
         id: restore-tfm-cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: ${{ runner.temp }}/TargetFramework.json
           # Unique key so we never get an exact hit; restore-keys picks up the latest saved entry
@@ -69,7 +69,7 @@ jobs:
 
       - name: Save TargetFramework.json cache
         if: steps.restore-tfm-cache.outputs.cache-matched-key != format('tfm-json-{0}', steps.hash-tfm.outputs.hash)
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ runner.temp }}/TargetFramework.json
           key: tfm-json-${{ steps.hash-tfm.outputs.hash }}
@@ -96,7 +96,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -212,7 +212,21 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ALCops.TestAutomationCop
-          path: ./src/ALCops.TestAutomationCop/bin/Release/          
+          path: ./src/ALCops.TestAutomationCop/bin/Release/
+
+      # Code style / analyzer gate (blocking). Runs after the cop builds: under ContinuousIntegrationBuild the test
+      # projects reference the cop DLLs by HintPath (bin/$(Configuration)/<tfm>/), so the workspace only compiles
+      # once those exist. dotnet format has no --configuration switch and defaults to Debug; the Configuration env
+      # var makes MSBuild resolve the Release DLLs built above.
+      - name: Restore solution
+        run: dotnet restore ALCops.sln
+        env:
+          Configuration: Release
+
+      - name: Verify code formatting
+        run: dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"
+        env:
+          Configuration: Release
 
   test:
     if: ${{ !inputs.draft-check || github.event.pull_request.draft == false }}
@@ -226,7 +240,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -407,7 +421,15 @@ jobs:
 
       - name: Merge Test Results
         if: always()
+        shell: bash
         run: |
+          # Every 'Run *.Test' step is continue-on-error, so this is the step that fails the job
+          # when tests never ran (e.g. BC DevTools download failed). Fail with a clear message
+          # instead of letting trx-merge crash on a missing directory.
+          if ! compgen -G "./TestResults/*.trx" > /dev/null; then
+            echo "::error::No .trx files found in ./TestResults - tests did not run. Check the 'Setup BC DevTools' and 'Run *.Test' steps above."
+            exit 1
+          fi
           trx-merge --dir ./TestResults/ --output ./TestResults_${{ matrix.version }}.trx
           
       - name: Upload Test Results

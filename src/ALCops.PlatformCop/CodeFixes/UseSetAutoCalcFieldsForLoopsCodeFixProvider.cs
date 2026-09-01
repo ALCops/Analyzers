@@ -12,7 +12,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(UseSetAutoCalcFieldsForLoopsCodeFixProvider))]
 public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvider
 {
-    private class UseSetAutoCalcFieldsForLoopsCodeAction : CodeAction.DocumentChangeAction
+    private sealed class UseSetAutoCalcFieldsForLoopsCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
@@ -34,11 +34,11 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
     public sealed override FixAllProvider GetFixAllProvider() =>
          WellKnownFixAllProviders.BatchFixer;
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -52,9 +52,9 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
         if (FindInsertionTarget(invocation) is null)
             return;
 
-        ctx.RegisterCodeFix(
+        context.RegisterCodeFix(
             CreateCodeAction(node, document, generateFixAll: true),
-            ctx.Diagnostics[0]);
+            context.Diagnostics[0]);
     }
 
     private static UseSetAutoCalcFieldsForLoopsCodeAction CreateCodeAction(
@@ -78,14 +78,18 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
         if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
             return document;
 
-        var variableName = memberAccess.Expression.ToString();
         var arguments = invocation.ArgumentList?.Arguments ?? default;
 
         if (arguments.Count == 0)
             return document;
 
-        // Build SetAutoCalcFields statement
-        var setAutoCalcFieldsStatement = BuildSetAutoCalcFieldsStatement(variableName, arguments);
+        // Build SetAutoCalcFields statement, reusing the original receiver expression
+        // so qualified receivers like 'this.Job' are preserved verbatim (issue #428).
+        // The elastic marker makes the CodeAction formatter indent the inserted
+        // statement; source nodes lack the elastic trivia factory tokens carry.
+        var setAutoCalcFieldsStatement = BuildSetAutoCalcFieldsStatement(
+            memberAccess.Expression.WithoutTrivia().WithLeadingTrivia(SyntaxFactory.ElasticMarker),
+            arguments);
 
         // Find the insertion point: before the loop or before the FindSet/Find call
         var insertionTarget = FindInsertionTarget(invocation);
@@ -139,12 +143,10 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
     }
 
     private static ExpressionStatementSyntax BuildSetAutoCalcFieldsStatement(
-        string variableName, SeparatedSyntaxList<CodeExpressionSyntax> calcFieldsArguments)
+        CodeExpressionSyntax instanceExpression, SeparatedSyntaxList<CodeExpressionSyntax> calcFieldsArguments)
     {
-        var variableIdentifier = SyntaxFactory.IdentifierName(variableName);
-
         var setAutoCalcFieldsAccess = SyntaxFactory.MemberAccessExpression(
-            variableIdentifier,
+            instanceExpression,
             SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
             SyntaxFactory.IdentifierName("SetAutoCalcFields"));
 
@@ -172,20 +174,20 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
                     // Check if an ancestor if-statement contains the FindSet condition
                     var enclosingIf = FindEnclosingIfWithFind(repeatStatement);
                     if (enclosingIf is not null)
-                        return enclosingIf;
+                        return InsertableOrNull(enclosingIf);
 
                     // Otherwise look for a standalone FindSet statement before the repeat
                     var precedingFind = FindPrecedingFindStatement(repeatStatement);
                     if (precedingFind is not null)
                         return precedingFind;
 
-                    return repeatStatement;
+                    return InsertableOrNull(repeatStatement);
 
                 case WhileStatementSyntax whileStatement:
-                    return whileStatement;
+                    return InsertableOrNull(whileStatement);
 
                 case ForEachStatementSyntax forEachStatement:
-                    return forEachStatement;
+                    return InsertableOrNull(forEachStatement);
 
                 case MethodOrTriggerDeclarationSyntax:
                     // We've reached the method body without finding a loop.
@@ -197,6 +199,15 @@ public sealed class UseSetAutoCalcFieldsForLoopsCodeFixProvider : CodeFixProvide
         }
         return null;
     }
+
+    /// <summary>
+    /// Returns the statement only when it is an element of a statement list
+    /// (begin..end block or repeat..until body). Inserting before a statement that is
+    /// a single-statement branch (e.g. an unblocked then-branch of an outer if) would
+    /// throw InvalidOperationException in the SDK's SyntaxReplacer (issue #398).
+    /// </summary>
+    private static StatementSyntax? InsertableOrNull(StatementSyntax statement) =>
+        statement.Parent is BlockSyntax or RepeatStatementSyntax ? statement : null;
 
     /// <summary>
     /// Walks up from the repeat statement to find an enclosing if-statement whose condition

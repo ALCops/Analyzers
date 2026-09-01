@@ -4,7 +4,6 @@ using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
-using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 
 namespace ALCops.PlatformCop.Analyzers;
 
@@ -122,7 +121,7 @@ public sealed class ClearCodeunitSingleInstance : DiagnosticAnalyzer
         var globalVariables = codeunitTypeSymbol.GetMembers().Where(members => members.Kind == EnumProvider.SymbolKind.GlobalVariable);
         var globalVariablesNonRecordTypes = globalVariables.Where(vars => vars.GetTypeSymbol().GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Record);
 
-        bool globalVariablesExists = globalVariablesNonRecordTypes.Count() != 0;
+        bool globalVariablesExists = globalVariablesNonRecordTypes.Any();
         return globalVariablesExists;
     }
 

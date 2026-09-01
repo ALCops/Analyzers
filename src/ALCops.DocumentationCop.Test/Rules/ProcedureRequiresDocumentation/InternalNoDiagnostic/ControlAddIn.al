@@ -1,0 +1,4 @@
+controladdin MyControlAddIn
+{
+    procedure [|MyProcedure|]()
+}

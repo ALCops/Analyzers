@@ -54,8 +54,10 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
             return;
 
         // Suppress string literals used in Caption properties
-        // Captions are user-facing text and may legitimately contain words that совпidentally match PageStyle names
-        if (ctx.ContainingSymbol is IPropertySymbol ps && ps.PropertyKind == EnumProvider.PropertyKind.Caption)
+        // Captions are user-facing text and may legitimately contain words that coincidentally match PageStyle names
+        PropertyKind[] captionKinds = [EnumProvider.PropertyKind.Caption, EnumProvider.PropertyKind.OptionCaption];
+
+        if (ctx.ContainingSymbol is IPropertySymbol ps && captionKinds.Contains(ps.PropertyKind))
             return;
 
         // Suppress enum and enum value contexts

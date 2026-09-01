@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
-using System.Reflection;
-using ALCops.Common.Reflection;
 using ALCops.Common.Extensions;
+using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
@@ -14,7 +13,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(ExtensiblePropertyExplicitlySetCodeFix))]
 public sealed class ExtensiblePropertyExplicitlySetCodeFix : CodeFixProvider
 {
-    private class ExtensiblePropertyExplicitlySetCodeAction : CodeAction.DocumentChangeAction
+    private sealed class ExtensiblePropertyExplicitlySetCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
@@ -35,14 +34,14 @@ public sealed class ExtensiblePropertyExplicitlySetCodeFix : CodeFixProvider
     public sealed override FixAllProvider GetFixAllProvider() =>
          WellKnownFixAllProviders.BatchFixer;
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-        RegisterInstanceCodeFix(ctx, syntaxRoot, span, document);
+        RegisterInstanceCodeFix(context, syntaxRoot, span, document);
     }
 
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
@@ -143,7 +142,7 @@ public sealed class ExtensiblePropertyExplicitlySetCodeFix : CodeFixProvider
         return propertyList.WithProperties(newProperties);
     }
 
-    private static PropertyValueSyntax CreateBooleanPropertyValueTrue() =>
+    private static BooleanPropertyValueSyntax CreateBooleanPropertyValueTrue() =>
         SyntaxFactory.BooleanPropertyValue(
             SyntaxFactory.BooleanLiteralValue(
                 SyntaxFactory.Token(EnumProvider.SyntaxKind.TrueKeyword)));

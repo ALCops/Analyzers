@@ -40,7 +40,7 @@ runs:
             exit 1
         }
 
-        Write-Output "Selected source: $($selectedSource.version) from $($selectedSource.source)"
+        Write-Output "Selected source: $($selectedSource.version) (package $($selectedSource.packageVersion))"
         Write-Output "Package Type: $($selectedSource.packageType)"
 
         # Set outputs
@@ -83,9 +83,26 @@ runs:
           
           Write-Output "Initiating download..."
           $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-          
-          Invoke-WebRequest $env:ASSET_URI -OutFile $downloadFilePath -Verbose
-          
+
+          # Retry with backoff: nuget.org / CDN occasionally drops the connection mid-stream
+          # ("The response ended prematurely"). -MaximumRetryCount only retries on HTTP status
+          # codes, not on connection drops, so use an explicit loop.
+          $maxAttempts = 5
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            try {
+              Write-Output "Download attempt $attempt of $maxAttempts..."
+              Invoke-WebRequest $env:ASSET_URI -OutFile $downloadFilePath
+              break
+            }
+            catch {
+              if (Test-Path $downloadFilePath) { Remove-Item $downloadFilePath -Force }
+              if ($attempt -eq $maxAttempts) { throw }
+              $delay = [math]::Pow(2, $attempt) * 5   # 10s, 20s, 40s, 80s
+              Write-Warning "Download failed: $($_.Exception.Message). Retrying in $delay s..."
+              Start-Sleep -Seconds $delay
+            }
+          }
+
           $stopwatch.Stop()
           
           # Verify download
@@ -152,10 +169,25 @@ runs:
         ACTION_PATH: ${{ github.action_path }}
         TFM: ${{ inputs.tfm }}
       run: |
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+
         $pathInArchive = switch ($env:ASSET_TYPE) {
-          'VSIX'       { 'extension/bin/Analyzers' }
+          { $_ -in 'VSIX', 'BCArtifact' } {
+            # VSIX layout changed in BC 29 (AL 17): DLLs moved from the legacy
+            # 'extension/bin/Analyzers' folder to a flat 'extension/bin'.
+            # Probe the archive for the current layout first; fall back to legacy.
+            $probe = [System.IO.Compression.ZipFile]::OpenRead($env:ARCHIVE_PATH)
+            try {
+              $flatLayout = $probe.Entries | Where-Object {
+                ($_.FullName -replace '\\', '/') -ieq 'extension/bin/Microsoft.Dynamics.Nav.Analyzers.Common.dll'
+              } | Select-Object -First 1
+            }
+            finally {
+              $probe.Dispose()
+            }
+            if ($flatLayout) { 'extension/bin' } else { 'extension/bin/Analyzers' }
+          }
           'NuGet'      { "tools/$($env:TFM)/any" }
-          'BCArtifact' { 'extension/bin/Analyzers' }
           default { 
             Write-Error "Invalid asset-type: $($env:ASSET_TYPE). Must be 'VSIX', 'NuGet', or 'BCArtifact'."
             exit 1

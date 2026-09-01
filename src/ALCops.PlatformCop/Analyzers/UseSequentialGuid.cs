@@ -131,8 +131,8 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                         if (bodyOp is not null)
                         {
                             var result = TraceVariable(
-                                targetSymbol, bodyOp, _context.SemanticModel.Compilation, _ct,
-                                new HashSet<IMethodSymbol>());
+                                targetSymbol, bodyOp, _context.SemanticModel.Compilation,
+                                new HashSet<IMethodSymbol>(), _ct);
                             if (result is not null)
                             {
                                 ReportDiagnostic(_context, createGuidInvocation,
@@ -180,8 +180,8 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                     !operation.TargetMethod.IsEvent)
                 {
                     var result = TraceParameter(
-                        operation.TargetMethod, i, _context.SemanticModel.Compilation, _ct,
-                        new HashSet<IMethodSymbol>());
+                        operation.TargetMethod, i, _context.SemanticModel.Compilation,
+                        new HashSet<IMethodSymbol>(), _ct);
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
@@ -216,16 +216,16 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
     private static KeyFieldResult? TraceVariable(
         ISymbol variable, IOperation methodBody, Compilation compilation,
-        CancellationToken ct, HashSet<IMethodSymbol> visited)
+        HashSet<IMethodSymbol> visited, CancellationToken ct)
     {
-        var tracer = new SymbolFlowTracer(variable, compilation, ct, visited);
+        var tracer = new SymbolFlowTracer(variable, compilation, visited, ct);
         tracer.Visit(methodBody);
         return tracer.Result;
     }
 
     private static KeyFieldResult? TraceParameter(
         IMethodSymbol method, int paramIndex, Compilation compilation,
-        CancellationToken ct, HashSet<IMethodSymbol> visited)
+        HashSet<IMethodSymbol> visited, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -251,7 +251,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                 return null;
 
             var parameter = method.Parameters[paramIndex];
-            var tracer = new SymbolFlowTracer(parameter, compilation, ct, visited);
+            var tracer = new SymbolFlowTracer(parameter, compilation, visited, ct);
             tracer.Visit(bodyOp);
             return tracer.Result;
         }
@@ -276,7 +276,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
         public SymbolFlowTracer(
             ISymbol tracked, Compilation compilation,
-            CancellationToken ct, HashSet<IMethodSymbol> visited)
+            HashSet<IMethodSymbol> visited, CancellationToken ct)
         {
             _tracked = tracked;
             _compilation = compilation;
@@ -318,7 +318,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                     if (IsTrackedSymbol(operation.Arguments[i].Value))
                     {
                         Result = TraceParameter(
-                            operation.TargetMethod, i, _compilation, _ct, _visited);
+                            operation.TargetMethod, i, _compilation, _visited, _ct);
                         if (Result is not null) return;
                     }
                 }

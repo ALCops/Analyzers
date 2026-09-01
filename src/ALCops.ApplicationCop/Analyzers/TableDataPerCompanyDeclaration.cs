@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -23,7 +23,7 @@ public sealed class TableDataPerCompanyDeclaration : DiagnosticAnalyzer
         if (ctx.IsObsolete() || ctx.Symbol is not ITableTypeSymbol table)
             return;
 
-        if (table.TableType == EnumProvider.TableTypeKind.Temporary)
+        if (table.IsTemporary())
             return;
 
         if (table.GetProperty(EnumProvider.PropertyKind.DataPerCompany) is null)

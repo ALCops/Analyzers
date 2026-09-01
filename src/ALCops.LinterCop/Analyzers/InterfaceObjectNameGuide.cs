@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using ALCops.Common.Extensions;
+using ALCops.Common.Helpers;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -15,34 +16,41 @@ public sealed class InterfaceObjectNameGuide : DiagnosticAnalyzer
         ImmutableArray.Create(
             DiagnosticDescriptors.InterfaceObjectNameGuide);
 
-    private static IEnumerable<string>? Affixes = null;
     private static readonly char CharOfCapitalI = 'I';
 
     public override void Initialize(AnalysisContext context)
     {
-        context.RegisterCompilationStartAction(
-            this.PopulateListOfAffixes);
+        context.RegisterCompilationStartAction(startContext =>
+        {
+            // Resolve the affixes once per compilation and capture them in the closure;
+            // no static state, so concurrent compilations cannot observe each other's affixes.
+            var affixes = new Lazy<string[]>(
+                () => MandatoryAffixes.GetAffixes(startContext.Compilation),
+                LazyThreadSafetyMode.ExecutionAndPublication);
 
-        context.RegisterSymbolAction(
-            this.AnalyzeObjectName,
-            EnumProvider.SymbolKind.Interface);
+            startContext.RegisterSymbolAction(
+                ctx => AnalyzeObjectName(ctx, affixes),
+                EnumProvider.SymbolKind.Interface);
+        });
     }
 
-    private void AnalyzeObjectName(SymbolAnalysisContext ctx)
+    private static void AnalyzeObjectName(SymbolAnalysisContext ctx, Lazy<string[]> affixes)
     {
         if (ctx.IsObsolete() || ctx.Symbol is not IInterfaceTypeSymbol interfaceTypeSymbol)
             return;
 
         // The interface object should start with a capital 'I' and should not have a space after it
-        if (interfaceTypeSymbol.Name.StartsWith(CharOfCapitalI) && !char.IsWhiteSpace(interfaceTypeSymbol.Name[1]))
+        if (interfaceTypeSymbol.Name.StartsWith(CharOfCapitalI) &&
+            (interfaceTypeSymbol.Name.Length == 1 || !char.IsWhiteSpace(interfaceTypeSymbol.Name[1])))
             return;
 
-        int? indexAfterAffix = GetIndexAfterAffix(interfaceTypeSymbol.Name);
+        int? indexAfterAffix = MandatoryAffixes.GetIndexAfterLeadingAffix(interfaceTypeSymbol.Name, affixes.Value);
         if (indexAfterAffix is null)
         {
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.InterfaceObjectNameGuide,
-                interfaceTypeSymbol.GetLocation()));
+                interfaceTypeSymbol.GetLocation(),
+                interfaceTypeSymbol.Name));
 
             return;
         }
@@ -50,11 +58,13 @@ public sealed class InterfaceObjectNameGuide : DiagnosticAnalyzer
         string objectNameWithoutPrefix = interfaceTypeSymbol.Name.Remove(0, indexAfterAffix.GetValueOrDefault());
 
         // The first character after the prefix should be a capital 'I'
-        if (RemoveSpecialCharacters(objectNameWithoutPrefix)[0] != CharOfCapitalI)
+        string lettersAndDigitsAfterPrefix = RemoveSpecialCharacters(objectNameWithoutPrefix);
+        if (lettersAndDigitsAfterPrefix.Length == 0 || lettersAndDigitsAfterPrefix[0] != CharOfCapitalI)
         {
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.InterfaceObjectNameGuide,
-                interfaceTypeSymbol.GetLocation()));
+                interfaceTypeSymbol.GetLocation(),
+                interfaceTypeSymbol.Name));
 
             return;
         }
@@ -67,16 +77,12 @@ public sealed class InterfaceObjectNameGuide : DiagnosticAnalyzer
             {
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.InterfaceObjectNameGuide,
-                    interfaceTypeSymbol.GetLocation()));
+                    interfaceTypeSymbol.GetLocation(),
+                    interfaceTypeSymbol.Name));
 
                 return;
             }
         }
-    }
-
-    private void PopulateListOfAffixes(CompilationStartAnalysisContext context)
-    {
-        Affixes = GetAffixes(context.Compilation);
     }
 
     private static string RemoveSpecialCharacters(string str)
@@ -90,44 +96,5 @@ public sealed class InterfaceObjectNameGuide : DiagnosticAnalyzer
             }
         }
         return sb.ToString();
-    }
-
-    private static int? GetIndexAfterAffix(string typeSymbolName)
-    {
-        foreach (var affix in Affixes ?? Enumerable.Empty<string>())
-        {
-            if (typeSymbolName.StartsWith(affix, SemanticFacts.NameEqualityComparison))
-            {
-                int affixLength = affix.Length;
-                if (typeSymbolName.Length > affixLength)
-                {
-                    return affixLength;
-                }
-            }
-        }
-
-        // Return null if no affix is found or no character is present after the affix
-        return null;
-    }
-
-    private static List<string>? GetAffixes(Compilation compilation)
-    {
-        AppSourceCopConfiguration? copConfiguration = AppSourceCopConfigurationProvider.GetAppSourceCopConfiguration(compilation);
-        if (copConfiguration is null)
-            return null;
-
-        List<string> affixes = new List<string>();
-        if (!string.IsNullOrEmpty(copConfiguration.MandatoryPrefix) && !affixes.Contains(copConfiguration.MandatoryPrefix, StringComparer.OrdinalIgnoreCase))
-            affixes.Add(copConfiguration.MandatoryPrefix);
-
-        if (copConfiguration.MandatoryAffixes is not null)
-        {
-            foreach (string mandatoryAffix in copConfiguration.MandatoryAffixes)
-            {
-                if (!string.IsNullOrEmpty(mandatoryAffix) && !affixes.Contains(mandatoryAffix, StringComparer.OrdinalIgnoreCase))
-                    affixes.Add(mandatoryAffix);
-            }
-        }
-        return affixes;
     }
 }

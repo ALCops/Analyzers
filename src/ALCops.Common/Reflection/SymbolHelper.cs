@@ -65,8 +65,10 @@ public static class SymbolHelper
     }
 
 #if NETSTANDARD2_1
-    /// Handling breaking changes between different versions of Microsoft.Dynamics.Nav.CodeAnalysis
-    /// .ToDisplayString() < 13.0 vs .ToDisplayString(SymbolDisplayFormat) >= 13.0
+    /// <summary>
+    /// Handling breaking changes between different versions of Microsoft.Dynamics.Nav.CodeAnalysis:
+    /// <c>.ToDisplayString()</c> before 13.0 vs <c>.ToDisplayString(SymbolDisplayFormat)</c> from 13.0 on.
+    /// </summary>
     private static readonly Lazy<Func<ISymbol, string>> _toDisplayString = new(CreateToDisplayStringInvoker);
     private static Func<ISymbol, string> CreateToDisplayStringInvoker()
     {

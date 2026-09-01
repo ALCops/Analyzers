@@ -1,24 +1,23 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
-using ALCops.Common.Diagnostics;
 
 namespace ALCops.ApplicationCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public sealed class CaptionRequired : ApplicationCopAnalyzer
+public sealed class CaptionRequired : DiagnosticAnalyzer
 {
-    protected override ImmutableArray<DiagnosticDescriptor> SupportedDiagnosticsCore { get; } =
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
             DiagnosticDescriptors.CaptionRequired);
 
     private static readonly HashSet<string> _predefinedActionCategoryNames =
         SyntaxFacts.PredefinedActionCategoryNames.Select(x => x.Key.ToLowerInvariant()).ToHashSet();
 
-    protected override void InitializeAnalyzer(SafeAnalysisContext context) =>
+    public override void Initialize(AnalysisContext context) =>
         context.RegisterSymbolAction(
             CheckForMissingCaptions,
             EnumProvider.SymbolKind.Page,
@@ -46,6 +45,12 @@ public sealed class CaptionRequired : ApplicationCopAnalyzer
             switch (Control.ControlKind)
             {
                 case var _ when Control.ControlKind == EnumProvider.ControlKind.Field:
+                    // The Caption property is ignored by the runtime for field controls on HeadlinePart pages;
+                    // only Expression, Visible, ApplicationArea, Drilldown and DrillDownPageID apply there.
+                    // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-create-role-center-headline#in-development
+                    if (IsInHeadlinePartPage(context))
+                        break;
+
                     if (CaptionIsMissing(context.Symbol, context))
                         if (Control.RelatedFieldSymbol is not null)
                         {
@@ -159,7 +164,7 @@ public sealed class CaptionRequired : ApplicationCopAnalyzer
         }
     }
 
-    private bool CaptionIsMissing(ISymbol Symbol, SymbolAnalysisContext context)
+    private static bool CaptionIsMissing(ISymbol Symbol, SymbolAnalysisContext context)
     {
         if (Symbol.ContainingType?.Kind == EnumProvider.SymbolKind.Table)
         {
@@ -191,7 +196,19 @@ public sealed class CaptionRequired : ApplicationCopAnalyzer
         return ((IPageTypeSymbol)containingObject).PageType == EnumProvider.PageTypeKind.API;
     }
 
-    private void RaiseDiagnostic(SymbolAnalysisContext context)
+    private static bool IsInHeadlinePartPage(SymbolAnalysisContext context)
+    {
+        IPageBaseTypeSymbol? pageBase = context.Symbol.GetContainingObjectTypeSymbol() switch
+        {
+            IPageTypeSymbol page => page,
+            IApplicationObjectExtensionTypeSymbol ext => ext.Target?.OriginalDefinition as IPageBaseTypeSymbol,
+            _ => null
+        };
+
+        return pageBase?.PageType == EnumProvider.PageTypeKind.HeadlinePart;
+    }
+
+    private static void RaiseDiagnostic(SymbolAnalysisContext context)
     {
         context.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.CaptionRequired,

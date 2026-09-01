@@ -24,6 +24,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("Codeunit")]
         [TestCase("Enum")]
         [TestCase("Table")]
+        [TestCase("XmlPort")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -43,6 +44,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("Enum")]
         [TestCase("Table")]
         [TestCase("VariableNamedAfterKeyword")]
+        [TestCase("XmlPort")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

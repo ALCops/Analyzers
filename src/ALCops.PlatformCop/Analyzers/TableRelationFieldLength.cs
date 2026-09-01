@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -38,7 +38,7 @@ public sealed class TableRelationFieldLength : DiagnosticAnalyzer
         AnalyzeTableRelations(ctx, field, tableRelation);
     }
 
-    private void AnalyzeTableRelations(SymbolAnalysisContext ctx, IFieldSymbol field, TableRelationPropertyValueSyntax? tableRelation)
+    private static void AnalyzeTableRelations(SymbolAnalysisContext ctx, IFieldSymbol field, TableRelationPropertyValueSyntax? tableRelation)
     {
         while (tableRelation is not null)
         {
@@ -75,7 +75,7 @@ public sealed class TableRelationFieldLength : DiagnosticAnalyzer
 #endif
     }
 
-    private IFieldSymbol? ResolveRelatedField(SymbolAnalysisContext ctx, TableRelationPropertyValueSyntax tableRelation)
+    private static IFieldSymbol? ResolveRelatedField(SymbolAnalysisContext ctx, TableRelationPropertyValueSyntax tableRelation)
     {
         return tableRelation.RelatedTableField switch
         {
@@ -136,7 +136,9 @@ public sealed class TableRelationFieldLength : DiagnosticAnalyzer
             return null;
 
 #if NETSTANDARD2_1
+#pragma warning disable CS0618 // Obsolete only in the netstandard2.1 SDK; the namespace-aware replacement does not exist there
         var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModules(EnumProvider.SymbolKind.Table, tableName);
+#pragma warning restore CS0618
 #else
         var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModulesAndNamespaces(EnumProvider.SymbolKind.Table, tableName);
 #endif
@@ -148,7 +150,9 @@ public sealed class TableRelationFieldLength : DiagnosticAnalyzer
     private static IFieldSymbol? GetFieldFromTable(string tableName, string fieldName, Compilation compilation)
     {
 #if NETSTANDARD2_1
+#pragma warning disable CS0618 // Obsolete only in the netstandard2.1 SDK; the namespace-aware replacement does not exist there
         var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModules(EnumProvider.SymbolKind.Table, tableName);
+#pragma warning restore CS0618
 #else
         var tableSymbols = compilation.GetApplicationObjectTypeSymbolsByNameAcrossModulesAndNamespaces(EnumProvider.SymbolKind.Table, tableName);
 #endif

@@ -12,7 +12,7 @@ namespace ALCops.FormattingCop.CodeFixes;
 [CodeFixProvider(nameof(PermissionDeclarationOrderCodeFixProvider))]
 public sealed class PermissionDeclarationOrderCodeFixProvider : CodeFixProvider
 {
-    private class PermissionDeclarationOrderCodeAction : CodeAction.DocumentChangeAction
+    private sealed class PermissionDeclarationOrderCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
@@ -32,16 +32,16 @@ public sealed class PermissionDeclarationOrderCodeFixProvider : CodeFixProvider
     public sealed override FixAllProvider GetFixAllProvider() =>
         WellKnownFixAllProviders.BatchFixer;
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        RegisterInstanceCodeFix(ctx, syntaxRoot, span, document);
+        RegisterInstanceCodeFix(context, syntaxRoot, span, document);
     }
 
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot,
@@ -81,21 +81,25 @@ public sealed class PermissionDeclarationOrderCodeFixProvider : CodeFixProvider
         if (permissions.Count <= 1)
             return document;
 
-        var sorted = PermissionSyntaxHelper.GetSortedPermissions(permissions);
-        var indentation = PermissionSyntaxHelper.GetEntryIndentation(permissionValue);
+        if (!PermissionSyntaxHelper.TryBuildRegionTree(propertySyntax, out var regionRoot))
+            return document;
 
-        PermissionPropertyValueSyntax newPermissionValue;
-        if (sorted.Count >= 2)
+        PropertySyntax newProperty;
+        if (PermissionSyntaxHelper.IsMultiLineFormat(permissionValue) || regionRoot.ContainsDirectives)
         {
-            // Always use multi-line format for 2+ entries
-            newPermissionValue = PermissionSyntaxHelper.BuildMultiLinePermissionValue(sorted, indentation);
+            // Keep the existing layout (indentation, comments, #region blocks); only the entries move.
+            // A single-line list wrapped in #region has no newline separator but must not be rebuilt
+            // (BuildMultiLinePermissionValue would drop the directives).
+            newProperty = PermissionSyntaxHelper.ReorderPreservingLayout(propertySyntax, regionRoot);
         }
         else
         {
-            newPermissionValue = permissionValue;
+            // Single-line lists become multi-line for readability.
+            var sorted = PermissionSyntaxHelper.GetSortedPermissions(permissions);
+            var indentation = PermissionSyntaxHelper.GetEntryIndentation(permissionValue);
+            newProperty = propertySyntax.WithValue(
+                PermissionSyntaxHelper.BuildMultiLinePermissionValue(sorted, indentation));
         }
-
-        var newProperty = propertySyntax.WithValue(newPermissionValue);
 
         var root = await syntaxRootTask.ConfigureAwait(false);
         if (root is null)

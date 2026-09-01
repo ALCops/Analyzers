@@ -3,12 +3,7 @@
         <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
         <TargetFrameworks Condition="'$(ContinuousIntegrationBuild)' != 'true'">net10.0</TargetFrameworks>
         <TargetFrameworks Condition="'$(ContinuousIntegrationBuild)' == 'true'">netstandard2.1;net8.0;net10.0</TargetFrameworks>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <LangVersion>Latest</LangVersion>
         <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-        <Nullable>enable</Nullable>
-        <WarningsAsErrors>CS8600;CS8602;CS8603;CS8604;CS8605</WarningsAsErrors>
-        <GenerateFullPaths>true</GenerateFullPaths>
 
         <!-- Path to BC dev tools may be overridden by /p:BcDevToolsDir= -->
         <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>
@@ -22,6 +17,13 @@
             <StronglyTypedFileName>$(IntermediateOutputPath)ALCops.DocumentationCopAnalyzers.cs</StronglyTypedFileName>
             <StronglyTypedClassName>DocumentationCopAnalyzers</StronglyTypedClassName>
         </EmbeddedResource>
+        <Compile Include="$(IntermediateOutputPath)ALCops.DocumentationCopAnalyzers.cs"
+                 Condition="'$(DesignTimeBuild)' == 'true' and Exists('$(IntermediateOutputPath)ALCops.DocumentationCopAnalyzers.cs')"
+                 Visible="false">
+            <AutoGen>true</AutoGen>
+            <DesignTime>true</DesignTime>
+            <DependentUpon>ALCops.DocumentationCopAnalyzers.resx</DependentUpon>
+        </Compile>
     </ItemGroup>
     
     <ItemGroup>
@@ -49,6 +51,6 @@
 
     <!-- Legacy support for netstandard2.1 -->
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-        <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
+        <PackageReference Include="System.Collections.Immutable" />
     </ItemGroup>
 </Project>

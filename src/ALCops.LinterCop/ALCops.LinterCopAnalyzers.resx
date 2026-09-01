@@ -355,7 +355,7 @@
     <value>Consider using a Query object or Rec.Find('-') with Rec.Next() for checking exactly one record</value>
   </data>
   <data name="UseQueryOrFindWithNextInsteadOfCountMessageFormat" xml:space="preserve">
-    <value>Consider using a Query object or {0}.Find('-') together with {0}.Next() instead of {0}.Count() for faster and more efficient record checks.</value>
+    <value>Consider using a Query object or {0}.Find('-') together with {0}.Next() instead of {0}.Count() {1} {2} for faster and more efficient record checks.</value>
   </data>
   <data name="UseQueryOrFindWithNextInsteadOfCountDescription" xml:space="preserve">
     <value>Instead of relying on Rec.Count(), consider using a Query object or a combination of Rec.Find('-') and Rec.Next() for faster and more efficient record checks.</value>
@@ -410,6 +410,39 @@
   </data>
   <data name="ParameterNotReferencedCodeAction" xml:space="preserve">
     <value>ALCops: Remove unreferenced parameter</value>
+  </data>
+  <data name="EventSubscriberParameterNotReferencedTitle" xml:space="preserve">
+    <value>Event subscriber parameter is not referenced</value>
+  </data>
+  <data name="EventSubscriberParameterNotReferencedMessageFormat" xml:space="preserve">
+    <value>Parameter '{0}' is not referenced in event subscriber '{1}'.</value>
+  </data>
+  <data name="EventSubscriberParameterNotReferencedDescription" xml:space="preserve">
+    <value>Event subscriber methods often include generated parameters. Unused parameters can be removed when they are not needed by the implementation. This rule reports unreferenced event subscriber parameters as information to keep signatures focused without enforcing warning-level strictness.</value>
+  </data>
+  <data name="EventSubscriberParameterNotReferencedCodeAction" xml:space="preserve">
+    <value>ALCops: Remove unreferenced event subscriber parameter</value>
+  </data>
+  <data name="MixedExitAndNamedReturnAssignmentTitle" xml:space="preserve">
+    <value>Avoid mixing exit() and named return variable assignments</value>
+  </data>
+  <data name="MixedExitAndNamedReturnAssignmentMessageFormat" xml:space="preserve">
+    <value>{0} '{1}' mixes exit() with assignments to the named return variable. Use one return style consistently.</value>
+  </data>
+  <data name="MixedExitAndNamedReturnAssignmentDescription" xml:space="preserve">
+    <value>In procedures and triggers with a named return variable, mixing exit() statements with return-variable assignments makes control flow harder to reason about and increases the risk of accidental default returns. Prefer one return style per procedure or trigger.</value>
+  </data>
+  <data name="EventSubscriberNamingPatternTitle" xml:space="preserve">
+    <value>Event subscriber procedure name does not match the configured template</value>
+  </data>
+  <data name="EventSubscriberNamingPatternMessageFormat" xml:space="preserve">
+    <value>Event subscriber '{0}' does not match the expected name '{1}'</value>
+  </data>
+  <data name="EventSubscriberNamingPatternDescription" xml:space="preserve">
+    <value>Event subscriber procedure names should follow a consistent naming convention derived from the subscribed event's source object, event name, and element name. The default template is '{Event Source}_{Event Name}[_{Element Name}]', which produces names like '"Sales Header_OnAfterDeleteEvent"'. Configure a custom template using SubscriberNamingPattern in alcops.json. The placeholder prefix determines the casing: {Event Source} = Raw (unchanged), {EventSource} = PascalCase, {eventSource} = camelCase, {event_source} = snake_case, {event-source} = kebab-case. The same applies to {EventName} and {ElementName}. Wrap a sub-template in square brackets to emit it only when all tokens inside resolve to a non-empty value, e.g. 'On{EventSource}_{EventName}[_{ElementName}]' emits the underscore-prefixed element name only when an element name is present.</value>
+  </data>
+  <data name="EventSubscriberNamingPatternCodeAction" xml:space="preserve">
+    <value>ALCops: Rename event subscriber to match template</value>
   </data>
   <data name="AnalyzerExceptionTitle" xml:space="preserve">
     <value>Analyzer threw an unhandled exception</value>

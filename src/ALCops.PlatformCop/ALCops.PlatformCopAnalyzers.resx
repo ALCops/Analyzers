@@ -331,7 +331,7 @@
     <value>Incorrect number or type of arguments in .Get() method on Record object</value>
   </data>
   <data name="RecordGetProcedureArgumentsMessageFormat" xml:space="preserve">
-    <value>Invalid arguments in .Get() method for record '{0}': {1}.</value>
+    <value>Invalid arguments in call to '{0}' for record '{1}': {2}.</value>
   </data>
   <data name="RecordGetProcedureArgumentsDescription" xml:space="preserve">
     <value>This rule ensures that calls to the built-in .Get() procedure on Record objects have the correct number and types of arguments matching the primary key (PK) of the record in question.</value>
@@ -494,6 +494,15 @@
   </data>
   <data name="UseValidateForFieldAssignmentCodeAction" xml:space="preserve">
     <value>ALCops: Use Validate() for field assignment</value>
+  </data>
+  <data name="NotAllCodePathsReturnValueTitle" xml:space="preserve">
+    <value>Not all code paths return a value</value>
+  </data>
+  <data name="NotAllCodePathsReturnValueMessageFormat" xml:space="preserve">
+    <value>'{0}': not all code paths return a value</value>
+  </data>
+  <data name="NotAllCodePathsReturnValueDescription" xml:space="preserve">
+    <value>Procedures and triggers with an explicit return type should return a value on every reachable path. Falling through the end of a procedure or trigger without an explicit return value can hide logic bugs and produce unintended default values.</value>
   </data>
   <data name="AnalyzerExceptionTitle" xml:space="preserve">
     <value>Analyzer threw an unhandled exception</value>

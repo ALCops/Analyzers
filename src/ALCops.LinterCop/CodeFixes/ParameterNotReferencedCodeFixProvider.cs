@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
@@ -11,7 +12,19 @@ namespace ALCops.LinterCop.CodeFixes;
 [CodeFixProvider(nameof(ParameterNotReferencedCodeFixProvider))]
 public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
 {
-    private class ParameterNotReferencedCodeAction : CodeAction.DocumentChangeAction
+    private enum ProcedureKind
+    {
+        Regular,
+        EventSubscriber
+    }
+
+    private sealed class PragmaTransferPlan
+    {
+        public Dictionary<ParameterSyntax, List<SyntaxTrivia>> PragmasByRecipient { get; } = [];
+        public Dictionary<ParameterSyntax, List<SyntaxTrivia>> PragmasByClosingParen { get; } = [];
+    }
+
+    private sealed class ParameterNotReferencedCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
@@ -28,69 +41,639 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
     }
 
     public sealed override ImmutableArray<string> FixableDiagnosticIds =>
-        ImmutableArray.Create(DiagnosticDescriptors.ParameterNotReferenced.Id);
+        ImmutableArray.Create(
+            DiagnosticDescriptors.ParameterNotReferenced.Id,
+            DiagnosticDescriptors.EventSubscriberParameterNotReferenced.Id);
 
     public sealed override FixAllProvider GetFixAllProvider() =>
-         WellKnownFixAllProviders.BatchFixer;
+        FixAllProvider.Create(FixAllAsync);
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken)
             .ConfigureAwait(false);
-        RegisterInstanceCodeFix(ctx, syntaxRoot, span, document);
+
+        RegisterInstanceCodeFix(context, syntaxRoot, span, document);
     }
 
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot,
         TextSpan span, Document document)
     {
         SyntaxNode node = syntaxRoot.FindNode(span, getInnermostNodeForTie: true);
+
+        if (node.AncestorsAndSelf().OfType<ParameterSyntax>().FirstOrDefault() is { } parameter
+            && HasConditionalDirective(parameter))
+        {
+            return;
+        }
+
+        ProcedureKind procedureKind = GetProcedureKind(ctx.Diagnostics[0].Id);
+
         ctx.RegisterCodeFix(
-            CreateCodeAction(node, document, generateFixAll: true),
-            ctx.Diagnostics[0]);
+            CreateCodeAction(node, document, procedureKind, generateFixAll: true),
+            ctx.Diagnostics);
+    }
+
+    private static ProcedureKind GetProcedureKind(string diagnosticId)
+    {
+        if (diagnosticId == DiagnosticIds.EventSubscriberParameterNotReferenced)
+        {
+            return ProcedureKind.EventSubscriber;
+        }
+
+        return ProcedureKind.Regular;
     }
 
     private static ParameterNotReferencedCodeAction CreateCodeAction(SyntaxNode node, Document document,
-        bool generateFixAll)
+        ProcedureKind procedureKind, bool generateFixAll)
     {
+        string title = procedureKind == ProcedureKind.EventSubscriber
+            ? LinterCopAnalyzers.EventSubscriberParameterNotReferencedCodeAction
+            : LinterCopAnalyzers.ParameterNotReferencedCodeAction;
+
+        string equivalenceKey = GetEquivalenceKey(procedureKind);
+
         return new ParameterNotReferencedCodeAction(
-            LinterCopAnalyzers.ParameterNotReferencedCodeAction,
-            ct => RemoveUnreferencedParameter(document, node, ct),
-            nameof(ParameterNotReferencedCodeFixProvider),
+            title,
+            ct => RemoveUnreferencedParameter(document, node, procedureKind, ct),
+            equivalenceKey,
             generateFixAll);
     }
 
-    private static async Task<Document> RemoveUnreferencedParameter(Document document, SyntaxNode node,
-        CancellationToken cancellationToken)
+    private static string GetEquivalenceKey(ProcedureKind procedureKind)
     {
-        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
+        return procedureKind == ProcedureKind.EventSubscriber
+            ? $"{nameof(ParameterNotReferencedCodeFixProvider)}.EventSubscriber"
+            : $"{nameof(ParameterNotReferencedCodeFixProvider)}.RegularProcedure";
+    }
 
-        var parameter = node.AncestorsAndSelf()
+    private static async Task<Document> RemoveUnreferencedParameter(Document document, SyntaxNode node,
+        ProcedureKind procedureKind, CancellationToken cancellationToken)
+    {
+        SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+
+        if (root is null)
+        {
+            return document;
+        }
+
+        SemanticModel? semanticModel = await document.GetSemanticModelAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var parameter = FindParameterInScope(node, semanticModel, procedureKind);
+
+        if (parameter is null)
+        {
+            return document;
+        }
+
+        var newRoot = RemoveParameters(root, [parameter]);
+
+        return newRoot is null ? document : document.WithSyntaxRoot(newRoot);
+    }
+
+    private static ParameterSyntax? FindParameterInScope(SyntaxNode currentNode,
+        SemanticModel? semanticModel, ProcedureKind procedureKind,
+        Dictionary<MethodOrTriggerDeclarationSyntax, bool>? eventSubscriberCache = null)
+    {
+        var parameter = currentNode?.AncestorsAndSelf()
             .OfType<ParameterSyntax>()
             .FirstOrDefault();
 
         if (parameter is null)
-            return document;
+        {
+            return null;
+        }
 
-        if (parameter.Parent is not ParameterListSyntax parameterList)
-            return document;
+        if (HasConditionalDirective(parameter))
+        {
+            return null;
+        }
 
-        var parameters = parameterList.Parameters;
-        int index = parameters.IndexOf(parameter);
-        if (index < 0)
-            return document;
+        if (semanticModel is null)
+        {
+            return parameter;
+        }
 
-        var newParameters = parameters.RemoveAt(index);
-        var newParameterList = parameterList.WithParameters(newParameters);
+        var methodDeclaration = parameter.AncestorsAndSelf()
+            .OfType<MethodOrTriggerDeclarationSyntax>()
+            .FirstOrDefault();
 
-        var root = await syntaxRootTask.ConfigureAwait(false);
+        if (methodDeclaration is null)
+        {
+            return parameter;
+        }
+
+        bool isEventSubscriber;
+
+        if (eventSubscriberCache is not null && eventSubscriberCache.TryGetValue(methodDeclaration, out bool cachedValue))
+        {
+            isEventSubscriber = cachedValue;
+        }
+        else
+        {
+            isEventSubscriber = (semanticModel.GetDeclaredSymbol(methodDeclaration) as IMethodSymbol)
+                ?.IsEventSubscriber() ?? false;
+
+            eventSubscriberCache?.Add(methodDeclaration, isEventSubscriber);
+        }
+
+        if ((procedureKind == ProcedureKind.EventSubscriber && !isEventSubscriber)
+            || (procedureKind == ProcedureKind.Regular && isEventSubscriber))
+        {
+            return null;
+        }
+
+        return parameter;
+    }
+
+    private static SyntaxNode? RemoveParameters(SyntaxNode root,
+        IEnumerable<ParameterSyntax> parametersToRemove)
+    {
+        var parameters = parametersToRemove.ToHashSet();
+        var pragmasToRemove = GetPragmasToRemove(root, parameters);
+        var pragmaTransferPlan = GetPragmaTransferPlan(root, parameters, pragmasToRemove);
+        var annotationsByParameter = CreateParameterAnnotations(parameters, pragmaTransferPlan);
+
+        root = AddParameterAnnotations(root, annotationsByParameter);
+
+        if (pragmasToRemove.Count > 0)
+        {
+            var pragmaSpans = pragmasToRemove.Select(pragma => pragma.Span).ToHashSet();
+            var triviaToRemove = GetPragmaDirectives(root)
+                .Where(directive => pragmaSpans.Contains(directive.ParentTrivia.Span))
+                .SelectMany(GetPragmaTriviaToRemove)
+                .ToList();
+
+            root = root.ReplaceTrivia(triviaToRemove, (_, _) => default);
+        }
+
+        root = TransferPragmas(root, pragmaTransferPlan.PragmasByRecipient, annotationsByParameter);
+        root = TransferPragmasToClosingParen(
+            root,
+            pragmaTransferPlan.PragmasByClosingParen,
+            annotationsByParameter,
+            parameters);
+
+        var rewrittenParameters = parameters
+            .Select(parameter => FindAnnotatedParameter(root, annotationsByParameter[parameter]))
+            .Where(parameter => parameter is not null)
+            .Cast<ParameterSyntax>();
+
+        return root.RemoveNodes(rewrittenParameters, SyntaxRemoveOptions.KeepNoTrivia) ?? root;
+    }
+
+    private static bool HasConditionalDirective(ParameterSyntax parameter) =>
+        parameter.GetLeadingTrivia()
+            .Any(trivia => trivia.GetStructure() is ConditionalDirectiveTriviaSyntax);
+
+    private static IEnumerable<SyntaxTrivia> GetPragmaTriviaToRemove(PragmaWarningDirectiveTriviaSyntax directive)
+    {
+        var leadingTrivia = directive.ParentTrivia.Token.LeadingTrivia;
+        int pragmaIndex = leadingTrivia.IndexOf(directive.ParentTrivia);
+
+        if (pragmaIndex < 0)
+        {
+            return [directive.ParentTrivia];
+        }
+
+        var triviaToRemove = leadingTrivia
+            .Skip(pragmaIndex)
+            .TakeWhile(trivia => trivia == directive.ParentTrivia
+                || trivia.ToString().All(char.IsWhiteSpace)
+                || trivia.IsKind(SyntaxKind.EndOfLineTrivia))
+            .ToList();
+
+        if (!directive.ParentTrivia.Token.IsKind(EnumProvider.SyntaxKind.CloseParenToken))
+        {
+            return triviaToRemove;
+        }
+
+        for (int index = pragmaIndex - 1; index >= 0; index--)
+        {
+            var trivia = leadingTrivia[index];
+
+            if (!trivia.ToString().All(char.IsWhiteSpace))
+            {
+                break;
+            }
+
+            triviaToRemove.Insert(0, trivia);
+        }
+
+        return triviaToRemove;
+    }
+
+    private static Dictionary<ParameterSyntax, SyntaxAnnotation> CreateParameterAnnotations(
+        HashSet<ParameterSyntax> parametersToRemove, PragmaTransferPlan pragmaTransferPlan)
+    {
+        var annotationsByParameter = new Dictionary<ParameterSyntax, SyntaxAnnotation>();
+
+        foreach (var parameter in parametersToRemove
+            .Concat(pragmaTransferPlan.PragmasByRecipient.Keys)
+            .Concat(pragmaTransferPlan.PragmasByClosingParen.Keys))
+        {
+            annotationsByParameter.TryAdd(parameter, new SyntaxAnnotation());
+        }
+
+        return annotationsByParameter;
+    }
+
+    private static SyntaxNode AddParameterAnnotations(SyntaxNode root,
+        Dictionary<ParameterSyntax, SyntaxAnnotation> annotationsByParameter)
+    {
+        return root.ReplaceNodes(
+            annotationsByParameter.Keys,
+            (parameter, _) => parameter.WithAdditionalAnnotations(annotationsByParameter[parameter]));
+    }
+
+    private static ParameterSyntax? FindAnnotatedParameter(SyntaxNode root, SyntaxAnnotation annotation) =>
+        root.GetAnnotatedNodes(annotation).OfType<ParameterSyntax>().FirstOrDefault();
+
+    private static HashSet<SyntaxTrivia> GetPragmasToRemove(SyntaxNode root,
+        HashSet<ParameterSyntax> parametersToRemove)
+    {
+        var pragmasToRemove = new HashSet<SyntaxTrivia>();
+        var pragmaPairs = GetPragmaPairs(root).ToList();
+
+        foreach (var pair in pragmaPairs)
+        {
+            var parameterList = parametersToRemove
+                .Select(parameter => parameter.AncestorsAndSelf().OfType<MethodOrTriggerDeclarationSyntax>()
+                    .FirstOrDefault()?.ParameterList)
+                .FirstOrDefault(list => list is not null
+                    && IsWithin(pair.Disable.Span, list.FullSpan)
+                    && IsWithin(pair.Restore.Span, list.FullSpan));
+
+            if (parameterList is null)
+            {
+                continue;
+            }
+
+            var enclosedParameters = parameterList.Parameters
+                .Where(parameter => parameter.Span.Start >= pair.Disable.Span.End
+                    && parameter.Span.End <= pair.Restore.Span.Start)
+                .ToList();
+
+            if (enclosedParameters.Count > 0 && enclosedParameters.All(parametersToRemove.Contains))
+            {
+                pragmasToRemove.Add(pair.Disable);
+                pragmasToRemove.Add(pair.Restore);
+            }
+        }
+
+        foreach (var parameter in parametersToRemove)
+        {
+            var parameterList = parameter.AncestorsAndSelf()
+                .OfType<MethodOrTriggerDeclarationSyntax>()
+                .FirstOrDefault()?.ParameterList;
+
+            if (parameterList is null)
+            {
+                continue;
+            }
+
+            var enclosingPair = pragmaPairs
+                .Where(pair => IsWithin(pair.Disable.Span, parameterList.FullSpan)
+                    && IsWithin(pair.Restore.Span, parameterList.FullSpan)
+                    && pair.Disable.Span.End <= parameter.Span.Start
+                    && pair.Restore.Span.Start >= parameter.Span.End)
+                .OrderBy(pair => pair.Disable.Span.Start)
+                .LastOrDefault();
+
+            if (enclosingPair.Disable == default)
+            {
+                continue;
+            }
+
+            var enclosedParameters = parameterList.Parameters
+                .Where(candidate => candidate.Span.Start >= enclosingPair.Disable.Span.End
+                    && candidate.Span.End <= enclosingPair.Restore.Span.Start);
+
+            if (enclosedParameters.Any() && enclosedParameters.All(parametersToRemove.Contains))
+            {
+                pragmasToRemove.Add(enclosingPair.Disable);
+                pragmasToRemove.Add(enclosingPair.Restore);
+            }
+        }
+
+        return pragmasToRemove;
+    }
+
+    private static PragmaTransferPlan GetPragmaTransferPlan(SyntaxNode root,
+        HashSet<ParameterSyntax> parametersToRemove, HashSet<SyntaxTrivia> pragmasToRemove)
+    {
+        var pragmaTransferPlan = new PragmaTransferPlan();
+
+        foreach (var directive in GetPragmaDirectives(root))
+        {
+            SyntaxTrivia pragma = directive.ParentTrivia;
+
+            if (pragmasToRemove.Contains(pragma))
+            {
+                continue;
+            }
+
+            var target = parametersToRemove.FirstOrDefault(parameter => IsWithin(pragma.Span, parameter.FullSpan));
+
+            if (target is null)
+            {
+                continue;
+            }
+
+            if (HasConditionalDirective(target))
+            {
+                continue;
+            }
+
+            var method = target.AncestorsAndSelf().OfType<MethodOrTriggerDeclarationSyntax>().FirstOrDefault();
+            var recipient = method?.ParameterList.Parameters
+                .SkipWhile(parameter => parameter != target)
+                .Skip(1)
+                .FirstOrDefault(parameter => !parametersToRemove.Contains(parameter));
+
+            if (recipient is null)
+            {
+                foreach (var trivia in GetPragmaTransferTrivia(target, pragma))
+                {
+                    AddPragma(pragmaTransferPlan.PragmasByClosingParen, target, trivia);
+                }
+            }
+            else
+            {
+                foreach (var trivia in GetPragmaTransferTrivia(target, pragma))
+                {
+                    AddPragma(pragmaTransferPlan.PragmasByRecipient, recipient, trivia);
+                }
+            }
+        }
+
+        return pragmaTransferPlan;
+    }
+
+    private static List<SyntaxTrivia> GetPragmaTransferTrivia(ParameterSyntax parameter,
+        SyntaxTrivia pragma)
+    {
+        var leadingTrivia = parameter.GetLeadingTrivia();
+        int pragmaIndex = leadingTrivia.IndexOf(pragma);
+
+        if (pragmaIndex < 0)
+        {
+            return [pragma];
+        }
+
+        var transferTrivia = new List<SyntaxTrivia> { pragma };
+
+        for (int index = pragmaIndex - 1; index >= 0; index--)
+        {
+            var trivia = leadingTrivia[index];
+
+            if (trivia.ToString().All(char.IsWhiteSpace))
+            {
+                continue;
+            }
+
+            if (!IsComment(trivia))
+            {
+                break;
+            }
+
+            transferTrivia.Insert(0, trivia);
+        }
+
+        return transferTrivia;
+    }
+
+    private static bool IsComment(SyntaxTrivia trivia)
+    {
+        return trivia.IsKind(EnumProvider.SyntaxKind.LineCommentTrivia)
+            || trivia.IsKind(EnumProvider.SyntaxKind.CommentTrivia);
+    }
+
+    private static void AddPragma(Dictionary<ParameterSyntax, List<SyntaxTrivia>> pragmasByParameter,
+        ParameterSyntax parameter, SyntaxTrivia pragma)
+    {
+        if (!pragmasByParameter.TryGetValue(parameter, out var pragmas))
+        {
+            pragmas = [];
+            pragmasByParameter.Add(parameter, pragmas);
+        }
+
+        pragmas.Add(pragma);
+    }
+
+    private static SyntaxNode TransferPragmas(SyntaxNode root,
+        Dictionary<ParameterSyntax, List<SyntaxTrivia>> pragmasByRecipient,
+        Dictionary<ParameterSyntax, SyntaxAnnotation> annotationsByParameter)
+    {
+        foreach (var (recipient, pragmas) in pragmasByRecipient)
+        {
+            var rewrittenRecipient = FindAnnotatedParameter(root, annotationsByParameter[recipient]);
+
+            if (rewrittenRecipient is null)
+            {
+                continue;
+            }
+
+            string leadingTrivia = rewrittenRecipient.GetLeadingTrivia().ToFullString().TrimStart();
+            string indentation = GetParameterIndentation(rewrittenRecipient);
+            string transferredPragmas = string.Concat(pragmas.Select(pragma =>
+                $"{pragma}{Environment.NewLine}{indentation}"));
+            var replacement = rewrittenRecipient.WithLeadingTrivia(
+                SyntaxFactory.ParseLeadingTrivia($"{indentation}{transferredPragmas}{leadingTrivia}"));
+
+            root = root.ReplaceNode(rewrittenRecipient, replacement);
+        }
+
+        return root;
+    }
+
+    private static SyntaxNode TransferPragmasToClosingParen(SyntaxNode root,
+        Dictionary<ParameterSyntax, List<SyntaxTrivia>> pragmasByTarget,
+        Dictionary<ParameterSyntax, SyntaxAnnotation> annotationsByParameter,
+        HashSet<ParameterSyntax> parametersToRemove)
+    {
+        var pragmasByParameterList = pragmasByTarget
+            .GroupBy(entry => entry.Key.AncestorsAndSelf()
+                .OfType<MethodOrTriggerDeclarationSyntax>()
+                .FirstOrDefault()?.ParameterList)
+            .Where(group => group.Key is not null);
+
+        foreach (var parameterListPragmas in pragmasByParameterList)
+        {
+            var orderedPragmas = parameterListPragmas.OrderBy(entry => entry.Key.SpanStart).ToList();
+            var target = orderedPragmas[0].Key;
+            var rewrittenTarget = FindAnnotatedParameter(root, annotationsByParameter[target]);
+
+            if (rewrittenTarget is null)
+            {
+                continue;
+            }
+
+            var parameterList = rewrittenTarget.AncestorsAndSelf()
+                .OfType<MethodOrTriggerDeclarationSyntax>()
+                .FirstOrDefault()?.ParameterList;
+
+            if (parameterList is null)
+            {
+                continue;
+            }
+
+            var closeParenToken = parameterList.GetLastToken();
+            string indentation = GetParameterIndentation(rewrittenTarget);
+            bool hasRetainedPrecedingParameter = parameterListPragmas.Key!.Parameters
+                .TakeWhile(parameter => parameter != target)
+                .Any(parameter => !parametersToRemove.Contains(parameter));
+            string leadingNewLine = hasRetainedPrecedingParameter ? Environment.NewLine : string.Empty;
+            string triviaSeparator = $"{Environment.NewLine}{indentation}";
+            var pragmas = orderedPragmas.SelectMany(entry => entry.Value);
+            string transferredPragmas = $"{leadingNewLine}{indentation}{string.Join(triviaSeparator, pragmas)}{triviaSeparator}";
+            var replacement = closeParenToken.WithLeadingTrivia(
+                SyntaxFactory.ParseLeadingTrivia($"{transferredPragmas}{closeParenToken.LeadingTrivia}"));
+
+            root = root.ReplaceToken(closeParenToken, replacement);
+        }
+
+        return root;
+    }
+
+    private static string GetParameterIndentation(ParameterSyntax parameter)
+    {
+        string leadingTrivia = parameter.GetLeadingTrivia().ToFullString();
+        int lineStart = leadingTrivia.LastIndexOf('\n') + 1;
+        string indentation = leadingTrivia[lineStart..];
+
+        if (indentation.All(char.IsWhiteSpace))
+        {
+            return indentation;
+        }
+
+        return string.Empty;
+    }
+
+    private static bool IsWithin(TextSpan innerSpan, TextSpan outerSpan) =>
+        innerSpan.Start >= outerSpan.Start && innerSpan.End <= outerSpan.End;
+
+    private static IEnumerable<(SyntaxTrivia Disable, SyntaxTrivia Restore)> GetPragmaPairs(SyntaxNode root)
+    {
+        var disabledPragmas = new Dictionary<string, Stack<SyntaxTrivia>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var directive in GetPragmaDirectives(root))
+        {
+            SyntaxTrivia pragma = directive.ParentTrivia;
+
+            if (IsPragmaDisable(directive))
+            {
+                string errorCodes = GetPragmaErrorCodes(directive);
+
+                if (!disabledPragmas.TryGetValue(errorCodes, out var disabled))
+                {
+                    disabled = new Stack<SyntaxTrivia>();
+                    disabledPragmas.Add(errorCodes, disabled);
+                }
+
+                disabled.Push(pragma);
+            }
+            else if (IsPragmaRestore(directive))
+            {
+                string errorCodes = GetPragmaErrorCodes(directive);
+
+                if (disabledPragmas.TryGetValue(errorCodes, out var disabled) && disabled.Count > 0)
+                {
+                    yield return (disabled.Pop(), pragma);
+                }
+            }
+        }
+    }
+
+    private static bool IsPragmaDisable(PragmaWarningDirectiveTriviaSyntax directive) =>
+        string.Equals(directive.DisableOrRestoreKeyword.ValueText, "disable", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsPragmaRestore(PragmaWarningDirectiveTriviaSyntax directive) =>
+        string.Equals(directive.DisableOrRestoreKeyword.ValueText, "restore", StringComparison.OrdinalIgnoreCase);
+
+    private static string GetPragmaErrorCodes(PragmaWarningDirectiveTriviaSyntax directive) =>
+        string.Join(",", directive.ErrorCodes
+            .Select(errorCode => errorCode.ToString().Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(errorCode => errorCode, StringComparer.OrdinalIgnoreCase));
+
+    private static IEnumerable<PragmaWarningDirectiveTriviaSyntax> GetPragmaDirectives(SyntaxNode root) =>
+        root.GetDirectives()
+            .OfType<PragmaWarningDirectiveTriviaSyntax>()
+            .Where(directive => directive.IsActive);
+
+    private static async Task<Document?> FixAllAsync(FixAllContext fixAllContext, Document document,
+        Optional<ImmutableArray<TextSpan>> fixAllSpans)
+    {
+        CancellationToken cancellationToken = fixAllContext.CancellationToken;
+
+        SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+
         if (root is null)
+        {
             return document;
+        }
 
-        var newRoot = root.ReplaceNode(parameterList, newParameterList);
-        return document.WithSyntaxRoot(newRoot);
+        // Determine the spans to fix.
+        // fixAllSpans is a Fix-In-Span filter: present + non-empty means "only fix within these spans".
+        // Absent OR empty (e.g. RoslynTestKit's default Document scope) means "fix all diagnostics in the document".
+        ImmutableArray<TextSpan> spans;
+
+        if (fixAllSpans.HasValue && !fixAllSpans.Value.IsDefaultOrEmpty)
+        {
+            spans = fixAllSpans.Value;
+        }
+        else
+        {
+            var diagnostics = await fixAllContext.GetDocumentDiagnosticsAsync(document).ConfigureAwait(false);
+            spans = diagnostics.Select(d => d.Location.SourceSpan).ToImmutableArray();
+        }
+
+        if (spans.IsDefaultOrEmpty)
+        {
+            return document;
+        }
+
+        // Determine scope filter from the invoked equivalence key.
+        string? equivalenceKey = fixAllContext.CodeActionEquivalenceKey;
+        ProcedureKind procedureKind = equivalenceKey == $"{nameof(ParameterNotReferencedCodeFixProvider)}.EventSubscriber"
+            ? ProcedureKind.EventSubscriber
+            : ProcedureKind.Regular;
+
+        SemanticModel? semanticModel = await document.GetSemanticModelAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var eventSubscriberCache = new Dictionary<MethodOrTriggerDeclarationSyntax, bool>();
+
+        // Collect all ParameterSyntax nodes matching the scope filter.
+        // HashSet guards against duplicate spans producing the same node.
+        var parametersToRemove = new HashSet<ParameterSyntax>();
+
+        foreach (var span in spans)
+        {
+            SyntaxNode currentNode = root.FindNode(span, getInnermostNodeForTie: true);
+            var parameter = FindParameterInScope(currentNode, semanticModel, procedureKind, eventSubscriberCache);
+
+            if (parameter is not null)
+            {
+                parametersToRemove.Add(parameter);
+            }
+        }
+
+        if (parametersToRemove.Count == 0)
+        {
+            return document;
+        }
+
+        // Single-pass rewrite: RemoveNodes correctly removes multiple SeparatedSyntaxList
+        // elements from the same list, including their associated separators, in one operation.
+        var newRoot = RemoveParameters(root, parametersToRemove);
+
+        return newRoot is null ? document : document.WithSyntaxRoot(newRoot);
     }
 }

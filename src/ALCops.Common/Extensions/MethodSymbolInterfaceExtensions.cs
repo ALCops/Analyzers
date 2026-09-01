@@ -3,8 +3,31 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 
 namespace ALCops.Common.Extensions;
 
+public enum MethodSymbolDisplayFormat
+{
+    MethodOnly,
+    MethodSignature,
+    ObjectNameWithMethod,
+    ObjectNameWithMethodSignature
+}
+
 public static class MethodSymbolInterfaceExtensions
 {
+    public static string GetDiagnosticDisplayText(this IMethodSymbol methodSymbol, MethodSymbolDisplayFormat format)
+    {
+        var methodName = methodSymbol.Name.QuoteIdentifierIfNeededWithReflection();
+
+        return format switch
+        {
+            MethodSymbolDisplayFormat.MethodOnly => $"{methodName}()",
+            MethodSymbolDisplayFormat.MethodSignature => $"{methodName}({GetParameterTypeList(methodSymbol)})",
+            MethodSymbolDisplayFormat.ObjectNameWithMethod => $"{GetObjectPrefix(methodSymbol)}{methodName}()",
+            MethodSymbolDisplayFormat.ObjectNameWithMethodSignature =>
+                $"{GetObjectPrefix(methodSymbol)}{methodName}({GetParameterTypeList(methodSymbol)})",
+            _ => $"{GetObjectPrefix(methodSymbol)}{methodName}({GetParameterTypeList(methodSymbol)})"
+        };
+    }
+
     public static bool MethodImplementsInterfaceMethod(this IMethodSymbol methodSymbol)
     {
         if (methodSymbol is null)
@@ -22,15 +45,15 @@ public static class MethodSymbolInterfaceExtensions
     public static bool IsHandler(this IMethodSymbol method)
         => method.GetPropertyIfExists<bool>("IsHandler");
 
-	/// <summary>
-	/// Checks whether the method is an IntegrationEvent or BusinessEvent.
-	/// </summary>
+    /// <summary>
+    /// Checks whether the method is an IntegrationEvent or BusinessEvent.
+    /// </summary>
     public static bool IsIntegrationOrBusinessEvent(this IMethodSymbol methodSymbol) =>
         methodSymbol.Attributes.Any(attr => (attr.AttributeKind == EnumProvider.AttributeKind.IntegrationEvent) || (attr.AttributeKind == EnumProvider.AttributeKind.BusinessEvent));
 
-	/// <summary>
-	/// Checks whether the method is an InternalEvent.
-	/// </summary>
+    /// <summary>
+    /// Checks whether the method is an InternalEvent.
+    /// </summary>
     public static bool IsInternalEvent(this IMethodSymbol methodSymbol) =>
         methodSymbol.Attributes.Any(attr => attr.AttributeKind == EnumProvider.AttributeKind.InternalEvent);
 
@@ -40,7 +63,7 @@ public static class MethodSymbolInterfaceExtensions
         if (methodSymbol is null || interfaceMethodSymbol is null)
             return false;
 
-        if (!string.Equals(methodSymbol.Name, interfaceMethodSymbol.Name, StringComparison.Ordinal))
+        if (!SemanticFacts.IsSameName(methodSymbol.Name, interfaceMethodSymbol.Name))
             return false;
 
         if (methodSymbol.Parameters.Length != interfaceMethodSymbol.Parameters.Length)
@@ -65,4 +88,27 @@ public static class MethodSymbolInterfaceExtensions
 
         return true;
     }
+
+    private static string GetObjectPrefix(IMethodSymbol methodSymbol)
+    {
+        var containingObject = methodSymbol.GetContainingApplicationObjectTypeSymbol();
+
+        if (containingObject is null)
+        {
+            return string.Empty;
+        }
+
+        return $"{containingObject.Name.QuoteIdentifierIfNeededWithReflection()}.";
+    }
+
+    private static string GetParameterTypeList(IMethodSymbol methodSymbol) =>
+        string.Join(", ",
+            methodSymbol.Parameters.Select(parameter => GetParameterTypeDisplay(parameter.ParameterType)));
+
+    private static string GetParameterTypeDisplay(ITypeSymbol typeSymbol)
+#if NETSTANDARD2_1
+        => typeSymbol.ToDisplayStringWithReflection();
+#else
+        => typeSymbol.ToDisplayString();
+#endif
 }

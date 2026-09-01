@@ -58,8 +58,8 @@ public sealed class ApiPageCanonicalFieldNameGuide : DiagnosticAnalyzer
         if (field.RelatedFieldSymbol is null)
             return null;
 
-        if (DescriptiveNames.ContainsKey(field.RelatedFieldSymbol.Name))
-            return DescriptiveNames[field.RelatedFieldSymbol.Name];
+        if (DescriptiveNames.TryGetValue(field.RelatedFieldSymbol.Name, out var value))
+            return value;
 
         if (field.RelatedFieldSymbol.Name.Contains("No.")
                 && field.Name.Contains("no", SemanticFacts.NameEqualityComparison)

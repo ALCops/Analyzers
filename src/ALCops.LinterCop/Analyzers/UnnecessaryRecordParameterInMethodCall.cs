@@ -119,17 +119,8 @@ public sealed class UnnecessaryRecordParameterInMethodCall : DiagnosticAnalyzer
     /// Uses <see cref="OperationSafeExtensions.GetSymbolSafe"/> to guard against
     /// SDK bugs with <c>BoundApplicationObjectAccess</c>.
     /// </summary>
-    private static ISymbol? ResolveArgumentSymbol(IArgument argument)
-    {
-        var symbol = argument.Value.GetSymbolSafe();
-        if (symbol is not null)
-            return symbol;
-
-        if (argument.Value is IConversionExpression conversion)
-            return conversion.Operand.GetSymbolSafe();
-
-        return null;
-    }
+    private static ISymbol? ResolveArgumentSymbol(IArgument argument) =>
+        argument.Value.GetSymbolSafe() ?? argument.Value.UnwrapConversions().GetSymbolSafe();
 
     /// <summary>
     /// Checks whether the syntax node is a table, page, or one of their extensions

@@ -4,13 +4,12 @@ using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
-using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
 namespace ALCops.ApplicationCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class UseReturnValueForDatabaseReadMethods : DiagnosticAnalyzer
+public sealed class UseReturnValueForDatabaseReadMethods : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(

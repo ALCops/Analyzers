@@ -1,5 +1,5 @@
-using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using ALCops.Common.Diagnostics;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 
 namespace ALCops.TestAutomationCop;
 

@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -10,84 +10,96 @@ namespace ALCops.DocumentationCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
 {
-	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-		ImmutableArray.Create(
-			DiagnosticDescriptors.PublicProcedureRequiresDocumentation,
-			DiagnosticDescriptors.InternalProcedureRequiresDocumentation,
-			DiagnosticDescriptors.EventRequiresDocumentation,
-			DiagnosticDescriptors.InternalEventRequiresDocumentation);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
+        ImmutableArray.Create(
+            DiagnosticDescriptors.PublicProcedureRequiresDocumentation,
+            DiagnosticDescriptors.InternalProcedureRequiresDocumentation,
+            DiagnosticDescriptors.EventRequiresDocumentation,
+            DiagnosticDescriptors.InternalEventRequiresDocumentation);
 
-	public override void Initialize(AnalysisContext context) =>
-		context.RegisterSyntaxNodeAction(
-			AnalyzeProcedures,
-			EnumProvider.SyntaxKind.MethodDeclaration
-		);
+    public override void Initialize(AnalysisContext context) =>
+        context.RegisterSyntaxNodeAction(
+            AnalyzeProcedures,
+            EnumProvider.SyntaxKind.MethodDeclaration
+        );
 
-	private void AnalyzeProcedures(SyntaxNodeAnalysisContext ctx)
-	{
-		if (ctx.IsObsolete() || ctx.Node is not MethodDeclarationSyntax method)
-			return;
+    private void AnalyzeProcedures(SyntaxNodeAnalysisContext ctx)
+    {
+        if (ctx.IsObsolete() || ctx.Node is not MethodDeclarationSyntax method)
+            return;
 
-		var containingObject = ctx.ContainingSymbol.GetContainingApplicationObjectTypeSymbol();
+        var containingApplicationObject = ctx.ContainingSymbol.GetContainingApplicationObjectTypeSymbol();
 
-		if (containingObject.IsTestCodeunit())
-			return;
+        // Interfaces and control add-ins are IObjectTypeSymbol but not IApplicationObjectTypeSymbol,
+        // so fall back to the object-type walker only when no application object exists in the chain.
+        // The application-object walker stays primary so members nested in request pages keep
+        // resolving to their report/xmlport instead of the request page (which is always Local).
+        var containingObject = (ISymbol?)containingApplicationObject
+            ?? ctx.ContainingSymbol.GetContainingObjectTypeSymbol();
 
-		if (HasXmlDocumentation(method))
-			return;
+        if (containingObject?.Kind == EnumProvider.SymbolKind.ControlAddIn)
+            return;
 
-		var accessibilityToken = method.ProcedureKeyword.GetPreviousToken();
+        if (containingApplicationObject.IsTestCodeunit())
+            return;
 
-		if (ctx.ContainingSymbol is IMethodSymbol methodSymbol && (methodSymbol is not null))
-		{
-			if (methodSymbol.IsIntegrationOrBusinessEvent())
-			{
-				ctx.ReportDiagnostic(Diagnostic.Create(
-					DiagnosticDescriptors.EventRequiresDocumentation,
-					method.Name.GetLocation(),
-					method.Name.Identifier.ToString()));
-			}
+        if (HasXmlDocumentation(method))
+            return;
 
-			else if (methodSymbol.IsInternalEvent())
-			{
-				ctx.ReportDiagnostic(Diagnostic.Create(
-					DiagnosticDescriptors.InternalEventRequiresDocumentation,
-					method.Name.GetLocation(),
-					method.Name.Identifier.ToString()));
-			}
+        var accessibilityToken = method.ProcedureKeyword.GetPreviousToken();
 
-			else
-			{
-				if (accessibilityToken.Kind == EnumProvider.SyntaxKind.LocalKeyword)
-				{
-					return;
-				}
+        if (ctx.ContainingSymbol is IMethodSymbol methodSymbol && (methodSymbol is not null))
+        {
+            var methodDisplayText = methodSymbol.GetDiagnosticDisplayText(MethodSymbolDisplayFormat.MethodSignature);
 
-				if ((accessibilityToken.Kind == EnumProvider.SyntaxKind.InternalKeyword) ||
-					(containingObject?.DeclaredAccessibility == EnumProvider.Accessibility.Internal))
-				{
-					ctx.ReportDiagnostic(Diagnostic.Create(
-						DiagnosticDescriptors.InternalProcedureRequiresDocumentation,
-						method.Name.GetLocation(),
-						method.Name.Identifier.ToString()));
-				}
-				else
-				{
-					ctx.ReportDiagnostic(Diagnostic.Create(
-						DiagnosticDescriptors.PublicProcedureRequiresDocumentation,
-						method.Name.GetLocation(),
-						method.Name.Identifier.ToString()));
-				}
-			}
-		}
-	}
+            if (methodSymbol.IsIntegrationOrBusinessEvent())
+            {
+                ctx.ReportDiagnostic(Diagnostic.Create(
+                    DiagnosticDescriptors.EventRequiresDocumentation,
+                    method.Name.GetLocation(),
+                    methodDisplayText));
+            }
 
-	private static bool HasXmlDocumentation(MethodDeclarationSyntax method)
-	{
-		var trivia = method.GetLeadingTrivia();
+            else if (methodSymbol.IsInternalEvent())
+            {
+                ctx.ReportDiagnostic(Diagnostic.Create(
+                    DiagnosticDescriptors.InternalEventRequiresDocumentation,
+                    method.Name.GetLocation(),
+                    methodDisplayText));
+            }
 
-		return trivia.Any(t =>
-			t.Kind == EnumProvider.SyntaxKind.SingleLineDocumentationCommentTrivia ||
-			t.Kind == EnumProvider.SyntaxKind.MultiLineDocumentationCommentTrivia);
-	}
+            else
+            {
+                if (accessibilityToken.Kind == EnumProvider.SyntaxKind.LocalKeyword)
+                {
+                    return;
+                }
+
+                if ((accessibilityToken.Kind == EnumProvider.SyntaxKind.InternalKeyword) ||
+                    (containingObject?.DeclaredAccessibility == EnumProvider.Accessibility.Internal))
+                {
+                    ctx.ReportDiagnostic(Diagnostic.Create(
+                        DiagnosticDescriptors.InternalProcedureRequiresDocumentation,
+                        method.Name.GetLocation(),
+                        methodDisplayText));
+                }
+                else
+                {
+                    ctx.ReportDiagnostic(Diagnostic.Create(
+                        DiagnosticDescriptors.PublicProcedureRequiresDocumentation,
+                        method.Name.GetLocation(),
+                        methodDisplayText));
+                }
+            }
+        }
+    }
+
+    private static bool HasXmlDocumentation(MethodDeclarationSyntax method)
+    {
+        var trivia = method.GetLeadingTrivia();
+
+        return trivia.Any(t =>
+            t.Kind == EnumProvider.SyntaxKind.SingleLineDocumentationCommentTrivia ||
+            t.Kind == EnumProvider.SyntaxKind.MultiLineDocumentationCommentTrivia);
+    }
 }

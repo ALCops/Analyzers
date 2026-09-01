@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Reflection;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
@@ -16,7 +15,7 @@ public sealed class GuidEmptyStringComparisonCodeFix : CodeFixProvider
     private const string SystemClassName = "System";
     private const string IsNullGuidFunctionName = "IsNullGuid";
 
-    private class GuidEmptyStringComparisonCodeAction : CodeAction.DocumentChangeAction
+    private sealed class GuidEmptyStringComparisonCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
@@ -38,14 +37,14 @@ public sealed class GuidEmptyStringComparisonCodeFix : CodeFixProvider
     public sealed override FixAllProvider GetFixAllProvider() =>
          WellKnownFixAllProviders.BatchFixer;
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-        RegisterInstanceCodeFix(ctx, syntaxRoot, span, document);
+        RegisterInstanceCodeFix(context, syntaxRoot, span, document);
     }
 
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
@@ -96,7 +95,7 @@ public sealed class GuidEmptyStringComparisonCodeFix : CodeFixProvider
         return document.WithSyntaxRoot(newRoot);
     }
 
-    private static CodeExpressionSyntax PrependNotKeyword(CodeExpressionSyntax expr, SyntaxNode triviaSource)
+    private static UnaryExpressionSyntax PrependNotKeyword(CodeExpressionSyntax expr, SyntaxNode triviaSource)
     {
         // not <expr>
         SyntaxToken notToken =

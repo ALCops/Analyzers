@@ -5,16 +5,18 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeFixes;
-using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
+#if NETSTANDARD2_1
+using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
+#endif
 
 namespace ALCops.PlatformCop.CodeFixes;
 
 [CodeFixProvider(nameof(UsePartialRecordsOnReadCodeFixProvider))]
 public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
 {
-    private class UsePartialRecordsOnReadCodeAction : CodeAction.DocumentChangeAction
+    private sealed class UsePartialRecordsOnReadCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
@@ -36,11 +38,11 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
     public sealed override FixAllProvider GetFixAllProvider() =>
          WellKnownFixAllProviders.BatchFixer;
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -65,9 +67,9 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         if (variableSymbol.Type is not IRecordTypeSymbol)
             return;
 
-        ctx.RegisterCodeFix(
+        context.RegisterCodeFix(
             CreateCodeAction(node, document, generateFixAll: true),
-            ctx.Diagnostics[0]);
+            context.Diagnostics[0]);
     }
 
     private static UsePartialRecordsOnReadCodeAction CreateCodeAction(

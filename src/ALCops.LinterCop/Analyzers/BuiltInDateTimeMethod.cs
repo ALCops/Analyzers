@@ -35,7 +35,10 @@ public sealed class BuiltInDateTimeMethod : DiagnosticAnalyzer
         if (operation.Syntax is not InvocationExpressionSyntax invocationExpression)
             return;
 
-        if (IsVariantArgument(operation.Arguments[0]))
+        if (IsFieldReferenceValueAccess(operation.Arguments[0]))
+            return;
+
+        if (IsVariantOrJokerArgument(operation.Arguments[0]))
             return;
 
         InvocationExpressionSyntax? replacementMethod = GetReplacementMethod(operation.TargetMethod.Name, invocationExpression);
@@ -113,7 +116,7 @@ public sealed class BuiltInDateTimeMethod : DiagnosticAnalyzer
             SyntaxFactory.ArgumentList());
     }
 
-    private static bool IsVariantArgument(IArgument argument)
+    private static bool IsVariantOrJokerArgument(IArgument argument)
     {
         IOperation value = argument.Value;
 
@@ -125,6 +128,30 @@ public sealed class BuiltInDateTimeMethod : DiagnosticAnalyzer
             ?? value.GetSymbol()?.OriginalDefinition.GetTypeSymbol().GetNavTypeKindSafe()
             ?? EnumProvider.NavTypeKind.None;
 
-        return navTypeKind == EnumProvider.NavTypeKind.Variant;
+        return navTypeKind == EnumProvider.NavTypeKind.Variant
+            || navTypeKind == EnumProvider.NavTypeKind.Joker;
+    }
+
+    private static bool IsFieldReferenceValueAccess(IArgument argument)
+    {
+        IOperation value = argument.Value;
+
+        if (value is IConversionExpression conversion)
+            value = conversion.Operand;
+
+        // The AL SDK currently models `FieldRef.Value` as an IInvocationExpression
+        // (getter call). Guarding IFieldAccess as well defends against future SDK
+        // versions that could remodel the same construct as a field/property access.
+        var (instance, memberName) = value switch
+        {
+            IInvocationExpression invocation => (invocation.Instance, invocation.TargetMethod?.Name),
+            IFieldAccess fieldAccess => (fieldAccess.Instance, fieldAccess.FieldSymbol?.Name),
+            _ => ((IOperation?)null, (string?)null)
+        };
+
+        if (!memberName.IsSameName("Value"))
+            return false;
+
+        return instance?.Type?.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.FieldRef;
     }
 }

@@ -36,6 +36,16 @@ public static class DiagnosticDescriptors
         description: FormattingCopAnalyzers.UseParenthesisForFunctionCallDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UseParenthesisForFunctionCall));
 
+    public static readonly DiagnosticDescriptor UseParenthesisForMethodAssignment = new(
+        id: DiagnosticIds.UseParenthesisForMethodAssignment,
+        title: FormattingCopAnalyzers.UseParenthesisForMethodAssignmentTitle,
+        messageFormat: FormattingCopAnalyzers.UseParenthesisForMethodAssignmentMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: FormattingCopAnalyzers.UseParenthesisForMethodAssignmentDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UseParenthesisForMethodAssignment));
+
     public static readonly DiagnosticDescriptor PermissionDeclarationOrder = new(
         id: DiagnosticIds.PermissionDeclarationOrder,
         title: FormattingCopAnalyzers.PermissionDeclarationOrderTitle,
@@ -46,6 +56,25 @@ public static class DiagnosticDescriptors
         description: FormattingCopAnalyzers.PermissionDeclarationOrderDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.PermissionDeclarationOrder));
 
+    public static readonly DiagnosticDescriptor PermissionValuesShouldBeLowercase = new(
+        id: DiagnosticIds.PermissionValuesShouldBeLowercase,
+        title: FormattingCopAnalyzers.PermissionValuesShouldBeLowercaseTitle,
+        messageFormat: FormattingCopAnalyzers.PermissionValuesShouldBeLowercaseMessageFormat,
+        category: Category.Style,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: FormattingCopAnalyzers.PermissionValuesShouldBeLowercaseDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PermissionValuesShouldBeLowercase));
+
+    public static readonly DiagnosticDescriptor StatementBlocksSeparatedByBlankLine = new(
+        id: DiagnosticIds.StatementBlocksSeparatedByBlankLine,
+        title: FormattingCopAnalyzers.StatementBlocksSeparatedByBlankLineTitle,
+        messageFormat: FormattingCopAnalyzers.StatementBlocksSeparatedByBlankLineMessageFormat,
+        category: Category.Style,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: FormattingCopAnalyzers.StatementBlocksSeparatedByBlankLineDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.StatementBlocksSeparatedByBlankLine));
 
     public static readonly DiagnosticDescriptor AnalyzerException = new(
         id: DiagnosticIds.AnalyzerException,
@@ -59,7 +88,7 @@ public static class DiagnosticDescriptors
 
     public static string GetHelpUri(string identifier)
     {
-        return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/formattingcop/{0}/", identifier.ToLower());
+        return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/formattingcop/{0}/", identifier.ToLowerInvariant());
     }
 
     /// <summary>

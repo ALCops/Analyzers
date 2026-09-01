@@ -1,0 +1,105 @@
+# ALCops Analyzers — editor and analyzer configuration
+# Every analyzer warning is a build error (CodeAnalysisTreatWarningsAsErrors in Directory.Build.props). This file
+# holds the code-style settings and the exceptions: every suppression carries its reason. See
+# .claude/rules/code-analysis.md. Note for fixing with `dotnet format analyzers --diagnostics CAxxxx`: the tool only
+# acts on a CA rule that has an explicit dotnet_diagnostic severity line in the matching section.
+
+root = true
+
+[*]
+charset = utf-8
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+# AL test fixtures must stay byte-stable: they are the inputs to the analyzer tests.
+[src/**/Rules/**/*.al]
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+generated_code = true
+
+[*.{csproj,props,targets,resx}]
+indent_size = 4
+
+[*.cs]
+# --- Code style (IDE*) ------------------------------------------------------
+# Only styles the codebase already follows uniformly are enforced; the rest are suggestions.
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+csharp_prefer_braces = when_multiline:silent
+# Mixed today (file-scoped and block-scoped). Do not enforce until unified.
+csharp_style_namespace_declarations = file_scoped:silent
+csharp_using_directive_placement = outside_namespace:suggestion
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+dotnet_diagnostic.IDE0161.severity = none      # namespace style — see above
+
+# Missing XML doc comments: GenerateDocumentationFile is only on to make IDE0005 work in build.
+dotnet_diagnostic.CS1591.severity = none
+
+# --- .NET analyzers (CA*) ---------------------------------------------------
+# Analyzer callbacks receive non-null contexts from the host; validating every public parameter is pure noise.
+dotnet_diagnostic.CA1062.severity = none
+# AL identifiers are compared ordinally by design; culture-aware overloads are not wanted
+# (the one deliberate culture compare, NaturalStringComparer, mirrors AZ AL Dev Tools).
+dotnet_diagnostic.CA1304.severity = none
+dotnet_diagnostic.CA1305.severity = none
+dotnet_diagnostic.CA1307.severity = none
+dotnet_diagnostic.CA1309.severity = none
+dotnet_diagnostic.CA1310.severity = none
+# Localization of diagnostic messages is handled via resx; these rules target UI strings.
+dotnet_diagnostic.CA1303.severity = none
+# Analyzer types are instantiated by the host via attributes; "unused"/"could be static" heuristics misfire.
+dotnet_diagnostic.CA1812.severity = none
+# CA1852 (seal internal types) cannot see public types or assemblies with InternalsVisibleTo (LinterCop); the
+# AnalyzerTypesAreSealed convention test in every *.Test project covers those.
+
+# Won't fix: BCL-authoring naming conventions that clash with this repo's domain vocabulary. Stays suppressed
+# regardless of target frameworks (this is NOT the [NETSTANDARD2_1-BLOCKED] block).
+#   CA1711  reserves the suffixes Permission/Enum/Attribute for BCL base types (CAS IPermission, enums,
+#           System.Attribute). Here they are AL concepts: RequiredPermission is an AL permission requirement;
+#           OptionTypeShouldBeEnum and GlobalMethodRequiresTestAttribute (+ test classes) are rule names fixed by
+#           descriptor, resx keys, test folder and alcops.dev docs.
+#   CA1720  forbids identifiers that are C# type names; EnumProvider members Char/Decimal/Guid/Integer/String and
+#           NamingPattern.Object mirror AL NavTypeKind names on purpose.
+dotnet_diagnostic.CA1711.severity = none
+dotnet_diagnostic.CA1720.severity = none
+
+# [NETSTANDARD2_1-BLOCKED] Suppressed only because every analyzer must compile for netstandard2.1 and the suggested
+# API does not exist there. Delete these lines the day netstandard2.1 support is dropped.
+dotnet_diagnostic.CA1510.severity = none   # ArgumentNullException.ThrowIfNull is not on netstandard2.1
+dotnet_diagnostic.CA1863.severity = none   # CompositeFormat is not on netstandard2.1
+dotnet_diagnostic.CA2263.severity = none   # Enum.GetNames<T>/GetValues<T>, MethodInfo.CreateDelegate<T> are not on netstandard2.1
+
+# --- Analyzer-authoring rules (RS*) from Microsoft.CodeAnalysis.Analyzers -----
+# The NAV SDK is a fork of Roslyn (Microsoft.Dynamics.Nav.CodeAnalysis); most RS rules key on the
+# real Microsoft.CodeAnalysis types and will simply not fire.
+# Do NOT add a suppression here without documenting which NAV SDK type triggered it.
+
+# --- Roslynator (RCS*) -----------------------------------------------------
+# RCS1075 (empty catch of System.Exception) is an error; the two intentional catches in PropertyAccessor
+# (version-tolerant reflection against the NAV SDK) carry a #pragma with that reason.
+dotnet_diagnostic.RCS1123.severity = suggestion  # add parentheses when necessary — opinionated
+dotnet_diagnostic.RCS1163.severity = suggestion  # unused parameter — analyzer callbacks often have fixed signatures
+
+[src/*.Test/**.cs]
+# Test methods are discovered by attribute; naming and static-member rules do not apply.
+dotnet_diagnostic.CA1707.severity = none   # underscores in identifiers
+dotnet_diagnostic.CA1822.severity = none   # mark members as static
+# Constant array arguments in assertions (Is.EquivalentTo(new[] { ... })) are the readable form; a static readonly
+# field per expected value would only move the literal away from the assert it belongs to.
+dotnet_diagnostic.CA1861.severity = none
+# Fixture fields are assigned in [SetUp]. The build already suppresses this through NUnit.Analyzers' suppressor;
+# dotnet format does not run suppressors and would otherwise offer to make every fixture field nullable.
+dotnet_diagnostic.CS8618.severity = none

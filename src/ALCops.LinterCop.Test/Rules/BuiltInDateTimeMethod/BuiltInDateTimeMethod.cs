@@ -25,6 +25,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("Date2DWY")]
         [TestCase("DT2Date")]
         [TestCase("DT2Time")]
+        [TestCase("DT2XOnRecordField")]
         [TestCase("FormatHour")]
         [TestCase("FormatMillisecond")]
         [TestCase("FormatMinute")]
@@ -43,6 +44,9 @@ namespace ALCops.LinterCop.Test
         [TestCase("VariantDate2DMY")]
         [TestCase("VariantDate2DWY")]
         [TestCase("VariantFormat")]
+        [TestCase("RecRefFieldRefDT2DateTime")]
+        [TestCase("FieldRefValueChained")]
+        [TestCase("FormatFieldRefValue")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

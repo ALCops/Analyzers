@@ -1,4 +1,4 @@
-table 50100 MyTable
+table 50100 TriggerUnusedParameter
 {
     fields
     {

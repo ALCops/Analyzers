@@ -3,7 +3,6 @@ using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
-using Microsoft.Dynamics.Nav.CodeAnalysis.InternalSyntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Packaging;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
@@ -14,7 +13,7 @@ namespace ALCops.LinterCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
 {
-    private class MethodSymbolAnalyzer : IDisposable
+    private sealed class MethodSymbolAnalyzer : IDisposable
     {
         private readonly PooledDictionary<IMethodSymbol, string> methodSymbols = PooledDictionary<IMethodSymbol, string>.GetInstance();
         private readonly PooledDictionary<IMethodSymbol, string> internalMethodsUnused = PooledDictionary<IMethodSymbol, string>.GetInstance();
@@ -48,7 +47,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
             }
         }
 
-        private bool MethodNeedsReferenceCheck(IMethodSymbol methodSymbol)
+        private static bool MethodNeedsReferenceCheck(IMethodSymbol methodSymbol)
         {
             if (methodSymbol.MethodKind != EnumProvider.MethodKind.Method)
             {
@@ -149,7 +148,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
 
                                 if (
                                     (methodObjectSymbolName == objectSyntaxName) &&
-                                    (objectSyntax.Kind.ToString().Replace("Object", "").ToLowerInvariant() == methodObjectSymbol?.Kind.ToString().ToLowerInvariant())
+                                    (objectSyntax.Kind.ToString().Replace("Object", "").Equals(methodObjectSymbol?.Kind.ToString().ToLowerInvariant(), StringComparison.InvariantCultureIgnoreCase))
                                 )
                                 {
                                     internalMethodsUsedInCurrentObject[methodSymbol] = methodSymbol.Name.ToLowerInvariant();

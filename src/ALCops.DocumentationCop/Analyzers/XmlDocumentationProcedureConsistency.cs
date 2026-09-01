@@ -1,7 +1,6 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
-using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
@@ -26,6 +25,7 @@ public sealed class XmlDocumentationProcedureConsistency : DiagnosticAnalyzer
             return;
 
         var docCommentTrivia = methodDeclarationSyntax.GetLeadingTrivia().FirstOrDefault(trivia => trivia.Kind == EnumProvider.SyntaxKind.SingleLineDocumentationCommentTrivia);
+
         if (docCommentTrivia.IsKind(EnumProvider.SyntaxKind.None))
             return; // no documentation comment exists
 
@@ -41,11 +41,18 @@ public sealed class XmlDocumentationProcedureConsistency : DiagnosticAnalyzer
             switch (element.StartTag.Name.LocalName.Text.ToLowerInvariant())
             {
                 case "param":
-                    var nameAttribute = (XmlNameAttributeSyntax)element.StartTag.Attributes.First(att => att.IsKind(EnumProvider.SyntaxKind.XmlNameAttribute));
+                    var nameAttributeSyntax = element.StartTag.Attributes.FirstOrDefault(att => att.IsKind(EnumProvider.SyntaxKind.XmlNameAttribute));
+
+                    if (nameAttributeSyntax is null)
+                    {
+                        ctx.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.XmlDocumentationProcedureConsistency, element.GetLocation()));
+                        break;
+                    }
+
+                    var nameAttribute = (XmlNameAttributeSyntax)nameAttributeSyntax;
                     var parameterName = nameAttribute.Identifier.GetText().ToString();
-                    if (!docCommentParameters.ContainsKey(parameterName))
-                        docCommentParameters.Add(parameterName, element);
-                    else
+
+                    if (!docCommentParameters.TryAdd(parameterName, element))
                         // report diagnostic for duplicate parameter documentation
                         ctx.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.XmlDocumentationProcedureConsistency, element.GetLocation()));
                     break;
@@ -53,6 +60,7 @@ public sealed class XmlDocumentationProcedureConsistency : DiagnosticAnalyzer
                     if (docCommentReturns is not null)
                         // report diagnostic for duplicate returns documentation
                         ctx.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.XmlDocumentationProcedureConsistency, element.GetLocation()));
+
                     docCommentReturns = element;
                     break;
             }

@@ -31,4 +31,16 @@ internal static class TestHelper
             ThrowsWhenInputDocumentContainsError = false
         };
     }
+
+    internal static AnalyzerTestFixtureConfig CreateConfigWithSettings(string settingsJson)
+    {
+        return new AnalyzerTestFixtureConfig
+        {
+            FileSystem = new MemoryFileSystem(new Dictionary<string, byte[]>
+            {
+                { "alcops.json", System.Text.Encoding.UTF8.GetBytes(settingsJson) }
+            }),
+            ThrowsWhenInputDocumentContainsError = false
+        };
+    }
 }

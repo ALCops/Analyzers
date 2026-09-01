@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
-using ALCops.Common.Permissions;
 using ALCops.Common.Extensions;
+using ALCops.Common.Permissions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
@@ -69,7 +69,7 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
     }
 #endif
 
-    private class TableDataAccessRequiresPermissionsCodeAction : CodeAction.DocumentChangeAction
+    private sealed class TableDataAccessRequiresPermissionsCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
@@ -89,16 +89,16 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
     public sealed override FixAllProvider GetFixAllProvider() =>
         WellKnownFixAllProviders.BatchFixer;
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        RegisterInstanceCodeFix(ctx, syntaxRoot, span, document);
+        RegisterInstanceCodeFix(context, syntaxRoot, span, document);
     }
 
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot,
@@ -272,17 +272,11 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         string rawTableName, char permissionChar)
     {
         var permissions = permissionValue.PermissionProperties;
-        var isSorted = PermissionSyntaxHelper.ArePermissionsSorted(permissions);
         var isMultiLine = PermissionSyntaxHelper.IsMultiLineFormat(permissionValue);
-
-        // FindInsertionIndex compares against GetObjectNameFromPermission output (unquoted).
-        var sortName = resolved.QualifyingNamespace is not null
-            ? $"{resolved.QualifyingNamespace}.{rawTableName}"
-            : rawTableName;
-        var insertIndex = PermissionSyntaxHelper.FindInsertionIndex(permissions, sortName, isSorted);
 
         var newEntry = PermissionSyntaxHelper.CreatePermissionSyntax(
             resolved.TableName, resolved.QualifyingNamespace, permissionChar.ToString());
+        var insertIndex = PermissionSyntaxHelper.FindInsertionIndex(permissions, newEntry);
 
         SeparatedSyntaxList<PermissionSyntax> newPermissions;
         if (isMultiLine)

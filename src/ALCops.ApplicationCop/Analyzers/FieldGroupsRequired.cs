@@ -32,7 +32,7 @@ public sealed class FieldGroupsRequired : DiagnosticAnalyzer
         });
     }
 
-    private static void AnalyzeFieldgroups(SymbolAnalysisContext ctx, ISet<ITableTypeSymbol> tablesReferencedByPages)
+    private static void AnalyzeFieldgroups(SymbolAnalysisContext ctx, HashSet<ITableTypeSymbol> tablesReferencedByPages)
     {
         if (ctx.IsObsolete() || ctx.Symbol is not ITableTypeSymbol table)
             return;
@@ -40,7 +40,7 @@ public sealed class FieldGroupsRequired : DiagnosticAnalyzer
         if (IsTableOfTypeSetupTable(table))
             return;
 
-        if (IsTemporaryTable(table) && !tablesReferencedByPages.Contains(table))
+        if (table.IsTemporary() && !tablesReferencedByPages.Contains(table))
             return;
 
         CheckFieldGroup(ctx, table, FieldGroupNameBrick, table.GetLocation());
@@ -61,9 +61,6 @@ public sealed class FieldGroupsRequired : DiagnosticAnalyzer
 
     private static bool IsTableOfTypeSetupTable(ITableTypeSymbol table) =>
         TableHelper.IsSetupTable(table);
-
-    private static bool IsTemporaryTable(ITableTypeSymbol table)
-        => table.TableType == EnumProvider.TableTypeKind.Temporary;
 
     private static HashSet<ITableTypeSymbol> BuildTablesReferencedByPages(CompilationStartAnalysisContext ctx)
     {

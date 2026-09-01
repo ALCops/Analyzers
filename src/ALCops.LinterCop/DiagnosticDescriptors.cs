@@ -294,6 +294,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.UnnecessaryRecordParameterInMethodCallDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UnnecessaryRecordParameterInMethodCall));
 
+    public static readonly DiagnosticDescriptor EventSubscriberNamingPattern = new(
+        id: DiagnosticIds.EventSubscriberNamingPattern,
+        title: LinterCopAnalyzers.EventSubscriberNamingPatternTitle,
+        messageFormat: LinterCopAnalyzers.EventSubscriberNamingPatternMessageFormat,
+        category: Category.Naming,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.EventSubscriberNamingPatternDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.EventSubscriberNamingPattern));
+
     public static readonly DiagnosticDescriptor ParameterNotReferenced = new(
         id: DiagnosticIds.ParameterNotReferenced,
         title: LinterCopAnalyzers.ParameterNotReferencedTitle,
@@ -303,6 +313,26 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: LinterCopAnalyzers.ParameterNotReferencedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ParameterNotReferenced));
+
+    public static readonly DiagnosticDescriptor EventSubscriberParameterNotReferenced = new(
+        id: DiagnosticIds.EventSubscriberParameterNotReferenced,
+        title: LinterCopAnalyzers.EventSubscriberParameterNotReferencedTitle,
+        messageFormat: LinterCopAnalyzers.EventSubscriberParameterNotReferencedMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.EventSubscriberParameterNotReferencedDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.EventSubscriberParameterNotReferenced));
+
+    public static readonly DiagnosticDescriptor MixedExitAndNamedReturnAssignment = new(
+        id: DiagnosticIds.MixedExitAndNamedReturnAssignment,
+        title: LinterCopAnalyzers.MixedExitAndNamedReturnAssignmentTitle,
+        messageFormat: LinterCopAnalyzers.MixedExitAndNamedReturnAssignmentMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: LinterCopAnalyzers.MixedExitAndNamedReturnAssignmentDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.MixedExitAndNamedReturnAssignment));
 
     public static readonly DiagnosticDescriptor UseSecretTextForSensitiveText = new(
         id: DiagnosticIds.UseSecretTextForSensitiveText,
@@ -326,7 +356,7 @@ public static class DiagnosticDescriptors
 
     public static string GetHelpUri(string identifier)
     {
-        return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/lintercop/{0}/", identifier.ToLower());
+        return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/lintercop/{0}/", identifier.ToLowerInvariant());
     }
 
     /// <summary>

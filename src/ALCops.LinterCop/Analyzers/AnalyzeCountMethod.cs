@@ -9,7 +9,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 namespace ALCops.LinterCop.Analyzers;
 
 [DiagnosticAnalyzer]
-public class AnalyzeCountMethod : DiagnosticAnalyzer
+public sealed class AnalyzeCountMethod : DiagnosticAnalyzer
 {
     private const string CountMethodName = "Count";
     private const int Zero = 0;
@@ -77,13 +77,13 @@ public class AnalyzeCountMethod : DiagnosticAnalyzer
         {
             if (IsOneComparison(binaryExpression, leftValue, rightValue))
             {
-                ReportUseFindWithNextDiagnostic(ctx, invocation, GetOperatorKind(binaryExpression.OperatorToken.Kind));
+                ReportUseFindWithNextDiagnostic(ctx, invocation, binaryExpression, leftValue, rightValue);
                 return;
             }
 
             if (IsLessThanTwoComparison(binaryExpression, rightValue) || IsGreaterThanTwoComparison(binaryExpression, leftValue))
             {
-                ReportUseFindWithNextDiagnostic(ctx, invocation, EnumProvider.SyntaxKind.EqualsToken);
+                ReportUseFindWithNextDiagnostic(ctx, invocation, binaryExpression, leftValue, rightValue);
                 return;
             }
         }
@@ -100,8 +100,25 @@ public class AnalyzeCountMethod : DiagnosticAnalyzer
         return literal.Literal.GetLiteralValue() is int value ? value : -1;
     }
 
-    private static SyntaxKind GetOperatorKind(SyntaxKind tokenKind) =>
-        tokenKind == EnumProvider.SyntaxKind.EqualsToken ? EnumProvider.SyntaxKind.EqualsToken : EnumProvider.SyntaxKind.NotEqualsToken;
+    private static SyntaxKind FlipOperator(SyntaxKind kind) => kind switch
+    {
+        _ when kind == EnumProvider.SyntaxKind.LessThanToken => EnumProvider.SyntaxKind.GreaterThanToken,
+        _ when kind == EnumProvider.SyntaxKind.GreaterThanToken => EnumProvider.SyntaxKind.LessThanToken,
+        _ when kind == EnumProvider.SyntaxKind.LessThanEqualsToken => EnumProvider.SyntaxKind.GreaterThanEqualsToken,
+        _ when kind == EnumProvider.SyntaxKind.GreaterThanEqualsToken => EnumProvider.SyntaxKind.LessThanEqualsToken,
+        _ => kind, // '=' and '<>' are symmetric
+    };
+
+    private static string GetOperatorSign(SyntaxKind kind) => kind switch
+    {
+        _ when kind == EnumProvider.SyntaxKind.EqualsToken => "=",
+        _ when kind == EnumProvider.SyntaxKind.NotEqualsToken => "<>",
+        _ when kind == EnumProvider.SyntaxKind.LessThanToken => "<",
+        _ when kind == EnumProvider.SyntaxKind.GreaterThanToken => ">",
+        _ when kind == EnumProvider.SyntaxKind.LessThanEqualsToken => "<=",
+        _ when kind == EnumProvider.SyntaxKind.GreaterThanEqualsToken => ">=",
+        _ => "=",
+    };
 
     private static bool IsZeroComparison(int left, int right)
         => left == Zero || right == Zero;
@@ -132,7 +149,7 @@ public class AnalyzeCountMethod : DiagnosticAnalyzer
 
     private static bool IsEligibleUseQueryOrFindWithNext(IRecordTypeSymbol record)
     {
-        if (possibleLargeTableIdentifierKeywords.Any(keyword => record.Name.IndexOf(keyword, SemanticFacts.NameEqualityComparison) >= 0))
+        if (possibleLargeTableIdentifierKeywords.Any(keyword => record.Name.Contains(keyword, SemanticFacts.NameEqualityComparison)))
             return true;
 
         // Tables with a field "Entry No." could possible have a large amount of records
@@ -150,14 +167,22 @@ public class AnalyzeCountMethod : DiagnosticAnalyzer
             GetSymbolName(operation)));
     }
 
-    private static void ReportUseFindWithNextDiagnostic(OperationAnalysisContext ctx, IInvocationExpression operation, SyntaxKind operatorToken)
+    private static void ReportUseFindWithNextDiagnostic(OperationAnalysisContext ctx, IInvocationExpression operation, BinaryExpressionSyntax binaryExpression, int leftValue, int rightValue)
     {
-        string operatorSign = operatorToken == EnumProvider.SyntaxKind.EqualsToken ? "=" : "<>";
+        // Normalize to "Count() <op> <value>" so the message always reads left-to-right,
+        // even when the source has the literal on the left (e.g. "2 > Rec.Count()").
+        bool countIsOnRight = leftValue >= 0 && rightValue < 0;
+        int comparedValue = countIsOnRight ? leftValue : rightValue;
+        SyntaxKind operatorKind = countIsOnRight
+            ? FlipOperator(binaryExpression.OperatorToken.Kind)
+            : binaryExpression.OperatorToken.Kind;
 
         ctx.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.UseQueryOrFindWithNextInsteadOfCount,
             operation.Syntax.Parent.GetLocation(),
-            GetSymbolName(operation), operatorSign));
+            GetSymbolName(operation),
+            GetOperatorSign(operatorKind),
+            comparedValue));
     }
 
     private static string GetSymbolName(IInvocationExpression operation) =>

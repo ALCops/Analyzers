@@ -2,10 +2,10 @@ using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
+using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeFixes;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
-using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 
 namespace ALCops.ApplicationCop.CodeFixes;
 
@@ -15,7 +15,7 @@ public sealed class InstallAndUpgradeCodeunitsShouldBeInternalCodeFixProvider : 
     private const string AccessPropertyName = "Access";
     private const string InternalAccessValue = "Internal";
 
-    private class InstallAndUpgradeCodeunitsShouldBeInternalCodeAction : CodeAction.DocumentChangeAction
+    private sealed class InstallAndUpgradeCodeunitsShouldBeInternalCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
@@ -36,14 +36,14 @@ public sealed class InstallAndUpgradeCodeunitsShouldBeInternalCodeFixProvider : 
     public sealed override FixAllProvider GetFixAllProvider() =>
          WellKnownFixAllProviders.BatchFixer;
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-        RegisterInstanceCodeFix(ctx, syntaxRoot, span, document);
+        RegisterInstanceCodeFix(context, syntaxRoot, span, document);
     }
 
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)

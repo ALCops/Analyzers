@@ -6,6 +6,43 @@ namespace ALCops.Common.Extensions;
 
 public static class SyntaxNodeExtensions
 {
+    /// <summary>
+    /// Normalizes a call node into method name plus receiver, for either syntax form:
+    /// with parentheses (<c>MyTable.Find()</c>, bare <c>Find()</c>) or without (<c>MyTable.Count</c>).
+    /// <paramref name="hasImplicitSelf"/> marks a bare call, where the receiver is the containing object.
+    /// </summary>
+    public static bool TryGetMethodCall(
+        this SyntaxNode node,
+        out string? methodName,
+        out ExpressionSyntax? receiverExpression,
+        out bool hasImplicitSelf)
+    {
+        methodName = null;
+        receiverExpression = null;
+        hasImplicitSelf = false;
+
+        switch (node)
+        {
+            case InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax invocationMemberAccess }:
+                methodName = invocationMemberAccess.Name.Identifier.ValueText;
+                receiverExpression = invocationMemberAccess.Expression;
+                return true;
+
+            case InvocationExpressionSyntax { Expression: IdentifierNameSyntax simpleName }:
+                methodName = simpleName.Identifier.ValueText;
+                hasImplicitSelf = true;
+                return true;
+
+            case MemberAccessExpressionSyntax memberAccess:
+                methodName = memberAccess.Name.Identifier.ValueText;
+                receiverExpression = memberAccess.Expression;
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
     public static int? GetIntegerPropertyValue(this LabelPropertyValueSyntax? labelProperty, IdentifierProperty property) =>
         labelProperty?.Value.GetIntegerPropertyValue(property);
 

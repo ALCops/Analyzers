@@ -39,6 +39,11 @@ namespace ALCops.FormattingCop.Test
         [TestCase("GlobalVarAndParamThisPrefix")]
         [TestCase("GlobalVarAndReturnValue")]
         [TestCase("GlobalVarAndLocalVar")]
+        [TestCase("XmlPortDataType")]
+        [TestCase("XmlPortObjectAccess")]
+        [TestCase("GenericDataType")]
+        [TestCase("SubtypedObjectReference")]
+        [TestCase("NamespacedObjectReference")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -58,6 +63,12 @@ namespace ALCops.FormattingCop.Test
                 testCase,
                 "14.0"
             );
+
+            SkipTestIfVersionIsTooLow(
+                ["GenericDataType", "SubtypedObjectReference"],
+                testCase,
+                "14.0",
+                "No support for Interface as a generic type argument before version 14.0");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
@@ -89,6 +100,11 @@ namespace ALCops.FormattingCop.Test
         [TestCase("GlobalVarAndParamThisPrefix")]
         [TestCase("GlobalVarAndReturnValue")]
         [TestCase("GlobalVarAndLocalVar")]
+        [TestCase("XmlPortDataType")]
+        [TestCase("XmlPortObjectAccess")]
+        [TestCase("GenericDataType")]
+        [TestCase("SubtypedObjectReference")]
+        [TestCase("NamespacedObjectReference")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -109,10 +125,37 @@ namespace ALCops.FormattingCop.Test
                 "14.0"
             );
 
+            SkipTestIfVersionIsTooLow(
+                ["GenericDataType", "SubtypedObjectReference"],
+                testCase,
+                "14.0",
+                "No support for Interface as a generic type argument before version 14.0");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.CasingMismatch);
+        }
+
+        [Test]
+        [TestCase("GenericTypeArgument")]
+        [TestCase("QuotedObjectReference")]
+        [TestCase("QualifiedObjectReference")]
+        public async Task HasFix(string testCase)
+        {
+            var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
+                .ConfigureAwait(false);
+
+            var expectedCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "expected.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<CasingMismatchCodeFix>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.CasingMismatch);
         }
     }
 }

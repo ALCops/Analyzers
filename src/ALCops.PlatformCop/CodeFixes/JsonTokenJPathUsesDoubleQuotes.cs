@@ -11,7 +11,7 @@ namespace ALCops.PlatformCop.CodeFixes;
 [CodeFixProvider(nameof(JsonTokenJPathUsesDoubleQuotesCodeFix))]
 public sealed class JsonTokenJPathUsesDoubleQuotesCodeFix : CodeFixProvider
 {
-    private class JsonTokenJPathUsesDoubleQuotesCodeAction : CodeAction.DocumentChangeAction
+    private sealed class JsonTokenJPathUsesDoubleQuotesCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.QuickFix;
         public override bool SupportsFixAll { get; }
@@ -33,14 +33,14 @@ public sealed class JsonTokenJPathUsesDoubleQuotesCodeFix : CodeFixProvider
     public sealed override FixAllProvider GetFixAllProvider() =>
          WellKnownFixAllProviders.BatchFixer;
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-        RegisterInstanceCodeFix(ctx, syntaxRoot, span, document);
+        RegisterInstanceCodeFix(context, syntaxRoot, span, document);
     }
 
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)

@@ -1,0 +1,4 @@
+interface MyInterface
+{
+    procedure [|MyProcedure|]()
+}

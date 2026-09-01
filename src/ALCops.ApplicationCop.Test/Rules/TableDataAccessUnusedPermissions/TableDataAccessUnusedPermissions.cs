@@ -32,10 +32,28 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("ParameterPartialUnused")]
         [TestCase("ReportDataItemPartialUnused")]
         [TestCase("ThisKeywordPartialUnused")]
+        [TestCase("TableTypeTemporaryUnused")]
+        [TestCase("XmlPortUseTemporaryUnused")]
+        [TestCase("RecordRefNoDbOperation")]
+        [TestCase("RecordRefFieldRefValueOnly")]
+        [TestCase("RecordRefNameShadowedByLocalRecord")]
+        [TestCase("NextPartialUnused")]
+        [TestCase("DataTransferPartialUnused")]
+        [TestCase("DataTransferCopyRowsDestinationPartialUnused")]
+        [TestCase("DataTransferOnlyBuilderCalls")]
+        [TestCase("DataTransferUnrelatedRecordMethodNamedCopyRows")]
+        [TestCase("DataTransferGlobalVariableUnrelatedUnused")]
+        [TestCase("DataTransferParameterUnrelatedUnused")]
+        [TestCase("DataTransferWithoutParenthesesUnrelatedUnused")]
+        [TestCase("DataTransferMultipleSetTablesUnrelatedUnused")]
+        [TestCase("DataTransferThisKeywordPartialUnused")]
+        [TestCase("DataTransferSequentialSetTablesPartialUnused")]
+        [TestCase("DataTransferSequentialSetTablesFirstGroupPartialUnused")]
+        [TestCase("DataTransferLoopCarriedSetTablesUnrelatedUnused")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["ThisKeywordPartialUnused"],
+                ["ThisKeywordPartialUnused", "DataTransferThisKeywordPartialUnused"],
                 testCase,
                 "14.0",
                 "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
@@ -74,6 +92,30 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("MethodWithoutParenthesesChained")]
         [TestCase("ThisKeywordSelfAccess")]
         [TestCase("ImplicitSelfBareCall")]
+        [TestCase("RecordRefParameterModify")]
+        [TestCase("RecordRefLocalVarFind")]
+        [TestCase("RecordRefGlobalVarDelete")]
+        [TestCase("RecordRefWithoutParensCount")]
+        [TestCase("RecordRefFindWithArgument")]
+        [TestCase("RecordRefNamedRecordVariable")]
+        [TestCase("NextOnVarParameterFilledElsewhere")]
+        [TestCase("NextWithoutParentheses")]
+        [TestCase("NextStandAlone")]
+        [TestCase("RecordRefNext")]
+        [TestCase("DataTransferCopyFieldsSameTable")]
+        [TestCase("DataTransferCopyFieldsTwoTables")]
+        [TestCase("DataTransferCopyRowsTwoTables")]
+        [TestCase("DataTransferGlobalVariable")]
+        [TestCase("DataTransferParameter")]
+        [TestCase("DataTransferMultipleSetTables")]
+        [TestCase("DataTransferWithoutParentheses")]
+        [TestCase("DataTransferUnresolvableSetTables")]
+        [TestCase("DataTransferSetTablesInOtherProcedure")]
+        [TestCase("DataTransferSequentialSetTables")]
+        [TestCase("DataTransferCopyRowsAndCopyFieldsAfterOneSetTables")]
+        [TestCase("DataTransferLoopCarriedSetTables")]
+        [TestCase("DataTransferBreakBeforeSetTables")]
+        [TestCase("DataTransferLoopCarriedUnresolvableSetTables")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

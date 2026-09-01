@@ -1,11 +1,11 @@
 using System.Collections.Immutable;
+using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
+using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeFixes;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
-using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
-using ALCops.Common.Reflection;
 
 namespace ALCops.PlatformCop.CodeFixes;
 
@@ -17,7 +17,7 @@ public sealed class PossibleOverflowAssigningApplyCopyStrCodeFixProvider : CodeF
     private const string MaxStrLenMethodName = "MaxStrLen";
     private const int StartPositionForCopyStr = 1;
 
-    private class PossibleOverflowAssigningApplyCopyStrCodeAction : CodeAction.DocumentChangeAction
+    private sealed class PossibleOverflowAssigningApplyCopyStrCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.Refactor;
         public override bool SupportsFixAll { get; }
@@ -38,14 +38,14 @@ public sealed class PossibleOverflowAssigningApplyCopyStrCodeFixProvider : CodeF
     public sealed override FixAllProvider GetFixAllProvider() =>
          WellKnownFixAllProviders.BatchFixer;
 
-    public override async Task RegisterCodeFixesAsync(CodeFixContext ctx)
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        Document document = ctx.Document;
-        TextSpan span = ctx.Span;
-        CancellationToken cancellationToken = ctx.CancellationToken;
+        Document document = context.Document;
+        TextSpan span = context.Span;
+        CancellationToken cancellationToken = context.CancellationToken;
 
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-        RegisterInstanceCodeFix(ctx, syntaxRoot, span, document);
+        RegisterInstanceCodeFix(context, syntaxRoot, span, document);
     }
 
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot, TextSpan span, Document document)
@@ -154,21 +154,21 @@ public sealed class PossibleOverflowAssigningApplyCopyStrCodeFixProvider : CodeF
         return fieldExpression;
     }
 
-    private static ExpressionSyntax CreateCopyStrExpressionWithMaxStrLen(ExpressionSyntax sourceExpression, ExpressionSyntax targetExpression)
+    private static InvocationExpressionSyntax CreateCopyStrExpressionWithMaxStrLen(ExpressionSyntax sourceExpression, ExpressionSyntax targetExpression)
     {
         // Create: Text.CopyStr(sourceExpression, 1, Text.MaxStrLen(targetExpression))
         var maxStrLenExpression = CreateMaxStrLenExpression(targetExpression);
         return CreateCopyStrExpression(sourceExpression, maxStrLenExpression);
     }
 
-    private static ExpressionSyntax CreateCopyStrExpressionWithLength(ExpressionSyntax sourceExpression, int length)
+    private static InvocationExpressionSyntax CreateCopyStrExpressionWithLength(ExpressionSyntax sourceExpression, int length)
     {
         // Create: Text.CopyStr(sourceExpression, 1, length)
         var lengthLiteral = CreateIntegerLiteral(length);
         return CreateCopyStrExpression(sourceExpression, lengthLiteral);
     }
 
-    private static ExpressionSyntax CreateCopyStrExpression(ExpressionSyntax sourceExpression, ExpressionSyntax lengthExpression)
+    private static InvocationExpressionSyntax CreateCopyStrExpression(ExpressionSyntax sourceExpression, ExpressionSyntax lengthExpression)
     {
         // Create: Text.CopyStr(sourceExpression, 1, lengthExpression)
         var textIdentifier = CreateTextIdentifier();

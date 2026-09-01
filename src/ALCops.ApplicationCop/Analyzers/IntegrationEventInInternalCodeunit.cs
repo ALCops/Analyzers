@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -38,8 +38,7 @@ public sealed class IntegrationEventInInternalCodeunit : DiagnosticAnalyzer
         ctx.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.IntegrationEventInInternalCodeunit,
             methodSymbol.GetLocation(),
-            methodSymbol.Name,
-            applicationObject.Name));
+            methodSymbol.Name));
     }
 
     private static bool IsIntegrationEvent(IMethodSymbol methodSymbol) =>

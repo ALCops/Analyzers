@@ -275,15 +275,15 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.ToolTipMaximumLengthDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ToolTipMaximumLength));
 
-    public static readonly DiagnosticDescriptor ToolTipMustEndWithDot = new(
-        id: DiagnosticIds.ToolTipMustEndWithDot,
-        title: ApplicationCopAnalyzers.ToolTipMustEndWithDotTitle,
-        messageFormat: ApplicationCopAnalyzers.ToolTipMustEndWithDotMessageFormat,
+    public static readonly DiagnosticDescriptor ToolTipMustEndWithPunctuation = new(
+        id: DiagnosticIds.ToolTipMustEndWithPunctuation,
+        title: ApplicationCopAnalyzers.ToolTipMustEndWithPunctuationTitle,
+        messageFormat: ApplicationCopAnalyzers.ToolTipMustEndWithPunctuationMessageFormat,
         category: Category.Design,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        description: ApplicationCopAnalyzers.ToolTipMustEndWithDotDescription,
-        helpLinkUri: GetHelpUri(DiagnosticIds.ToolTipMustEndWithDot));
+        description: ApplicationCopAnalyzers.ToolTipMustEndWithPunctuationDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.ToolTipMustEndWithPunctuation));
 
     public static readonly DiagnosticDescriptor ToolTipShouldStartWithSpecifies = new(
         id: DiagnosticIds.ToolTipShouldStartWithSpecifies,
@@ -347,7 +347,7 @@ public static class DiagnosticDescriptors
 
     public static string GetHelpUri(string identifier)
     {
-        return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/applicationcop/{0}/", identifier.ToLower());
+        return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/applicationcop/{0}/", identifier.ToLowerInvariant());
     }
 
     /// <summary>

@@ -365,6 +365,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.UseValidateForFieldAssignmentDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.UseValidateForFieldAssignment));
 
+    public static readonly DiagnosticDescriptor NotAllCodePathsReturnValue = new(
+        id: DiagnosticIds.NotAllCodePathsReturnValue,
+        title: PlatformCopAnalyzers.NotAllCodePathsReturnValueTitle,
+        messageFormat: PlatformCopAnalyzers.NotAllCodePathsReturnValueMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.NotAllCodePathsReturnValueDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.NotAllCodePathsReturnValue));
+
     public static readonly DiagnosticDescriptor AnalyzerException = new(
         id: DiagnosticIds.AnalyzerException,
         title: PlatformCopAnalyzers.AnalyzerExceptionTitle,
@@ -377,7 +387,7 @@ public static class DiagnosticDescriptors
 
     public static string GetHelpUri(string identifier)
     {
-        return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLower());
+        return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/platformcop/{0}/", identifier.ToLowerInvariant());
     }
 
     /// <summary>

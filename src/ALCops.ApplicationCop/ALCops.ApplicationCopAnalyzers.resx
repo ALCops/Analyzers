@@ -253,7 +253,7 @@
     <value>Integration events must not be declared in codeunits with Access set to Internal</value>
   </data>
   <data name="IntegrationEventInInternalCodeunitMessageFormat" xml:space="preserve">
-    <value>Integration event '{0}' is declared in a codeunit with Access = Internal`, making it inaccessible to extensions. Remove the Access property or declare the event as an InternalEvent.</value>
+    <value>Integration event '{0}' is declared in a codeunit with Access = Internal, making it inaccessible to extensions. Remove the Access property or declare the event as an InternalEvent.</value>
   </data>
   <data name="IntegrationEventInInternalCodeunitDescription" xml:space="preserve">
     <value>Integration events are designed to be consumed by extensions and therefore must be accessible outside the defining app. When an IntegrationEvent is declared in a codeunit with Access = Internal, the event cannot be subscribed to by extensions, rendering it ineffective.</value>
@@ -277,7 +277,7 @@
     <value>DrillDownPageId and LookupPageId property must be defined for tables used in list pages</value>
   </data>
   <data name="LookupPageIdAndDrillDownPageIdMessageFormat" xml:space="preserve">
-    <value>Table '{0}' is used in a list page but does not define both the DrillDownPageId and LookupPageId properties.</value>
+    <value>Table '{0}' is used in list page '{1}' but does not define both the DrillDownPageId and LookupPageId properties.</value>
   </data>
   <data name="LookupPageIdAndDrillDownPageIdDescription" xml:space="preserve">
     <value>When a table is used as the source for a list page, users expect to be able to drill down into records and open lookups in a consistent and predictable way. The DrillDownPageId and LookupPageId table properties define which pages are used for these interactions.</value>
@@ -399,14 +399,14 @@
   <data name="ToolTipMaximumLengthDescription" xml:space="preserve">
     <value>The user assistance model recommends keeping ToolTips short (about 200 characters including spaces) so users can scan them quickly. The UI can render longer ToolTips, but longer text reduces scannability and consistency.</value>
   </data>
-  <data name="ToolTipMustEndWithDotTitle" xml:space="preserve">
-    <value>ToolTip must end with a dot</value>
+  <data name="ToolTipMustEndWithPunctuationTitle" xml:space="preserve">
+    <value>ToolTip must end with a punctuation</value>
   </data>
-  <data name="ToolTipMustEndWithDotMessageFormat" xml:space="preserve">
-    <value>ToolTip must end with a dot.</value>
+  <data name="ToolTipMustEndWithPunctuationMessageFormat" xml:space="preserve">
+    <value>ToolTip must end with one of the following punctuations: '{0}'.</value>
   </data>
-  <data name="ToolTipMustEndWithDotDescription" xml:space="preserve">
-    <value>End ToolTips with a dot to keep phrasing consistent and clearly separated from surrounding UI text.</value>
+  <data name="ToolTipMustEndWithPunctuationDescription" xml:space="preserve">
+    <value>End ToolTips with a punctuation to keep phrasing consistent and clearly separated from surrounding UI text.</value>
   </data>
   <data name="ToolTipShouldStartWithSpecifiesTitle" xml:space="preserve">
     <value>ToolTip should start with 'Specifies'</value>

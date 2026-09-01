@@ -15,6 +15,18 @@ public static class AppSourceCopConfigurationProvider
 
         return AppSourceCopConfiguration.From(appSourceCopConf);
     }
+
+    /// <summary>
+    /// Returns the merged, distinct, non-empty list of mandatory affixes (mandatoryPrefix,
+    /// mandatorySuffix and mandatoryAffixes) for the compilation's AppSourceCop.json, or an
+    /// empty array when none is present. Delegates to the SDK so the merge semantics stay
+    /// identical to AppSourceCop's own affix validation. Note: unlike
+    /// <see cref="GetAppSourceCopConfiguration"/>, the underlying SDK overload re-reads the
+    /// configuration on every call; cache the result per compilation at the call site.
+    /// </summary>
+    public static string[] GetMandatoryNameAffixes(Compilation compilation)
+        => Microsoft.Dynamics.Nav.Analyzers.Common.AppSourceCopConfiguration.AppSourceCopConfigurationProvider
+            .GetMandatoryNameAffixes(compilation);
 }
 
 public sealed class AppSourceCopConfiguration

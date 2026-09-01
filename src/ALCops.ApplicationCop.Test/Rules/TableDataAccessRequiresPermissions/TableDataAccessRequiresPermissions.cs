@@ -31,10 +31,18 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("Queries")]
         [TestCase("Reports")]
         [TestCase("DottedTableName")]
+        [TestCase("NextWithoutPermissions")]
+        [TestCase("DataTransferCopyFieldsMissingModify")]
+        [TestCase("DataTransferCopyRowsMissingInsert")]
+        [TestCase("DataTransferMissingReadOnSource")]
+        [TestCase("DataTransferMultipleSetTablesMissing")]
+        [TestCase("DataTransferThisKeywordMissingModify")]
+        [TestCase("DataTransferSequentialSetTablesMissing")]
+        [TestCase("DataTransferLoopCarriedSetTablesMissing")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["ThisKeywordSelfCallInTable"],
+                ["ThisKeywordSelfCallInTable", "DataTransferThisKeywordMissingModify"],
                 testCase,
                 "14.0",
                 "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
@@ -69,6 +77,17 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("CountWithPermissions")]
         [TestCase("ImplicitSelfCallWithInherentPermissions")]
         [TestCase("DottedTableNameWithPermissions")]
+        [TestCase("TableTypeTemporaryVariable")]
+        [TestCase("TableTypeTemporaryImplicitSelf")]
+        [TestCase("XmlPortUseTemporary")]
+        [TestCase("NextWithPermissions")]
+        [TestCase("PageSourceTableNext")]
+        [TestCase("TemporaryRecordNext")]
+        [TestCase("DataTransferCopyFieldsWithPermissions")]
+        [TestCase("DataTransferCopyRowsWithPermissions")]
+        [TestCase("DataTransferUnresolvable")]
+        [TestCase("DataTransferInherentPermissions")]
+        [TestCase("DataTransferSequentialSetTablesFirstCovered")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -92,6 +111,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("AddEntrySingleLine")]
         [TestCase("AddEntryAlphabetical")]
         [TestCase("AddEntryAlphabeticalFirst")]
+        [TestCase("AddEntryOtherTypesFirst")]
         [TestCase("AddEntryAppend")]
         [TestCase("AddNewPermissionsPropertyDottedName")]
         [TestCase("MergePermissionCharDottedName")]

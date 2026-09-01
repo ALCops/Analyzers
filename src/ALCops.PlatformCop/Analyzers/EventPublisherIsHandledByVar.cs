@@ -36,7 +36,8 @@ public sealed class EventPublisherIsHandledByVar : DiagnosticAnalyzer
 
             ctx.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.EventPublisherIsHandledByVar,
-                parameter.GetLocation()));
+                parameter.GetLocation(),
+                parameter.Name));
         }
     }
 

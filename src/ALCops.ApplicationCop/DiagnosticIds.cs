@@ -16,7 +16,7 @@ public static class DiagnosticIds
     public static readonly string CaptionRequired = "AC0011";
     public static readonly string IntegrationEventInInternalCodeunit = "AC0012";
     public static readonly string FieldGroupsRequired = "AC0013";
-    public static readonly string ToolTipMustEndWithDot = "AC0014";
+    public static readonly string ToolTipMustEndWithPunctuation = "AC0014";
     public static readonly string ToolTipShouldStartWithSpecifies = "AC0015";
     public static readonly string ToolTipDoNotUseLineBreaks = "AC0016";
     public static readonly string ToolTipMaximumLength = "AC0017";
