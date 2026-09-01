@@ -52,7 +52,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
         var identifiers = new List<(IdentifierNameSyntax Node, SyntaxNode? Scope)>();
         var qualifiedNames = new List<(QualifiedNameSyntax Node, SyntaxNode? Scope)>();
         var triggers = new List<TriggerDeclarationSyntax>();
-        var objectReferences = new List<IdentifierNameSyntax>();
+        var objectReferences = new List<(string? TypeName, IdentifierNameSyntax Node)>();
 
         WalkNode(ctx, root, identifiers, qualifiedNames, triggers, objectReferences);
 
@@ -75,7 +75,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
         List<(IdentifierNameSyntax Node, SyntaxNode? Scope)> identifiers,
         List<(QualifiedNameSyntax Node, SyntaxNode? Scope)> qualifiedNames,
         List<TriggerDeclarationSyntax> triggers,
-        List<IdentifierNameSyntax> objectReferences,
+        List<(string? TypeName, IdentifierNameSyntax Node)> objectReferences,
         bool skipChildIdentifiers = false)
     {
         var stack = new Stack<(SyntaxNode node, bool skipIds, SyntaxNode? scope)>();
@@ -104,7 +104,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                     {
                         CompareAgainstDictionary(ctx, subtyped.TypeName, _navTypeKindDictionary);
                         if (subtyped.Subtype.Identifier is IdentifierNameSyntax subtypeName)
-                            objectReferences.Add(subtypeName);
+                            objectReferences.Add((subtyped.TypeName.ValueText, subtypeName));
                     }
                     continue;
                 }
@@ -552,14 +552,10 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
     private static void ResolveObjectReferences(
         SymbolAnalysisContext ctx,
         SemanticModel semanticModel,
-        List<IdentifierNameSyntax> objectReferences)
+        List<(string? TypeName, IdentifierNameSyntax Node)> objectReferences)
     {
         var groups = objectReferences
-            .ToLookup(node =>
-            {
-                var subtypedDataType = (SubtypedDataTypeSyntax)node.Parent!.Parent!;
-                return subtypedDataType.TypeName.ValueText + "\0" + node.Identifier.ValueText;
-            }, SemanticFacts.NameEqualityComparer);
+            .ToLookup(item => (item.TypeName, item.Node.Identifier.ValueText));
 
         foreach (var group in groups)
         {
@@ -568,8 +564,8 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
             IdentifierNameSyntax? representative = null;
             foreach (var item in group)
             {
-                if (representative is null || item.Position > representative.Position)
-                    representative = item;
+                if (representative is null || item.Node.Position > representative.Position)
+                    representative = item.Node;
             }
 
             if (representative is null)
@@ -579,7 +575,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 continue;
 
             foreach (var item in group)
-                CompareIdentifier(ctx, item.Identifier, symbol.Name);
+                CompareIdentifier(ctx, item.Node.Identifier, symbol.Name);
         }
     }
 
