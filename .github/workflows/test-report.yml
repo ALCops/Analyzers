@@ -1,8 +1,11 @@
 name: Test Report
 
+# Fork-safe report path for pull requests only (fork PR runs have a read-only token,
+# no checks: write). Push and scheduled runs publish the same report inline via the
+# 'report' job in build-test.yml (publish-report: true), before any release job.
 on:
   workflow_run:
-    workflows: ['Pull Request', 'Build and Release', 'Scheduled Build']
+    workflows: ['Pull Request']
     types:
       - completed
 
@@ -19,26 +22,13 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
       || github.event.workflow_run.conclusion == 'failure'
     steps:
-      - name: Checkout tested commit
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-
-      - name: Download test result artifacts
-        uses: actions/download-artifact@v8
-        with:
-          pattern: test-results-*
-          merge-multiple: true
-          path: TestResults
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
-
       - name: Publish unified test report
         uses: dorny/test-reporter@v3
         with:
+          artifact: test-results
           name: Test results
           report-title: 'ALCops Test Results'
-          path: 'TestResults/**/*.trx'
+          path: '**/*.trx'
           reporter: dotnet-trx
           use-actions-summary: 'false'
           list-suites: 'failed'
