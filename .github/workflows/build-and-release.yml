@@ -41,8 +41,10 @@ jobs:
     permissions:
       contents: read
       actions: read
+      checks: write
     with:
       draft-check: false
+      publish-report: true
 
   release:
     needs: build-and-test

@@ -1,8 +1,11 @@
 name: Test Report
 
+# Fork-safe report path for pull requests only (fork PR runs have a read-only token,
+# no checks: write). Push and scheduled runs publish the same report inline via the
+# 'report' job in build-test.yml (publish-report: true), before any release job.
 on:
   workflow_run:
-    workflows: ['Pull Request', 'Build and Release', 'Scheduled Build']
+    workflows: ['Pull Request']
     types:
       - completed
 

@@ -19,3 +19,4 @@ jobs:
       pull-requests: write
     with:
       draft-check: false
+      publish-report: true

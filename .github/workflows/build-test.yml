@@ -8,6 +8,11 @@ on:
         required: false
         type: boolean
         default: true
+      publish-report:
+        description: "Publish the unified dorny test report as a check in this run (caller needs checks: write; keep false for PRs, fork tokens are read-only)"
+        required: false
+        type: boolean
+        default: false
     outputs:
       bc-devtools-sources:
         description: "BC DevTools sources"
@@ -436,4 +441,34 @@ jobs:
           name: test-results
           path: TestResults/**/*.trx
           if-no-files-found: ignore
+
+  report:
+    # Inline report for push/scheduled runs (trusted context, checks: write available).
+    # PR runs keep publish-report false; their report comes from the workflow_run
+    # Test Report workflow, the fork-safe path. !cancelled() keeps the report coming
+    # when a matrix leg hard-failed; the failed test job still fails the calling job,
+    # so a release stays blocked either way.
+    if: ${{ !cancelled() && inputs.publish-report }}
+    needs: merge-test-results
+    runs-on: ubuntu-latest
+    name: Report
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+    steps:
+      - name: Publish unified test report
+        uses: dorny/test-reporter@v3
+        with:
+          artifact: test-results
+          name: Test results
+          report-title: 'ALCops Test Results'
+          path: '**/*.trx'
+          reporter: dotnet-trx
+          use-actions-summary: 'false'
+          list-suites: 'failed'
+          list-tests: 'failed'
+          collapsed: 'never'
+          fail-on-error: true
+          fail-on-empty: true
 
