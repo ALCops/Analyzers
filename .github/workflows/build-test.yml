@@ -474,10 +474,9 @@ jobs:
     needs: merge-test-results
     runs-on: ubuntu-latest
     name: Report
-    permissions:
-      contents: read
-      actions: read
-      checks: write
+    # No permissions block: a called workflow may only downgrade the caller's token,
+    # and declaring checks: write here startup-fails callers that don't grant it
+    # (Pull Request). Callers that set publish-report grant checks: write themselves.
     steps:
       - name: Publish unified test report
         uses: dorny/test-reporter@v3
