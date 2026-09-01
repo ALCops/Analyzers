@@ -289,6 +289,7 @@ Rules for .al fixtures:
 3. Keep fixtures minimal: only include code relevant to the rule being tested.
 4. Place `[|...|]` markers precisely around the syntax node the analyzer targets.
 5. Every `HasDiagnostic` fixture must have at least one marker. Every `NoDiagnostic` fixture must also have markers (on the same kind of syntax node, but in a valid scenario).
+6. When adding or creating tests, consider both a fixture **without** namespaces and one **with** a `namespace` declaration (if applicable to the analyzed syntax) — analyzers must support both. Use a generic multi-part namespace such as `MyPublisher.MyExtension.MyAppDomain`, and where relevant include fully-qualified object references (`MyPublisher.MyExtension.MyAppDomain.MyTable`). See `Rules/CasingMismatchDeclaration/HasDiagnostic/NamespacedObjectReference.al` in FormattingCop.Test for an example.
 
 Typical fixture structure:
 
