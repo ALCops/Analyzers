@@ -349,8 +349,8 @@ public sealed class GlobalVariableCouldBeLocal : DiagnosticAnalyzer
         context.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.GlobalVariableCouldBeLocal,
             variable.GetLocation(),
-            GetTypeDisplay(variable.Type),
             variable.Name,
+            GetTypeDisplay(variable.Type),
             method.Name,
             stateClause));
     }

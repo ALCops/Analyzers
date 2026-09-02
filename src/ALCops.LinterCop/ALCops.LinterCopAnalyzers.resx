@@ -427,7 +427,7 @@
     <value>Global variable could be local</value>
   </data>
   <data name="GlobalVariableCouldBeLocalMessageFormat" xml:space="preserve">
-    <value>Global '{0}' variable '{1}' is only used in '{2}'{3} Consider moving it to local scope.</value>
+    <value>Global variable '{0}' ({1}) is only used in '{2}'{3} Consider moving it to local scope.</value>
   </data>
   <data name="GlobalVariableCouldBeLocalMutableStateClause" xml:space="preserve">
     <value> and appears to be reinitialized before every read.</value>

@@ -45,6 +45,7 @@ public class GlobalVariableCouldBeLocal : NavCodeAnalysisBase
     [TestCase("UnrelatedRecursionDoesNotSuppress")]
     [TestCase("ConditionalRecordGetReadOnSuccess")]
     [TestCase("RecordAssignmentInitializesFields")]
+    [TestCase("RecordTypeNameRequiresQuotes")]
     [TestCase("ThisQualifiedInitialization")]
     [TestCase("RecursiveThenReinitialize")]
     public async Task HasDiagnostic(string testCase)
@@ -142,13 +143,16 @@ public class GlobalVariableCouldBeLocal : NavCodeAnalysisBase
     [Test]
     [TestCase(
         "BooleanVariable",
-        "Global 'Boolean' variable 'MyTestVariable' is only used in 'MyTestProcedure' and appears to be reinitialized before every read. Consider moving it to local scope.")]
+        "Global variable 'MyTestVariable' (Boolean) is only used in 'MyTestProcedure' and appears to be reinitialized before every read. Consider moving it to local scope.")]
     [TestCase(
         "Case05ImmutableLabel",
-        "Global 'Label' variable 'MyProcedureOnlyLabel' is only used in 'ShowCustomerName'. Consider moving it to local scope.")]
+        "Global variable 'MyProcedureOnlyLabel' (Label) is only used in 'ShowCustomerName'. Consider moving it to local scope.")]
     [TestCase(
         "Case03RecordGetBeforeFieldRead",
-        "Global 'Record Customer' variable 'MyCustomerFromGet' is only used in 'ShowCustomerFromOriginalPost' and appears to be reinitialized before every read. Consider moving it to local scope.")]
+        "Global variable 'MyCustomerFromGet' (Record Customer) is only used in 'ShowCustomerFromOriginalPost' and appears to be reinitialized before every read. Consider moving it to local scope.")]
+    [TestCase(
+        "RecordTypeNameRequiresQuotes",
+        "Global variable 'SalesHeader' (Record \"Sales Header\") is only used in 'JustATest' and appears to be reinitialized before every read. Consider moving it to local scope.")]
     public async Task DiagnosticMessageIncludesTypeAndUsesStateAppropriateWording(
         string testCase,
         string expectedMessage)
