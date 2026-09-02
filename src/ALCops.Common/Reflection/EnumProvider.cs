@@ -350,6 +350,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.ControlAddIn)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _decimal =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Decimal)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dialog =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>("Dialog"));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dotNet =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DotNet)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dataTransfer =
@@ -430,6 +432,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind Codeunit => _codeunit.Value;
         public static NavCodeAnalysis.NavTypeKind ControlAddIn => _controlAddIn.Value;
         public static NavCodeAnalysis.NavTypeKind Decimal => _decimal.Value;
+        public static NavCodeAnalysis.NavTypeKind Dialog => _dialog.Value;
         public static NavCodeAnalysis.NavTypeKind DotNet => _dotNet.Value;
         public static NavCodeAnalysis.NavTypeKind DataTransfer => _dataTransfer.Value;
         public static NavCodeAnalysis.NavTypeKind Duration => _duration.Value;

@@ -5,12 +5,19 @@ namespace ALCops.PlatformCop.Test;
 public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
 {
     private AnalyzerTestFixture _fixture;
+    private AnalyzerTestFixture _errorTolerantFixture;
     private string _testCasePath;
 
     [SetUp]
     public void Setup()
     {
         _fixture = RoslynFixtureFactory.Create<Analyzers.NotAllCodePathsReturnValue>();
+
+        _errorTolerantFixture = RoslynFixtureFactory.Create<Analyzers.NotAllCodePathsReturnValue>(
+            new AnalyzerTestFixtureConfig
+            {
+                ThrowsWhenInputDocumentContainsError = false
+            });
 
         _testCasePath = Path.Combine(
             Directory.GetParent(
@@ -32,6 +39,7 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
     [TestCase("NamedWhileConditionShortCircuit")]
     [TestCase("NamedAssignedInIncompleteEnumCase")]
     [TestCase("UnnamedCaseTrueWithoutElse")]
+    [TestCase("UnnamedUserDefinedFieldErrorNotTerminating")]
     public async Task HasDiagnostic(string testCase)
     {
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -52,11 +60,16 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
     [TestCase("NamedNestedIfElseIfAssigned")]
     [TestCase("TriggerCases")]
     [TestCase("UnnamedIfElseErrorTerminates")]
+    [TestCase("UnnamedIfElseFieldErrorTerminates")]
     [TestCase("NamedIfElseErrorTerminates")]
+    [TestCase("NamedIfElseFieldErrorTerminates")]
     [TestCase("UnnamedCaseElseErrorTerminates")]
+    [TestCase("UnnamedCaseElseFieldErrorTerminates")]
     [TestCase("UnnamedCaseElseExitTerminates")]
     [TestCase("UnnamedCaseTrueElseExitTerminates")]
     [TestCase("UnnamedGuardClauseErrorFirst")]
+    [TestCase("UnnamedGuardClauseFieldErrorFirst")]
+    [TestCase("UnnamedIfElseFieldRefFieldErrorTerminates")]
     [TestCase("NamedInitializedByVarArgument")]
     [TestCase("NamedInitializedByVarArgumentInCondition")]
     [TestCase("NamedIfConditionGuaranteedLeft")]
@@ -82,5 +95,26 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
             .ConfigureAwait(false);
 
         _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.NotAllCodePathsReturnValue);
+    }
+
+    [Test]
+    [TestCase("UnnamedIfElseErrorUnboundArgumentTerminates")]
+    [TestCase("UnnamedIfElseFieldErrorUnboundArgumentTerminates")]
+    public async Task NoDiagnosticInDocumentWithErrors(string testCase)
+    {
+        var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+            .ConfigureAwait(false);
+
+        _errorTolerantFixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.NotAllCodePathsReturnValue);
+    }
+
+    [Test]
+    [TestCase("UnnamedUserDefinedErrorUnboundArgumentNotTerminating")]
+    public async Task HasDiagnosticInDocumentWithErrors(string testCase)
+    {
+        var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+            .ConfigureAwait(false);
+
+        _errorTolerantFixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.NotAllCodePathsReturnValue);
     }
 }
