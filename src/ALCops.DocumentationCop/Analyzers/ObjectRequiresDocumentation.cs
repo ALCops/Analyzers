@@ -36,34 +36,35 @@ public sealed class ObjectRequiresDocumentation : DiagnosticAnalyzer
             return;
         }
 
-        if (ctx.Symbol is not IApplicationObjectTypeSymbol appObjectTypeSymbol)
+        if (ctx.Symbol is not IObjectTypeSymbol objectTypeSymbol)
         {
             return;
         }
 
-        if (appObjectTypeSymbol.IsTestCodeunit())
+        if (objectTypeSymbol is IApplicationObjectTypeSymbol appObjectTypeSymbol &&
+            appObjectTypeSymbol.IsTestCodeunit())
         {
             return;
         }
 
-        var xmlComment = appObjectTypeSymbol.GetDocumentationCommentXml();
+        var xmlComment = objectTypeSymbol.GetDocumentationCommentXml();
 
         if (string.IsNullOrWhiteSpace(xmlComment))
         {
-            if (appObjectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Public)
+            if (objectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Public)
             {
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.PublicObjectRequiresDocumentation,
-                    appObjectTypeSymbol.GetLocation(),
-                    appObjectTypeSymbol.Name));
+                    objectTypeSymbol.GetLocation(),
+                    objectTypeSymbol.Name));
             }
 
-            else if (appObjectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Internal)
+            else if (objectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Internal)
             {
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.InternalObjectRequiresDocumentation,
-                    appObjectTypeSymbol.GetLocation(),
-                    appObjectTypeSymbol.Name));
+                    objectTypeSymbol.GetLocation(),
+                    objectTypeSymbol.Name));
             }
         }
     }

@@ -61,7 +61,4 @@ merged variable must be typed `ISymbol`). Consequences:
 
 ## Known issues
 
-- `ObjectRequiresDocumentation` (DC0007/DC0008) has the same SDK-hierarchy false negative at
-  object level: it registers Interface and ControlAddIn symbol kinds but bails on
-  `is not IApplicationObjectTypeSymbol`, so those objects never get object-level documentation
-  diagnostics. Tracked in a separate issue pending the original author's intent.
+None.
