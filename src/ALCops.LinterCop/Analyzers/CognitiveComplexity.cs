@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using ALCops.Common.Settings;
@@ -55,7 +56,6 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     {
         "Break",
         "Continue",
-        "Error",
         "Quit",
         "Skip"
     };
@@ -137,7 +137,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
                 continue; // Skip further processing for this IF node
             }
 
-            if (IsFlowBreakingStructure(node) && !IsGuardClause(node))
+            if (IsFlowBreakingStructure(node) && !IsGuardClause(context, node))
             {
                 complexity += 1 + nestingLevel;
                 RaiseIncrementDiagnostic(context, GetKeywordLocation(node, node.SpanStart), node.Kind.ToString(), nestingLevel, isIncrementDiagnosticsEnabled);
@@ -169,7 +169,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         if (node is not IfStatementSyntax ifStatement)
             return;
 
-        if (!IsGuardClause(node))
+        if (!IsGuardClause(context, node))
         {
             // Increment for the 'if' statement
             complexity += 1 + nestingLevel;
@@ -221,7 +221,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
     private static bool IsNestedStructure(SyntaxNode node) =>
         nestedStructures.Contains(node.Kind);
 
-    private static bool IsGuardClause(SyntaxNode node)
+    private static bool IsGuardClause(CodeBlockAnalysisContext context, SyntaxNode node)
     {
         return node switch
         {
@@ -229,12 +229,14 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             IfStatementSyntax { Statement: ExitStatementSyntax } => true,
 
             IfStatementSyntax { Statement: ExpressionStatementSyntax { Expression: CodeExpressionSyntax codeExpression } }
-                => IsGuardExpression(codeExpression),
+                => IsGuardExpression(context, codeExpression),
             _ => false
         };
     }
 
-    private static bool IsGuardExpression(CodeExpressionSyntax codeExpression)
+    private static bool IsGuardExpression(
+        CodeBlockAnalysisContext context,
+        CodeExpressionSyntax codeExpression)
     {
         return codeExpression switch
         {
@@ -242,18 +244,26 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             IdentifierNameSyntax identifier when identifier.GetIdentifierOrLiteralValue() is { } value
                 => guardClauseExitCommands.Contains(value),
 
-            InvocationExpressionSyntax invocation => IsGuardInvocation(invocation),
+            InvocationExpressionSyntax invocation => IsGuardInvocation(context, invocation),
             _ => false
         };
     }
 
-    private static bool IsGuardInvocation(InvocationExpressionSyntax invocation)
+    private static bool IsGuardInvocation(
+        CodeBlockAnalysisContext context,
+        InvocationExpressionSyntax invocation)
     {
+        if (FlowTerminatingBuiltIns.IsFlowTerminatingCall(
+            context.SemanticModel.GetOperation(invocation, context.CancellationToken)))
+        {
+            return true;
+        }
+
         return invocation.Expression switch
         {
             MemberAccessExpressionSyntax memberAccess => IsGuardCommand(memberAccess),
 
-            // if not <condition> then error;
+            // if not <condition> then break/continue/quit/skip;
             IdentifierNameSyntax identifier when identifier.GetIdentifierOrLiteralValue() is { } value
                 => guardClauseExitCommands.Contains(value),
             _ => false
