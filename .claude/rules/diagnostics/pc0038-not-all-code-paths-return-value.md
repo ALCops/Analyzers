@@ -20,7 +20,7 @@ The rule excludes TryFunction methods.
 | Flow analysis based on IOperation tree | Works consistently for nested blocks and AL control-flow constructs |
 | Named return variable counts as return value when definitely assigned on fallthrough paths | Matches AL named-return pattern without forcing exit() usage |
 | `exit` without explicit expression is treated as missing value unless named return was already assigned on that path | Prevents silent default-value returns on early exits |
-| Built-in `Error(...)` and `FieldError(...)` invocations terminate the path (return empty state set) | `FlowTerminatingBuiltIns` identifies only semantically bound built-ins, including incomplete calls on Dialog, Record, and FieldRef while editing; user-defined methods with the same names do not terminate a path |
+| Built-in `Error(...)` and `FieldError(...)` invocations terminate the path (return empty state set) | `FlowTerminatingBuiltIns` requires an exact clean binding to `Dialog.Error`, `Table.FieldError`, or `FieldRef.FieldError`. Incomplete calls use the corresponding Dialog, Record, or FieldRef receiver kind while editing; user-defined methods and crossed class/method pairs do not terminate a path |
 | Passing a named return to a `var` parameter or using it as an invocation receiver counts as assignment (e.g. `Rec.Get(No)`) | These operations can write the value. PC0038 intentionally stops at the call boundary and does not inspect callees to prove that a write occurs; a potential write therefore counts as assignment to avoid unbounded interprocedural analysis and noise |
 | Direct `if` conditions contribute `var` assignment side effects | Covers guard clauses such as `if not JsonObject.Get(Key, Result) then Error(...)`. For `and` and `or`, the left operand is always analyzed while right-operand states are unioned with the short-circuit path. Conditional expressions union both result branches when the target SDK exposes their operation interface; older SDKs remain conservative |
 | Case selectors, loop conditions, `for` bounds, and `foreach` collection expressions contribute `var` initialization side effects | Extends the same guard-clause treatment to constructs whose expression is guaranteed to execute at least once regardless of body iteration |
@@ -56,5 +56,6 @@ The rule excludes TryFunction methods.
 
 ## Known issues
 
+- `Error(ErrorInfo)` is treated as terminating even when `ErrorInfo.Collectible = true` and the call occurs in an `ErrorBehavior::Collect` scope, where execution can continue. Correctly distinguishing that case requires data-flow and enclosing-call analysis beyond the invocation classifier.
 - `LoopKind.Repeat` handling depends on SDK loop metadata availability across versions; behavior is conservative for optional-loop execution.
 - `case` line body extraction uses reflective fallback to remain compatible across SDK versions.
