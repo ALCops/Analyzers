@@ -68,13 +68,6 @@ public static class SymbolInterfaceExtensions
 
     public static bool IsObsolete(this ISymbol symbol)
     {
-#if NETSTANDARD2_1
-        // COMPAT(netstandard2.0): On the last netstandard2.0 SDK (AL Language v15.2),
-        // GetContainingObjectTypeSymbol() can return null for certain symbol kinds,
-        // and the null flows here through the extension-method call. See issue #365.
-        if (symbol is null)
-            return false;
-#endif
         // Check the "always available" properties first
         if (symbol.IsObsoletePending || symbol.IsObsoleteRemoved)
         {
