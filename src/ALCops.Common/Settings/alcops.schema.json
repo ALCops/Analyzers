@@ -20,7 +20,7 @@
         "Source": {
           "type": "string",
           "minLength": 1,
-          "description": "An anonymously accessible HTTP(S) URL or an absolute local file path to the base alcops.json configuration."
+          "description": "An anonymously accessible HTTP(S) URL without embedded credentials, or an absolute local file path to the base alcops.json configuration."
         }
       }
     },

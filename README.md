@@ -37,6 +37,8 @@ Analyzer-specific settings are configured in `alcops.json`. A project can inheri
 
 Local scalar values and arrays replace inherited values. Nested objects are merged property by property. Inheritance chains are deliberately not supported. See the [configuration guide](https://alcops.dev/docs/getting-started/configuration/) for all settings and precedence rules.
 
+HTTP(S) sources must be anonymously accessible. URLs containing embedded credentials such as `https://user:pass@example.com/alcops.json` are rejected.
+
 ## Contributing
 
 Contributions are welcome! Whether it's a new rule idea, a bug report, or a pull request — all input helps improve ALCops for the community.

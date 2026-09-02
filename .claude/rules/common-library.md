@@ -51,7 +51,7 @@ Settings are resolved using `.editorconfig`-style upward traversal. The first lo
 3. **Assembly location** — directory where `ALCops.Common.dll` is located
 4. **Defaults** — built-in default values from `ALCopsSettings`
 
-The selected local file can declare an external base through `Extends.Source`. Exactly one anonymously accessible HTTP(S) URL or absolute local file path is supported. `ALCopsSettingsInheritanceResolver` merges the referenced JSON before deserialization: local scalar values and arrays replace inherited values, while nested objects merge property by property. A referenced configuration that declares `Extends` is rejected, so inheritance chains are not followed. Unavailable or invalid external configurations fall back to the local file.
+The selected local file can declare an external base through `Extends.Source`. Exactly one anonymously accessible HTTP(S) URL or absolute local file path is supported. HTTP(S) URLs with a non-empty `Uri.UserInfo` are rejected before any request is made. `ALCopsSettingsInheritanceResolver` merges the referenced JSON before deserialization: local scalar values and arrays replace inherited values, while nested objects merge property by property. A referenced configuration that declares `Extends` is rejected, so inheritance chains are not followed. Unavailable or invalid external configurations fall back to the local file.
 
 This allows a multi-root workspace to share a single `alcops.json` at the workspace root:
 ```

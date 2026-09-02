@@ -356,6 +356,34 @@ public class ALCopsSettingsProviderTests
     }
 
     [Test]
+    public void GetSettings_ExtendsRejectsHttpSourceWithEmbeddedCredentials()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var endpoint = (IPEndPoint)listener.LocalEndpoint;
+
+        var appFolder = Path.Combine(_tempRoot, "CredentialSourceApp");
+        Directory.CreateDirectory(appFolder);
+        File.WriteAllText(
+            Path.Combine(appFolder, "alcops.json"),
+            $$"""
+            {
+              "Extends": { "Source": "http://user:pass@127.0.0.1:{{endpoint.Port}}/alcops.json" },
+              "MaintainabilityIndexThreshold": 39
+            }
+            """);
+
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(settings.MaintainabilityIndexThreshold, Is.EqualTo(39));
+            Assert.That(settings.CognitiveComplexityThreshold, Is.EqualTo(15));
+            Assert.That(listener.Pending(), Is.False, "A credential-bearing URL must be rejected before connecting.");
+        });
+    }
+
+    [Test]
     public void GetSettings_WithIFileSystem_FallsBackToParentTraversal()
     {
         // Arrange: alcops.json in parent, not in the app folder

@@ -94,6 +94,9 @@ internal static class ALCopsSettingsInheritanceResolver
                 (string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
                  string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
             {
+                if (!string.IsNullOrEmpty(uri.UserInfo))
+                    return null;
+
                 return _httpClient.GetStringAsync(uri).GetAwaiter().GetResult();
             }
 
