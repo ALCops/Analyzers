@@ -340,12 +340,33 @@ public sealed class GlobalVariableCouldBeLocal : DiagnosticAnalyzer
     private static void Report(
         CompilationAnalysisContext context,
         IVariableSymbol variable,
-        IMethodSymbol method) =>
+        IMethodSymbol method)
+    {
+        var stateClause = IsLabel(variable)
+            ? LinterCopAnalyzers.GlobalVariableCouldBeLocalLabelStateClause
+            : LinterCopAnalyzers.GlobalVariableCouldBeLocalMutableStateClause;
+
         context.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.GlobalVariableCouldBeLocal,
             variable.GetLocation(),
+            GetTypeDisplay(variable.Type),
             variable.Name,
-            method.Name));
+            method.Name,
+            stateClause));
+    }
+
+    private static string GetTypeDisplay(ITypeSymbol type)
+    {
+        var typeKind = type.GetNavTypeKindSafe();
+
+        if (typeKind == EnumProvider.NavTypeKind.Record &&
+            type is IRecordTypeSymbol { OriginalDefinition: ITableTypeSymbol tableType })
+        {
+            return $"{typeKind} {tableType.Name.QuoteIdentifierIfNeededWithReflection()}";
+        }
+
+        return typeKind.ToString();
+    }
 
     private static bool IsSameVariable(ISymbol? symbol, IVariableSymbol candidate)
     {

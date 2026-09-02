@@ -427,7 +427,13 @@
     <value>Global variable could be local</value>
   </data>
   <data name="GlobalVariableCouldBeLocalMessageFormat" xml:space="preserve">
-    <value>Global variable '{0}' is only used in '{1}' and appears to be reinitialized before every read. Consider moving it to local scope.</value>
+    <value>Global '{0}' variable '{1}' is only used in '{2}'{3} Consider moving it to local scope.</value>
+  </data>
+  <data name="GlobalVariableCouldBeLocalMutableStateClause" xml:space="preserve">
+    <value> and appears to be reinitialized before every read.</value>
+  </data>
+  <data name="GlobalVariableCouldBeLocalLabelStateClause" xml:space="preserve">
+    <value>.</value>
   </data>
   <data name="GlobalVariableCouldBeLocalDescription" xml:space="preserve">
     <value>Reports high-confidence cases in normal codeunits where all references to a global variable are contained in one procedure or trigger and prior object state cannot influence a read. The suggested move still requires behavioral review, especially for stateful objects and reentrant execution.</value>

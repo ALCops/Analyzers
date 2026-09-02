@@ -35,7 +35,7 @@ Reports global variables in normal codeunits whose references are confined to on
 - Registers a compilation action and visits each declared application object independently.
 - Collects source global variables, resolves every identifier through the semantic model, and groups eligible variables by their single containing method or trigger.
 - Binds one operation tree per method and evaluates all candidates together with a flow-sensitive `OperationWalker`.
-- Reports at the global declaration and includes the variable and method names in the diagnostic message.
+- Reports at the global declaration and includes the AL type, variable name, and method name in the diagnostic message. Labels use wording that does not imply runtime reinitialization.
 
 ## Known issues
 

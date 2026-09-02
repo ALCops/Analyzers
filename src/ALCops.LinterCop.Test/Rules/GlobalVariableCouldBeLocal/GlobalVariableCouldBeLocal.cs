@@ -1,5 +1,6 @@
+using System.Collections.Immutable;
+using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
-using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 using RoslynTestKit;
 
 namespace ALCops.LinterCop.Test;
@@ -26,6 +27,7 @@ public class GlobalVariableCouldBeLocal : NavCodeAnalysisBase
 
     [Test]
     [TestCase("Case01UnconditionalOverwrite")]
+    [TestCase("BooleanVariable")]
     [TestCase("Case02AllBranchesInitialize")]
     [TestCase("Case03RecordGetBeforeFieldRead")]
     [TestCase("Case04ClearBeforeConditionalRecordGet")]
@@ -138,17 +140,64 @@ public class GlobalVariableCouldBeLocal : NavCodeAnalysisBase
     }
 
     [Test]
-    public void DiagnosticMessageIncludesVariableAndScopeNames()
+    [TestCase(
+        "BooleanVariable",
+        "Global 'Boolean' variable 'MyTestVariable' is only used in 'MyTestProcedure' and appears to be reinitialized before every read. Consider moving it to local scope.")]
+    [TestCase(
+        "Case05ImmutableLabel",
+        "Global 'Label' variable 'MyProcedureOnlyLabel' is only used in 'ShowCustomerName'. Consider moving it to local scope.")]
+    [TestCase(
+        "Case03RecordGetBeforeFieldRead",
+        "Global 'Record Customer' variable 'MyCustomerFromGet' is only used in 'ShowCustomerFromOriginalPost' and appears to be reinitialized before every read. Consider moving it to local scope.")]
+    public async Task DiagnosticMessageIncludesTypeAndUsesStateAppropriateWording(
+        string testCase,
+        string expectedMessage)
     {
-        var diagnostic = Diagnostic.Create(
-            DiagnosticDescriptors.GlobalVariableCouldBeLocal,
-            Location.None,
-            "MyGlobalVariable",
-            "MyDummyProcedure");
+        var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+            .ConfigureAwait(false);
+
+        var fixture = new DiagnosticMessageFixture(
+            Path.Combine(_testCasePath, $"{nameof(GlobalVariableCouldBeLocal)}.ruleset.json"));
 
         Assert.That(
-            diagnostic.GetMessage(),
-            Is.EqualTo(
-                "Global variable 'MyGlobalVariable' is only used in 'MyDummyProcedure' and appears to be reinitialized before every read. Consider moving it to local scope."));
+            fixture.GetDiagnosticMessages(code, DiagnosticIds.GlobalVariableCouldBeLocal),
+            Is.EqualTo(new[] { expectedMessage }));
+    }
+
+    private sealed class DiagnosticMessageFixture(string ruleSetPath) : AnalyzerTestFixture
+    {
+        protected override string LanguageName => LanguageNames.AL;
+        protected override string? RuleSetPath => ruleSetPath;
+
+        protected override DiagnosticAnalyzer CreateAnalyzer() =>
+            new Analyzers.GlobalVariableCouldBeLocal();
+
+        public string[] GetDiagnosticMessages(string markupCode, string diagnosticId)
+        {
+            var markup = new CodeMarkup(markupCode);
+            var document = CreateDocumentFromCode(markup.Code);
+            var compilation = document.Project
+                .GetCompilationAsync(CancellationToken.None)
+                .AsTask()
+                .GetAwaiter()
+                .GetResult();
+
+            if (compilation is null)
+            {
+                return [];
+            }
+
+            return compilation
+                .WithAnalyzers(
+                    ImmutableArray.Create(CreateAnalyzer()),
+                    cancellationToken: CancellationToken.None)
+                .GetAnalyzerDiagnosticsAsync()
+                .GetAwaiter()
+                .GetResult()
+                .Where(diagnostic => diagnostic.Id == diagnosticId)
+                .Select(diagnostic => diagnostic.GetMessage())
+                .ToArray();
+        }
     }
 }
