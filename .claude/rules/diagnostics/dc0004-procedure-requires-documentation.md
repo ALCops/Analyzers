@@ -23,7 +23,7 @@ internal interfaces route to DC0006, matching internal codeunit behavior.
 | DC0006 and DC0010 (internal targets) are disabled by default (opt-in); DC0004 and DC0009 are enabled | Internal procedures and events are not cross-extension API surface |
 | Public interface procedures raise DC0004 | Interface signatures are the cross-extension API contract |
 | Internal interface procedures raise DC0006 | Consistent with procedures in `Access = Internal` codeunits (issue #438) |
-| ControlAddIn procedures are skipped entirely | JS-implemented contract, not cross-extension AL API |
+| Public ControlAddIn procedures and events raise DC0004 | Both declarations form the public AL contract exposed by the control add-in |
 | Layered containing-object resolution | See SDK pitfall below; preserves requestpage behavior |
 | `local` procedures are skipped | Not callable outside the object |
 | Test codeunits are skipped | Test methods are not API surface |
@@ -31,12 +31,14 @@ internal interfaces route to DC0006, matching internal codeunit behavior.
 
 ## Architecture
 
-- Registers `SyntaxNodeAction` for `MethodDeclaration`.
+- Registers `SyntaxNodeAction` for `MethodDeclaration` and `EventDeclaration`; ControlAddIn events
+  use the latter SDK syntax node and bind to `IEventSymbol` rather than `IMethodSymbol`.
 - Resolves the containing object with **layered resolution**:
   1. `GetContainingApplicationObjectTypeSymbol()` (primary),
   2. fall back to `GetContainingObjectTypeSymbol()` only when the primary returns null.
-- Skips ControlAddIn containers (`SymbolKind.ControlAddIn`), test codeunits, obsolete members,
-  and methods with XML documentation leading trivia.
+- Skips test codeunits, obsolete members, and declarations with XML documentation leading trivia.
+- Reports undocumented ControlAddIn procedures and events as DC0004. The dedicated event callback
+  is restricted to ControlAddIns so AL publisher events remain routed by the method callback.
 - Routes to internal diagnostics when the procedure has the `internal` keyword or the containing
   object's `DeclaredAccessibility` is Internal; events route via
   `IsIntegrationOrBusinessEvent()` / `IsInternalEvent()`.

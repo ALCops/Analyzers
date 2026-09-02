@@ -17,11 +17,35 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
             DiagnosticDescriptors.EventRequiresDocumentation,
             DiagnosticDescriptors.InternalEventRequiresDocumentation);
 
-    public override void Initialize(AnalysisContext context) =>
+    public override void Initialize(AnalysisContext context)
+    {
         context.RegisterSyntaxNodeAction(
             AnalyzeProcedures,
             EnumProvider.SyntaxKind.MethodDeclaration
         );
+
+        context.RegisterSyntaxNodeAction(
+            AnalyzeControlAddInEvents,
+            EnumProvider.SyntaxKind.EventDeclaration
+        );
+    }
+
+    private static void AnalyzeControlAddInEvents(SyntaxNodeAnalysisContext ctx)
+    {
+        if (ctx.IsObsolete() ||
+            ctx.Node is not EventDeclarationSyntax eventDeclaration ||
+            HasXmlDocumentation(eventDeclaration) ||
+            ctx.ContainingSymbol is not IEventSymbol eventSymbol ||
+            eventSymbol.GetContainingObjectTypeSymbol()?.Kind != EnumProvider.SymbolKind.ControlAddIn)
+        {
+            return;
+        }
+
+        ctx.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticDescriptors.PublicProcedureRequiresDocumentation,
+            eventDeclaration.Name.GetLocation(),
+            GetEventDisplayText(eventSymbol)));
+    }
 
     private void AnalyzeProcedures(SyntaxNodeAnalysisContext ctx)
     {
@@ -36,9 +60,6 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
         // resolving to their report/xmlport instead of the request page (which is always Local).
         var containingObject = (ISymbol?)containingApplicationObject
             ?? ctx.ContainingSymbol.GetContainingObjectTypeSymbol();
-
-        if (containingObject?.Kind == EnumProvider.SymbolKind.ControlAddIn)
-            return;
 
         if (containingApplicationObject.IsTestCodeunit())
             return;
@@ -94,9 +115,19 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
         }
     }
 
-    private static bool HasXmlDocumentation(MethodDeclarationSyntax method)
+    private static string GetEventDisplayText(IEventSymbol eventSymbol) =>
+        $"{eventSymbol.Name.QuoteIdentifierIfNeededWithReflection()}({string.Join(", ", eventSymbol.Parameters.Select(parameter => GetTypeDisplayText(parameter.ParameterType)))})";
+
+    private static string GetTypeDisplayText(ITypeSymbol typeSymbol)
+#if NETSTANDARD2_1
+        => typeSymbol.ToDisplayStringWithReflection();
+#else
+        => typeSymbol.ToDisplayString();
+#endif
+
+    private static bool HasXmlDocumentation(SyntaxNode declaration)
     {
-        var trivia = method.GetLeadingTrivia();
+        var trivia = declaration.GetLeadingTrivia();
 
         return trivia.Any(t =>
             t.Kind == EnumProvider.SyntaxKind.SingleLineDocumentationCommentTrivia ||
