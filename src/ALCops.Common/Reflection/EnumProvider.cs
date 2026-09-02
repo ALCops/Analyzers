@@ -33,9 +33,11 @@ public static class EnumProvider
     ///
     /// This method uses reflection to parse enum values from strings, providing
     /// backward compatibility when enum definitions change between dependency versions.
-    /// A value that does not exist in the loaded SDK resolves to <paramref name="fallback"/>.
+    /// A value that does not exist in the loaded SDK resolves to <paramref name="fallback"/>. The default
+    /// fallback is only safe when <c>default(T)</c> is an inert member (e.g. <c>None</c>); nested classes
+    /// whose enum has a meaningful zero value must pass an explicit fallback (see <see cref="SymbolKind"/>).
     /// </summary>
-    private static T ParseEnum<T>(string value, T fallback) where T : struct, Enum
+    private static T ParseEnum<T>(string value, T fallback = default) where T : struct, Enum
     {
         // Each call creates a new Lazy<T>, but the actual parsing only happens once per unique value
         var lazy = new Lazy<T>(() =>
@@ -53,14 +55,6 @@ public static class EnumProvider
 
         return lazy.Value;
     }
-
-    /// <summary>
-    /// Parses <paramref name="value"/>, resolving a value missing from the loaded SDK to <c>default(T)</c>.
-    /// Only safe when <c>default(T)</c> is an inert member (e.g. <c>None</c>); nested classes whose
-    /// enum has a meaningful zero value must pass an explicit fallback (see <see cref="SymbolKind"/>).
-    /// </summary>
-    private static T ParseEnum<T>(string value) where T : struct, Enum =>
-        ParseEnum(value, default(T));
 
     /// <summary>
     /// ActionKind enum values
