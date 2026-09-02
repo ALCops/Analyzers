@@ -324,6 +324,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.EventSubscriberParameterNotReferencedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.EventSubscriberParameterNotReferenced));
 
+    public static readonly DiagnosticDescriptor GlobalVariableCouldBeLocal = new(
+        id: DiagnosticIds.GlobalVariableCouldBeLocal,
+        title: LinterCopAnalyzers.GlobalVariableCouldBeLocalTitle,
+        messageFormat: LinterCopAnalyzers.GlobalVariableCouldBeLocalMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: LinterCopAnalyzers.GlobalVariableCouldBeLocalDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.GlobalVariableCouldBeLocal));
+
     public static readonly DiagnosticDescriptor MixedExitAndNamedReturnAssignment = new(
         id: DiagnosticIds.MixedExitAndNamedReturnAssignment,
         title: LinterCopAnalyzers.MixedExitAndNamedReturnAssignmentTitle,

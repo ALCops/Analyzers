@@ -211,12 +211,15 @@ public static class EnumProvider
     {
         private static readonly Lazy<NavCodeAnalysis.CodeunitSubtypeKind> _install =
             new(() => ParseEnum<NavCodeAnalysis.CodeunitSubtypeKind>(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Install)));
+        private static readonly Lazy<NavCodeAnalysis.CodeunitSubtypeKind> _normal =
+            new(() => ParseEnum<NavCodeAnalysis.CodeunitSubtypeKind>(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Normal)));
         private static readonly Lazy<NavCodeAnalysis.CodeunitSubtypeKind> _test =
             new(() => ParseEnum<NavCodeAnalysis.CodeunitSubtypeKind>(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Test)));
         private static readonly Lazy<NavCodeAnalysis.CodeunitSubtypeKind> _upgrade =
             new(() => ParseEnum<NavCodeAnalysis.CodeunitSubtypeKind>(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Upgrade)));
 
         public static NavCodeAnalysis.CodeunitSubtypeKind Install => _install.Value;
+        public static NavCodeAnalysis.CodeunitSubtypeKind Normal => _normal.Value;
         public static NavCodeAnalysis.CodeunitSubtypeKind Test => _test.Value;
         public static NavCodeAnalysis.CodeunitSubtypeKind Upgrade => _upgrade.Value;
     }
@@ -263,6 +266,17 @@ public static class EnumProvider
         public static NavCodeAnalysis.DirectionKind Import => _import.Value;
         public static NavCodeAnalysis.DirectionKind Export => _export.Value;
         public static NavCodeAnalysis.DirectionKind Both => _both.Value;
+    }
+
+    /// <summary>
+    /// EventSubscriberInstanceKind enum values
+    /// </summary>
+    public static class EventSubscriberInstanceKind
+    {
+        private static readonly Lazy<NavCodeAnalysis.EventSubscriberInstanceKind> _manual =
+            new(() => ParseEnum<NavCodeAnalysis.EventSubscriberInstanceKind>(nameof(NavCodeAnalysis.EventSubscriberInstanceKind.Manual)));
+
+        public static NavCodeAnalysis.EventSubscriberInstanceKind Manual => _manual.Value;
     }
     /// <summary>
     /// Feature enum values
@@ -340,6 +354,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Blob)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _boolean =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Boolean)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _byte =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Byte)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _char =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Char)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _code =
@@ -354,6 +370,12 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DotNet)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dataTransfer =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DataTransfer)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _date =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Date)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dateFormula =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DateFormula)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dateTime =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DateTime)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _duration =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Duration)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _enum =
@@ -416,6 +438,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.TableFilter)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _text =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Text)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _time =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Time)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _variant =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Variant)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _xmlPort =
@@ -425,6 +449,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind BigInteger => _bigInteger.Value;
         public static NavCodeAnalysis.NavTypeKind Blob => _blob.Value;
         public static NavCodeAnalysis.NavTypeKind Boolean => _boolean.Value;
+        public static NavCodeAnalysis.NavTypeKind Byte => _byte.Value;
         public static NavCodeAnalysis.NavTypeKind Char => _char.Value;
         public static NavCodeAnalysis.NavTypeKind Code => _code.Value;
         public static NavCodeAnalysis.NavTypeKind Codeunit => _codeunit.Value;
@@ -432,6 +457,9 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind Decimal => _decimal.Value;
         public static NavCodeAnalysis.NavTypeKind DotNet => _dotNet.Value;
         public static NavCodeAnalysis.NavTypeKind DataTransfer => _dataTransfer.Value;
+        public static NavCodeAnalysis.NavTypeKind Date => _date.Value;
+        public static NavCodeAnalysis.NavTypeKind DateFormula => _dateFormula.Value;
+        public static NavCodeAnalysis.NavTypeKind DateTime => _dateTime.Value;
         public static NavCodeAnalysis.NavTypeKind Duration => _duration.Value;
         public static NavCodeAnalysis.NavTypeKind Enum => _enum.Value;
         public static NavCodeAnalysis.NavTypeKind ErrorInfo => _errorInfo.Value;
@@ -463,6 +491,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind TableExtension => _tableExtension.Value;
         public static NavCodeAnalysis.NavTypeKind TableFilter => _tableFilter.Value;
         public static NavCodeAnalysis.NavTypeKind Text => _text.Value;
+        public static NavCodeAnalysis.NavTypeKind Time => _time.Value;
         public static NavCodeAnalysis.NavTypeKind Variant => _variant.Value;
         public static NavCodeAnalysis.NavTypeKind XmlPort => _xmlPort.Value;
     }
@@ -489,6 +518,9 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.BinaryOperatorExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _compoundAssignmentStatement =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>("CompoundAssignmentStatement"));
+        // ContinueStatement was introduced after the oldest supported AL SDK.
+        private static readonly Lazy<NavCodeAnalysis.OperationKind?> _continueStatement =
+            new(() => Enum.TryParse<NavCodeAnalysis.OperationKind>("ContinueStatement", out var value) ? value : null);
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _conversionExpression =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.ConversionExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _emptyStatement =
@@ -519,6 +551,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.OperationKind AssignmentStatement => _assignmentStatement.Value;
         public static NavCodeAnalysis.OperationKind BinaryOperatorExpression => _binaryOperatorExpression.Value;
         public static NavCodeAnalysis.OperationKind CompoundAssignmentStatement => _compoundAssignmentStatement.Value;
+        public static NavCodeAnalysis.OperationKind? ContinueStatement => _continueStatement.Value;
         public static NavCodeAnalysis.OperationKind ConversionExpression => _conversionExpression.Value;
         public static NavCodeAnalysis.OperationKind EmptyStatement => _emptyStatement.Value;
         public static NavCodeAnalysis.OperationKind ExitStatement => _exitStatement.Value;
@@ -628,6 +661,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Editable)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _enabled =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Enabled)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _eventSubscriberInstance =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.EventSubscriberInstance)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _extensible =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Extensible)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _inherentPermissions =
@@ -686,6 +721,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind DrillDownPageId => _drillDownPageId.Value;
         public static NavCodeAnalysis.PropertyKind Editable => _editable.Value;
         public static NavCodeAnalysis.PropertyKind Enabled => _enabled.Value;
+        public static NavCodeAnalysis.PropertyKind EventSubscriberInstance => _eventSubscriberInstance.Value;
         public static NavCodeAnalysis.PropertyKind Extensible => _extensible.Value;
         public static NavCodeAnalysis.PropertyKind InherentPermissions => _inherentPermissions.Value;
         public static NavCodeAnalysis.PropertyKind LookupPageId => _lookupPageId.Value;
@@ -781,6 +817,20 @@ public static class EnumProvider
         public static NavCodeAnalysis.TableTypeKind CDS => _cds.Value;
         public static NavCodeAnalysis.TableTypeKind Normal => _normal.Value;
         public static NavCodeAnalysis.TableTypeKind Temporary => _temporary.Value;
+    }
+
+    /// <summary>
+    /// UnaryOperationKind enum values
+    /// </summary>
+    public static class UnaryOperationKind
+    {
+        private static readonly Lazy<NavCodeAnalysis.UnaryOperationKind> _booleanLogicalNot =
+            new(() => ParseEnum<NavCodeAnalysis.UnaryOperationKind>(nameof(NavCodeAnalysis.UnaryOperationKind.BooleanLogicalNot)));
+        private static readonly Lazy<NavCodeAnalysis.UnaryOperationKind> _operatorMethodLogicalNot =
+            new(() => ParseEnum<NavCodeAnalysis.UnaryOperationKind>(nameof(NavCodeAnalysis.UnaryOperationKind.OperatorMethodLogicalNot)));
+
+        public static NavCodeAnalysis.UnaryOperationKind BooleanLogicalNot => _booleanLogicalNot.Value;
+        public static NavCodeAnalysis.UnaryOperationKind OperatorMethodLogicalNot => _operatorMethodLogicalNot.Value;
     }
     /// <summary>
     /// XmlPortSourceTypeKind enum values
