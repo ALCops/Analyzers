@@ -31,3 +31,9 @@ Checks that user-facing symbols define a `Caption` (or `CaptionClass`/`CaptionML
 Single `RegisterSymbolAction` over Page, Query, Table, Field, Action, EnumValue, Control, PermissionSet, and AnalysisView symbol kinds. Per-symbol dispatch on symbol kind, then control kind/action kind.
 
 `IsInHeadlinePartPage` resolves the containing object via `GetContainingObjectTypeSymbol()`; for pageextensions it resolves `IApplicationObjectExtensionTypeSymbol.Target?.OriginalDefinition as IPageBaseTypeSymbol` (same pattern as `PermissionResolver`), then compares `PageType` to `EnumProvider.PageTypeKind.HeadlinePart`.
+
+## Known issues
+
+| Issue | Status |
+|---|---|
+| #365: `AD0001` (`NullReferenceException` in `IsObsolete`) on AL Language 12.x–16.x, every project | Fixed in `EnumProvider`. `SymbolKind.AnalysisView` exists only from SDK 17.0.34; older SDKs resolved it to `default(SymbolKind)` = `Module`, so the symbol action fired for the module symbol, which has no containing object. Missing `SymbolKind` members now resolve to an out-of-range sentinel that the SDK driver skips, so the unconditional `AnalysisView` registration is a no-op there. The permissionset in the report was unrelated. |

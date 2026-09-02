@@ -375,6 +375,8 @@ SymbolKind.Table
 PropertyKind.Access
 ```
 
+A member that does not exist in the loaded SDK resolves to a fallback instead of throwing (same in Debug and Release). For most enums that is `default(T)`, an inert `None`; for `SymbolKind` it is an out-of-range sentinel above the enum's maximum, because `default(SymbolKind)` is `Module` and an unresolved kind passed to `RegisterSymbolAction` would fire for the module symbol and crash `IsObsolete()` (issue #365: `CaptionRequired` registering `AnalysisView` on SDK < 17.0.34), while `Undefined` (-1) makes `AnalyzerDriverBase.MakeSymbolActionsByKind` throw. The driver skips registered kinds above `MaxSymbolKind`, so an unresolved `EnumProvider.SymbolKind.*` is safe to register — it never matches a declared symbol — and analyzers must not add `!= default` guards for `SymbolKind`. The `!= default` idiom stays correct for enums whose zero member is `None` (e.g. `OperationKind.ThisReference`).
+
 Each `EnumProvider` nested class exposes a `CanonicalNames` property (`Lazy<ImmutableDictionary<string, string>>`) mapping case-insensitive enum value names to their canonical form. These are generated from `Enum.GetNames()` at runtime, so they are self-maintaining across SDK versions.
 
 ## Semantic Model APIs

@@ -30,11 +30,12 @@ public static class EnumProvider
     /// <summary>
     /// Internal method for parsing enums with caching.
     /// DO NOT call this directly - use the nested classes instead.
-    /// 
+    ///
     /// This method uses reflection to parse enum values from strings, providing
     /// backward compatibility when enum definitions change between dependency versions.
+    /// A value that does not exist in the loaded SDK resolves to <paramref name="fallback"/>.
     /// </summary>
-    private static T ParseEnum<T>(string value) where T : struct, Enum
+    private static T ParseEnum<T>(string value, T fallback) where T : struct, Enum
     {
         // Each call creates a new Lazy<T>, but the actual parsing only happens once per unique value
         var lazy = new Lazy<T>(() =>
@@ -43,24 +44,23 @@ public static class EnumProvider
             {
                 return Enum.Parse<T>(value);
             }
-#if DEBUG
-            catch (ArgumentException ex)
-            {
-                throw new ArgumentException(
-                    $"Enum value '{value}' not found in {typeof(T).Name}. " +
-                    $"This may indicate a breaking change in dependencies.", ex);
-            }
-#else
             catch (ArgumentException)
             {
                 // Enum value doesn't exist in this version
-                return default(T);
+                return fallback;
             }
-#endif
         }, LazyThreadSafetyMode.PublicationOnly);
 
         return lazy.Value;
     }
+
+    /// <summary>
+    /// Parses <paramref name="value"/>, resolving a value missing from the loaded SDK to <c>default(T)</c>.
+    /// Only safe when <c>default(T)</c> is an inert member (e.g. <c>None</c>); nested classes whose
+    /// enum has a meaningful zero value must pass an explicit fallback (see <see cref="SymbolKind"/>).
+    /// </summary>
+    private static T ParseEnum<T>(string value) where T : struct, Enum =>
+        ParseEnum(value, default(T));
 
     /// <summary>
     /// ActionKind enum values
@@ -797,85 +797,95 @@ public static class EnumProvider
     /// </summary>
     public static class SymbolKind
     {
+        // default(SymbolKind) is Module (0): a member missing from the loaded SDK must not resolve to it,
+        // or a RegisterSymbolAction on that member fires for the module symbol (issue #365). Undefined (-1)
+        // is unusable too: AnalyzerDriverBase.MakeSymbolActionsByKind indexes a list by (int)kind and throws
+        // on a negative value. It skips any kind above the loaded enum's maximum, so an out-of-range value
+        // is the SDK-sanctioned "unknown kind": never bucketed, never matched by Kinds.Contains(symbol.Kind).
+        private const NavCodeAnalysis.SymbolKind Unresolved = (NavCodeAnalysis.SymbolKind)int.MaxValue;
+
+        private static NavCodeAnalysis.SymbolKind Parse(string name) =>
+            ParseEnum(name, Unresolved);
+
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _action =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Action)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Action)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _change =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Change)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Change)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _class =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Class)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Class)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _codeunit =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Codeunit)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Codeunit)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _control =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Control)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Control)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _controlAddIn =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.ControlAddIn)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.ControlAddIn)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _entitlement =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Entitlement)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Entitlement)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _enum =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Enum)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Enum)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _enumExtension =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.EnumExtension)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.EnumExtension)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _enumValue =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.EnumValue)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.EnumValue)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _field =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Field)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Field)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _globalVariable =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.GlobalVariable)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.GlobalVariable)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _interface =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Interface)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Interface)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _localVariable =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.LocalVariable)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.LocalVariable)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _method =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Method)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Method)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _module =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Module)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Module)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _namedType =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.NamedType)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.NamedType)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _page =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Page)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Page)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _pageExtension =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.PageExtension)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.PageExtension)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _permissionSet =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.PermissionSet)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.PermissionSet)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _permissionSetExtension =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.PermissionSetExtension)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.PermissionSetExtension)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _profile =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Profile)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Profile)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _profileExtension =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.ProfileExtension)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.ProfileExtension)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _query =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Query)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Query)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _queryDataItem =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.QueryDataItem)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.QueryDataItem)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _report =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Report)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Report)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _reportDataItem =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.ReportDataItem)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.ReportDataItem)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _reportExtension =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.ReportExtension)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.ReportExtension)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _reportLabel =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.ReportLabel)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.ReportLabel)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _requestPage =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.RequestPage)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.RequestPage)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _requestPageExtension =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.RequestPageExtension)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.RequestPageExtension)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _returnValue =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.ReturnValue)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.ReturnValue)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _table =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Table)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Table)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _tableExtension =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.TableExtension)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.TableExtension)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _undefined =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.Undefined)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.Undefined)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _xmlPort =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.XmlPort)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.XmlPort)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _xmlPortNode =
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.XmlPortNode)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.XmlPortNode)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _analysisView =
 #if NETSTANDARD2_1 || NET8_0
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>("AnalysisView"));
+            new(() => Parse("AnalysisView"));
 #else
-            new(() => ParseEnum<NavCodeAnalysis.SymbolKind>(nameof(NavCodeAnalysis.SymbolKind.AnalysisView)));
+            new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.AnalysisView)));
 #endif
 
         public static NavCodeAnalysis.SymbolKind Action => _action.Value;
