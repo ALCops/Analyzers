@@ -128,16 +128,17 @@ namespace ALCops.FormattingCop.Test
                 Is.EqualTo(expectedCount));
         }
 
-        [Test]
-        public async Task ReportsActualScopeLeavingMethodName()
+        [TestCase("FieldErrorSpacingMissing", 2)]
+        [TestCase("FieldErrorSpacingMissingInvalid", 1)]
+        public async Task ReportsCanonicalScopeLeavingMethodName(string fixtureName, int expectedCount)
         {
-            var code = await LoadFixtureAsync("FieldErrorSpacingMissing");
+            var code = await LoadFixtureAsync(fixtureName);
             var fixture = new DiagnosticCountingFixture(_ruleSetPath);
             var messages = fixture.GetDiagnosticMessages(
                 code,
                 DiagnosticIds.StatementBlocksSeparatedByBlankLine);
 
-            Assert.That(messages, Has.Length.EqualTo(2));
+            Assert.That(messages, Has.Length.EqualTo(expectedCount));
             Assert.That(messages, Is.All.Contains("FieldError()"));
         }
 

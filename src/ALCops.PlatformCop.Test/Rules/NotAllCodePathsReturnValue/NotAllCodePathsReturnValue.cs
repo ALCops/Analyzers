@@ -38,6 +38,8 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
     [TestCase("NamedIfConditionShortCircuit")]
     [TestCase("NamedWhileConditionShortCircuit")]
     [TestCase("NamedAssignedInIncompleteEnumCase")]
+    [TestCase("NamedAssignedInExtensibleEnumCase")]
+    [TestCase("NamedRepeatUntilBreakSkipsCondition")]
     [TestCase("UnnamedCaseTrueWithoutElse")]
     [TestCase("UnnamedUserDefinedFieldErrorNotTerminating")]
     public async Task HasDiagnostic(string testCase)
@@ -83,6 +85,8 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
     [TestCase("NamedInitializedByForBounds")]
     [TestCase("NamedInitializedByForEachCollection")]
     [TestCase("NamedAssignedInExhaustiveTextEncodingCase")]
+    [TestCase("NamedIfConditionParenthesizedGuaranteedLeft")]
+    [TestCase("NamedInitializedByTernaryCondition")]
     public async Task NoDiagnostic(string testCase)
     {
         SkipTestIfVersionIsTooLow(
@@ -100,6 +104,7 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
     [Test]
     [TestCase("UnnamedIfElseErrorUnboundArgumentTerminates")]
     [TestCase("UnnamedIfElseFieldErrorUnboundArgumentTerminates")]
+    [TestCase("UnnamedIfElseFieldRefFieldErrorUnboundArgumentTerminates")]
     public async Task NoDiagnosticInDocumentWithErrors(string testCase)
     {
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

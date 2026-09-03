@@ -198,8 +198,9 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        if (!FlowTerminatingBuiltIns.IsFlowTerminatingCall(invocation) ||
-            invocation.TargetMethod is not IMethodSymbol targetMethod)
+        var flowTerminatingBuiltInName = FlowTerminatingBuiltIns.GetFlowTerminatingBuiltInName(invocation);
+
+        if (flowTerminatingBuiltInName is null)
         {
             return;
         }
@@ -214,7 +215,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         var diagnostic = GetScopeLeavingSpacingDiagnostic(
             expressionStatement,
             config,
-            $"before scope-leaving statement '{targetMethod.Name}()'");
+            $"before scope-leaving statement '{flowTerminatingBuiltInName}()'");
 
         if (diagnostic is not null)
         {

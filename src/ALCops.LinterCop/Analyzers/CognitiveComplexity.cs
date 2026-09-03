@@ -67,6 +67,9 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         "ExternalBusinessEvent"
     };
 
+    private const string ErrorMethodName = "Error";
+    private const string FieldErrorMethodName = "FieldError";
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(
             DiagnosticDescriptors.CognitiveComplexityMetric,
@@ -253,21 +256,33 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         CodeBlockAnalysisContext context,
         InvocationExpressionSyntax invocation)
     {
-        if (FlowTerminatingBuiltIns.IsFlowTerminatingCall(
-            context.SemanticModel.GetOperation(invocation, context.CancellationToken)))
+        switch (invocation.Expression)
         {
-            return true;
-        }
-
-        return invocation.Expression switch
-        {
-            MemberAccessExpressionSyntax memberAccess => IsGuardCommand(memberAccess),
+            case MemberAccessExpressionSyntax memberAccess when IsGuardCommand(memberAccess):
+                return true;
 
             // if not <condition> then break/continue/quit/skip;
-            IdentifierNameSyntax identifier when identifier.GetIdentifierOrLiteralValue() is { } value
-                => guardClauseExitCommands.Contains(value),
-            _ => false
+            case IdentifierNameSyntax identifier when identifier.GetIdentifierOrLiteralValue() is { } value
+                && guardClauseExitCommands.Contains(value):
+                return true;
+        }
+
+        var methodName = invocation.Expression switch
+        {
+            IdentifierNameSyntax identifier => identifier.GetIdentifierOrLiteralValue(),
+            MemberAccessExpressionSyntax memberAccess => memberAccess.Name.GetIdentifierOrLiteralValue(),
+            _ => null
         };
+
+        if (methodName is null ||
+            (!SemanticFacts.IsSameName(methodName, ErrorMethodName) &&
+             !SemanticFacts.IsSameName(methodName, FieldErrorMethodName)))
+        {
+            return false;
+        }
+
+        return FlowTerminatingBuiltIns.IsFlowTerminatingCall(
+            context.SemanticModel.GetOperation(invocation, context.CancellationToken));
     }
 
     private static bool IsGuardCommand(MemberAccessExpressionSyntax memberAccess)

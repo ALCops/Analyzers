@@ -6,6 +6,7 @@ using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Semantics;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
 namespace ALCops.PlatformCop.Analyzers;
@@ -93,6 +94,7 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
     {
         private readonly SemanticModel _semanticModel = semanticModel;
         private readonly CancellationToken _cancellationToken = cancellationToken;
+        private readonly Stack<ImmutableHashSet<bool>> _breakStates = new();
 
         public ImmutableHashSet<bool> AnalyzeOperation(
             IOperation? operation,
@@ -145,6 +147,17 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
                             }
                         }
                     }
+
+                    return ImmutableHashSet<bool>.Empty;
+
+                case IBreakStatement:
+                    if (_breakStates.Count == 0)
+                    {
+                        return states;
+                    }
+
+                    var breakStates = _breakStates.Pop().Union(states);
+                    _breakStates.Push(breakStates);
 
                     return ImmutableHashSet<bool>.Empty;
 
@@ -231,25 +244,28 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
                     if (loopStatement.LoopKind == EnumProvider.LoopKind.Repeat)
                     {
                         // repeat-until: body runs at least once, then the condition is evaluated at least once.
-                        var repeatBodyStates = AnalyzeOperation(
+                        var repeatBodyStates = AnalyzeLoopBody(
                             loopStatement.Body,
                             states,
                             hasNamedReturn,
                             returnVariableName,
-                            out var repeatHasPathWithoutValue);
+                            out var repeatHasPathWithoutValue,
+                            out var repeatBreakStates);
 
                         hasPathWithoutValue = repeatHasPathWithoutValue;
 
                         if (repeatBodyStates.Count == 0)
                         {
-                            return repeatBodyStates;
+                            return repeatBreakStates;
                         }
 
-                        return AnalyzeCondition(
+                        var repeatConditionStates = AnalyzeCondition(
                             loopStatement.Condition,
                             repeatBodyStates,
                             hasNamedReturn,
                             returnVariableName);
+
+                        return repeatConditionStates.Union(repeatBreakStates);
                     }
 
                     // while-do: condition is evaluated at least once before the body, body may not run.
@@ -264,16 +280,17 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
                         return whileConditionStates;
                     }
 
-                    var bodyStates = AnalyzeOperation(
+                    var bodyStates = AnalyzeLoopBody(
                         loopStatement.Body,
                         whileConditionStates,
                         hasNamedReturn,
                         returnVariableName,
-                        out var loopHasPathWithoutValue);
+                        out var loopHasPathWithoutValue,
+                        out var whileBreakStates);
 
                     hasPathWithoutValue = loopHasPathWithoutValue;
 
-                    return whileConditionStates.Union(bodyStates);
+                    return whileConditionStates.Union(bodyStates).Union(whileBreakStates);
 
                 case IForLoopStatement forLoop:
                     // for i := from to to do: from and to are evaluated at least once, body may not run.
@@ -299,16 +316,17 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
                         return forRangeStates;
                     }
 
-                    var forBodyStates = AnalyzeOperation(
+                    var forBodyStates = AnalyzeLoopBody(
                         forLoop.Body,
                         forRangeStates,
                         hasNamedReturn,
                         returnVariableName,
-                        out var forHasPathWithoutValue);
+                        out var forHasPathWithoutValue,
+                        out var forBreakStates);
 
                     hasPathWithoutValue = forHasPathWithoutValue;
 
-                    return forRangeStates.Union(forBodyStates);
+                    return forRangeStates.Union(forBodyStates).Union(forBreakStates);
 
                 case IForEachLoopStatement forEachLoop:
                     // foreach x in collection: collection expression is evaluated once, body may not run.
@@ -323,16 +341,17 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
                         return forEachExprStates;
                     }
 
-                    var forEachBodyStates = AnalyzeOperation(
+                    var forEachBodyStates = AnalyzeLoopBody(
                         forEachLoop.Body,
                         forEachExprStates,
                         hasNamedReturn,
                         returnVariableName,
-                        out var forEachHasPathWithoutValue);
+                        out var forEachHasPathWithoutValue,
+                        out var forEachBreakStates);
 
                     hasPathWithoutValue = forEachHasPathWithoutValue;
 
-                    return forEachExprStates.Union(forEachBodyStates);
+                    return forEachExprStates.Union(forEachBodyStates).Union(forEachBreakStates);
 
                 case IInvocationExpression invocation:
                     return AnalyzeInvocation(invocation, states, hasNamedReturn, returnVariableName);
@@ -373,7 +392,9 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
             {
                 IEnumBaseTypeSymbol enumType => IsExhaustiveCase(
                     caseStatement,
-                    enumType.Values.Select(static enumValue => enumValue.Ordinal)),
+                    _semanticModel.Compilation
+                        .GetEnumValuesIncludingExtensionsWithReflection(enumType)
+                        .Select(static enumValue => enumValue.Ordinal)),
                 IOptionTypeSymbol optionType => IsExhaustiveCase(
                     caseStatement,
                     optionType.Values.Select(static optionValue => optionValue.Ordinal)),
@@ -384,23 +405,8 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
             };
         }
 
-        private ITypeSymbol? GetCaseSelectorType(IOperation selector)
-        {
-            if (selector.Type is not null)
-            {
-                return selector.Type;
-            }
-
-            var selectorSymbol = GetOperationSymbol(selector);
-
-            return selectorSymbol switch
-            {
-                IParameterSymbol parameter => parameter.ParameterType,
-                IVariableSymbol variable => variable.Type,
-                IReturnValueSymbol returnValue => returnValue.ReturnType,
-                _ => null
-            };
-        }
+        private ITypeSymbol? GetCaseSelectorType(IOperation selector) =>
+            selector.Type ?? GetOperationSymbol(selector)?.GetTypeSymbol();
 
         private bool IsExhaustiveCase(ICaseStatement caseStatement, IEnumerable<int> possibleOrdinals)
         {
@@ -429,7 +435,7 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
 
         private int? GetCaseLabelOrdinal(IOperation expression)
         {
-            return GetCaseLabelSymbol(expression) switch
+            return GetOperationSymbol(expression) switch
             {
                 IEnumValueSymbol enumValue => enumValue.Ordinal,
                 IOptionSymbol optionValue => optionValue.Ordinal,
@@ -437,16 +443,10 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
             };
         }
 
-        private ISymbol? GetCaseLabelSymbol(IOperation expression)
-        {
-            return GetOperationSymbol(expression);
-        }
-
         private ISymbol? GetOperationSymbol(IOperation operation)
         {
             var unwrappedOperation = operation.UnwrapConversions();
-            var operationSymbol = (unwrappedOperation as IOptionAccess)?.OptionSymbol
-                ?? unwrappedOperation.GetSymbolSafe();
+            var operationSymbol = unwrappedOperation.GetSymbolSafe();
 
             if (operationSymbol is not null)
             {
@@ -490,30 +490,33 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
                 return leftStates.Union(rightStates);
             }
 
-#if !NETSTANDARD2_1
-            if (condition is IConditionalOperatorExpression conditionalExpression)
+            var conditionalExpressionKind = EnumProvider.OperationKind.ConditionalExpression;
+            if (conditionalExpressionKind != default
+                && condition.Kind == conditionalExpressionKind
+                && condition.GetPropertyIfExists<IOperation>("Condition") is IOperation conditionalCondition
+                && condition.GetPropertyIfExists<IOperation>("WhenTrue") is IOperation whenTrue
+                && condition.GetPropertyIfExists<IOperation>("WhenFalse") is IOperation whenFalse)
             {
                 var conditionStates = AnalyzeCondition(
-                    conditionalExpression.Condition,
+                    conditionalCondition,
                     states,
                     hasNamedReturn,
                     returnVariableName);
 
                 var trueStates = AnalyzeCondition(
-                    conditionalExpression.WhenTrue,
+                    whenTrue,
                     conditionStates,
                     hasNamedReturn,
                     returnVariableName);
 
                 var falseStates = AnalyzeCondition(
-                    conditionalExpression.WhenFalse,
+                    whenFalse,
                     conditionStates,
                     hasNamedReturn,
                     returnVariableName);
 
                 return trueStates.Union(falseStates);
             }
-#endif
 
             if (condition is IUnaryOperatorExpression unaryExpression)
             {
@@ -543,6 +546,31 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
             }
 
             return states;
+        }
+
+        private ImmutableHashSet<bool> AnalyzeLoopBody(
+            IOperation loopBody,
+            ImmutableHashSet<bool> states,
+            bool hasNamedReturn,
+            string returnVariableName,
+            out bool hasPathWithoutValue,
+            out ImmutableHashSet<bool> breakStates)
+        {
+            _breakStates.Push(ImmutableHashSet<bool>.Empty);
+
+            try
+            {
+                return AnalyzeOperation(
+                    loopBody,
+                    states,
+                    hasNamedReturn,
+                    returnVariableName,
+                    out hasPathWithoutValue);
+            }
+            finally
+            {
+                breakStates = _breakStates.Pop();
+            }
         }
 
         // Skip conditions where an operand may not execute: short-circuit `and`/`or` or a

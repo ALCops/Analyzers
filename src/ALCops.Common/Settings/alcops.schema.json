@@ -119,7 +119,7 @@
           "type": "string",
           "enum": ["Off", "ExitOnly", "ErrorOnly", "ExitAndError"],
           "default": "ExitAndError",
-          "description": "Which scope-leaving statements require a blank line before them. 'Off' disables the check, 'ExitOnly' checks only 'exit', 'ErrorOnly' checks only built-in 'Error(...)', 'ExitAndError' checks both. Used by FC0007. Default: ExitAndError"
+          "description": "Which scope-leaving statements require a blank line before them. 'Off' disables the check, 'ExitOnly' checks only 'exit', 'ErrorOnly' checks built-in 'Error(...)' and 'FieldError(...)', 'ExitAndError' checks all three. Used by FC0007. Default: ExitAndError"
         },
         "ElseChainBeforeMode": {
           "type": "string",

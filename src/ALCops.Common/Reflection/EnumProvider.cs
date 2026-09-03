@@ -351,7 +351,7 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _decimal =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Decimal)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dialog =
-            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>("Dialog"));
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Dialog)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dotNet =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.DotNet)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dataTransfer =
@@ -492,6 +492,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.BinaryOperatorExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _compoundAssignmentStatement =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>("CompoundAssignmentStatement"));
+        private static readonly Lazy<NavCodeAnalysis.OperationKind> _conditionalExpression =
+            new(() => ParseEnum<NavCodeAnalysis.OperationKind>("ConditionalExpression"));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _conversionExpression =
             new(() => ParseEnum<NavCodeAnalysis.OperationKind>(nameof(NavCodeAnalysis.OperationKind.ConversionExpression)));
         private static readonly Lazy<NavCodeAnalysis.OperationKind> _emptyStatement =
@@ -522,6 +524,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.OperationKind AssignmentStatement => _assignmentStatement.Value;
         public static NavCodeAnalysis.OperationKind BinaryOperatorExpression => _binaryOperatorExpression.Value;
         public static NavCodeAnalysis.OperationKind CompoundAssignmentStatement => _compoundAssignmentStatement.Value;
+        public static NavCodeAnalysis.OperationKind ConditionalExpression => _conditionalExpression.Value;
         public static NavCodeAnalysis.OperationKind ConversionExpression => _conversionExpression.Value;
         public static NavCodeAnalysis.OperationKind EmptyStatement => _emptyStatement.Value;
         public static NavCodeAnalysis.OperationKind ExitStatement => _exitStatement.Value;

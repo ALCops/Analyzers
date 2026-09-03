@@ -16,7 +16,8 @@ public static class FlowTerminatingBuiltIns
     private const string FieldRefClassName = "FieldRef";
 
     /// <summary>
-    /// Returns whether <paramref name="operation"/> calls a built-in AL method that never returns control.
+    /// Gets the canonical name of the built-in AL method called by <paramref name="operation"/>,
+    /// when that method never returns control.
     /// </summary>
     /// <remarks>
     /// Valid calls must match the exact built-in class and method pair: <c>Dialog.Error</c>,
@@ -30,32 +31,49 @@ public static class FlowTerminatingBuiltIns
     /// <c>ErrorBehavior::Collect</c> scope. This method currently classifies them as terminating
     /// because the invocation alone does not expose the surrounding collection behavior.
     /// </remarks>
+    /// <returns>The canonical built-in method name, or <c>null</c> when the operation can return control.</returns>
+    public static string? GetFlowTerminatingBuiltInName(IOperation? operation)
+    {
+        if (operation is not IInvocationExpression { TargetMethod: IMethodSymbol method } ||
+            (!IsKnownBuiltInMethod(method) &&
+             (!operation.IsInvalid || !IsKnownInvalidBinding(method))))
+        {
+            return null;
+        }
+
+        return SemanticFacts.IsSameName(method.Name, ErrorMethodName)
+            ? ErrorMethodName
+            : FieldErrorMethodName;
+    }
+
+    /// <summary>
+    /// Returns whether <paramref name="operation"/> calls a built-in AL method that never returns control.
+    /// </summary>
     public static bool IsFlowTerminatingCall(IOperation? operation) =>
-        operation is IInvocationExpression { TargetMethod: IMethodSymbol method } &&
-        (IsKnownBuiltInMethod(method) ||
-         (operation.IsInvalid && IsKnownInvalidBinding(method)));
+        GetFlowTerminatingBuiltInName(operation) is not null;
 
     private static bool IsKnownBuiltInMethod(IMethodSymbol method) =>
         method.MethodKind == EnumProvider.MethodKind.BuiltInMethod &&
         method.ContainingSymbol is IClassTypeSymbol containingClass &&
-        (IsErrorOnDialog(method.Name, containingClass.Name) ||
-         IsFieldErrorOn(method.Name, containingClass.Name));
+        ((SemanticFacts.IsSameName(method.Name, ErrorMethodName) &&
+          SemanticFacts.IsSameName(containingClass.Name, DialogClassName)) ||
+         (SemanticFacts.IsSameName(method.Name, FieldErrorMethodName) &&
+          (SemanticFacts.IsSameName(containingClass.Name, TableClassName) ||
+           SemanticFacts.IsSameName(containingClass.Name, FieldRefClassName))));
 
-    private static bool IsKnownInvalidBinding(IMethodSymbol method) =>
-        method.ContainingSymbol is ITypeSymbol containingType &&
-        (IsSameName(method.Name, ErrorMethodName) &&
-         containingType.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Dialog ||
-         IsSameName(method.Name, FieldErrorMethodName) &&
-         (containingType.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Record ||
-          containingType.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.FieldRef));
+    private static bool IsKnownInvalidBinding(IMethodSymbol method)
+    {
+        if (method.ContainingSymbol is not ITypeSymbol containingType)
+        {
+            return false;
+        }
 
-    private static bool IsErrorOnDialog(string methodName, string className) =>
-        IsSameName(methodName, ErrorMethodName) && IsSameName(className, DialogClassName);
+        var containingTypeKind = containingType.GetNavTypeKindSafe();
 
-    private static bool IsFieldErrorOn(string methodName, string className) =>
-        IsSameName(methodName, FieldErrorMethodName) &&
-        (IsSameName(className, TableClassName) || IsSameName(className, FieldRefClassName));
-
-    private static bool IsSameName(string left, string right) =>
-        SemanticFacts.NameEqualityComparer.Equals(left, right);
+        return (SemanticFacts.IsSameName(method.Name, ErrorMethodName) &&
+                containingTypeKind == EnumProvider.NavTypeKind.Dialog) ||
+               (SemanticFacts.IsSameName(method.Name, FieldErrorMethodName) &&
+                (containingTypeKind == EnumProvider.NavTypeKind.Record ||
+                 containingTypeKind == EnumProvider.NavTypeKind.FieldRef));
+    }
 }
