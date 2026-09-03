@@ -28,8 +28,17 @@ namespace ALCops.LinterCop.Test
         [TestCase("DeleteAllWithoutParentheses")]
         [TestCase("InsertWithoutParentheses")]
         [TestCase("ModifyWithoutParentheses")]
+        [TestCase("InsertRecSelf")]
+        [TestCase("InsertBareSelf")]
+        [TestCase("InsertThisSelf")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["InsertThisSelf"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
