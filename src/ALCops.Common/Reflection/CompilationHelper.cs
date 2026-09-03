@@ -1,5 +1,5 @@
-using System.Collections.Immutable;
 using System.Collections;
+using System.Collections.Immutable;
 using System.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 
