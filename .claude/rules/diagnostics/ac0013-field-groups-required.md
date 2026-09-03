@@ -15,7 +15,7 @@ Checks that tables used by pages define both `Brick` and `DropDown` field groups
 |---|---|
 | Architecture: CompilationStart with pre-computed table set | Cross-object analysis (which tables have pages) must be done once, not per-table. |
 | Page discovery via `GetDeclaredApplicationObjectSymbols()` filtered for pages | Original syntax tree walk created 7938 semantic models (one per file). Symbol-based query is O(S) with a single call. |
-| Setup tables excluded | Tables with a single Code PK field named "Primary Key" are setup tables; field groups are not useful. |
+| Setup tables excluded | Tables with a single Code PK field named "Primary Key"/"PrimaryKey", or declaring a parameterless, return-less `GetRecordOnce` method (any accessibility, table-declared only), are setup tables; field groups are not useful. Shared heuristic: `TableHelper.IsSetupTable()`. See [#287](https://github.com/ALCops/Analyzers/issues/287). |
 | Temporary tables: conditional | Only flagged if referenced by a page (temporary tables without pages are skipped). |
 | Both field groups checked (Brick and DropDown) | Both serve different purposes; missing either is a separate diagnostic. |
 | Enabled by default: false | Opt-in rule; not all teams enforce field group conventions. |
