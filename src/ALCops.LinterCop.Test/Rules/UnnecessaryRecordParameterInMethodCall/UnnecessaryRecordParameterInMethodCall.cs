@@ -47,8 +47,15 @@ namespace ALCops.LinterCop.Test
         [TestCase("FieldAccessExpression")]
         [TestCase("PublicPageMethodWithRec")]
         [TestCase("DatabaseObjectReference")]
+        [TestCase("ExternalThisSelfMethodCall")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ExternalThisSelfMethodCall"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
