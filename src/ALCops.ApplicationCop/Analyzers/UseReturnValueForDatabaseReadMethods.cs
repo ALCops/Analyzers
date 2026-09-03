@@ -31,7 +31,7 @@ public sealed class UseReturnValueForDatabaseReadMethods : DiagnosticAnalyzer
         if (invocation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
             return;
 
-        if (invocation.Instance?.Type is not IRecordTypeSymbol)
+        if (invocation.Instance.GetReceiverTableType(ctx.ContainingSymbol, out _) is null)
             return;
 
         if (!DatabaseReadMethods.Contains(invocation.TargetMethod.Name))
