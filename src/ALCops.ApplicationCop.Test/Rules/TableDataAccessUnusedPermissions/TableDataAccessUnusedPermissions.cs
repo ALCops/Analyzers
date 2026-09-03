@@ -116,6 +116,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferLoopCarriedSetTables")]
         [TestCase("DataTransferBreakBeforeSetTables")]
         [TestCase("DataTransferLoopCarriedUnresolvableSetTables")]
+        [TestCase("RecSelfAccess")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
