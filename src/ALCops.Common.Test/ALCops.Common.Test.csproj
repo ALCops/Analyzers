@@ -49,6 +49,11 @@
             <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.CodeAnalysis.dll</HintPath>
             <Private>True</Private>
         </Reference>
+        <Reference Include="System.Collections.Immutable"
+                   Condition="Exists('$(BcDevToolsDir)/$(TargetFramework)/System.Collections.Immutable.dll')">
+            <HintPath>$(BcDevToolsDir)/$(TargetFramework)/System.Collections.Immutable.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
     </ItemGroup>
     <!-- Conventions/ is a shared source folder linked into every cop test project; Common itself ships no analyzers
          and does not reference the Workspaces assembly those tests need. -->
