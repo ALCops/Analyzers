@@ -81,7 +81,7 @@ Maps AL built-in record methods to `DatabaseOperation`:
 ## Known issues
 
 - **IntegerTable** test case is skipped (commented out)
-- **Bare implicit calls** (`Modify()` without `Rec.`) inside table objects may not be detected as invocations; use `Rec.Modify()` pattern
+- ~~**Bare implicit calls** (`Modify()` without `Rec.`) inside table objects may not be detected~~ Fixed by `GetReceiverTableType` helper (#348); all four receiver forms now resolved correctly, including bare calls in tableextensions
 - **CalcFields/CalcSums** are not yet covered (out of scope for initial implementation)
 - **CodeFix: blank line formatting** When creating a new Permissions property on an object that has no properties, no blank line is inserted between the new property and the first member (trigger/procedure)
 - **CodeFix: cross-namespace test** The single-file test framework cannot test qualified table name resolution; both objects must be in the same file

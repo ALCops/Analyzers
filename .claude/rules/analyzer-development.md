@@ -344,6 +344,15 @@ if (receiverExpression is not null && receiverExpression is not IdentifierNameSy
 
 This is the same mechanism AC0031 (`RequiredPermissionDetector.TryGetFromInvocation`) uses via `invocation.Instance.Type`. Keep the variable-map fast path first so `GetOperation` (the ~0.3ms call) only runs for the rare non-identifier receivers.
 
+#### Verified SDK facts (issue #348)
+
+These were confirmed by auditing 18 receiver-relevant analyzers across all cops:
+
+- **`Rec` vs `this` symbol binding**: `Rec` binds to a synthesized global VARIABLE symbol named `"Rec"`, while `this` binds to the record TYPE symbol named after the table (e.g. `"Sales Line"`). Name-keyed maps and symbol equality see different keys for the same instance; `GetReceiverTableType` normalizes both.
+- **Pages/reports/xmlports**: `this` on a page binds to the page object symbol, not a record. The receiver-form matrix applies only inside tables and tableextensions.
+- **Tableextensions**: `this`/`Rec`/bare all bind to the TARGET table's record. Containing-symbol fallbacks must unwrap the extension via `IApplicationObjectExtensionTypeSymbol.Target`.
+- **Canonical resolution**: `GetReceiverTableType` in `ALCops.Common/Extensions/OperationExtensions.cs` is the canonical helper for resolving `IInvocationExpression.Instance` / `IFieldAccess.Instance` (including the null-Instance bare form) to the backing `IRecordTypeSymbol`.
+
 ### Detecting `this`/self at the operation level (`OperationKind.ThisReference`)
 
 When you already hold the bound `IOperation` (e.g. `IFieldAccess.Instance` inside a `RegisterOperationAction`) rather than syntax, detect a `this`/self reference via the **`OperationKind` enum**, not the `IInstanceReferenceOperation` type:

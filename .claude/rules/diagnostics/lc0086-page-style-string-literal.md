@@ -32,6 +32,7 @@ Detects string literals that match `PageStyle` enum value names (e.g., `'Unfavor
 | Unlocked labels: skip (no diagnostic) | Unlocked labels are translatable text, not style constants |
 | StyleExpr direct: skip `StyleExpr = 'Standard'` | Already using the string in the correct property; the fix is to change the property value type, not the location |
 | Table field writes: skip `MyRecord.MyField := 'Standard'` | Writing data to a record field, not styling |
+| Receiver forms: bare/this field writes suppressed (#348) | The suppression checks `IFieldAccess.Instance` type; bare self-reference (null instance) and `this` both resolve via `GetReceiverTableType` to the record type, correctly triggering the field-write suppression |
 | Data-access args: skip arguments to Record/RecordRef/FieldRef/Query methods | Data operations, not styling |
 | Flow analysis (Option C): rejected | Tracing `StyleExpr = myVar` -> `myVar := 'Standard'` across triggers/methods has PC0030-level complexity. BC.LinterCop also doesn't do this. |
 

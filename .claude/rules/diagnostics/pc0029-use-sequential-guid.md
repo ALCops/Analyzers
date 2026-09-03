@@ -83,6 +83,10 @@ The BC SDK's `OperationWalker` does NOT preserve `IOperation` reference identity
 
 ## Known issues and workarounds
 
+### Receiver forms (#348)
+
+Bare and `this` CreateGuid flows (assignment to key field, Validate call) are correctly detected via the `IFieldAccess.Instance` / `IInvocationExpression.Instance` operation tree. The `CheckFieldInKey` and `CheckValidateTarget` paths resolve the record type through the instance operation, which handles all four receiver forms without explicit form detection.
+
 ### IConversionExpression wrapping
 
 Arguments and assignment values may be wrapped in `IConversionExpression` by the SDK. The `UnwrapConversion()` helper strips this layer before checking for `CreateGuid()` or resolving symbols.
