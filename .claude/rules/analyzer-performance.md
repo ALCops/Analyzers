@@ -35,7 +35,7 @@ ctx.RegisterCodeBlockAction(ctx =>
 });
 ```
 
-`PartialRecordOperations` (PC0030/PC0031) and `TableDataAccessUnusedPermissions` (AC0032) are the reference implementations. `RegisterOperationAction` stays right for rules that need no per-body state and whose operation kind is rare.
+`PartialRecordOperations` (PC0030/PC0031) is the reference implementation. `TableDataAccessUnusedPermissions` (AC0032) applies the same idea one level up: a `SyntaxNodeAction` per application object, a syntax pre-filter per body, and binding only for the rare receivers the variable map cannot resolve. `RegisterOperationAction` stays right for rules that need no per-body state and whose operation kind is rare.
 
 ## Pre-filter on syntax before binding
 
