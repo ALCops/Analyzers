@@ -16,7 +16,8 @@ Target frameworks, LangVersion, nullable enforcement and conditional package ref
 - `Extensions/` — Extension methods on SDK types; one static class per extended type or interface family (e.g. `OperationExtensions.GetSymbolSafe()` as the safe replacement for the SDK `GetSymbol()` bug, `IRecordTypeSymbol.IsTemporary()` / `ITableTypeSymbol.IsTemporary()` as the shared temporary-record detection).
 - `Helpers/` — Higher-level utilities that wrap SDK functionality (AppSourceCop configuration and mandatory affixes, manifest access, OData name mangling, acronym registry and identifier rendering). Note: `ManifestHelper.GetManifest` **throws `FileNotFoundException` in test contexts** because `Microsoft.Dynamics.Nav.Analyzers.Common` isn't available; analyzers must catch this and treat as null manifest. `AppSourceCopConfigurationProvider.GetMandatoryNameAffixes` / `MandatoryAffixes.GetAffixes` are NOT cached — re-read AppSourceCop.json every call, so cache per compilation at the call site.
 - `Reflection/` — Runtime access to internal/version-dependent SDK types; the most sensitive area of Common. `EnumProvider` wraps 60+ Nav.CodeAnalysis enums — never reference Nav.CodeAnalysis enum values directly, always go through `EnumProvider`.
-- `Settings/` — Per-project analyzer configuration: `ALCopsSettings` (POCO with defaults) and `ALCopsSettingsProvider` (hierarchical `alcops.json` lookup, see Settings System). Schema parity rules: `.claude/rules/settings-schema.md`.
+- `Settings/` — Per-project analyzer configuration: `ALCopsSettings` (POCO with defaults) and `ALCopsSettingsProvider` (hierarchical `alcops.json` lookup, see Settings System). Load failures are recorded in `ALCopsSettingsLoadResult` / `SettingsLoadFailure` and surfaced as CM0001. Schema parity rules: `.claude/rules/settings-schema.md`.
+- `Analyzers/` — Common's own diagnostics (`CM` prefix). Currently only `ConfigurationCouldNotBeLoaded` (CM0001); see `.claude/rules/diagnostics/cm0001-configuration-could-not-be-loaded.md`, including why hosting an analyzer in Common is loader-safe while a Common *base class* for cop analyzers is not (issue #389).
 - `Diagnostics/` — Analyzer exception harness (`XX0000`); see `.claude/rules/analyzer-exception-harness.md`.
 - `Permissions/` — Shared permission model for AC0031 (missing) and AC0032 (unused): `DatabaseOperation`, `RequiredPermissionDetector`, `PermissionResolver`, the deliberately separate `DataTransferOperations`, and `DataTransferTableResolver` (the flow-sensitive `SetTables` ↔ executor pairing both cops rely on; build it once per body and pass it in when a caller inspects several executors); plus the AZ AL Dev Tools-compatible ordering used by FC0004 and the AC0031 fix (`PermissionEntryComparer`, `NaturalStringComparer`, `PermissionRegionGroup`, see `.claude/rules/diagnostics/fc0004-permission-declaration-order.md`). Why the two method maps stay disjoint: the `DataTransferOperations.cs` XML doc; what an *unresolvable* `TryGetFromDataTransfer` obliges each cop to do: `.claude/rules/diagnostics/ac0032-table-data-access-unused-permissions.md`.
 - `Constants.cs` — `PermissionNodeXPath` (XPath for permission set XML) plus `Comment`, `Locked`, `MaxLength` label property name strings matching the SDK's `LabelPropertyHelper`.
@@ -64,13 +65,15 @@ This allows a multi-root workspace to share a single `alcops.json` at the worksp
 
 ### Public API
 
-`ALCopsSettingsProvider` exposes a single entry point: `GetSettings(IFileSystem?)`. Behavior: virtual FS check → parent traversal → assembly fallback. Results are cached in a `ConcurrentDictionary` keyed by `IFileSystem.GetDirectoryPath()`; a `MemoryFileSystem` returning `""` bypasses the cache. JSON parsing is case-insensitive and allows comments and trailing commas.
+`ALCopsSettingsProvider` exposes two entry points: `GetSettings(IFileSystem?)` (what analyzers use) and `GetLoadResult(IFileSystem?)` (settings **plus** recorded `SettingsLoadFailure`s; `GetSettings` is a thin wrapper over it, and the CM0001 analyzer is its only failure consumer). Behavior: virtual FS check → parent traversal → assembly fallback. Load results (including failures) are cached in a `ConcurrentDictionary` keyed by `IFileSystem.GetDirectoryPath()`; a `MemoryFileSystem` returning `""` bypasses the cache. JSON parsing is case-insensitive and allows comments and trailing commas.
 
 ### Error handling
 
 - Inaccessible directory during parent traversal: stops traversal (treats as boundary)
-- Unreadable/malformed `alcops.json` (invalid syntax, unknown enum values, wrong types): silently returns defaults via a `JsonException` catch in `DeserializeSettings` (see #328 for planned improvement)
+- Unreadable or malformed `alcops.json` (invalid syntax, unknown enum values, wrong types): returns defaults — that fallback contract is unchanged — and records an `Unreadable`/`Invalid` failure that `Analyzers/ConfigurationCouldNotBeLoaded` reports as CM0001 (issue #328). An unreadable app-folder file does **not** fall through to a parent-directory file.
+- Unknown top-level keys (typo'd setting names): recognized settings still apply; one `UnknownSetting` failure per key. The known-key set is reflection-derived from `ALCopsSettings` properties (case-insensitive, `$schema` allowlisted), so new settings extend it automatically.
 - `MemoryFileSystem` (in tests, `GetDirectoryPath()` returns `""`): only checks virtual FS, no parent traversal
+- Only `IFileSystem` members present at the AL 12 interface floor may be called (`Exists`, `OpenRead`, `GetDirectoryPath`, …). `GetAbsolutePath` is not among them — the netstandard2.1 binary would throw `MissingMethodException` on old compilers.
 
 Users configure settings by placing an `alcops.json` file in their AL project root or any parent directory:
 ```json
@@ -116,7 +119,7 @@ Settings are cached per directory path for the analyzer session lifetime. There 
 2. No changes needed to `ALCopsSettingsProvider.cs` for scalar / string / list / dictionary properties — JSON deserialization picks them up automatically.
 3. **For enum-typed properties**, add a converter registration to `ALCopsSettingsProvider.cs`: `JsonStringEnumConverter` in `_jsonOptions.Converters` (net8+) and `StringEnumConverter` in `_jsonSettings.Converters` (netstandard2.1). Both are case-insensitive by default. Then add a schema-parity guard test that compares `Enum.GetNames(typeof(YourEnum))` with the `enum` array in `alcops.schema.json` (see `StatementBlockSpacingSchema` in `src/ALCops.FormattingCop.Test/Rules/StatementBlocksSeparatedByBlankLine/` for a template).
 4. **For nested-class properties with a default instance** (e.g. `public MySettings MyGroup { get; set; } = new();`): JSON deserializers ignore NRT annotations and happily set the property to `null` when the JSON contains `"MyGroup": null`, which then NREs on the first consumer access — violating the "malformed alcops.json → defaults" contract (see [issue #328](https://github.com/ALCops/Analyzers/issues/328)). Keep the public property non-nullable and normalize in `ALCopsSettingsProvider.DeserializeSettings` after the deserialize call: `settings.MyGroup ??= new MySettings();`. Consumers then use the property directly without `!` or a duplicate fallback.
-   - Add a regression fixture that injects `{"MyGroup": null}` and asserts the analyzer falls back to defaults without NRE (see `StatementBlockSpacingNull` test case in `StatementBlocksSeparatedByBlankLine.cs` for a template).
+   - Add a regression fixture that injects `{"MyGroup": null}` and asserts the analyzer falls back to defaults without NRE (see `StatementBlockSpacingNull` test case in `StatementBlocksSeparatedByBlankLine.cs` for a template). An explicit `null` is normalized, not reported as CM0001.
 5. Document the new setting in the project README and update `alcops.schema.json` (`.claude/rules/settings-schema.md`).
 
 ### Changing the Public API
@@ -127,7 +130,7 @@ Common is a **private dependency**: it is compiled into every cop package and AL
 - When adding reflection for a new SDK version, keep the fallback path for older versions.
 
 ### Testing
-`src/ALCops.Common.Test` holds unit tests for pure helpers (settings provider, acronym registry, `NaturalStringComparer`); everything that needs an AL compilation is tested through the 6 cop test projects. When modifying Common:
+`src/ALCops.Common.Test` holds unit tests for pure helpers (settings provider, acronym registry, `NaturalStringComparer`) plus the CM0001 analyzer tests (a manual `Compilation.Create` + `CompilationWithAnalyzers` harness in `Analyzers/`, because RoslynTestKit's marker-based asserts cannot match `Location.None`); everything else that needs an AL compilation is tested through the 6 cop test projects. The shared `Conventions/` tests run here too now that Common ships an analyzer. When modifying Common:
 - Run the full test suite (`dotnet test` at the solution level) to verify no regressions.
 - If adding a new utility, write tests in the cop test project that will use it.
 - Pay special attention to conditional compilation paths; CI builds both `net8.0` and `netstandard2.1`.

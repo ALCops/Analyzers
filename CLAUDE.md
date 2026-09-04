@@ -1,6 +1,6 @@
 # ALCops Analyzers
 
-Six custom code analyzers for AL (Microsoft Dynamics 365 Business Central), built on the `Microsoft.Dynamics.Nav.CodeAnalysis` SDK (the "NAV SDK"). Each cop is a .NET project under `src/` with a sibling `*.Test` project; `ALCops.Common` is the shared library; `ALCops.Analyzers` is a CI-only NuGet meta-package (not in the `.sln`).
+Six custom code analyzers for AL (Microsoft Dynamics 365 Business Central), built on the `Microsoft.Dynamics.Nav.CodeAnalysis` SDK (the "NAV SDK"). Each cop is a .NET project under `src/` with a sibling `*.Test` project; `ALCops.Common` is the shared library (it also hosts the cross-cutting `CM` diagnostics); `ALCops.Analyzers` is a CI-only NuGet meta-package (not in the `.sln`).
 
 | Project | Prefix | Help URI slug | CodeFixes |
 |---|---|---|---|
@@ -10,6 +10,7 @@ Six custom code analyzers for AL (Microsoft Dynamics 365 Business Central), buil
 | `ALCops.LinterCop` | `LC` | `lintercop` | yes |
 | `ALCops.PlatformCop` | `PC` | `platformcop` | yes |
 | `ALCops.TestAutomationCop` | `TA` | `testautomationCop` (sic, matches descriptors) | no |
+| `ALCops.Common` | `CM` | `common` | no |
 
 Per cop: `DiagnosticIds.cs`, `DiagnosticDescriptors.cs`, `ALCops.{Cop}Analyzers.resx` (messages; generates a strongly-typed class at build), `Analyzers/{RuleName}.cs`, `CodeFixes/{RuleName}CodeFixProvider.cs`. Tests: `src/ALCops.{Cop}.Test/Rules/{RuleName}/{RuleName}.cs` + `HasDiagnostic/`, `NoDiagnostic/`, `HasFix/` `.al` fixtures.
 
