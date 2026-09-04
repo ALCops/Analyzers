@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/ALCops.PlatformCop/**/PlaceholderArgumentCountMismatch*"
+  - "src/ALCops.PlatformCop.Test/Rules/PlaceholderArgumentCountMismatch/**"
 ---
 
 # PC0034: PlaceholderArgumentCountMismatch
@@ -9,34 +10,26 @@ paths:
 
 Detects mismatches between placeholder count in format strings and the number of substitution arguments passed to `StrSubstNo`, `Error`, `Message`, and `Confirm`. This rule extends CodeCop AA0131 to cover its gaps.
 
+Registers `RegisterOperationAction` on `InvocationExpression`; main type `PlaceholderArgumentCountMismatch`.
+
+**References:**
+- [CodeCop AA0131](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/analyzers/codecop-aa0131)
+
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| Text variable support — Bail out (no diagnostic) | Matches AA0131 behavior, avoids false positives |
-| TextConst support — Not implemented | Legacy type, NavTypeKind.TextConst not in EnumProvider |
-| Confirm default button — args[1] is always Boolean | Substitution args start at index 2 for Confirm |
-| Duplicate placeholder counting — HashSet-based (unique) | `%1 appears %1 twice` counts as 1 placeholder |
-| Regex pattern — `[#%](\d+)` | Both `%N` and `#N` are valid AL placeholder syntax |
+| Fires only in AA0131's gaps: `StrSubstNo`/`Error`/`Message` with placeholders but zero substitution arguments, and every mismatch on `Confirm` | AA0131 exits early when `args.Length - 1 < 1` and does not cover `Confirm`; with one or more arguments AA0131 already reports, so overlapping would double-warn |
+| Bail out when the format string is a `Text` variable | Runtime-determined string; matches AA0131 and avoids false positives |
+| Duplicate placeholders count once (HashSet of unique numbers) | `%1 appears %1 twice` counts as one placeholder |
+| Both `%N` and `#N` are placeholders (`[#%](\d+)`) | Both forms are valid AL placeholder syntax |
 
-## Architecture
+## Deliberate non-reports
 
-- Registers for `OperationKind.InvocationExpression`
-- Matches built-in methods by name (case-insensitive)
-- Unwraps ConversionExpression chain to get the format string operand
-- Bails out if any unwrapped type is `NavTypeKind.Text` (runtime-determined string)
-- Extracts text from `ILabelTypeSymbol.Text` or `ConstantValue` for string literals
+- `StrSubstNo`/`Error`/`Message` calls with one or more substitution arguments: AA0131 territory.
+- Format strings held in `Text` variables.
+- `TextConst` format strings: legacy type, `NavTypeKind.TextConst` is not exposed by `EnumProvider`.
 
-## Relationship to CodeCop AA0131
+## Known issues
 
-This rule is an **extension of CodeCop AA0131** ([docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/analyzers/codecop-aa0131)).
-
-AA0131 has two gaps:
-1. **Zero-args gap**: When `args.Length - 1 < 1`, AA0131 exits early without checking placeholder count
-2. **No Confirm coverage**: AA0131 only handles `StrSubstNo`, `Error`, `Message`
-
-PC0034 fires when:
-- For StrSubstNo/Error/Message: placeholders exist but zero substitution args are passed (gap #1)
-- For Confirm: any placeholder/argument mismatch (gap #2)
-
-PC0034 intentionally avoids overlap: for StrSubstNo/Error/Message with `argumentCount >= 1`, AA0131 already handles it.
+- `TextConst` support is not implemented (see non-reports).

@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/ALCops.ApplicationCop/**/CaptionRequired*"
+  - "src/ALCops.ApplicationCop.Test/Rules/CaptionRequired/**"
 ---
 
 # AC0011: CaptionRequired
@@ -9,25 +10,27 @@ paths:
 
 Checks that user-facing symbols define a `Caption` (or `CaptionClass`/`CaptionML`) property: pages, tables, table fields, page controls, actions, enum values, permission sets, and analysis views.
 
+Registers `RegisterSymbolAction` on `Page`, `Query`, `Table`, `Field`, `Action`, `EnumValue`, `Control`, `PermissionSet` and `AnalysisView`; main type `CaptionRequired`.
+
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| Caption satisfied by `Caption`, `CaptionClass`, or `CaptionML` | Any of the three provides a user-facing caption. |
-| `ShowCaption = false` suppresses the check | Explicitly hidden captions need no value. |
-| API pages: entire page skipped (`IsInApiPage`) | API pages are not user-facing. No pageextension handling needed: API pages cannot be extended. |
-| HeadlinePart field controls skipped (`IsInHeadlinePartPage`), including via pageextension targets | The runtime ignores `Caption` on HeadlinePart field controls; only `Expression`, `Visible`, `ApplicationArea`, `Drilldown`, and `DrillDownPageID` apply ([docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-create-role-center-headline#in-development)). Page object, actions, and groups in HeadlinePart pages remain checked. See issue #293. |
-| Field controls fall back to `RelatedFieldSymbol` caption | A page field without a caption inherits the source table field's caption. |
-| Part controls fall back to `RelatedPartSymbol` caption | Same inheritance principle for page parts. |
-| Area/Grid/Repeater/UserControl/SystemPart controls skipped | No user-facing caption requirement. |
-| System tables/fields (Id >= 2000000000) skipped | System objects are Microsoft-owned. |
-| Predefined action category groups skipped | Names like `Category_Process` get captions from the platform. |
-| Promoted SplitButton groups checked only when containing repeater-scoped actionrefs | Only case where the runtime displays the group caption. |
-| Empty enum values skipped | Blank enum values conventionally have no caption. |
-| Non-assignable permission sets skipped | Not shown in the UI for assignment. |
+| `Caption`, `CaptionClass` or `CaptionML` all satisfy the check | Any of the three yields a user-facing caption. |
+| Field controls fall back to the `RelatedFieldSymbol` caption, part controls to the `RelatedPartSymbol` caption | A page field or part without its own caption inherits the source field's or part's caption at runtime. |
+| Promoted `SplitButton` groups are checked only when they contain repeater-scoped actionrefs | That is the only case in which the runtime displays the group caption. |
 
-## Architecture
+## Deliberate non-reports
 
-Single `RegisterSymbolAction` over Page, Query, Table, Field, Action, EnumValue, Control, PermissionSet, and AnalysisView symbol kinds. Per-symbol dispatch on symbol kind, then control kind/action kind.
+- `ShowCaption = false` suppresses the check: an explicitly hidden caption needs no value.
+- API pages are skipped entirely (`IsInApiPage`): they are not user-facing. No pageextension handling is needed because API pages cannot be extended.
+- Field controls in HeadlinePart pages, including those added by a pageextension targeting one, are skipped (`IsInHeadlinePartPage`): the runtime ignores `Caption` there and only honours `Expression`, `Visible`, `ApplicationArea`, `Drilldown` and `DrillDownPageID` ([docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-create-role-center-headline#in-development), [#293](https://github.com/ALCops/Analyzers/issues/293)). The page object, actions and groups of a HeadlinePart page remain checked.
+- Area, Grid, Repeater, UserControl and SystemPart controls have no user-facing caption requirement.
+- System tables and fields (Id >= 2000000000) are Microsoft-owned.
+- Predefined action category groups (`Category_Process` and friends) get their captions from the platform.
+- Empty enum values conventionally have no caption.
+- Non-assignable permission sets are never shown in the assignment UI.
 
-`IsInHeadlinePartPage` resolves the containing object via `GetContainingObjectTypeSymbol()`; for pageextensions it resolves `IApplicationObjectExtensionTypeSymbol.Target?.OriginalDefinition as IPageBaseTypeSymbol` (same pattern as `PermissionResolver`), then compares `PageType` to `EnumProvider.PageTypeKind.HeadlinePart`.
+## Test notes
+
+- Analysis-view fixtures are gated on 18.0.36 (`PageAnalysisView` requires the net10.0 SDK); the same-module page-extension fixtures are gated on 13.0.
