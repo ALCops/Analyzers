@@ -1,6 +1,6 @@
 # ALCops Analyzers
 
-Six custom code analyzers for AL (Microsoft Dynamics 365 Business Central), built on the `Microsoft.Dynamics.Nav.CodeAnalysis` SDK (the "NAV SDK"). Each cop is a .NET project under `src/` with a sibling `*.Test` project; `ALCops.Common` is the shared library; `ALCops.Analyzers` is a CI-only NuGet meta-package (not in the `.sln`).
+Six custom code analyzers for AL (Microsoft Dynamics 365 Business Central), built on the `Microsoft.Dynamics.Nav.CodeAnalysis` SDK (the "NAV SDK"). Each cop is a .NET project under `src/` with a sibling `*.Test` project; `ALCops.Common` is the shared library (it also hosts the cross-cutting `CM` diagnostics); `ALCops.Analyzers` is a CI-only NuGet meta-package (not in the `.sln`).
 
 | Project | Prefix | Help URI slug | CodeFixes |
 |---|---|---|---|
@@ -10,6 +10,7 @@ Six custom code analyzers for AL (Microsoft Dynamics 365 Business Central), buil
 | `ALCops.LinterCop` | `LC` | `lintercop` | yes |
 | `ALCops.PlatformCop` | `PC` | `platformcop` | yes |
 | `ALCops.TestAutomationCop` | `TA` | `testautomationCop` (sic, matches descriptors) | no |
+| `ALCops.Common` | `CM` | `common` | no |
 
 Per cop: `DiagnosticIds.cs`, `DiagnosticDescriptors.cs`, `ALCops.{Cop}Analyzers.resx` (messages; generates a strongly-typed class at build), `Analyzers/{RuleName}.cs`, `CodeFixes/{RuleName}CodeFixProvider.cs`. Tests: `src/ALCops.{Cop}.Test/Rules/{RuleName}/{RuleName}.cs` + `HasDiagnostic/`, `NoDiagnostic/`, `HasFix/` `.al` fixtures.
 
@@ -32,9 +33,9 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.H
 
 ## Hard constraints
 
-- **Read the decompiled NAV SDK source before using any SDK API.** Syntax kinds, operation shapes, and symbol members are undocumented and version-dependent. See `.claude/rules/analyzer-development.md` (§NAV SDK Source Reference) and `.claude/rules/sdk-analyzer-infrastructure.md`.
+- **Read the decompiled NAV SDK source before using any SDK API.** Syntax kinds, operation shapes, and symbol members are undocumented and version-dependent. See `.claude/rules/analyzer-development.md` (§NAV SDK source) and `.claude/rules/symbol-resolution.md`.
 - **Every analyzer must compile on `netstandard2.1`.** Guard newer C# features and missing SDK APIs; net8.0-only analyzers compile as empty stubs under `#if NETSTANDARD2_1`. See `.claude/rules/netstandard21-compatibility.md`.
-- **Never assume analyzer callback ordering or that every callback runs** (the host's partial-analysis module pass skips all per-declaration callbacks). No two-phase accumulator patterns. See `.claude/rules/sdk-analyzer-infrastructure.md`.
+- **Never assume analyzer callback ordering or that every callback runs** (the host's partial-analysis module pass skips all per-declaration callbacks). No two-phase accumulator patterns. See `.claude/rules/sdk-analysis-scope.md`.
 - **Analyzers extend plain `DiagnosticAnalyzer`.** Do not switch them to the `ALCopsDiagnosticAnalyzer` / `{Cop}Analyzer` exception harness: deriving from a Common-based type makes `alc` fail with `AL1003` (issue #389). The harness stays test-only until a loader-safe approach exists. See `.claude/rules/analyzer-exception-harness.md`.
 - **`ALCopsSettings.cs` and `alcops.schema.json` must stay in sync**; a parity test enforces it. See `.claude/rules/settings-schema.md`.
 - Diagnostic IDs are `{Prefix}{4 digits}`, sequential per cop. Help URI: `https://alcops.dev/docs/analyzers/{copslug}/{id}/`. Every new rule needs a page in the sibling docs repo (`../alcops.dev`, `content/docs/analyzers/{copslug}/{ID}.md`).
@@ -44,19 +45,21 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.H
 
 - `main` is protected — never commit to it. Branch from `main`: `feat/<desc>`, `fix/<desc>`, `docs/<desc>`, `chore/<desc>`; `release/vX.Y.Z` for release stabilization. Open PRs with `gh pr create`; CI runs build + tests.
 - Commit messages: conventional commits scoped by rule ID — `feat(LC0095): …`, `fix(PC0021): …`, `test(FC0002): …`, `docs: …`, `chore: …`.
+- Code comments and XML docs must be self-contained: explain the mechanism, never cite issue or PR numbers. Deep context and issue links belong in the rule's `.claude/rules/diagnostics/{id}-{slug}.md`. Docs and config describe current state only — no PR numbers anywhere.
 - Bug fixes start with a failing regression fixture (`NoDiagnostic/` for false positives, `HasDiagnostic/` for false negatives) before touching the analyzer.
 - Releases use GitVersion with alpha/beta/stable channels. See `.claude/rules/release-strategy.md`; use `/release`.
 
 ## Keeping `.claude/` in sync
 
-- New rule → create `.claude/rules/diagnostics/{id}-{slug}.md` from `.claude/skills/new-analyzer/references/rule-doc.md`. New CodeFix → add a `## CodeFix` section to that file. Changed or added design decision, non-obvious workaround, or accepted limitation → update its Design decisions / Known issues table.
+- New rule → create `.claude/rules/diagnostics/{id}-{slug}.md` from `.claude/skills/new-analyzer/references/rule-doc.md`. New CodeFix → add a `## CodeFix` section to that file. Changed or added design decision, deliberate non-report, non-obvious workaround, or accepted limitation → update the matching section. Deferred ideas go to a GitHub issue, not a Roadmap section.
 - New shared component or convention → new `.claude/rules/<area>.md` with a `paths:` frontmatter scoped as narrowly as possible. Never add a rules file without `paths:` (it would load in every session).
 - Rules files document *why*, not *what*: no diagnostic-property tables, test-case lists, or file inventories — the code is the source of truth for those.
 - Knowledge needed whenever you edit matching files lives in `.claude/rules/`; procedural templates and checklists used only while running a skill live in `.claude/skills/*/references/`. Never keep the same content in both — leave a pointer.
+- Before opening a PR that touches `.claude/`, run `pwsh .claude/scripts/Validate-Rules.ps1`: it checks frontmatter, live `paths:` globs, rule-doc sections, link targets, and stale-fact patterns in the general guides.
 - If none of this applies to a change, say "No `.claude` doc changes needed" in the plan.
 
 ## Where to look
 
-- `.claude/rules/*.md` — path-scoped guides, auto-loaded when you touch matching files: analyzer development, SDK internals, CodeFixes, testing, Common library, exception harness, record-method classification, settings schema, netstandard2.1, release strategy, BC DevTools action.
-- `.claude/rules/diagnostics/{id}-{slug}.md` — one file per rule: purpose, design decisions, architecture, known issues, CodeFix decisions.
+- `.claude/rules/*.md` — path-scoped guides, auto-loaded when you touch matching files: analyzer development (core rules), SDK analysis scope (how callbacks run), symbol resolution, record receiver forms, analyzer performance, CodeFixes, testing, Common library, exception harness, record-method classification, settings schema, netstandard2.1, code analysis, release strategy, BC DevTools action.
+- `.claude/rules/diagnostics/{id}-{slug}.md` — one file per rule: purpose, design decisions, deliberate non-reports, known issues, SDK facts, CodeFix decisions.
 - Skills: `/new-analyzer <ID> <ClassName> <Cop>`, `/new-codefix <ID>`, `/fix-false-positive <issue-or-description>`, `/release`.

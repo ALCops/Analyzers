@@ -8,6 +8,23 @@
         <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>
     </PropertyGroup>
     <ItemGroup>
+        <EmbeddedResource Update="ALCops.CommonAnalyzers.resx">
+            <LogicalName>ALCops.Common.CommonAnalyzers.resources</LogicalName>
+            <Generator>MSBuild:Compile</Generator>
+            <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+            <StronglyTypedNamespace>ALCops.Common</StronglyTypedNamespace>
+            <StronglyTypedFileName>$(IntermediateOutputPath)ALCops.CommonAnalyzers.cs</StronglyTypedFileName>
+            <StronglyTypedClassName>CommonAnalyzers</StronglyTypedClassName>
+        </EmbeddedResource>
+        <Compile Include="$(IntermediateOutputPath)ALCops.CommonAnalyzers.cs"
+                 Condition="'$(DesignTimeBuild)' == 'true' and Exists('$(IntermediateOutputPath)ALCops.CommonAnalyzers.cs')"
+                 Visible="false">
+            <AutoGen>true</AutoGen>
+            <DesignTime>true</DesignTime>
+            <DependentUpon>ALCops.CommonAnalyzers.resx</DependentUpon>
+        </Compile>
+    </ItemGroup>
+    <ItemGroup>
         <Reference Include="Microsoft.Dynamics.Nav.CodeAnalysis">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.CodeAnalysis.dll</HintPath>

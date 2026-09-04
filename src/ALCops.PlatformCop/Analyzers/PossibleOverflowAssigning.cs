@@ -268,7 +268,7 @@ public sealed class PossibleOverflowAssigning : DiagnosticAnalyzer
         if (invocation.Arguments.Length < 1)
             return;
 
-        if (invocation.Instance?.Type.GetTypeSymbol()?.OriginalDefinition is not ITableTypeSymbol table)
+        if (invocation.Instance.GetReceiverTableType(ctx.ContainingSymbol, out _) is not ITableTypeSymbol table)
             return;
 
         if (invocation.Arguments.Length < table.PrimaryKey.Fields.Length)

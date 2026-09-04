@@ -121,86 +121,20 @@ Key details:
 
 Reference implementation: `ParameterNotReferencedCodeFixProvider` in `ALCops.LinterCop`. See `.claude/rules/diagnostics/lc0095-lc0099-parameter-not-referenced.md` for its scope-split CodeActions.
 
-## Common fix patterns
+## Where to find each fix shape
 
-### Pattern 1: Property modification (add/update/remove)
+Copy the nearest existing provider rather than inventing a transformation:
 
-**Add a property** (from `EditableFlowField.cs`):
-```csharp
-// Add Editable = false to a field that has no Editable property
-newFieldNode = originalFieldNode.AddPropertyListProperties(
-    SyntaxFactory.Property(EnumProvider.PropertyKind.Editable, GetBooleanFalsePropertyValue()));
-```
+| Transformation | Reference provider |
+|---|---|
+| Add, update or remove a property in a property list | `EditableFlowField`, `AllowInCustomizationsRedundancy`, `InstallAndUpgradeCodeunitsShouldBeInternal` (insert at a position) |
+| Replace or wrap an invocation, preserving the receiver and trivia | `RecordInstanceIsolationLevel`, `UseParenthesisForFunctionCall`, `GuidEmptyStringComparison` |
+| Plain text edit (`SourceText.WithChanges`) | `CasingMismatchKeyword` (the only one; prefer syntax rewrites) |
+| Add `Locked = true` to a label | `EmptyCaptionLocked`, `LabelWithTokSuffixMustBeLocked` |
+| Remove siblings from a `SeparatedSyntaxList` with FixAll | `ParameterNotReferencedCodeFixProvider` |
+| Insert a statement before another, using the semantic model | `UsePartialRecordsOnRead` |
 
-**Update a property** (from `EditableFlowField.cs`):
-```csharp
-// Change existing Editable property value to false
-var updatedProperty = editableProperty.WithValue(GetBooleanFalsePropertyValue());
-var newProperties = propertyList.Properties.Select(prop =>
-    prop == editableProperty ? updatedProperty : prop).ToList();
-var newPropertyList = propertyList.WithProperties(SyntaxFactory.List(newProperties));
-```
-
-**Remove a property** (from `AllowInCustomizationsRedundancy.cs`):
-```csharp
-// Remove the AllowInCustomizations property entirely
-var newProperties = originalPropertyList.Properties.Remove(allowInCustomizationsProperty);
-var newPropertyList = originalPropertyList.WithProperties(newProperties);
-```
-
-**Insert at specific position** (from `InstallAndUpgradeCodeunitsShouldBeInternal.cs`):
-```csharp
-// Insert Access = Internal at the beginning of property list
-properties.Insert(0, accessProperty);
-```
-
-### Pattern 2: Expression/invocation replacement
-
-**Replace method call** (from `RecordInstanceIsolationLevel.cs`):
-```csharp
-// Replace Record.LockTable() with Record.ReadIsolation(IsolationLevel::UpdLock)
-var memberAccess = SyntaxFactory.MemberAccessExpression(expression, "ReadIsolation");
-var argument = SyntaxFactory.OptionAccessExpression(
-    SyntaxFactory.IdentifierName("IsolationLevel"),
-    SyntaxFactory.IdentifierName("UpdLock"));
-var newInvocation = SyntaxFactory.InvocationExpression(memberAccess, argumentList)
-    .WithTriviaFrom(invocation);
-```
-
-**Wrap in invocation** (from `UseParenthesisForFunctionCall.cs`):
-```csharp
-// Add parentheses: MyFunction → MyFunction()
-var newInvocation = SyntaxFactory.InvocationExpression(identifierExpression)
-    .WithTriviaFrom(node);
-```
-
-**Replace comparison** (from `GuidEmptyStringComparison.cs`):
-```csharp
-// Replace guid == '' with System.IsNullGuid(guid)
-var invocation = SyntaxFactory.InvocationExpression(
-    SyntaxFactory.MemberAccessExpression(
-        SyntaxFactory.IdentifierName("System"),
-        "IsNullGuid"),
-    argumentList);
-```
-
-### Pattern 3: Text replacement
-
-For simple textual changes (rare; only `CasingMismatchKeyword.cs`):
-```csharp
-var sourceText = await document.GetTextAsync(cancellationToken);
-var newSourceText = sourceText.WithChanges(new TextChange(span, properties.CanonicalText));
-return document.WithText(newSourceText);
-```
-
-### Pattern 4: Label property manipulation
-
-Adding `Locked = true` to label values (from `EmptyCaptionLocked.cs`, `LabelWithTokSuffixMustBeLocked.cs`):
-```csharp
-// Find the LabelPropertyValueSyntax
-// Check if it has an existing properties list
-// Add or update the Locked = true entry
-```
+Always build the replacement from the existing nodes and tokens (`WithTriviaFrom`, keep the receiver expression) and guard every navigation step: a missing optional node returns the unchanged document instead of throwing.
 
 ## Passing data from analyzer to CodeFix via diagnostic properties
 
@@ -358,16 +292,6 @@ Use `/new-codefix`.
 
 See `.claude/rules/testing.md`.
 
-## AL name comparisons in CodeFixes
+## AL name comparisons and symbol resolution in CodeFixes
 
-When comparing AL identifiers (method names, property names, object names, variable names, namespaces) in CodeFix code, use the `SemanticFacts` API family. See `.claude/rules/analyzer-development.md` for the full reference table. Quick summary:
-
-```csharp
-// Direct equality
-if (SemanticFacts.IsSameName(expression.GetNameStringValue(), "RunModal"))
-
-// Collection of AL names
-private static readonly HashSet<string> Methods = new(SemanticFacts.NameEqualityComparer) { "Get", "Set" };
-```
-
-Do NOT use `SemanticFacts` for property value text, file paths, or non-AL strings.
+Compare AL identifiers with the `SemanticFacts` family and resolve symbols through the semantic model, never through text; `Document.GetSemanticModelAsync()` is available in a fix. The reference table and the SDK pitfalls are in `.claude/rules/symbol-resolution.md`, which also loads for `CodeFixes/` files.

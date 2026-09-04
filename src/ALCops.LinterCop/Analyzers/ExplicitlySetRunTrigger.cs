@@ -36,8 +36,7 @@ public sealed class ExplicitlySetRunTrigger : DiagnosticAnalyzer
         if (targetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod || !BuiltInMethodNames.Contains(targetMethod.Name))
             return;
 
-        var navTypeKind = invocation.Instance?.GetSymbol()?.GetTypeSymbol().GetNavTypeKindSafe();
-        if (navTypeKind is null || navTypeKind != EnumProvider.NavTypeKind.Record)
+        if (invocation.Instance.GetReceiverTableType(ctx.ContainingSymbol, out _) is null)
             return;
 
         foreach (var arg in invocation.Arguments)

@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/ALCops.*/**"
+  - "src/ALCops.{ApplicationCop,DocumentationCop,FormattingCop,LinterCop,PlatformCop,TestAutomationCop,Common}/**"
 ---
 
 # netstandard2.1 Backward Compatibility
@@ -22,8 +22,7 @@ Some `Microsoft.Dynamics.Nav.CodeAnalysis` APIs only exist in newer SDK versions
 | API | Available in | netstandard2.1 workaround |
 |---|---|---|
 | `IFieldSymbol.Type` | net8.0 only | `fieldSymbol.OriginalDefinition.GetTypeSymbol()` (requires `using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols`) |
-| `ThisExpressionSyntax` (AL `this` keyword) | net8.0+ only (do not reference) | The public type, `SyntaxKind.ThisExpression`, and `IInstanceReferenceOperation` are absent from the netstandard2.1 compile floor (AL 12.0.13, predating the Fall 2024 `this` feature), so there is no type-name or `EnumProvider` workaround for the syntax type. Instead, **do not reference it at all**: resolve the receiver via the operation tree (`GetOperation(receiver)?.Type`, or `IInvocationExpression.Instance.Type`), which *is* available at the floor and binds a table's `this` to its record. This avoids the `#if` entirely and works on AL 14.0-15.2 (which run the netstandard2.1 binary). See AC0032 `TableDataAccessUnusedPermissions` and AC0031 `RequiredPermissionDetector`. |
-| `IInstanceReferenceOperation` (`this`/self when you hold the `IOperation`) | net8.0+ only (do not reference) | When you already have the bound instance operation, detect self via `instance.Kind == EnumProvider.OperationKind.ThisReference` (guarded `!= default`) instead of `instance is IInstanceReferenceOperation`. The `OperationKind` enum member is reachable through `EnumProvider` (string-literal `ParseEnum<…>("ThisReference")`) and resolves to `default` on SDKs without it, so no `#if` is needed and it works on every TFM. See PC0037 `UseValidateForFieldAssignment.IsCurrentRecordInstance` (`.claude/rules/diagnostics/pc0037-use-validate-for-field-assignment.md`) and the this/self note in `.claude/rules/analyzer-development.md`. |
+| `ThisExpressionSyntax`, `SyntaxKind.ThisExpression`, `IInstanceReferenceOperation` (AL `this`) | net8.0+ only | **Do not reference them at all** (a guard would silently drop `this` handling on the netstandard2.1 binary that serves AL 14.0 to 15.2). Resolve the receiver through the operation tree, which exists at the floor: `.claude/rules/record-receiver-forms.md`. |
 
 ### Pattern for `IFieldSymbol.Type`
 

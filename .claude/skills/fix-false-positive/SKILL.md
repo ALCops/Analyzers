@@ -16,7 +16,7 @@ Input: `$ARGUMENTS`. For an issue number/URL, `gh issue view <n> --comments` and
 2. **Root cause.** Read the analyzer and the `ALCops.Common` helpers it uses; check the decompiled SDK source when an SDK shape surprised you. Ask whether sibling rules sharing the helper have the same bug (fix or open an issue).
 3. **Minimal fix.** Prefer binder/semantic information already available over new syntax heuristics; keep the diff small; respect `netstandard2.1`. Do not widen or narrow the rule beyond the reported case unless its Design decisions require it.
 4. **Run** the rule's full test set, then the cop's test project. Report real results; explain any other breakage before touching fixtures.
-5. **Document.** Add a Design-decision row (new intentional behaviour) or a Known-issues bullet (workaround / accepted limitation) to the rule doc; update the relevant `.claude/rules/*.md` if a shared helper changed; add the cause to `references/regression-catalog.md` if it is new.
+5. **Document.** Add a Design-decision row (a new choice), a Deliberate non-reports bullet (a case the rule now intentionally skips), or a Known-issues bullet (workaround or accepted limitation) to the rule doc; update the relevant `.claude/rules/*.md` if a shared helper changed; add the cause to `references/regression-catalog.md` if it is new.
 6. Commit `fix({ID}): <what now behaves correctly>` on `fix/{id}-<slug>`; PR body contains `Fixes #n`.
 
 ## Common Mistakes

@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/ALCops.ApplicationCop/**/ToolTipPunctuation*"
+  - "src/ALCops.ApplicationCop.Test/Rules/ToolTipMustEndWithPunctuation/**"
 ---
 
 # AC0014: ToolTipMustEndWithPunctuation
@@ -9,24 +10,28 @@ paths:
 
 Checks that ToolTip text ends with an allowed punctuation character. The allowed set is configurable through `ToolTipAllowedPunctuations` in `alcops.json`.
 
+Registers `RegisterSyntaxNodeAction` on `PageField`, `PageAction`, `Field` and `PageAnalysisView`; main type `ToolTipPunctuation` (shared with the other ToolTip rules).
+
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| Rule scope: implemented in `ToolTipPunctuation` analyzer | Keeps all ToolTip punctuation and phrasing checks in one analyzer for shared extraction logic. |
-| Allowed punctuation source: `ALCopsSettingsProvider.GetSettings(compilation.FileSystem)` | Makes punctuation configurable per workspace/app using existing settings infrastructure. |
-| Default behavior: fallback to dot (`.` / `dot`) when settings are missing | Preserves backward compatibility with prior AC0014 behavior. |
-| Match logic: suffix check against raw tooltip text ending before closing quote | Works with AL syntax representation where value is read from property source text. |
-| Message parameterization: report configured punctuation names in diagnostic argument | Gives actionable guidance to users based on current configuration. |
+| Implemented inside the shared `ToolTipPunctuation` analyzer rather than its own class | One extraction of the ToolTip text serves all ToolTip punctuation and phrasing checks. |
+| Allowed punctuation comes from `ToolTipAllowedPunctuations` via `ALCopsSettingsProvider.GetSettings(compilation.FileSystem)` | Makes the set configurable per workspace/app on the existing settings infrastructure. |
+| Missing, empty or fully invalid settings fall back to the dot (`.` / `dot`) | Preserves the pre-configuration AC0014 behaviour instead of disabling the check. |
+| The message lists the configured punctuation names, not the characters | Gives guidance that matches the user's own configuration. |
 
-## Architecture
+## Deliberate non-reports
 
-1. Extract ToolTip value from property syntax.
-2. Resolve settings via file-system-based settings provider.
-3. Build allowed punctuation set from `ToolTipAllowedPunctuations` or fallback default.
-4. Return if any configured punctuation matches the tooltip ending.
-5. Report AC0014 with configured punctuation names when no match exists.
+- Obsolete symbols, and ToolTips that are not a plain label (`LabelPropertyValueSyntax`) are skipped; every other ToolTip on the registered kinds is checked, the only silence being a text that ends in one of the allowed characters.
 
-## Known issues
+## Settings
 
-- Empty or fully invalid `ToolTipAllowedPunctuations` configurations are ignored and the analyzer falls back to the default dot punctuation.
+| Setting | Default | Effect |
+|---|---|---|
+| `ToolTipAllowedPunctuations` | `[{ "Character": ".", "Name": "dot" }]` | The characters a ToolTip may end with; the `Name` values appear in the message. |
+
+## Test notes
+
+- Fixtures with custom settings (an exclamation-mark-only list, an empty list, an invalid entry) run on fixtures created with `TestHelper.CreateConfigWithSettings`.
+- ToolTips on table fields require 13.0; those fixtures are version-gated.

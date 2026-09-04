@@ -26,6 +26,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("BrickIsMissing")]
         [TestCase("DropDownIsMissing")]
         [TestCase("TemporaryTable")]
+        [TestCase("GetRecordOnceWithParameter")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -37,6 +38,8 @@ namespace ALCops.ApplicationCop.Test
         [Test]
         [TestCase("HasBrickAndDropDown")]
         [TestCase("TemporaryTable")]
+        [TestCase("SetupTableGetRecordOnce")]
+        [TestCase("SetupTablePrimaryKey")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
