@@ -45,6 +45,7 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.H
 
 - `main` is protected — never commit to it. Branch from `main`: `feat/<desc>`, `fix/<desc>`, `docs/<desc>`, `chore/<desc>`; `release/vX.Y.Z` for release stabilization. Open PRs with `gh pr create`; CI runs build + tests.
 - Commit messages: conventional commits scoped by rule ID — `feat(LC0095): …`, `fix(PC0021): …`, `test(FC0002): …`, `docs: …`, `chore: …`.
+- Code comments and XML docs must be self-contained: explain the mechanism, never cite issue or PR numbers. Deep context and issue links belong in the rule's `.claude/rules/diagnostics/{id}-{slug}.md`. Docs and config describe current state only — no PR numbers anywhere.
 - Bug fixes start with a failing regression fixture (`NoDiagnostic/` for false positives, `HasDiagnostic/` for false negatives) before touching the analyzer.
 - Releases use GitVersion with alpha/beta/stable channels. See `.claude/rules/release-strategy.md`; use `/release`.
 

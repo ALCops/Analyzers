@@ -10,7 +10,7 @@ paths:
 
 Warns when an `alcops.json` configuration file is found but cannot be fully applied: the file is unreadable, its JSON is malformed, or it contains unknown top-level settings (typo'd key names). Without it the settings provider falls back to defaults silently and users never learn why their configuration has no effect.
 
-**References:** [issue #328](https://github.com/ALCops/Analyzers/issues/328); PR #500 (remote `Extends` configuration) defers its failure diagnostics here.
+**References:** [issue #328](https://github.com/ALCops/Analyzers/issues/328); discussion #483 (remote `Extends` configuration) defers its failure diagnostics here.
 
 ## Design decisions
 
@@ -25,7 +25,7 @@ Warns when an `alcops.json` configuration file is found but cannot be fully appl
 | One diagnostic per unknown key | Each typo is independently fixable; `Unreadable`/`Invalid` are inherently single. |
 | An unreadable app-folder file does **not** fall through to parent traversal | The app-level file was intended to win; silently applying a parent file would mask the problem. (Behavior change vs. pre-CM0001.) |
 | Virtual-file source path built from `GetDirectoryPath()` + file name, not `IFileSystem.GetAbsolutePath` | `GetAbsolutePath` does not exist on `IFileSystem` at the oldest SDK the netstandard2.1 binary runs on (AL 12) — calling it would throw `MissingMethodException` there. |
-| `MessageFormat` = `The ALCops configuration '{0}' could not be fully loaded: {1}` with free-text reason | Generic enough that PR #500 can plug remote failure reasons (unreachable URL, timeout, illegal `Extends` chain) into the same descriptor via new `SettingsLoadFailureKind` members. `{1}` may contain OS-localized exception text — tests only assert substrings we control. |
+| `MessageFormat` = `The ALCops configuration '{0}' could not be fully loaded: {1}` with free-text reason | Generic enough that future failure kinds (remote `Extends`: unreachable URL, timeout, illegal chain) reuse the same descriptor via new `SettingsLoadFailureKind` members. `{1}` may contain OS-localized exception text — tests only assert substrings we control. |
 
 ## Architecture
 
@@ -44,4 +44,4 @@ Warns when an `alcops.json` configuration file is found but cannot be fully appl
 ## Roadmap
 
 - Nested unknown-key detection (`StatementBlockSpacing` sub-keys, `NamingPatterns` targets) — would need per-type key maps; currently left to the JSON schema in editors.
-- Remote `Extends` failure kinds once PR #500 lands (unavailable source, timeout, illegal chain) — extend `SettingsLoadFailureKind`, no descriptor change.
+- Remote `Extends` failure kinds (unavailable source, timeout, illegal chain; discussion #483) — extend `SettingsLoadFailureKind`, no descriptor change.
