@@ -23,8 +23,17 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("GetBySystemIdMethod")]
         [TestCase("GetMethodWithoutParentheses")]
         [TestCase("FindFirstMethodWithoutParentheses")]
+        [TestCase("GetRecSelf")]
+        [TestCase("GetBareSelf")]
+        [TestCase("GetThisSelf")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["GetThisSelf"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 

@@ -344,6 +344,16 @@ if (receiverExpression is not null && receiverExpression is not IdentifierNameSy
 
 This is the same mechanism AC0031 (`RequiredPermissionDetector.TryGetFromInvocation`) uses via `invocation.Instance.Type`. Keep the variable-map fast path first so `GetOperation` (the ~0.3ms call) only runs for the rare non-identifier receivers.
 
+#### Verified SDK facts (issue #348)
+
+These were confirmed by auditing 18 receiver-relevant analyzers across all cops:
+
+- **`Rec` vs `this` symbol binding**: `Rec` binds to a synthesized global VARIABLE symbol named `"Rec"`, while `this` binds to the record TYPE symbol named after the table (e.g. `"Sales Line"`). Name-keyed maps and symbol equality see different keys for the same instance; `GetReceiverTableType` normalizes both.
+- **Pages/reports/xmlports**: `this` on a page binds to the page object symbol, not a record. The receiver-form matrix applies only inside tables and tableextensions.
+- **Tableextensions**: `this`/`Rec`/bare all bind to the TARGET table's record. Containing-symbol fallbacks must unwrap the extension via `IApplicationObjectExtensionTypeSymbol.Target`.
+- **Canonical resolution**: `GetReceiverTableType` in `ALCops.Common/Extensions/OperationExtensions.cs` is the canonical helper for resolving `IInvocationExpression.Instance` / `IFieldAccess.Instance` (including the null-Instance bare form) to the backing `IRecordTypeSymbol`.
+- **`GetSymbolInfo` on a `this` receiver returns no symbol before AL 14.2**: `BoundThisReference` only gained its `ExpressionSymbol => Type` override in SDK 14.2.19, so on 14.0-14.1 `GetSymbolInfo(thisExpr).Symbol` is null while `GetOperation(thisExpr)?.Type` resolves the record type on all versions — so a `GetSymbolInfo`-based receiver fast path must fall back to the operation tree for non-identifier receivers (see LC0086).
+
 ### Detecting `this`/self at the operation level (`OperationKind.ThisReference`)
 
 When you already hold the bound `IOperation` (e.g. `IFieldAccess.Instance` inside a `RegisterOperationAction`) rather than syntax, detect a `this`/self reference via the **`OperationKind` enum**, not the `IInstanceReferenceOperation` type:
@@ -374,6 +384,8 @@ EnumProvider.SyntaxKind.StringLiteralValue
 SymbolKind.Table
 PropertyKind.Access
 ```
+
+A member that does not exist in the loaded SDK resolves to a fallback instead of throwing (same in Debug and Release). For most enums that is `default(T)`, an inert `None`; for `SymbolKind` it is an out-of-range sentinel above the enum's maximum, because `default(SymbolKind)` is `Module` and an unresolved kind passed to `RegisterSymbolAction` would fire for the module symbol and crash `IsObsolete()` (issue #365: `CaptionRequired` registering `AnalysisView` on SDK < 17.0.34), while `Undefined` (-1) makes `AnalyzerDriverBase.MakeSymbolActionsByKind` throw. The driver skips registered kinds above `MaxSymbolKind`, so an unresolved `EnumProvider.SymbolKind.*` is safe to register — it never matches a declared symbol — and analyzers must not add `!= default` guards for `SymbolKind`. The `!= default` idiom stays correct for enums whose zero member is `None` (e.g. `OperationKind.ThisReference`).
 
 Each `EnumProvider` nested class exposes a `CanonicalNames` property (`Lazy<ImmutableDictionary<string, string>>`) mapping case-insensitive enum value names to their canonical form. These are generated from `Enum.GetNames()` at runtime, so they are self-maintaining across SDK versions.
 

@@ -50,10 +50,14 @@ namespace ALCops.LinterCop.Test
         [TestCase("Page")]
         [TestCase("RecordMethodInvocation")]
         [TestCase("TableFieldCaptions")]
+        [TestCase("TableFieldWriteBareSelf")]
+        [TestCase("TableFieldWriteThisSelf")]
+        [TestCase("SetRangeArgumentBareSelf")]
+        [TestCase("SetRangeArgumentThisSelf")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["AssignToStyleExpr", "AssignToTableField", "AssignToTableFieldLocal", "AssignToTableFieldRec", "Enum", "Label", "LockedLabelLowercase", "LockedLabelUppercase", "Page", "RecordMethodInvocation", "TableFieldCaptions"],
+                ["AssignToStyleExpr", "AssignToTableField", "AssignToTableFieldLocal", "AssignToTableFieldRec", "Enum", "Label", "LockedLabelLowercase", "LockedLabelUppercase", "Page", "RecordMethodInvocation", "TableFieldCaptions", "TableFieldWriteBareSelf", "TableFieldWriteThisSelf", "SetRangeArgumentBareSelf", "SetRangeArgumentThisSelf"],
                 testCase,
                 "14.0",
                 "No support for PageStyle datatype in versions below 14.0."

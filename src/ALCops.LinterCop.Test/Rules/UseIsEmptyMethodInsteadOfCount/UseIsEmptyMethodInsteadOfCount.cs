@@ -27,8 +27,17 @@ namespace ALCops.LinterCop.Test
         [TestCase("RecordCountLessThanOrEqualZero")]
         [TestCase("RecordCountLessThanZero")]
         [TestCase("RecordCountNotEqualsZero")]
+        [TestCase("CountRecSelf")]
+        [TestCase("CountBareSelf")]
+        [TestCase("CountThisSelf")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["CountThisSelf"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 

@@ -60,6 +60,7 @@ PK fields; a constant-`true` third argument (`SkipFieldsNotMatchingType`) suppre
 
 - Affix fixtures (`Affix_*`) inject an `AppSourceCop.json` via `MemoryFileSystem`; this requires `Microsoft.Dynamics.Nav.Analyzers.Common.dll` as a `Private=True` reference in the test csproj (ALCops.Common references it with `Private=False`).
 
+- **Receiver forms**: bare/this TransferFields target in tableextensions resolved via `GetReceiverTableType` (#348); all four receiver forms now work correctly for target table resolution.
 - `TransferFieldsRelations.TableRelations` is a curated static list with BC version ranges
   (`MinVersion`/`MaxVersion`); relation-path coverage only applies to listed pairs.
 - No CodeFix.
