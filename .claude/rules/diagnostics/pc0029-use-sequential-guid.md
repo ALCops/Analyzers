@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/ALCops.PlatformCop/**/UseSequentialGuid*"
+  - "src/ALCops.PlatformCop.Test/Rules/UseSequentialGuid/**"
 ---
 
 # PC0029: UseSequentialGuid
@@ -8,6 +9,8 @@ paths:
 ## Purpose
 
 Detects `CreateGuid()` calls whose result flows into a Guid field that is part of a table key, and suggests using `CreateSequentialGuid()` instead. Random GUIDs cause SQL index fragmentation; sequential GUIDs reduce it by 20-40%.
+
+Registers `RegisterCodeBlockAction` on method/trigger bodies; main type `CreateGuidFlowWalker`.
 
 **References:**
 - [MS Docs: Guid.CreateSequentialGuid](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/guid/guid-createsequentialguid-method)
@@ -18,144 +21,41 @@ Detects `CreateGuid()` calls whose result flows into a Guid field that is part o
 
 | Decision | Rationale |
 |---|---|
-| Cop — PlatformCop (PC0029) | Already has Guid rules (PC0015 GuidEmptyStringComparison), platform performance focus |
-| Default scope — Key fields only | Security trade-off: sequential GUIDs are predictable; non-key fields may use random GUIDs intentionally |
-| Configurable scope — `UseSequentialGuidScope` in alcops.json | Users can opt into `AllGuidFields` mode to flag all CreateGuid() calls |
-| Keys checked — All declared keys (primary + secondary + extension keys) | All keys benefit from sequential GUIDs for SQL index performance |
-| Temporary tables — Skip | No SQL backing, no index fragmentation benefit |
-| Events — Skip | Event parameters flow to external unanalyzable code; passing Rec to events is idiomatic |
-| Obsolete — Skip | Standard ALCops convention |
-| Cross-procedure tracing — Unlimited depth, cycle detection, intra-module only | Covers helper methods like `SetPrimaryKey(CreateGuid())` |
-| Cross-module procedures — Skip if no body (DeclaringSyntaxReference is null) | Symbol-only dependencies don't expose implementation |
-| Cross-module tables — Always check key membership | Table symbols always expose field/key metadata regardless of module |
-| Variable tracking — Yes | `v := CreateGuid(); Table.PK := v;` is a common pattern |
-| Diagnostic location — At the `CreateGuid()` call site | Where the developer needs to make the change |
-| CodeFix replacement — Always produce `Guid.CreateSequentialGuid()` | `CreateSequentialGuid()` requires the `Guid.` qualifier; bare `CreateGuid()` gets prefix added, `Guid.CreateGuid()` gets method name replaced |
-| Category — Performance | SQL index fragmentation is a database performance concern |
-| Severity — Info | Performance suggestion, not a correctness issue |
-| Registration — RegisterCodeBlockAction | Single-pass analysis of method/trigger bodies |
-| Version gate — `Fall2025OrGreater` (runtime 16.0), currently commented out until SDK ships · Full netstandard2.1 support | The `Fall2025OrGreater` field doesn't exist in the current SDK's `VersionCompatibility` class; see Known issues |
+| PlatformCop | Platform performance focus; already hosts the Guid rule PC0015 |
+| Severity Info, category Performance | SQL index fragmentation is a performance suggestion, not a correctness issue |
+| Default scope: key fields only, configurable to all Guid fields | Sequential GUIDs are predictable, so non-key fields may use random GUIDs intentionally; users who want everything flagged opt in via `UseSequentialGuidScope` |
+| All declared keys count (primary, secondary, extension keys) | Every key benefits from sequential GUIDs for SQL index performance |
+| Flow analysis: local variable tracking plus cross-procedure tracing with unlimited depth and cycle detection, intra-module only | `v := CreateGuid(); Table.PK := v;` and helpers like `SetPrimaryKey(CreateGuid())` are common; cross-module procedures have no body (`DeclaringSyntaxReference` is null) while cross-module tables still expose key metadata, so key membership is always checked |
+| Single-pass walker that inspects assignments and invocations inline, instead of a collect-then-find-parents pass | The SDK `OperationWalker` does not preserve `IOperation` reference identity across walks (see SDK facts) |
+| Diagnostic at the `CreateGuid()` call site | Where the developer makes the change |
+| Version gate `Fall2025OrGreater` (runtime 16.0); full netstandard2.1 support | `CreateSequentialGuid()` ships with runtime 16.0 |
 
-## Architecture
+## Deliberate non-reports
 
-### Registration strategy
+- Fields of temporary tables: no SQL backing, so no index fragmentation.
+- `CreateGuid()` passed to event parameters: they flow to unanalyzable external code, and passing `Rec` to events is idiomatic.
+- Obsolete symbols (standard ALCops convention).
+- Flows through cross-module procedures: symbol-only dependencies expose no body.
+- In the default `KeyFieldsOnly` scope, `CreateGuid()` assigned to non-key Guid fields.
 
-Uses `RegisterCodeBlockAction` directly in `Initialize` to analyze entire method/trigger bodies in a single pass. Settings are loaded per code block from `ALCopsSettingsProvider`.
+## SDK facts
 
-### Analysis flow (KeyFieldsOnly mode, default)
+- `OperationWalker` does not preserve `IOperation` reference identity across separate walks of the same tree; `==` on logically identical nodes from different walks is false.
+- `SymbolEqualityComparer` does not exist in the BC SDK (unlike Roslyn); cycle detection uses a plain `HashSet<IMethodSymbol>`.
 
-Single-pass `CreateGuidFlowWalker` (extends `OperationWalker`) visits the operation tree:
+## Test notes
 
-1. **VisitAssignmentStatement**: If `assignment.Value` is `CreateGuid()`:
-   - If target is `IFieldAccess` -> `CheckFieldInKey()`
-   - If target is a local variable -> `TraceVariable()` to find downstream key field assignments
-
-2. **VisitInvocationExpression**: For each argument that is `CreateGuid()`:
-   - If the invocation is `Validate` and arg[1] is `CreateGuid()` -> `CheckValidateTarget()`
-   - If the invocation is a user procedure -> `TraceParameter()` with cycle detection
-
-### Analysis flow (AllGuidFields mode)
-
-Same walker reports every `CreateGuid()` call found in assignments or invocation arguments without flow analysis.
-
-### Critical SDK quirk: OperationWalker reference equality
-
-The BC SDK's `OperationWalker` does NOT preserve `IOperation` reference identity across separate walks of the same tree. A two-pass approach (collect nodes, then find parents) fails because `==` on `IOperation` returns false for logically identical nodes from different walks. The single-pass approach avoids this entirely by visiting parent structures (assignments, invocations) and checking their children inline.
-
-### Cross-procedure tracing
-
-`TraceParameter(method, paramIndex, visited)`:
-1. Check cycle detection (`visited` HashSet of `IMethodSymbol`)
-2. Get method body via `DeclaringSyntaxReference` (null for cross-module -> skip)
-3. Walk body with `SymbolFlowTracer` tracking the parameter symbol
-4. `SymbolFlowTracer` checks: direct field assignment, Validate call, nested procedure call (recursive)
-
-`TraceVariable(symbol, methodBody, ...)`:
-- Same `SymbolFlowTracer` but tracking a local variable instead of a parameter
-
-### Key field resolution
-
-`CheckFieldInKey(IFieldAccess)`:
-1. Get field symbol, verify it's Guid type
-2. Get record type from the instance, skip if Temporary
-3. Resolve to `ITableTypeSymbol`, skip if not Normal table type
-4. Iterate all keys (`.Keys` property), check if field is in any key by name comparison
-
-## Known issues and workarounds
-
-### Receiver forms (#348)
-
-Bare and `this` CreateGuid flows (assignment to key field, Validate call) are correctly detected via the `IFieldAccess.Instance` / `IInvocationExpression.Instance` operation tree. The `CheckFieldInKey` and `CheckValidateTarget` paths resolve the record type through the instance operation, which handles all four receiver forms without explicit form detection.
-
-### IConversionExpression wrapping
-
-Arguments and assignment values may be wrapped in `IConversionExpression` by the SDK. The `UnwrapConversion()` helper strips this layer before checking for `CreateGuid()` or resolving symbols.
-
-### Fall2025OrGreater version gate
-
-The `SupportedVersions` override is commented out because the `Fall2025OrGreater` field doesn't exist in the current SDK's `VersionCompatibility` class. Reflection returns a "never supported" fallback, which prevents the analyzer from running entirely. Uncomment when the SDK ships runtime 16.0.
-
-### SymbolEqualityComparer
-
-Does NOT exist in the BC SDK (unlike Roslyn). Use plain `HashSet<IMethodSymbol>()` for cycle detection.
-
-### CreateSequentialGuid in test fixtures
-
-`CreateSequentialGuid()` doesn't exist in the current test SDK, so test fixtures cannot reference it in AL code that gets compiled. The `AlreadySequentialGuid` NoDiagnostic test case was removed for this reason.
+- All fixtures require runtime 16.0 (`RequireMinimumVersion("16.0")`) because `CreateSequentialGuid()` must compile in the HasFix expected output.
 
 ## Settings
 
-```json
-{
-  "UseSequentialGuidScope": "KeyFieldsOnly"
-}
-```
-
-| Value | Behavior |
-|---|---|
-| `"KeyFieldsOnly"` (default when null/unset) | Only flag `CreateGuid()` when value flows to a key field |
-| `"AllGuidFields"` | Flag all `CreateGuid()` calls regardless of context |
-
-Setting is defined as `public string? UseSequentialGuidScope` in `ALCopsSettings.cs`.
+| Setting | Default | Effect |
+|---|---|---|
+| `UseSequentialGuidScope` | `KeyFieldsOnly` (when null/unset) | `AllGuidFields` flags every `CreateGuid()` call regardless of where the value flows |
 
 ## CodeFix: UseSequentialGuidCodeFixProvider
 
-### Purpose
-
-Provides a QuickFix "ALCops: Use CreateSequentialGuid()" that replaces `CreateGuid()` with `CreateSequentialGuid()`, preserving any `Guid.` prefix.
-
-### Design decisions
-
 | Decision | Rationale |
 |---|---|
-| Prefix handling — Always output `Guid.CreateSequentialGuid()` | `CreateSequentialGuid()` requires the `Guid.` qualifier; detect `MemberAccessExpressionSyntax` to avoid `Guid.Guid.` duplication |
-| Replacement strategy — Replace method name for `Guid.` form, wrap bare form in `MemberAccessExpression` | Handles both syntax shapes correctly |
-| FixAll — Supported via `WellKnownFixAllProviders.BatchFixer` | Standard pattern |
-
-### Architecture
-
-1. Receive diagnostic span (the `CreateGuid()` invocation)
-2. Read `HasGuidPrefix` from diagnostic properties
-3. If `Guid.` prefix: find `MemberAccessExpressionSyntax`, build new one with `CreateSequentialGuid`
-4. If no prefix: find `IdentifierNameSyntax`, replace with `CreateSequentialGuid`
-5. Return document with updated syntax root
-
-## Differences from related rules
-
-| Aspect | PC0015 GuidEmptyStringComparison | PC0029 UseSequentialGuid |
-|---|---|---|
-| Focus | Guid comparison correctness | Guid creation performance |
-| Analysis | Single expression check | Flow analysis with cross-procedure tracing |
-| Severity | Warning | Info |
-| CodeFix | Replace comparison | Replace method name |
-
-## Phase 2 roadmap (not yet implemented)
-
-- **RecordRef support**: Detect `RecordRef.SetTable()` followed by field assignment
-- **Return value tracing**: Function returns CreateGuid(), caller assigns to key field
-- **Global variable tracking**: Track global variables across methods in the same object
-- **Parameter variable tracking**: Analyze calling context for parameters
-- **Cross-module setting**: Optional mode to also flag cross-module procedure calls
-- **AlreadySequentialGuid NoDiagnostic**: Add test when SDK ships CreateSequentialGuid
-- **Suppress for security**: Attribute or comment-based suppression for intentionally random GUIDs
-- **Event parameter tracing**: Optional mode to flag event arguments (currently skipped)
+| Always produce `Guid.CreateSequentialGuid()`: bare `CreateGuid()` gets the prefix added, `Guid.CreateGuid()` gets only the method name replaced | `CreateSequentialGuid()` requires the `Guid.` qualifier; detecting the existing `MemberAccessExpressionSyntax` avoids `Guid.Guid.` |
+| FixAll via `WellKnownFixAllProviders.BatchFixer` | Standard pattern |

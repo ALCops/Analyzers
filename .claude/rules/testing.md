@@ -113,6 +113,12 @@ HasFix files use current/expected pairs:
 | `fixture.TestCodeFix(currentCode, expectedCode, diagnosticDescriptor)` | Assert single code fix transforms current into expected |
 | `fixture.TestFixAll(currentCode, expectedCode, diagnosticId, codeFixIndex, equivalenceKey)` | Assert `FixAllProvider` transforms current into expected across ALL `[|...|]` markers in one pass |
 
+## What the harness does not catch
+
+- **Analyzer exceptions.** `HasDiagnosticAtAllMarkers` and `NoDiagnosticAtAllMarkers` filter the reported diagnostics by the requested ID. An analyzer that throws produces the SDK's `AD0001` instead, which the filter discards, so `NoDiagnostic` passes and `HasDiagnostic` fails with "no diagnostic at marker" rather than with the exception. A rule that crashed on every compilation of older SDKs once stayed green in CI for months this way. When a rule behaves unexpectedly, assert the absence of exceptions with `fixture.NoException(code)`; it takes raw AL, so strip the `[|` and `|]` markers first or the parse errors trip `ThrowsWhenInputDocumentContainsError`.
+- **Empty markers.** `[||]` at the start of a file asserts nothing: `NoDiagnosticAtAllMarkers` checks only the marked span, so the analyzer may fire anywhere else and the test still passes. In a `NoDiagnostic` fixture wrap the exact span the rule would report (copy the span convention from the rule's `HasDiagnostic` fixtures), and confirm a new regression fixture fails before the analyzer change.
+- **Marker matching is `IntersectsWith`.** A marker anywhere inside the reported node satisfies the assertion, so a marker that is too wide or too narrow still passes. Keep markers on the node the analyzer targets.
+
 ## Testing Code Fixes
 
 `HasFix` / `HasFixAll` test methods and their `current.al` / `expected.al` layout: `.claude/skills/new-codefix/references/hasfix-tests.md` (used by `/new-codefix`). Key rule: `TestCodeFix` takes the `DiagnosticDescriptor` object, `TestFixAll` takes the ID string.
@@ -170,6 +176,17 @@ public async Task HasDiagnostic(string testCase)
 ### Why `#if` pragmas don't work in test projects
 
 Test projects always compile as `net10.0`, so `NETSTANDARD2_1` is never defined. The version difference is a runtime property of which SDK DLL gets loaded (CI tests against the netstandard2.1, net8.0 and net10.0 analyzer binaries), so it must be a runtime check.
+
+### Running the tests against the other SDK binaries locally
+
+`dotnet test` runs the net10.0 SDK only. To reproduce a CI failure on another analyzer binary, build the cop as CI does and point the test project at that output:
+
+```bash
+dotnet build src/ALCops.{Cop}/ALCops.{Cop}.csproj -c Release -p:ContinuousIntegrationBuild=true --no-incremental
+GITHUB_ACTIONS=true dotnet test src/ALCops.{Cop}.Test -c Release -p:NavTargetFramework=net8.0 --filter "FullyQualifiedName~{RuleName}"
+```
+
+Under `GITHUB_ACTIONS=true` the test project references the cop's `bin/Release/{tfm}` DLLs by `HintPath`. The net8.0 run works locally; the netstandard2.1 run fails locally with a `MissingMethodException` inside RoslynTestKit (the test project loads the net10.0 CodeAnalysis assembly), which is pre-existing and not a rule failure. CI test results are downloadable with `gh run download <runId>` as `test-results-<sdk>/TestResults_<sdk>.trx`; a failure reported at `Line:0 Col:0` is a diagnostic on a symbol without a source location, such as the module symbol.
 
 ## Testing Analyzers with File System Dependencies
 
@@ -289,8 +306,19 @@ Rules for .al fixtures:
 3. Keep fixtures minimal: only include code relevant to the rule being tested.
 4. Place `[|...|]` markers precisely around the syntax node the analyzer targets.
 5. Every `HasDiagnostic` fixture must have at least one marker. Every `NoDiagnostic` fixture must also have markers (on the same kind of syntax node, but in a valid scenario).
-6. Receiver-relevant rules (those that detect record method calls or field access) need the four-form fixture set: `{Scenario}NamedVariable`, `{Scenario}RecSelf`, `{Scenario}BareSelf`, `{Scenario}ThisSelf` (+ `.InTableExtension` variant where applicable). Every `this` fixture must be version-gated with `SkipTestIfVersionIsTooLow([...], testCase, "14.0", "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).")`.
+6. Receiver-relevant rules (those that detect record method calls or field access) need the four-form fixture set: `{Scenario}NamedVariable`, `{Scenario}RecSelf`, `{Scenario}BareSelf`, `{Scenario}ThisSelf` (+ `.InTableExtension` variant where applicable; background in `record-receiver-forms.md`). Every `this` fixture must be version-gated with `SkipTestIfVersionIsTooLow([...], testCase, "14.0", "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).")`.
 7. When adding or creating tests, consider both a fixture **without** namespaces and one **with** a `namespace` declaration (if applicable to the analyzed syntax) — analyzers must support both. Use a generic multi-part namespace such as `MyPublisher.MyExtension.MyAppDomain`, and where relevant include fully-qualified object references (`MyPublisher.MyExtension.MyAppDomain.MyTable`). See `Rules/CasingMismatchDeclaration/HasDiagnostic/NamespacedObjectReference.al` in FormattingCop.Test for an example.
+
+### Fixtures must compile
+
+RoslynTestKit rejects a fixture with compile errors (`RoslynTestKitException: Input document contains errors`). That error means the AL is wrong, not the analyzer; read the AL diagnostic before touching code. Frequent causes:
+
+- Permission entries need object names, never ids (`tabledata 50100 = R` is AL0653); the same object twice in one `Permissions` property is AL0393; `system` entries need real system object names (AL0443).
+- A wildcard `tabledata * = RIMD` compiles only inside a `permissionset`.
+- A `#endregion` after the property's `;` sits outside the property and is unbalanced from the analyzer's view.
+- Referenced tables, enums and codeunits must be declared in the same file.
+
+A fixture that must not compile (a rule that runs on invalid code at editor time) uses a second `AnalyzerTestFixture` created with `ThrowsWhenInputDocumentContainsError = false`; name those test methods `*InDocumentWithErrors`.
 
 Typical fixture structure:
 

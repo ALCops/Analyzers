@@ -42,7 +42,7 @@ The repo ships analyzers, so it dogfoods static analysis on itself: .NET analyze
 ## Verifying a change
 
 1. Every cop for all TFMs: `dotnet build src/ALCops.{Cop}/ALCops.{Cop}.csproj -c Release -p:ContinuousIntegrationBuild=true --no-incremental` — must show no `warning` or `error` line of any id.
-2. `dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"` — exit 0 (this is the CI gate).
+2. `dotnet format ALCops.sln --verify-no-changes --no-restore --severity warn --exclude "**/Rules/**/*.al"` — exit 0 (this is the CI gate). Read the findings, not the exit code: exit 2 with no diagnostics listed means whitespace findings (typically mixed CRLF/LF after a scripted edit; fix with `dotnet format whitespace --include <file>`), and on a clean tree the MSB3277 workspace warnings alone can produce exit 2.
 3. `dotnet test ALCops.sln` — includes the convention tests.
 
 ## Known issues / limitations

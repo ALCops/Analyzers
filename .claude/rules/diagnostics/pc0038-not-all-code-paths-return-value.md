@@ -1,6 +1,8 @@
 ---
 paths:
   - "src/ALCops.PlatformCop/**/NotAllCodePathsReturnValue*"
+  - "src/ALCops.PlatformCop.Test/Rules/NotAllCodePathsReturnValue/**"
+  - "src/ALCops.Common/FlowTerminatingBuiltIns.cs"
 ---
 
 # PC0038: NotAllCodePathsReturnValue
@@ -10,52 +12,52 @@ paths:
 Detects procedure declarations with an explicit return type where at least one reachable path does not return a value.
 The rule excludes TryFunction methods.
 
+Registers `RegisterSyntaxNodeAction` on `SyntaxKind.MethodDeclaration`; main type `NotAllCodePathsReturnValue`, with flow-terminating calls classified by `ALCops.Common.FlowTerminatingBuiltIns`.
+
+**References:** [#463](https://github.com/ALCops/Analyzers/issues/463) (`FieldError` false positive), [#468](https://github.com/ALCops/Analyzers/issues/468) (built-in name matching), [#471](https://github.com/ALCops/Analyzers/issues/471) (flow edge cases).
+
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| Scope: procedure declarations with return values | The rule intentionally excludes triggers even when they declare a return type |
-| Require explicit return syntax (`method.ReturnValue`) | Targets only methods that declare a return contract |
-| Exclude TryFunction | TryFunction has implicit platform semantics and is intentionally out of scope |
-| Flow analysis based on IOperation tree | Works consistently for nested blocks and AL control-flow constructs |
-| Named return variable counts as return value when definitely assigned on fallthrough paths | Matches AL named-return pattern without forcing exit() usage |
-| `exit` without explicit expression is treated as missing value unless named return was already assigned on that path | Prevents silent default-value returns on early exits |
-| Built-in `Error(...)` and `FieldError(...)` invocations terminate the path (return empty state set) | `FlowTerminatingBuiltIns` requires an exact clean binding to `Dialog.Error`, `Table.FieldError`, or `FieldRef.FieldError`. Incomplete calls use the corresponding Dialog, Record, or FieldRef receiver kind while editing; user-defined methods and crossed class/method pairs do not terminate a path |
-| Passing a named return to a `var` parameter or using it as an invocation receiver counts as assignment (e.g. `Rec.Get(No)`) | These operations can write the value. PC0038 intentionally stops at the call boundary and does not inspect callees to prove that a write occurs; a potential write therefore counts as assignment to avoid unbounded interprocedural analysis and noise |
-| Direct `if` conditions contribute `var` assignment side effects | Covers guard clauses such as `if not JsonObject.Get(Key, Result) then Error(...)`. For `and` and `or`, the left operand is always analyzed while right-operand states are unioned with the short-circuit path. Conditional expressions union both result branches through the cross-target operation-kind/reflection compatibility path |
-| Case selectors, loop conditions, `for` bounds, and `foreach` collection expressions contribute `var` initialization side effects | Extends the same guard-clause treatment to constructs whose expression is guaranteed to execute at least once regardless of body iteration |
-| `xor` in conditions is not treated as a branching operator | AL's `xor` always evaluates both operands, so a `var` invocation under `xor` is guaranteed to execute. Only `and`, `or`, and conditional (ternary-like) expressions are guarded against short-circuit skipping |
-| Case-else clauses are traversed through both `IBlockStatement` and `IStatementList` | The AL SDK wraps a case's else clause in `IStatementList` (`BoundStatementList`), so an additional case was added alongside the block handler |
-| Exhaustive `case` statements do not require `else` | An enum or option case is exhaustive when every ordinal available in the current compilation is handled. Enum values are obtained through the SDK's internal `CompilationUtilities.GetEnumValues` helper, which merges visible enum-extension values. System options expose their option values through the public `IContainerSymbol.GetMembers()` contract |
-| `IsNamedReturnTarget` fallback requires symbol kind `ReturnValue` | Comparing by name only would misclassify member accesses that share the return variable's name (e.g. `Buf.Result := 5;` when the record has a field named `Result`). Fix lives in `ALCops.Common/Extensions/OperationExtensions.cs` |
-| Report location is method name | User requirement |
+| Procedure declarations with explicit return syntax only; triggers are excluded even when they declare a return type | Targets methods that declare a return contract |
+| TryFunction methods excluded | TryFunction has implicit platform semantics |
+| Path-state analysis over the `IOperation` tree | Works consistently for nested blocks and AL control-flow constructs |
+| A named return variable counts as returned when definitely assigned on every fallthrough path | Matches the AL named-return pattern without forcing `exit()` |
+| Bare `exit` is a missing value unless the named return was already assigned on that path; `exit(<value>)`, bare `exit` and assigned fallthrough stay distinct | Prevents silent default-value returns on early exits |
+| Only `Dialog.Error`, `Table.FieldError` and `FieldRef.FieldError` terminate a path, matched on the exact built-in class and method through the shared `FlowTerminatingBuiltIns` classifier; the former `ThrowError` special case is gone | Guard clauses like `if Cond then exit(x) else Error('...')` are pervasive; matching `MethodKind.BuiltInMethod` plus a name would also accept a future unrelated built-in or a crossed pair, and `ThrowError` is not an AL built-in |
+| Incomplete (invalid) calls terminate only when the binder's synthesized receiver is the matching `Dialog`, `Record` or `FieldRef` type | Stops the diagnostic from flickering while an argument is being typed, without treating user-defined `Error`/`FieldError` procedures as terminators |
+| Passing the named return to a `var` parameter or using it as an invocation receiver (`Rec.Get(No)`) counts as assignment | These calls can write the value; the rule stops at the call boundary rather than proving the write interprocedurally, trading a possible false negative for bounded analysis and no noise |
+| `if` conditions, `case` selectors, `while` and `repeat until` conditions, `for` bounds and `foreach` collection expressions contribute the `var` side effects of the invocations they contain | Those expressions execute at least once regardless of the body, so `if not JsonObject.Get(Key, Result) then Error(...)` initializes `Result` |
+| Under `and`/`or` only the left operand is guaranteed; right-operand states are unioned with the short-circuit path, and conditional expressions union both branches. `xor` is not treated as branching | AL short-circuits `and`/`or` and evaluates only one branch of a conditional expression, while `xor` always evaluates both operands |
+| A `case` over an enum or option without `else` is exhaustive when every value visible in the current compilation is covered | Matches how the compiler sees the enum, including enum-extension values; a missing `else` on an exhaustive `case` is not a missing return |
+| Named-return target matching falls back to symbol kind `ReturnValue`, never to name alone | Name comparison misclassified member accesses sharing the return variable's name (`Buf.Result := 5;` with a field named `Result`) |
+| Loops conservatively include the non-executed path for optional loops; `break` is a loop exit, not body fallthrough | A loop body that may not run cannot guarantee a return, and a `repeat until` left through `break` never evaluates its condition |
+| Reported at the method name | User requirement |
 
-## Architecture
+## Deliberate non-reports
 
-- Registers `SyntaxNodeAction` on `SyntaxKind.MethodDeclaration`.
-- Resolves `IMethodSymbol` and validates:
-  - explicit return syntax is present,
-  - procedure is not a TryFunction method (via `MethodDeclarationSyntaxExtensions.IsTryFunction` in `ALCops.Common`),
-  - body exists.
-- Formats the diagnostic subject through `MethodSymbolInterfaceExtensions.GetDiagnosticDisplayText(...)` in `ALCops.Common` using the object name, procedure name, and parameter type list.
-- Obtains operation tree via `SemanticModel.GetOperation(method.Body)`.
-- Runs path-state analysis with state set `{assignedNamedReturn: true|false}`.
-  - Assignment to named return target marks state as `true` (via `OperationSafeExtensions.IsNamedReturnTarget` in `ALCops.Common`).
-  - `exit(<expr>)` terminates path with value.
-  - `exit` without expression terminates path and marks missing-value path if required.
-  - `if` condition invocations update state before branch analysis unless the condition contains `and`, `or`, or a conditional expression.
-  - `case` selector invocations update state before branch analysis under the same guard.
-  - `while` conditions run before the body; `repeat until` conditions run after the body. `for` bounds (initial + end) and `foreach` collection expressions run before the body. All contribute state under the same guard.
-  - Branches (`if`, `case`) union successor states.
-  - Loops conservatively include non-executed path for optional loops.
-- Reports diagnostic when at least one reachable path can end without value.
-
-## Test notes
-
-- The test suite contains a hard-coded `AnalyzeTriggers = false` toggle so the existing trigger fixtures remain reusable while triggers stay intentionally excluded from the analyzer.
+- Triggers, even with a return type.
+- TryFunction methods.
+- Paths ending in a clean `Dialog.Error`, `Table.FieldError` or `FieldRef.FieldError` call, or in an incomplete call whose receiver binds to one of those types.
+- Named returns passed by `var` or used as a receiver: assumed assigned, even when the callee never writes.
+- `case` statements without `else` that cover every enum or option value visible in the compilation.
 
 ## Known issues
 
-- `Error(ErrorInfo)` is treated as terminating even when `ErrorInfo.Collectible = true` and the call occurs in an `ErrorBehavior::Collect` scope, where execution can continue. Correctly distinguishing that case requires data-flow and enclosing-call analysis beyond the invocation classifier.
-- `LoopKind.Repeat` handling depends on SDK loop metadata availability across versions; behavior is conservative for optional-loop execution.
-- `case` line body extraction uses reflective fallback to remain compatible across SDK versions.
+- `Error(ErrorInfo)` is treated as terminating even when `ErrorInfo.Collectible = true` inside an `ErrorBehavior::Collect` scope, where execution continues. Telling the two apart needs data flow on the `ErrorInfo` value and the enclosing call context, which the invocation-level classifier does not have.
+- `LoopKind.Repeat` handling depends on SDK loop metadata availability across versions; behaviour is conservative for optional-loop execution.
+- `case` line body extraction uses a reflective fallback to remain compatible across SDK versions.
+
+## SDK facts
+
+- The AL SDK wraps a case's else clause in `IStatementList` (`BoundStatementList`), not `IBlockStatement`, so both shapes must be traversed.
+- `CompilationUtilities.GetEnumValues` (internal) is the only complete source of enum values: the public enum value lists omit values added by enum extensions. System options expose their values through the public `IContainerSymbol.GetMembers()`.
+- The operation interfaces for conditional expressions differ per target framework, so the analyzer switches on `OperationKind` and reads the operands reflectively instead of naming the interface.
+- Parenthesized expressions wrap their operand in a separate operation and must be unwrapped before the short-circuit rules apply.
+- Bad-call and built-in identity facts (single-candidate bad calls keep the real symbol, built-in classes `Table`/`FieldRef` have `NavTypeKind.None`, bare `Error` is a static built-in on `Dialog`) are in `.claude/rules/symbol-resolution.md`.
+
+## Test notes
+
+- Fixtures are gated with `SkipTestIfVersionIsTooLow`: an enum extension declared in the same module needs runtime `13.0`; the ternary conditional expression and `this` need `14.0`.
+- Incomplete `Error`/`FieldError` calls are tested with a second fixture created with `ThrowsWhenInputDocumentContainsError = false`; those test methods are named `*InDocumentWithErrors`.
