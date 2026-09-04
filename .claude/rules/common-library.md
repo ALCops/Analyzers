@@ -85,7 +85,7 @@ Users configure settings by placing an `alcops.json` file in their AL project ro
 }
 ```
 
-Settings are cached per directory path for the analyzer session lifetime. There is no public cache-invalidation API; tests inject an isolated `IFileSystem` (typically `MemoryFileSystem` or a purpose-built `RelativeFileSystem`) to avoid contaminating the cache.
+Settings are cached per directory path for the analyzer session lifetime. There is no public cache-invalidation API, so an edited `alcops.json` takes effect only after the language server restarts; tests inject an isolated `IFileSystem` (typically `MemoryFileSystem` or a purpose-built `RelativeFileSystem`) to avoid contaminating the cache.
 
 ## Coding Standards
 
