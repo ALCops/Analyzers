@@ -145,7 +145,7 @@ VariableState (per-variable, method-level accumulated):
 
 The SDK's `OperationExtensions.GetSymbol()` throws `InvalidCastException` when the operation instance is a `BoundObjectAccess` (or `BoundApplicationObjectAccess`). These internal SDK types report `Kind = FieldAccess` but don't implement `IFieldAccess`, so the SDK's internal cast fails.
 
-The analyzer uses `GetSymbolSafe()` from `ALCops.Common.Extensions.OperationSafeExtensions` on all `GetSymbol()` call sites. This method handles the bug without exception handling: it checks `is IApplicationObjectAccess` (public SDK interface) first, then guards any remaining `FieldAccess`-kind operations that don't implement `IFieldAccess` by returning null. See the "SDK GetSymbol() Bug" section in `.claude/rules/analyzer-development.md`.
+The analyzer uses `GetSymbolSafe()` from `ALCops.Common.Extensions.OperationSafeExtensions` on all `GetSymbol()` call sites. This method handles the bug without exception handling: it checks `is IApplicationObjectAccess` (public SDK interface) first, then guards any remaining `FieldAccess`-kind operations that don't implement `IFieldAccess` by returning null. See `.claude/rules/symbol-resolution.md`.
 
 This is an SDK bug. If a future SDK version fixes it, the type checks become harmless no-ops.
 

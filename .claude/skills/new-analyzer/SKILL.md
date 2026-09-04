@@ -10,7 +10,7 @@ argument-hint: <ID> <RuleName> <Cop>   e.g. LC0100 AvoidFooBar LinterCop
 
 Arguments: `$ARGUMENTS` → `{ID}`, `{RuleName}` (PascalCase; also the class, descriptor, `DiagnosticIds` field and test-folder name), `{Cop}` (`ApplicationCop` | `DocumentationCop` | `FormattingCop` | `LinterCop` | `PlatformCop` | `TestAutomationCop`).
 
-Knowledge you need loads automatically when you open files under `Analyzers/` and `*.Test/`: `.claude/rules/analyzer-development.md`, `sdk-analyzer-infrastructure.md`, `netstandard21-compatibility.md`, `testing.md`.
+Knowledge you need loads automatically when you open files under `Analyzers/` and `*.Test/`: `.claude/rules/analyzer-development.md`, `sdk-analysis-scope.md`, `symbol-resolution.md`, `record-receiver-forms.md`, `analyzer-performance.md`, `netstandard21-compatibility.md`, `testing.md`.
 
 ## Confirm rule parameters (hard gate)
 
@@ -31,8 +31,8 @@ Knowledge you need loads automatically when you open files under `Analyzers/` an
 ## Steps
 
 1. **Study the SDK first (mandatory).** Locate the syntax kinds, operation kinds, and symbol members you need in the decompiled NAV SDK source; note any API absent on `netstandard2.1` (→ version gate or `#if NETSTANDARD2_1` stub). Find an existing analyzer with the same registration shape and reuse its pattern and `ALCops.Common` helpers. Feed the version-gate finding back into the gate above.
-2. **Wire the diagnostic.** `DiagnosticIds.cs` field → `ALCops.{Cop}Analyzers.resx` (`{RuleName}Title`, `{RuleName}MessageFormat`, `{RuleName}Description`) → `DiagnosticDescriptors.cs` entry with help URI `https://alcops.dev/docs/analyzers/{copslug}/{id}/`. If configurable: `ALCopsSettings.cs` + `alcops.schema.json` together (`.claude/rules/settings-schema.md`).
-3. **Write the analyzer** in `src/ALCops.{Cop}/Analyzers/{RuleName}.cs`: `[DiagnosticAnalyzer]`, `sealed`, extends plain `DiagnosticAnalyzer`, narrowest `Register*Action`, no state carried across callbacks, `IsObsolete()` check first, `GetSymbolSafe()` in operation callbacks, report at the most specific location.
+2. **Wire the diagnostic.** `DiagnosticIds.cs` field → `ALCops.{Cop}Analyzers.resx` (`{RuleName}Title`, `{RuleName}MessageFormat`, `{RuleName}Description`) → `DiagnosticDescriptors.cs` entry with help URI `https://alcops.dev/docs/analyzers/{copslug}/{id}/`. If configurable: `ALCopsSettings.cs` + `alcops.schema.json` together (`.claude/rules/settings-schema.md`). Code shapes: `references/wiring.md`.
+3. **Write the analyzer** in `src/ALCops.{Cop}/Analyzers/{RuleName}.cs`: `[DiagnosticAnalyzer]`, `sealed`, extends plain `DiagnosticAnalyzer`, narrowest `Register*Action`, no state carried across callbacks, `IsObsolete()` check first, `GetSymbolSafe()` in operation callbacks, report at the most specific location. Templates per registration shape: `references/analyzer-template.md`.
 4. **Write tests** in `src/ALCops.{Cop}.Test/Rules/{RuleName}/`: class from `references/test-class-template.md`; `.al` fixtures in `HasDiagnostic/` and `NoDiagnostic/` with `[|...|]` markers in both; one fixture per confirmed design decision, including the deliberate non-reports.
 5. **Build and run:** `dotnet build ALCops.sln`, then `dotnet test src/ALCops.{Cop}.Test/ --filter "FullyQualifiedName~{RuleName}"`. Report the real output.
 6. **Document.** Create `.claude/rules/diagnostics/{id-lowercase}-{kebab-slug}.md` from `references/rule-doc.md` with `paths: src/ALCops.{Cop}/**/{RuleName}*`; every gate answer becomes a Design-decision row with its rationale.
@@ -46,13 +46,13 @@ Knowledge you need loads automatically when you open files under `Analyzers/` an
 | Inventing severity / enabled-by-default / category because the issue did not say | Stop at the gate and ask; these are never derivable. |
 | `MessageFormat` placeholder count ≠ arguments passed to `Diagnostic.Create` (#415) | Count `{n}` in the resx and match the `messageArgs`; add a fixture whose message is asserted. |
 | Stray characters in resx text, e.g. an unbalanced backtick (#397) | Proofread the three resx entries; they render verbatim in the editor. |
-| Deriving from `ALCopsDiagnosticAnalyzer` / `{Cop}Analyzer` | Extend plain `DiagnosticAnalyzer`; the harness makes `alc` fail with `AL1003` (#389). |
-| Collecting in one callback and reporting in another (two-phase accumulator) | Incremental compilation skips callbacks; analyze and report inside the same callback (`sdk-analyzer-infrastructure.md`). |
-| `SemanticModel.GetSymbolInfo()` inside an operation callback, or comparing syntax text to identify symbols | Use `IOperation.GetSymbolSafe()` and compare symbols, not `ToString()` / `ValueText`. |
+| Deriving from `ALCopsDiagnosticAnalyzer` / `{Cop}Analyzer` | Extend plain `DiagnosticAnalyzer` (`analyzer-exception-harness.md`). |
+| Collecting in one callback and reporting in another (two-phase accumulator) | Partial-analysis passes run per-declaration callbacks only for the edited file, or not at all; analyze and report inside the same callback (`sdk-analysis-scope.md`). |
+| `SemanticModel.GetSymbolInfo()` inside an operation callback, or comparing syntax text to identify symbols | Use `IOperation.GetSymbolSafe()` and compare symbols, not `ToString()` / `ValueText` (`symbol-resolution.md`). |
 | Raw `StringComparison.OrdinalIgnoreCase` for AL identifiers | Use the `SemanticFacts` name-comparison API. |
 | Using a net8.0-only SDK member without a guard | `#if NETSTANDARD2_1` stub or `VersionProvider` gate (`netstandard21-compatibility.md`). |
 | Handling only one temporary-table form (#379, #382, #384) | Cover `TableType = Temporary`, `Record X temporary` variables/parameters, and temporary page source tables. |
 | Name-keyed variable maps that ignore AL scoping (#448) | Consult the full local scope (locals, parameters, named return) before object scope; classify by symbol type, not name. |
 | `[TestCase("Foo")]` without a matching `Foo.al`, or `NoDiagnostic` fixtures without `[|...|]` markers | Names must match exactly; both fixture kinds need markers. |
 | Skipping the rule doc or the docs-site reminder | Steps 6 and 7 are part of "done". |
-| Gating on `invocation.Instance` non-null silently skips bare self calls (#348) | Resolve via `GetReceiverTableType`; every receiver-relevant rule needs fixtures for all four forms (named variable, Rec, bare, this) + tableextension variant. |
+| Gating on `invocation.Instance` non-null silently skips bare self calls (#348) | Resolve via `GetReceiverTableType`; fixtures for all four forms plus the tableextension variant (`record-receiver-forms.md`). |
