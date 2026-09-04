@@ -352,6 +352,7 @@ These were confirmed by auditing 18 receiver-relevant analyzers across all cops:
 - **Pages/reports/xmlports**: `this` on a page binds to the page object symbol, not a record. The receiver-form matrix applies only inside tables and tableextensions.
 - **Tableextensions**: `this`/`Rec`/bare all bind to the TARGET table's record. Containing-symbol fallbacks must unwrap the extension via `IApplicationObjectExtensionTypeSymbol.Target`.
 - **Canonical resolution**: `GetReceiverTableType` in `ALCops.Common/Extensions/OperationExtensions.cs` is the canonical helper for resolving `IInvocationExpression.Instance` / `IFieldAccess.Instance` (including the null-Instance bare form) to the backing `IRecordTypeSymbol`.
+- **`GetSymbolInfo` on a `this` receiver returns no symbol before AL 14.2**: `BoundThisReference` only gained its `ExpressionSymbol => Type` override in SDK 14.2.19, so on 14.0-14.1 `GetSymbolInfo(thisExpr).Symbol` is null while `GetOperation(thisExpr)?.Type` resolves the record type on all versions — so a `GetSymbolInfo`-based receiver fast path must fall back to the operation tree for non-identifier receivers (see LC0086).
 
 ### Detecting `this`/self at the operation level (`OperationKind.ThisReference`)
 

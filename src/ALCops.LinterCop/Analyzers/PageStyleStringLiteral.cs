@@ -149,8 +149,15 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
 
         if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
         {
-            var instanceSymbol = ctx.SemanticModel.GetSymbolInfo(memberAccess.Expression).Symbol;
-            if (instanceSymbol?.GetTypeSymbol()?.GetNavTypeKindSafe() is { } navTypeKind
+            var instanceType = ctx.SemanticModel.GetSymbolInfo(memberAccess.Expression).Symbol?.GetTypeSymbol();
+
+            // Pre-14.2 compilers return no symbol from GetSymbolInfo for a `this` receiver,
+            // while the operation tree still binds it to the record type. Fall back to
+            // GetOperation only for non-identifier receivers the fast path could not resolve.
+            if (instanceType is null && memberAccess.Expression is not IdentifierNameSyntax)
+                instanceType = ctx.SemanticModel.GetOperation(memberAccess.Expression, ctx.CancellationToken)?.Type;
+
+            if (instanceType?.GetNavTypeKindSafe() is { } navTypeKind
                 && DataAccessNavTypeKinds.Value.Contains(navTypeKind))
                 return true;
         }
