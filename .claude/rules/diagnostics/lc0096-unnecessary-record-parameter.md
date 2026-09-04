@@ -95,6 +95,10 @@ The SDK's `OperationExtensions.GetSymbol()` throws `InvalidCastException` when t
 
 The analyzer uses `GetSymbolSafe()` (from `ALCops.Common.Extensions.OperationSafeExtensions`) on all `GetSymbol()` call sites. This method handles the bug without exception handling: it checks `is IApplicationObjectAccess` first (returning the `ApplicationObjectTypeSymbol`), then guards any remaining `FieldAccess`-kind operations that don't implement `IFieldAccess` by returning null. The `DatabaseObjectReference` NoDiagnostic test case covers this pattern (`DATABASE::MyTable` as a method argument).
 
+### `this.MyProc(this)` false negative (#348)
+
+`GetSymbolSafe()` returns null for `this` references (no `OperationKind` case in the SDK's `GetSymbol` switch for `BoundThisReference`). When both the instance and the argument are `this`, the symbol comparison fails because neither resolves. Pinned by `NoDiagnostic/ExternalThisSelfMethodCall.al`. Fixing requires detecting `ThisReference` kind on both sides.
+
 ### IConversionExpression wrapping
 
 Arguments may be wrapped in `IConversionExpression` by the SDK. When `argument.Value.GetSymbolSafe()` returns null, the analyzer unwraps through the conversion and calls `GetSymbolSafe()` on the operand.

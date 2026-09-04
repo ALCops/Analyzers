@@ -70,6 +70,7 @@ The insertion target must be an element of a statement list (`BlockSyntax` or `R
 
 ## Known limitations
 
+- **Bare/this/Rec self-forms: by-design no diagnostic (#348)**: Self-reference forms inside a table call CalcFields on the object's own record, which is always the loop variable in that context. No realistic use case warrants a separate fixture; the existing variable-based fixtures cover the analysis path.
 - Fixtures using the `this` self-reference keyword must be gated with `SkipTestIfVersionIsTooLow("14.0")` (runtime 14.0, BC 2024 wave 2).
 
 - Cross-method CalcFields calls (passed record variable) are not detected

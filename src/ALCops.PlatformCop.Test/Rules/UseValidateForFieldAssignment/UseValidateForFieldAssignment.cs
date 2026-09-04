@@ -30,8 +30,15 @@ namespace ALCops.PlatformCop.Test
         [TestCase("OnValidateOtherRecordSameField")]
         [TestCase("InherentlyTemporaryTable")]
         [TestCase("InherentlyTemporaryTableTemporaryVariable")]
+        [TestCase("ThisFieldAssignment")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ThisFieldAssignment"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 

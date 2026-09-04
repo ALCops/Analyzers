@@ -124,15 +124,21 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
 
     private static bool IsWritingToTableField(SyntaxNodeAnalysisContext ctx)
     {
-        var assignmentNode = ctx.Node.GetFirstParent(EnumProvider.SyntaxKind.AssignmentStatement) as AssignmentStatementSyntax;
-        if (assignmentNode?.Target is MemberAccessExpressionSyntax memberAccess &&
-            memberAccess.Expression.IsKind(EnumProvider.SyntaxKind.IdentifierName))
+        if (ctx.Node.GetFirstParent(EnumProvider.SyntaxKind.AssignmentStatement) is not AssignmentStatementSyntax assignmentNode)
+            return false;
+
+        SyntaxNode? fieldNameNode = assignmentNode.Target switch
         {
-            var fieldSymbol = ctx.SemanticModel.GetSymbolInfo(memberAccess.Name).Symbol as IFieldSymbol;
-            if (fieldSymbol is not null && fieldSymbol.ContainingType?.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Record)
-                return true;
-        }
-        return false;
+            MemberAccessExpressionSyntax memberAccess => memberAccess.Name,
+            IdentifierNameSyntax identifierName => identifierName,
+            _ => null
+        };
+
+        if (fieldNameNode is null)
+            return false;
+
+        var fieldSymbol = ctx.SemanticModel.GetSymbolInfo(fieldNameNode).Symbol as IFieldSymbol;
+        return fieldSymbol is not null && fieldSymbol.ContainingType?.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Record;
     }
 
     private static bool IsDataAccessMethodInvocationArgument(SyntaxNodeAnalysisContext ctx)
@@ -141,13 +147,29 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
             is not InvocationExpressionSyntax invocation)
             return false;
 
-        if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
-            return false;
+        if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+        {
+            var instanceType = ctx.SemanticModel.GetSymbolInfo(memberAccess.Expression).Symbol?.GetTypeSymbol();
 
-        var instanceSymbol = ctx.SemanticModel.GetSymbolInfo(memberAccess.Expression).Symbol;
-        if (instanceSymbol?.GetTypeSymbol()?.GetNavTypeKindSafe() is not { } navTypeKind)
-            return false;
+            // Pre-14.2 compilers return no symbol from GetSymbolInfo for a `this` receiver,
+            // while the operation tree still binds it to the record type. Fall back to
+            // GetOperation only for non-identifier receivers the fast path could not resolve.
+            if (instanceType is null && memberAccess.Expression is not IdentifierNameSyntax)
+                instanceType = ctx.SemanticModel.GetOperation(memberAccess.Expression, ctx.CancellationToken)?.Type;
 
-        return DataAccessNavTypeKinds.Value.Contains(navTypeKind);
+            if (instanceType?.GetNavTypeKindSafe() is { } navTypeKind
+                && DataAccessNavTypeKinds.Value.Contains(navTypeKind))
+                return true;
+        }
+
+        if (invocation.Expression is IdentifierNameSyntax)
+        {
+            var containingType = ctx.ContainingSymbol?.ContainingType;
+            if (containingType?.GetNavTypeKindSafe() is { } selfKind
+                && DataAccessNavTypeKinds.Value.Contains(selfKind))
+                return true;
+        }
+
+        return false;
     }
 }

@@ -34,8 +34,17 @@ namespace ALCops.PlatformCop.Test
         [TestCase("TempVarExplicit")]
         [TestCase("TempTable")]
         [TestCase("TempTableExplicitTemp")]
+        [TestCase("ValidateRecSelf")]
+        [TestCase("ValidateBareSelf")]
+        [TestCase("ValidateThisSelf")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ValidateThisSelf"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 

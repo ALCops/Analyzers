@@ -112,7 +112,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                 }
                 else if (operation.Target is IFieldAccess fieldAccess)
                 {
-                    var result = CheckFieldInKey(fieldAccess);
+                    var result = CheckFieldInKey(fieldAccess, _context.OwningSymbol);
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
@@ -166,7 +166,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                 // Validate(Field, CreateGuid())
                 if (IsValidateCall(operation) && i == 1 && operation.Arguments.Length >= 2)
                 {
-                    var result = CheckValidateTarget(operation);
+                    var result = CheckValidateTarget(operation, _context.OwningSymbol);
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
@@ -291,7 +291,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
             if (IsTrackedSymbol(operation.Value) && operation.Target is IFieldAccess fieldAccess)
             {
-                Result = CheckFieldInKey(fieldAccess);
+                Result = CheckFieldInKey(fieldAccess, _tracked.ContainingSymbol);
                 if (Result is not null) return;
             }
 
@@ -306,7 +306,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
             if (IsValidateCall(operation) && operation.Arguments.Length >= 2 &&
                 IsTrackedSymbol(operation.Arguments[1].Value))
             {
-                Result = CheckValidateTarget(operation);
+                Result = CheckValidateTarget(operation, _tracked.ContainingSymbol);
                 if (Result is not null) return;
             }
 
@@ -343,7 +343,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         invocation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod &&
         SemanticFacts.IsSameName(invocation.TargetMethod.Name, "Validate");
 
-    private static KeyFieldResult? CheckFieldInKey(IFieldAccess fieldAccess)
+    private static KeyFieldResult? CheckFieldInKey(IFieldAccess fieldAccess, ISymbol? containingSymbol = null)
     {
         var fieldSymbol = fieldAccess.FieldSymbol;
         if (fieldSymbol is null)
@@ -352,11 +352,11 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         if (fieldSymbol.GetTypeSymbol().GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Guid)
             return null;
 
-        if (fieldAccess.Instance?.Type is not IRecordTypeSymbol recordType || recordType.Temporary)
+        var tableType = fieldAccess.Instance.GetReceiverTableType(containingSymbol, out var recordType);
+        if (tableType is null || tableType.TableType != EnumProvider.TableTypeKind.Normal)
             return null;
 
-        if (recordType.OriginalDefinition is not ITableTypeSymbol tableType ||
-            tableType.TableType != EnumProvider.TableTypeKind.Normal)
+        if (recordType is not null && recordType.Temporary)
             return null;
 
         return IsFieldInAnyKey(fieldSymbol, tableType)
@@ -364,13 +364,13 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
             : null;
     }
 
-    private static KeyFieldResult? CheckValidateTarget(IInvocationExpression validateCall)
+    private static KeyFieldResult? CheckValidateTarget(IInvocationExpression validateCall, ISymbol? containingSymbol = null)
     {
-        if (validateCall.Instance?.Type is not IRecordTypeSymbol recordType || recordType.Temporary)
+        var tableType = validateCall.Instance.GetReceiverTableType(containingSymbol, out var recordType);
+        if (tableType is null || tableType.TableType != EnumProvider.TableTypeKind.Normal)
             return null;
 
-        if (recordType.OriginalDefinition is not ITableTypeSymbol tableType ||
-            tableType.TableType != EnumProvider.TableTypeKind.Normal)
+        if (recordType is not null && recordType.Temporary)
             return null;
 
         var firstArg = UnwrapConversion(validateCall.Arguments[0].Value);

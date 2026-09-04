@@ -52,6 +52,10 @@ These decisions were made during the initial design and should be preserved unle
 | Exit statement escape — Retroactive-only clear of `UncoveredReads` on the current path; NO forward flow flag | `exit(Rec)` escapes the procedure scope, so the caller might need the full record. `exit` terminates the path, so forward state is unreachable; setting a flow flag would leak suppression past the enclosing branch via OR-merge, causing false negatives on reads after an early-exit guard (`if Cond then exit(Rec); Rec.Get(X);` must still fire). Only bare variable references suppress (`exit(Rec."No.")` does not). Sets method-level `EverPassedToFunction` for RecordRef SetTable suppression. See [#429](https://github.com/ALCops/Analyzers/issues/429). |
 | Version gate — `Spring2021OrGreater` (runtime 6.0, BC17) · Full netstandard2.1 support | `SetLoadFields` was introduced with runtime 6.0 |
 
+## Receiver forms (#348)
+
+Bare/this/Rec self-forms are by-design out of scope: PC0030/PC0031 tracks local variables only, and Rec/this/bare are object-scope globals that are never entered into the name-keyed tracking map. No realistic use case for `SetLoadFields` on the object's own record from inside a table's methods (maintainer decision, #348 — documentation only, no fixtures). Known theoretical edge: `this.FindSet()` next to a local variable named like the table shares a key in the name-keyed tracking map; not fixed, no real-world occurrence found.
+
 ## Architecture
 
 ### Registration strategy

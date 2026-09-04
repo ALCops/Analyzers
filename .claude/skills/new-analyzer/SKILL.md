@@ -55,3 +55,4 @@ Knowledge you need loads automatically when you open files under `Analyzers/` an
 | Name-keyed variable maps that ignore AL scoping (#448) | Consult the full local scope (locals, parameters, named return) before object scope; classify by symbol type, not name. |
 | `[TestCase("Foo")]` without a matching `Foo.al`, or `NoDiagnostic` fixtures without `[|...|]` markers | Names must match exactly; both fixture kinds need markers. |
 | Skipping the rule doc or the docs-site reminder | Steps 6 and 7 are part of "done". |
+| Gating on `invocation.Instance` non-null silently skips bare self calls (#348) | Resolve via `GetReceiverTableType`; every receiver-relevant rule needs fixtures for all four forms (named variable, Rec, bare, this) + tableextension variant. |
