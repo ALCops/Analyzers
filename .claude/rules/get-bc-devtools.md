@@ -9,17 +9,7 @@ paths:
 
 The `get-bc-devtools` composite GitHub Action discovers all available BC DevTools sources (Marketplace VSIX, NuGet, BCArtifact), analyzes their assembly metadata (target framework and assembly version), and outputs a unified source list used by the build and test pipeline.
 
-## Architecture
-
-### Script pipeline
-
-1. **`Get-Sources.ps1`** — Merges sources from three providers into a unified list, enriched with cached TFM data:
-   - `Marketplace.ps1` — Queries VS Marketplace for ALLanguage VSIX versions
-   - `NuGet-Packages.ps1` — Queries NuGet.org for `Microsoft.Dynamics.Nav.CodeAnalysis` packages
-   - `BC-Artifacts.ps1` — Queries BC artifact feed for BCArtifact versions
-2. **`Get-BC-DevTools.ps1`** — Main orchestrator. Reads `TargetFramework.json` cache, identifies missing versions, downloads and analyzes assemblies, updates the cache, then outputs enriched sources via `Get-Sources.ps1`.
-3. **`action.yml`** — Composite action entry point. Calls `Get-BC-DevTools.ps1`, deduplicates sources by version, determines lowest version per TFM, and sets outputs.
-4. **`Display-Sources.ps1`** — Renders a summary table to the workflow log.
+## Non-obvious behaviour
 
 ### VSIX layout change in BC 29 (AL 17)
 
@@ -87,15 +77,3 @@ The pipeline is prepared for net10.0 BC DevTools:
 |---|---|
 | Corrupted or non-.NET assemblies cannot be read by `PEReader` | Returns `"analysis-error"` sentinel; downstream consumers should handle non-parseable versions |
 | Failed analyses write `error` entries into `TargetFramework.json`; since `Find-MissingVersions` matches on composite keys, those versions are never retried | Manually delete the `tfm-json-*` GitHub Actions cache entry; the next run re-analyzes everything |
-
-## Key files
-
-| File | Purpose |
-|---|---|
-| `Get-BC-DevTools.ps1` | Main orchestrator: cache management, assembly analysis, source enrichment |
-| `Get-Sources.ps1` | Source merging: combines Marketplace, NuGet, BCArtifact with cache data |
-| `action.yml` | GitHub Action interface: deduplication, TFM boundary detection, output setting |
-| `BC-Artifacts.ps1` | BCArtifact feed query |
-| `Marketplace.ps1` | VS Marketplace API query |
-| `NuGet-Packages.ps1` | NuGet.org API query |
-| `Display-Sources.ps1` | Log display formatting |
