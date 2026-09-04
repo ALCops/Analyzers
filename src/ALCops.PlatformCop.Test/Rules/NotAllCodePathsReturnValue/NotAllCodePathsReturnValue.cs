@@ -44,6 +44,12 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
     [TestCase("UnnamedUserDefinedFieldErrorNotTerminating")]
     public async Task HasDiagnostic(string testCase)
     {
+        SkipTestIfVersionIsTooLow(
+            ["NamedAssignedInExtensibleEnumCase"],
+            testCase,
+            "13.0",
+            "Extending an enum declared in the same module requires runtime version 13.0.");
+
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
             .ConfigureAwait(false);
 
@@ -94,6 +100,12 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
             testCase,
             "14.0",
             "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
+        SkipTestIfVersionIsTooLow(
+            ["NamedInitializedByTernaryCondition"],
+            testCase,
+            "14.0",
+            "The ternary conditional expression requires runtime version 14.0.");
 
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
             .ConfigureAwait(false);
