@@ -43,16 +43,16 @@
         </Reference>
     </ItemGroup>
 
-    <!-- BC Dev Tools (needed for IFileSystem, RelativeFileSystem, MemoryFileSystem) -->
+    <!-- BC Dev Tools (needed for IFileSystem, RelativeFileSystem, MemoryFileSystem;
+         Workspaces for the Conventions tests, which cover Common's own analyzers too) -->
     <ItemGroup>
         <Reference Include="Microsoft.Dynamics.Nav.CodeAnalysis">
             <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.CodeAnalysis.dll</HintPath>
             <Private>True</Private>
         </Reference>
-    </ItemGroup>
-    <!-- Conventions/ is a shared source folder linked into every cop test project; Common itself ships no analyzers
-         and does not reference the Workspaces assembly those tests need. -->
-    <ItemGroup>
-        <Compile Remove="Conventions/**" />
+        <Reference Include="Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces">
+            <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
     </ItemGroup>
 </Project>
