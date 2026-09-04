@@ -5,7 +5,7 @@ namespace ALCops.Common.Test;
 
 /// <summary>
 /// Tests for the load-failure reporting of <see cref="ALCopsSettingsProvider.GetLoadResult"/>:
-/// unreadable files, malformed JSON, and unknown top-level settings (issue #328).
+/// unreadable files, malformed JSON, and unknown top-level settings.
 /// </summary>
 [NonParallelizable]
 public class ALCopsSettingsLoadFailureTests

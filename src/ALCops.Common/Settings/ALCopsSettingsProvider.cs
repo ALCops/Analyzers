@@ -148,21 +148,14 @@ public static class ALCopsSettingsProvider
         if (string.IsNullOrEmpty(directoryPath))
             return SettingsFileName;
 
-        try
-        {
-            return Path.Combine(directoryPath, SettingsFileName);
-        }
-        catch (ArgumentException)
-        {
-            return SettingsFileName;
-        }
+        return Path.Combine(directoryPath, SettingsFileName);
     }
 
     private static ALCopsSettingsLoadResult DeserializeSettings(string json, string source)
     {
         // Malformed JSON (invalid syntax, unknown enum values, wrong types) falls back to defaults —
         // consumers rely on always getting a usable settings object — and the failure is recorded
-        // so CM0001 can tell the user why the file was not applied (issue #328).
+        // so CM0001 can tell the user why the file was not applied.
         try
         {
 #if NETSTANDARD2_1

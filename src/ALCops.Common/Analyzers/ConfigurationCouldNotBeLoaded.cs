@@ -6,8 +6,9 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 
 namespace ALCops.Common.Analyzers;
 
-// Derives directly from the SDK DiagnosticAnalyzer: a base class in a sibling DLL would fail
-// type-load under alc (AL1003, issue #389), but ALCops.Common.dll is itself an analyzer
+// Derives directly from the SDK DiagnosticAnalyzer: alc resolves an analyzer's base type only
+// from the compiler's own assemblies or from already-loaded analyzer references (a base class in
+// a sibling DLL fails type-load with AL1003), and ALCops.Common.dll is itself an analyzer
 // reference on every documented install path, so an analyzer hosted here loads like any cop.
 [DiagnosticAnalyzer]
 public sealed class ConfigurationCouldNotBeLoaded : DiagnosticAnalyzer
