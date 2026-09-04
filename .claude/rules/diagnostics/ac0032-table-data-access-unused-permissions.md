@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/ALCops.ApplicationCop/**/TableDataAccessUnusedPermissions*"
+  - "src/ALCops.ApplicationCop.Test/Rules/TableDataAccessUnusedPermissions/**"
 ---
 
 # AC0032: Unused Permissions
@@ -9,147 +10,67 @@ paths:
 
 Detects `Permissions` property entries that have no corresponding table data access in the object. This is the inverse of AC0031 (which detects missing permissions). Reports an Info-level diagnostic per unused permission entry. Unused permissions are dead code because the `Permissions` property only applies to the object that directly accesses the table (no call-stack inheritance).
 
+Registers `RegisterSyntaxNodeAction` on the nine application object syntax kinds (codeunit, table, tableextension, page, pageextension, report, reportextension, query, xmlport); main type `TableDataAccessUnusedPermissions`, with detection shared in `ALCops.Common/Permissions` (`RequiredPermissionDetector`, `DataTransferOperations`, `DataTransferTableResolver`).
+
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| `RegisterSyntaxNodeAction` on object kinds | Self-contained per-object analysis; no CompilationStart/End coupling; gives SemanticModel directly |
-| Variable map + syntax resolution | Resolves ~66% of DB calls via dictionary lookup from `IMethodSymbol.LocalVariables`/`.Parameters`; avoids expensive `GetOperation` calls entirely |
-| Global variable map from `GetMembers()` | Captures object-level Record variables that account for ~34% of invocations not resolvable from locals/params |
-| Data items in object-scope record map | Report data items and xmlport table elements act as implicit record variables in trigger code; added to the same map for fast-path resolution via `GetTypeSymbol()` |
-| XmlPort nested nodes via `GetFlattenedXmlPortNodes` | `GetMembers()` returns only top-level schema nodes; `IXmlPortNodeSymbol.FlattenedNodes` only returns immediate children (not recursive). Uses reflection on the internal `SourceXmlPortTypeSymbol.FlattenedNodes` property which truly flattens all depths |
-| `GetSymbolInfo` fallback for complex receivers | Handles function return values, array indexing, property access; only ~1% of invocations need this path |
-| Hot path avoids `GetOperation` / `OperationWalker` | `GetOperation` in `SyntaxNodeAction` costs ~0.3ms/call (no pre-computed cache); the variable-map fast path is 4.5x faster and handles the common identifier receivers. `GetOperation` is used only for the rare non-identifier receivers (`this.`, expression receivers), reading the receiver type off the base `IOperation.Type` |
-| Four receiver forms handled explicitly | Database access can target a record via four syntactic forms: `MyTable.Modify()`, `Rec.Modify()`, bare `Modify()` (implicit self), and `this.Modify()` (AL `this` keyword). Variable receivers use the fast path; bare self resolves the containing `ITableTypeSymbol`; `this` (and other expression receivers) resolve via `IOperation.Type` -- the same operation-tree mechanism AC0031 uses, which works on all TFMs (it never references the `ThisExpressionSyntax` type, absent at the netstandard2.1 floor). Missing the `this` form caused the AC0032 false positive in issue #343 |
-| Self-table symbol shapes | The table object's declared symbol is an `ITableTypeSymbol` (not an `IRecordTypeSymbol`); `this`/`Rec` resolve to a separate `IRecordTypeSymbol` wrapper. `TryGetPermissionForType` accepts both: record types via `OriginalDefinition`, table types directly |
-| No cross-callback shared state | Eliminates the fragile two-phase accumulator pattern that caused false positives during incremental compilation |
-| Iterate `DescendantNodes()` for methods | Finds all MethodOrTriggerDeclarationSyntax in the object, skip obsolete ones |
-| Skip obsolete methods via symbol | `GetDeclaredSymbol` + `IsObsolete()` on the method symbol |
-| Syntax pre-filter per method body | `HasPossibleDbInvocation` checks method names against MethodOperationMap before expensive analysis |
-| Data items via `GetMembers()` | Direct member iteration replaces separate `RegisterSymbolAction` callbacks |
-| Report nested data items via `FlattenedDataItems` | `IReportTypeSymbol.FlattenedDataItems` (public API) recursively includes all nested data items; fixes false positives on nested report structures |
-| Query nested data items via reflection | `IQueryTypeSymbol` doesn't expose `FlattenedDataItems`; access the internal `QueryTypeSymbol.FlattenedDataItems` via `PropertyAccessor.GetPropertyIfExists` (consistent with project reflection patterns) |
-| Named return values included in localRecordVarMap | AL named return values act as implicit local variables; only added when `ReturnValueSymbol.IsNamed == true` to avoid issues with unnamed returns |
-| No CompilationEnd needed | Eliminates the fragile two-phase pattern that caused false positives |
-| Page SourceTable exemption unchanged | Same logic, just moved into per-object callback |
-| System tables included in collection | AC0032 passes `includeSystemTables: true` to `RequiredPermissionDetector` so that declared permissions on system tables are matched against actual accesses |
-| Two descriptors sharing one ID | Same conceptual rule, different message clarity. `TableDataAccessUnusedPermissionsEntireEntry`: no database operations found on the table; `TableDataAccessUnusedPermissionsPartialChars`: table accessed but not all declared RIMD chars are needed |
-| `PermissionMatchesTable` duplicated from `PermissionResolver` | Avoids coupling; operates on syntax nodes, not resolved symbols |
-| `Next` counts as a Read (issue #466) | `Next()` advances the server-side cursor and fetches the next row, so it consumes `r` in the object that calls it. Adding it to `MethodOperationMap` fixes the false positive where the caller only iterates (`repeat … until Rec.Next() = 0`) a set that a helper object positioned via `FindSet`: permissions don't flow through the call stack, so the iterating object genuinely needs its own `r`. `RecordRef.Next()` needs no extra code - once `Next` is in the map it is picked up by the `HasPossibleDbInvocation` pre-filter and the existing RecordRef whole-object bailout. |
-| Temporary tables NOT counted as permission users (all implementations) | Temporary tables never touch the database, so a permission declared for a table accessed ONLY via temporary records is dead code and IS flagged as unused. All three implementations plus report/xmlport `UseTemporary` are excluded from the "used" collection via the `IRecordTypeSymbol.IsTemporary()` / `ITableTypeSymbol.IsTemporary()` extensions: applied to global var map, data-item map, locals, params, named return, `TryGetPermissionForType` (record + table-type branches), `AddXmlPortNodeToVarMap`, and the `GetSymbolInfo` fallback. The `TableType = Temporary` case needs the explicit `TableType` check because `IRecordTypeSymbol.Temporary` reflects only the `temporary` keyword. |
-| Skip permissionset/permissionsetextension objects | These objects declare permissions as their core purpose |
-| RecordRef whole-object bailout (issue #420) | A DB operation (any `MethodOperationMap` entry, reads included) on a `RecordRef` receiver can target any table at runtime; static analysis cannot tell which declared permission it consumes. AC0032 is therefore disabled for the entire object (silent, no diagnostic). Operation-granular suppression (only suppress the matching permission char) was considered and rejected in favor of simplicity. Detection: RecordRef-typed globals/locals/params/named returns tracked by name (fast path, `NavTypeKind == RecordRef`), complex receivers via `IOperation.Type.NavTypeKind`, plus the `GetSymbolInfo` fallback. Without this, the FixAll CodeFix removed permissions that were required at runtime |
-| Fast-path lookup honors AL scoping | Variables are classified by symbol type, never by name, so `RecordRef: Record Customer` tracks Customer normally. Because locals shadow globals, the receiver lookup consults the full local scope (RecordRef name set, then record map) before the object scope; otherwise a global `RecordRef: RecordRef` shadowed by a local record variable of the same name would falsely trigger the bailout |
-| `DataTransfer` executors count as table operations (issue #465) | `CopyFields` reads the source and modifies the destination, `CopyRows` reads the source and inserts into the destination — real database work that the object needs `r`/`m`/`i` for. Because the tables are arguments to `SetTables` and not the receiver, the whole construct was invisible to the receiver-keyed resolution and every permission held only for a `DataTransfer` was reported as unused. The other seven `DataTransfer` methods only build the transfer definition and are not operations. |
-| Separate `DataTransferOperations`, not `MethodOperationMap` | `MethodOperationMap` is keyed on built-in methods invoked *on a record receiver* and is mirrored by `RecordMethodClassification`; adding `CopyFields`/`CopyRows` there would make any same-named call on a record look like a DB operation and would leak into the record-method classification. The `DataTransfer` set is consulted only after the receiver is confirmed to be a `DataTransfer`. |
-| Resolution scope is the same method or trigger body | The `SetTables` call must sit in the same body as the executor. Following the variable across procedures would need call-graph analysis and cross-callback state, which the no-shared-state design rules out. A `DataTransfer` configured in one procedure and executed in another therefore falls to the bailout rather than being resolved. One `DataTransferTableResolver` is built per body and reused for every executor in it, held in a callback-local so nothing crosses callbacks. |
-| Pairing is flow-sensitive with strict reset | Reconfiguring one `DataTransfer` variable for several sequential copies (`SetTables; CopyRows; SetTables; CopyFields`) is the standard upgrade-codeunit pattern, so a `SetTables` *replaces* the pending pair for that variable on the path rather than adding to it, and each executor is attributed only to the pair that reaches it. The earlier union over every `SetTables` in the body over-granted (it made permissions the code never needs look used) and hid true positives such as an `i` on a destination that only `CopyFields` touches. An executor consumes the pending pairs without clearing them, so a second executor after the same `SetTables` transfers the same tables again. Branches fork and merge like PC0030's `SetLoadFieldsWalker`, and a merge is the **union** of the branches' pairs — the conservative direction for AC0032, which can only make a permission look used. `break` contributes the state at the jump to the states after the loop, and a loop body is visited **twice** so that a `SetTables` written after an executor still reaches it through the back edge (`repeat dt.CopyRows(); dt.SetTables(C, D); until …` needs both pairs on the executor). The per-variable transfer function is a constant or a pass-through, so the second pass is the fixed point for a single loop. |
-| Receiver may be bare or `this.`-qualified | The executor and the `SetTables` calls are matched by the variable name the receiver resolves to, and both `MyDataTransfer.CopyFields()` and `this.MyDataTransfer.CopyFields()` yield the bare name — so a `SetTables` written one way still matches an executor written the other. The self-reference is recognized through `EnumProvider.OperationKind.ThisReference` on the operation tree, never `ThisExpressionSyntax`/`SyntaxKind.ThisExpression` (absent at the netstandard2.1 floor). Any other receiver shape is unresolvable. |
-| Only `Database::"X"` literals resolve | The argument operation is an `IApplicationObjectAccess` (optionally wrapped in `IConversionExpression`), which names the table directly. Constant propagation of integer locals was rejected: it is unbounded and the bailout already covers the case safely. |
-| Unresolvable `DataTransfer` triggers the whole-object bailout | Same reasoning as the RecordRef bailout (#420): no `SetTables` reaching the executor on any path, a reaching `SetTables` with a non-literal table argument, or a receiver that is neither a plain identifier nor `this.<variable>` all mean the executor may touch any table, so no declared permission in the object can be proven unused. Silent, no diagnostic. |
-| Handle `MemberAccessExpressionSyntax` without parent `InvocationExpressionSyntax` | AL allows method calls without parentheses (e.g., `MyTable.Count`); the parser produces `MemberAccessExpressionSyntax` instead of `InvocationExpressionSyntax`. Unified in `TryGetPermissionFromDbAccess` which pattern-matches both forms at entry, then uses a single resolution path. The `HasPossibleDbInvocation` pre-filter also checks both forms. |
+| One self-contained `SyntaxNodeAction` per object, no CompilationStart/End or cross-callback state | Each object is analyzed atomically with the SemanticModel at hand; the earlier two-phase accumulator produced false positives during incremental compilation (`sdk-analysis-scope.md`). |
+| Name-keyed variable maps (locals, parameters, named returns, globals, data items) resolve receivers before any binding; `GetOperation` only for non-identifier receivers, `GetSymbolInfo` as last fallback | The fast path handles ~99% of receivers and was 4.5x faster than binding every invocation (`analyzer-performance.md`). |
+| Report data items and xmlport table elements go into the object-scope record map | They act as implicit record variables in trigger code. |
+| Named return values are mapped only when `ReturnValueSymbol.IsNamed` | An unnamed return has no identifier a receiver could use. |
+| Nested report data items via the public `IReportTypeSymbol.FlattenedDataItems`; nested query data items and xmlport nodes via reflection on the internal flattened properties | `GetMembers()` and the public xmlport API only return one level, which produced false positives on nested structures. |
+| System tables are included (`includeSystemTables: true`) | A declared permission on a system table must be matched against real accesses like any other. |
+| Two descriptors share the one ID: `...EntireEntry` (no operation on the table) and `...PartialChars` (some declared RIMD chars unused) | Same rule, two messages that tell the developer exactly what to remove. |
+| `PermissionMatchesTable` is duplicated from `PermissionResolver` | It matches syntax nodes, not resolved symbols; sharing would couple the two. |
+| `Next` counts as a Read ([#466](https://github.com/ALCops/Analyzers/issues/466)) | An object that only iterates a set positioned elsewhere still reads the database, so its `r` is used; without this the pattern was a false positive. Adding `Next` to `MethodOperationMap` also covers `RecordRef.Next()` through the bailout. |
+| Temporary-only accesses do not count as uses, so a permission held only for temporary records is reported | Temporary tables never touch the database; all temporary forms are excluded through the `IsTemporary()` extensions at every map and fallback. |
+| Whole-object bailout on any `MethodOperationMap` call on a `RecordRef` receiver ([#420](https://github.com/ALCops/Analyzers/issues/420)) | A `RecordRef` can target any table at runtime, so no declared permission can be proven unused; without it FixAll removed permissions needed at runtime. Suppressing only the matching char was considered and rejected for simplicity. |
+| `CopyFields` and `CopyRows` on a `DataTransfer` count as table operations (`r`+`m`, `r`+`i`) ([#465](https://github.com/ALCops/Analyzers/issues/465)) | The tables are `SetTables` arguments rather than receivers, so receiver-keyed resolution never saw them and every `DataTransfer`-only permission was reported. The other seven `DataTransfer` methods only build the definition. |
+| `DataTransfer` executors live in `DataTransferOperations`, consulted only after the receiver is confirmed to be a `DataTransfer`, not in `MethodOperationMap` | `MethodOperationMap` is keyed on record-receiver built-ins and mirrored by `RecordMethodClassification`; adding the names there would make any same-named record call look like a DB operation. |
+| `SetTables` and executor must sit in the same method or trigger body; one `DataTransferTableResolver` per body, held callback-local | Following the variable across procedures needs call-graph analysis and shared state, which the design rules out; the cross-procedure case falls to the bailout. |
+| Pairing is flow-sensitive: a `SetTables` replaces the pending pair for that variable, each executor is charged only for the pair that reaches it, and an executor does not clear the pair | `SetTables; CopyRows; SetTables; CopyFields` is the standard upgrade pattern; the earlier union over every `SetTables` in the body made never-needed permissions look used and hid true positives such as an `i` on a `CopyFields`-only destination. |
+| Branch merges are the union of pairs; `break` feeds the post-loop state; loop bodies are visited twice | Union is the conservative direction (it can only make a permission look used); the second pass lets a `SetTables` written after the executor reach it via the back edge, and is the fixed point because the transfer function is constant or pass-through. |
+| Executor and `SetTables` are matched on the variable name, with `this.<variable>` normalized to the bare name via `EnumProvider.OperationKind.ThisReference` | Mixed spellings of the same variable must pair; `ThisExpressionSyntax` is unavailable at the netstandard2.1 floor (`record-receiver-forms.md`). |
+| Only `Database::"X"` literals resolve (`IApplicationObjectAccess`, possibly wrapped in `IConversionExpression`) | Constant propagation of integer locals is unbounded and the bailout already covers the case safely. |
 
-## Architecture
+## Deliberate non-reports
 
-Uses a per-object `RegisterSyntaxNodeAction` pattern for self-contained analysis. Each application object is analyzed atomically within a single callback, eliminating shared mutable state.
-
-```
-src/ALCops.ApplicationCop/
-├── Analyzers/
-│   └── TableDataAccessUnusedPermissions.cs           # Analyzer (SyntaxNodeAction on object kinds)
-└── CodeFixes/
-    └── TableDataAccessUnusedPermissionsCodeFixProvider.cs  # CodeFix (remove entry / reduce chars / remove property)
-
-src/ALCops.Common/
-└── Permissions/
-    ├── RequiredPermissionDetector.cs   # Shared detection logic (also used by AC0031)
-    ├── DataTransferOperations.cs       # DataTransfer executors, kept out of MethodOperationMap
-    └── DataTransferTableResolver.cs    # Flow-sensitive SetTables <-> executor pairing per body
-```
-
-### Analysis flow
-
-**Registration (`Initialize`):**
-- `RegisterSyntaxNodeAction` on 9 application object syntax kinds (CodeunitObject, TableObject, TableExtensionObject, PageObject, PageExtensionObject, ReportObject, ReportExtensionObject, QueryObject, XmlPortObject)
-
-**Per-object analysis (`AnalyzeApplicationObject`):**
-1. `GetDeclaredSymbol(ctx.Node)` to obtain `IApplicationObjectTypeSymbol` (early exit if not)
-2. Skip PermissionSet/PermissionSetExtension, obsolete objects, test codeunits with permissions disabled
-3. Get `Permissions` property (early exit if null, covers ~70% of objects)
-4. **Collect DB invocations** (`CollectFromInvocations`):
-   - Build object-scope record map (`objectScopeRecordMap`) from `containingObject.GetMembers()`: global vars, report data items (via `GetTypeSymbol()`), xmlport table elements (via `FlattenedNodes` + `GetTypeSymbol()`); also collect object-scope RecordRef variable names (`objectScopeRecordRefNames`)
-   - Walk `ctx.Node.DescendantNodes()` for `MethodOrTriggerDeclarationSyntax`
-   - Skip obsolete methods via `GetDeclaredSymbol` + `IsObsolete()`
-   - For each method body: syntax pre-filter (`HasPossibleDbInvocation`)
-   - Build per-method record variable map from `IMethodSymbol.LocalVariables` + `.Parameters`; RecordRef-typed locals/parameters/named returns go into a per-method RecordRef name set (`localRecordRefNames`)
-   - Walk method body for both `InvocationExpressionSyntax` and standalone `MemberAccessExpressionSyntax` (method calls without parentheses)
-   - Unified `TryGetPermissionFromDbAccess` extracts method name + receiver from either form, resolves via variable map (fast path), then via the receiver's `IOperation.Type` for non-identifier receivers (`this.`, expression receivers), and falls back to `GetSymbolInfo` for anything unresolved
-   - **RecordRef whole-object bailout**: when a DB-operation method is invoked on a RecordRef receiver (detected via the RecordRef name sets, `IOperation.Type.NavTypeKind`, or the `GetSymbolInfo` fallback), `CollectFromInvocations` returns `true` and `AnalyzeApplicationObject` aborts without reporting any diagnostic for the object
-5. **Collect data items** (`CollectFromDataItems`):
-   - Iterate `containingObject.GetMembers()` for ReportDataItem, QueryDataItem, XmlPortNode symbols
-   - For XmlPortNode: also iterate `FlattenedNodes` to reach nested table elements
-   - Use `RequiredPermissionDetector.TryGetFrom*` methods
-6. Compare declared entries against collected permissions, report diagnostics
-
-### Key methods
-
-| Method | Purpose |
-|---|---|
-| `AnalyzeApplicationObject` | Entry point; checks Permissions, orchestrates collection and reporting |
-| `CollectFromInvocations` | Builds object-scope record map (vars + data items) and RecordRef name set, walks method bodies, resolves DB calls via unified handler. Returns `true` (bail out) when a RecordRef DB operation is found |
-| `TryGetPermissionFromDbAccess` | Unified resolution for both syntax forms (with/without parentheses). Handles all four receiver forms: `MyTable.Modify()` / `Rec.Modify()` (variable-map fast path), `Modify()` (bare implicit self), `this.Modify()` (AL `this` self-reference, resolved via `IOperation.Type`). Falls back to `TryGetPermissionViaSymbolInfo` for unresolved receivers |
-| `TryGetPermissionForType` | Builds a required permission from a resolved receiver/self type (record resolved to its backing table, or a table type directly); returns null for non-record/table types (e.g. `this` inside a codeunit) |
-| `TryGetPermissionViaSymbolInfo` | Fallback for complex receivers: uses GetSymbolInfo on the node and receiver expression to resolve method and receiver type |
-| `CollectFromDataItems` | Iterates report/query FlattenedDataItems and xmlport FlattenedXmlPortNodes (all via reflection) for implicit read permissions |
-| `AddXmlPortNodeToVarMap` | Adds an xmlport table element to the object-scope record map if it references a non-temporary table |
-| `HasPossibleDbInvocation` | Syntax pre-filter: checks if body has any invocation name matching a DB operation or a `DataTransfer` executor (handles both syntax forms) |
-| `IsDataTransferReceiver` | Decides whether a `CopyFields`/`CopyRows` receiver is a `DataTransfer`, honoring AL scoping (a local record shadows an object-scope `DataTransfer` of the same name). Identifiers resolve through the name sets; every other shape (`this.MyDataTransfer`, expression receivers) falls back to the receiver's bound type, so anything that is not a `DataTransfer` keeps flowing through the normal record path |
-| `AnalyzePermissionEntry` | Compares one declared entry against collected required permissions |
-| `PermissionMatchesTable` | Matches identifier/qualified/objectId syntax against `ITableTypeSymbol` |
-
-### Threading model
-
-Each `SyntaxNodeAction` callback is self-contained with no shared mutable state. The compiler may parallelize callbacks across different objects, but each object's analysis uses only local variables (`List<RequiredPermission>`). No `ConcurrentDictionary` or cross-callback communication needed.
+- Objects without a `Permissions` property, obsolete objects, `permissionset`/`permissionsetextension` objects, and test codeunits with `TestPermissions = Disabled`.
+- Accesses inside obsolete methods are not collected as uses.
+- The whole object is silent when a DB operation runs on a `RecordRef` receiver (see [#420](https://github.com/ALCops/Analyzers/issues/420) above).
+- The whole object is silent when a `DataTransfer` executor cannot be resolved: no `SetTables` reaches it on any path, a reaching `SetTables` has a non-literal table argument, or the receiver is neither a plain identifier nor `this.<variable>`. The executor may then touch any table, exactly like the `RecordRef` case.
+- `FieldRef.Value`/`Field`/`Caption` are in-memory operations on the current row: they neither consume a permission nor trigger the bailout. `FieldRef.CalcField` does read the database but is not traced (see Known issues).
 
 ## Known issues
 
-1. **Extension objects**: Cannot see base object code; may flag permissions needed by the base as unused
-2. **CalcFields/CalcSums**: Indirect table access through FlowFields is not traced
-3. **InherentPermissions overlap**: Table-level `InherentPermissions` may make an object-level entry redundant, but the analyzer does not flag this (different concern from unused)
-4. **Cross-object calls**: If codeunit A calls codeunit B, and B accesses a table, A's permission for that table appears unused (correct, because permissions don't flow through the call stack). The reverse is not a limitation: when A iterates a set that B positioned (`Rec.Next()` in A), A's `r` is counted as used, because `Next` itself reads the database in A
-5. **RecordRef bailout hides true positives**: When the whole-object bailout triggers, genuinely unused permissions in that object are no longer reported (accepted trade-off; see design decisions)
-6. **DataTransfer bailout hides true positives**: a `CopyFields`/`CopyRows` that no `SetTables` reaches in the same body, or whose table arguments are not `Database::X` literals, silences AC0032 for the whole object — genuinely unused entries there go unreported (same trade-off as the RecordRef bailout). One accepted imprecision remains in the flow walk: `exit` does not terminate a path, so state from before an early exit still flows forward and an executor can be attributed a table its path never reaches. That over-attribution is conservative for AC0032 — it can only make a permission look used — but the same walk backs AC0031, where it can produce a spurious "missing permission" report
-7. **Receiver forms fully covered** (#348): All four forms (named variable, Rec, bare, this) plus tableextension variants are resolved; the `this` form false positive from #343 is fixed
-8. **FieldRef access is not a DB operation**: `FieldRef.Value`/`Field`/`Caption` operate on the in-memory current row and neither consume a permission nor trigger the RecordRef bailout (verified: only mapped DB methods on the RecordRef itself count). `FieldRef.CalcField` does read the database but is not traced, consistent with limitation 2
+- Extension objects cannot see the base object's code and may flag permissions the base needs as unused.
+- `CalcFields`/`CalcSums` (FlowField reads) are not traced.
+- A table-level `InherentPermissions` can make an object-level entry redundant; the rule does not flag that (a different concern from unused).
+- Cross-object calls: if codeunit A calls B and B accesses the table, A's permission is correctly reported as unused (permissions do not flow through the call stack). The reverse is fine: A iterating with `Next()` a set that B positioned counts as A's own read.
+- Both whole-object bailouts hide genuinely unused entries in that object; accepted trade-off.
+- The flow walk does not terminate a path at `exit`, so state from before an early exit flows forward. For AC0032 that only ever makes a permission look used; the same walk backs AC0031, where it can produce a spurious report.
+
+## SDK facts
+
+- `IXmlPortNodeSymbol.FlattenedNodes` returns only immediate children; the internal `SourceXmlPortTypeSymbol.FlattenedNodes` is fully recursive (read via reflection in `GetFlattenedXmlPortNodes`).
+- `IReportTypeSymbol.FlattenedDataItems` is public and recursive; `IQueryTypeSymbol` has no public equivalent, so the internal `QueryTypeSymbol.FlattenedDataItems` is read via `PropertyAccessor.GetPropertyIfExists`.
+- `IApplicationObjectTypeSymbol.GetMembers()` returns only top-level data items and schema nodes.
+- `IRecordTypeSymbol.Temporary` reflects only the `temporary` keyword; `TableType = Temporary` must be read from `ITableTypeSymbol.TableType`.
+- The `SetTables` argument operation is an `IApplicationObjectAccess`, optionally wrapped in an `IConversionExpression`.
+- Receiver forms, self-reference symbol shapes and name-map scoping: see `record-receiver-forms.md`; `GetOperation` cost in `SyntaxNodeAction` and the method-call-without-parentheses syntax shape: see `analyzer-performance.md`.
+
+## Test notes
+
+- The `this` fixtures are gated on runtime 14.0; the `PermissionSetExtension` NoDiagnostic fixture on 13.0.
 
 ## CodeFix: TableDataAccessUnusedPermissionsCodeFixProvider
 
-The `TableDataAccessUnusedPermissionsCodeFixProvider` removes or reduces unused permission entries. Supports FixAll.
-
-### Scenarios
-
-| Scenario | Behavior |
+| Decision | Rationale |
 |---|---|
-| Entire entry unused, other entries remain | Remove the entry from the permission list |
-| Entire entry unused, only entry | Remove the entire `Permissions` property |
-| Partial chars unused | Replace permission chars with only the used subset |
-
-### Data passing (analyzer -> CodeFix)
-
-`ImmutableDictionary<string, string>` properties on the diagnostic:
-- `TableName`: table name as written in the permission declaration
-- `UnusedChars`: chars to remove (e.g., "imd")
-- `UsedChars`: chars to keep (e.g., "r"); empty string when entire entry is unused
-
-### Node finding
-
-`syntaxRoot.FindNode(span)` may return `PermissionPropertyValueSyntax` instead of `PermissionSyntax` when there is only one entry (identical spans). The code fix handles this by searching descendants:
-```csharp
-var permissionNode = node as PermissionSyntax
-    ?? node.FirstAncestorOrSelf<PermissionSyntax>()
-    ?? node.DescendantNodes().OfType<PermissionSyntax>().FirstOrDefault();
-```
-
-### Trivia handling
-
-When removing the first entry from a multi-entry list, `SeparatedSyntaxList.Remove` preserves the second entry's leading trivia (newline + indent). The code fix strips this trivia to avoid `Permissions =\n              tabledata ...` artifacts.
+| Removes the whole entry when it is entirely unused, replaces the chars with the used subset when only some are unused | Mirrors the two descriptors; a partial entry keeps the table listed. |
+| Removes the entire `Permissions` property when the last entry goes | An empty `Permissions =` is not valid. |
+| Locates the `PermissionSyntax` via ancestor-or-self, then descendant search from the diagnostic span | `FindNode` may return the `PermissionPropertyValueSyntax` when a single entry shares its span. |
+| Strips the leading trivia of the new first entry after removing the original first one | `SeparatedSyntaxList.Remove` keeps the second entry's newline and indent, leaving a `Permissions =\n    tabledata ...` artifact otherwise. |
+| Supports FixAll | Unused entries typically appear across many objects at once. |

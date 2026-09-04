@@ -1,66 +1,55 @@
 ---
 paths:
   - "src/ALCops.PlatformCop/**/TransferFields*"
+  - "src/ALCops.PlatformCop.Test/Rules/TransferFieldsNameMismatch/**"
+  - "src/ALCops.PlatformCop.Test/Rules/TransferFieldsTypeMismatch/**"
 ---
 
 # PC0020 / PC0021: TransferFieldsSchemaCompatibility
 
 ## Purpose
 
-One analyzer (`Analyzers/TransferFieldsSchemaCompatibility.cs`) reports two diagnostics:
+One analyzer reports two diagnostics: PC0020 `TransferFieldsTypeMismatch` (same field ID, incompatible types between source and target table) and PC0021 `TransferFieldsNameMismatch` (same field ID, different field names).
 
-| ID | Descriptor | Meaning |
-|---|---|---|
-| PC0020 | `TransferFieldsTypeMismatch` | Same field ID, incompatible types between source and target table |
-| PC0021 | `TransferFieldsNameMismatch` | Same field ID, different field names |
+Registers `RegisterOperationAction` on `InvocationExpression` and `RegisterSymbolAction` on `TableExtension`; main type `TransferFieldsSchemaCompatibility`.
 
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| Filter removed **fields** in `BuildFieldMapById` via `IsRemoved()` | Issue #148: removed fields don't participate in TransferFields at runtime |
-| Skip invocation analysis when **either** source or target table `IsRemoved()` | Issue #435: upgrade code transfers from removed tables; a removed target makes the call dead code |
-| Skip relation-path extensions that are removed or whose base table `IsRemoved()` | Issue #435: non-removed fields on removed tables were still compared |
-| Use `IsRemoved()` (Removed/Moved), NOT `IsObsolete()` | `ObsoleteState = Pending` tables/fields still participate at runtime and must keep firing |
-| Field-level `#pragma warning disable` honored on either side | Checked via `IsEitherFieldSuppressed` against field syntax directives |
-| Enum→Integer, Code→Text, Integer→BigInteger/Decimal treated as compatible | Safe implicit conversions performed by the platform |
-| Mandatory affixes stripped before name comparison (PC0021 only) | Issue #436: AppSource `mandatoryPrefix`/`mandatorySuffix`/`mandatoryAffixes` force extension field names to differ from the paired field. `AreFieldNamesEquivalent` compares raw names first, then affix-stripped effective names via `MandatoryAffixes.StripAffixes` (loose SDK semantics: any affix, either end; whitespace trimmed after strip) |
-| Affix stripping only for TableExtension fields declared in the current module | Fields on own (non-extension) tables carry the affix on the table object, not the fields; dependency extensions have their own unknown affixes. Checked via `field.ContainingSymbol is ITableExtensionTypeSymbol` + `field.Location` in the compilation's syntax-tree paths |
-| Coincidental glued affix substrings can over-strip (accepted SDK-parity limitation) | Issue #436 revisit: affix matching mirrors the platform (`RuleIdentifiersMustHaveValidAffixes.VerifyAffixIsUsed`, `StringComparison.OrdinalIgnoreCase`, no word boundary), so a field like `Customer` satisfies glued affix `MER` and strips to `Custo`. When the paired same-ID field's core genuinely collides (e.g. `CustoMER`→`Custo`), PC0021 is suppressed (a narrow false negative). Case-sensitive matching and word-boundary hardening were rejected: they diverge from the platform and cause false positives on legitimately glued affixes |
-| Affix list cached per `Compilation` via `ConditionalWeakTable` (`AffixesCache`) | The SDK's `GetMandatoryNameAffixes(Compilation)` re-reads AppSourceCop.json on every call (it bypasses the SDK's module-spec config cache) |
+| Two analysis paths: the invocation path compares the tables of each `TransferFields` call, the relation path compares extension-added fields of curated table pairs (`TransferFieldsRelations.TableRelations`, e.g. Customer → Contact) | The relation path catches extension fields that collide on well-known BaseApp transfers even when the call site is not in the analyzed module |
+| Invocation path reports field-level diagnostics only for pairs outside the curated list, plus one summary diagnostic at the invocation site | Curated pairs are already reported field-by-field on the extension fields themselves by the relation path |
+| Skip via `IsRemoved()` (Removed/Moved), not `IsObsolete()` | `ObsoleteState = Pending` tables and fields still participate at runtime and must keep firing |
+| Removed fields, calls where either table is removed, and removed relation-path extensions (or extensions of a removed base table) are excluded | Removed fields do not participate in `TransferFields` at runtime ([#148](https://github.com/ALCops/Analyzers/issues/148)); upgrade code transfers from removed tables and a removed target makes the call dead code ([#435](https://github.com/ALCops/Analyzers/issues/435)) |
+| Field-level `#pragma warning disable` on either side suppresses the pair | Checked against both fields' syntax directives, so silencing one side is enough |
+| Enum→Integer, Code→Text and Integer→BigInteger/Decimal are compatible | Safe implicit conversions performed by the platform |
+| `InitPrimaryKeyFields: false` excludes PK fields; a constant `true` `SkipFieldsNotMatchingType` skips the analysis | Mirrors what the runtime transfers for those arguments |
+| PC0021 strips mandatory affixes before comparing names, but only for TableExtension fields declared in the current module | AppSource `mandatoryPrefix`/`mandatorySuffix`/`mandatoryAffixes` force extension field names to differ from the paired field ([#436](https://github.com/ALCops/Analyzers/issues/436)). Own tables carry the affix on the object, not the fields, and dependency extensions have unknown affixes |
+| Affix matching mirrors the platform (`OrdinalIgnoreCase`, any affix at either end, no word boundary) | Case-sensitive or word-boundary matching was rejected: it diverges from the platform's `VerifyAffixIsUsed` and false-positives on legitimately glued affixes |
+| Affix list cached per `Compilation` via `ConditionalWeakTable` | The SDK's `GetMandatoryNameAffixes(Compilation)` re-reads AppSourceCop.json on every call |
 
-## Architecture
+## Deliberate non-reports
 
-Two analysis paths:
-
-1. **Invocation path** (`AnalyzeInvocation`, `RegisterOperationAction` on InvocationExpression):
-   matches built-in `TransferFields` calls, resolves source table from argument 0 and target table
-   from `invocation.Instance` (or the containing table object for `Rec.TransferFields(...)`).
-   Reports at field level when the pair is NOT in the curated relation list, and always emits a
-   summary diagnostic at the invocation site.
-2. **Relation path** (`AnalyzeTableExtension`, `RegisterSymbolAction` on TableExtension): for
-   extensions whose base table appears as Source in the curated `TransferFieldsRelations.TableRelations`
-   list (e.g. Customer → Contact), compares extension-added fields on both sides and reports at
-   field level on both extension fields.
-
-Effective fields = base table fields + all tableextension `AddedFields` across modules (cached per
-`Compilation` via `ConditionalWeakTable`). `TransferFields(_, InitPrimaryKeyFields: false)` excludes
-PK fields; a constant-`true` third argument (`SkipFieldsNotMatchingType`) suppresses analysis.
-
-## SDK behavior notes
-
-- The AL compiler suppresses obsolete diagnostics entirely inside `Subtype = Upgrade` / `Install`
-  codeunits (`Binder.IsUpgradeOrInstallCode`, nav-sdk-source `Binder.cs`). This is why upgrade code
-  referencing removed tables compiles cleanly and reaches this analyzer.
-- Outside upgrade/install code, in-module references to removed tables are compile errors
-  (`WRN_ERR_ObsoleteStateObsolete` reported as error), so invocation-path test fixtures for removed
-  tables MUST use an upgrade codeunit.
+- Removed or moved fields, tables and extensions: they do not take part in `TransferFields` at runtime.
+- Field pairs suppressed by a field-level pragma on either side.
+- Type pairs the platform converts implicitly (Enum→Integer, Code→Text, Integer→BigInteger/Decimal).
+- PK fields when `InitPrimaryKeyFields` is `false`; any pair when `SkipFieldsNotMatchingType` is a constant `true`.
+- PC0021: names that differ only by a mandatory affix on a same-module extension field.
 
 ## Known issues
 
-- Affix fixtures (`Affix_*`) inject an `AppSourceCop.json` via `MemoryFileSystem`; this requires `Microsoft.Dynamics.Nav.Analyzers.Common.dll` as a `Private=True` reference in the test csproj (ALCops.Common references it with `Private=False`).
+- Platform-parity affix matching can over-strip coincidental substrings (`Customer` with affix `MER` → `Custo`); when the paired same-ID field's core genuinely collides, PC0021 stays silent. Accepted as a narrow false negative for SDK parity ([#436](https://github.com/ALCops/Analyzers/issues/436)).
+- Relation-path coverage only applies to the curated `TransferFieldsRelations.TableRelations` list, which carries BC version ranges (`MinVersion`/`MaxVersion`).
 
-- **Receiver forms**: bare/this TransferFields target in tableextensions resolved via `GetReceiverTableType` (#348); all four receiver forms now work correctly for target table resolution.
-- `TransferFieldsRelations.TableRelations` is a curated static list with BC version ranges
-  (`MinVersion`/`MaxVersion`); relation-path coverage only applies to listed pairs.
-- No CodeFix.
+## SDK facts
+
+- The compiler suppresses obsolete diagnostics inside `Subtype = Upgrade`/`Install` codeunits (`Binder.IsUpgradeOrInstallCode`), which is why upgrade code referencing removed tables compiles and reaches this analyzer.
+- Outside upgrade/install code, in-module references to removed tables are compile errors (`WRN_ERR_ObsoleteStateObsolete` reported as error).
+- `GetMandatoryNameAffixes(Compilation)` bypasses the SDK's module-spec config cache and re-reads AppSourceCop.json each call.
+- Affix semantics come from `RuleIdentifiersMustHaveValidAffixes.VerifyAffixIsUsed`: any configured affix, either end, `StringComparison.OrdinalIgnoreCase`, no word boundary.
+
+## Test notes
+
+- Invocation-path fixtures for removed tables must be upgrade codeunits (see SDK facts).
+- Affix fixtures (`Affix_*`) inject an `AppSourceCop.json` via `MemoryFileSystem`; this requires `Microsoft.Dynamics.Nav.Analyzers.Common.dll` as a `Private=True` reference in the test csproj (ALCops.Common references it with `Private=False`).
+- Tableextension fixtures are gated on runtime 13.0 and `this` receiver fixtures on 14.0.

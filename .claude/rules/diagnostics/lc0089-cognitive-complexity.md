@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/ALCops.LinterCop/**/*CognitiveComplexity*"
+  - "src/ALCops.LinterCop.Test/Rules/CognitiveComplexity/**"
 ---
 
 # LC0089 / LC0089i / LC0090: CognitiveComplexity
@@ -9,25 +10,35 @@ paths:
 
 LC0089 reports a hidden metric diagnostic with the cognitive complexity score of each method/trigger. LC0089i (opt-in) reports per-increment diagnostics showing where each complexity point comes from and the nesting penalty. LC0090 reports a warning when cognitive complexity exceeds the configurable threshold. Together they give AL developers actionable feedback on method readability using the Cognitive Complexity model (Sonar).
 
+Registers `CompilationStartAction` (captures threshold, LC0089i enablement and the recursion graph) then `CodeBlockAction`; main type `CognitiveComplexity` with `CognitiveComplexityRecursionGraphService`.
+
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| `CompilationStart` closure for threshold and LC0089i enablement (not instance fields) | Analyzer instances are shared across passes/projects (`ProjectInfo.cs:113`). Mutable instance fields are overwritten by an overlapping pass with a different `alcops.json` or ruleset, producing wrong thresholds or silently enabling/disabling LC0089i mid-analysis. Fixed in #254. |
-| Threshold loaded from `ALCopsSettingsProvider`, not per-method | `ALCopsSettingsProvider` caches statically by directory path with no invalidation API — an `alcops.json` edit takes effect only after restart regardless of where settings are read. Moving the read into a per-method callback would add cost without changing staleness behavior. |
-| `RegisterCodeBlockAction` (not `SyntaxNodeAction` or `OperationAction`) | Cognitive complexity requires walking the full method body once with nesting tracking. `CodeBlockAction` provides the body directly and benefits from pre-computed operation trees for recursion detection. |
-| Recursion detection via `CognitiveComplexityRecursionGraphService` | Builds a call graph at `CompilationStart` from all method bodies, then queries it per-method for cycles. Lives in a separate service class because the graph is compilation-scoped while the complexity walk is per-method. |
-| LC0089 as `Info` / `isEnabledByDefault: false` | A metric, not a violation — only useful to developers who opt in via `.editorconfig`. |
-| LC0089i as `Info` / `isEnabledByDefault: false` | Per-increment detail is noise unless actively investigating a specific method's score. Gated behind `IsDiagnosticEnabled` so the walk-and-report cost is zero when disabled. |
-| Guard-clause discount | Standard Cognitive Complexity model: early-exit `if <condition> then exit/error/break/continue/skip/quit` is a flow simplification, not additional cognitive load, so it does not increment. |
-| #254 verification: no regression fixture for the instance-field race | The race requires overlapping compilation passes against different `alcops.json` files, which is not reproducible in unit tests. Existing `CognitiveComplexity` tests verify the functional behavior is unchanged. |
+| Threshold and LC0089i enablement live in the `CompilationStart` closure, not instance fields | Analyzer instances are shared across passes and projects (see `.claude/rules/sdk-analysis-scope.md`); instance fields would be overwritten by an overlapping pass with a different `alcops.json` or ruleset. |
+| Threshold read once from `ALCopsSettingsProvider` at compilation start, not per method | The provider caches statically by directory with no invalidation, so an `alcops.json` edit only applies after restart wherever it is read; a per-method read adds cost without changing staleness. |
+| `CodeBlockAction` rather than `SyntaxNodeAction`/`OperationAction` | The score needs one walk of the full body with nesting tracking; the body is available directly and the pre-computed operation tree serves recursion detection. |
+| Recursion detection in a separate compilation-scoped `CognitiveComplexityRecursionGraphService` | The call graph is built once per compilation while the complexity walk is per method; mixing the two scopes in one class would be wrong. |
+| LC0089 and LC0089i are `Info` and `isEnabledByDefault: false`; LC0089i is gated behind `IsDiagnosticEnabled` | A metric is not a violation and per-increment detail is noise unless a specific method is being investigated; the gate makes the walk-and-report cost zero when disabled. |
+| Guard-clause discount | Standard Cognitive Complexity: an early exit `if <condition> then exit/error/break/continue/skip/quit` simplifies flow and does not increment. |
 
-## Architecture
+## Deliberate non-reports
 
-- Registers `CompilationStartAction` → captures `complexityThreshold`, `isIncrementDiagnosticsEnabled`, and `CognitiveComplexityRecursionGraphService` as locals → registers `CodeBlockAction`.
-- Iterative stack-based walk (no recursion) of the method body counts flow-breaking structures, nesting penalties, logical-operator sequences, and guard-clause discounts.
-- Recursion detection: `CognitiveComplexityRecursionGraphService` builds an adjacency list of method-ID edges at compilation start; per-method, checks for cycles back to the current method via DFS.
+- LC0089 and LC0089i are never emitted unless explicitly enabled via `.editorconfig` or a ruleset.
+- Guard clauses (`if cond then exit/error/break/continue/skip/quit`) add no complexity, so methods made of early exits stay below the threshold.
 
 ## Known issues
 
-- `ALCopsSettingsProvider` caches the threshold statically by directory with no invalidation. Changing `alcops.json` requires restarting the language server. This is a pre-existing cross-cop limitation, not specific to this analyzer.
+- `ALCopsSettingsProvider` caches the threshold statically by directory with no invalidation; changing `alcops.json` requires restarting the language server. Cross-cop limitation, not specific to this analyzer.
+
+## Test notes
+
+- Fixtures are version-gated with `SkipTestIfVersionIsTooLow`: nested conditional expressions and `this` need `14.0`, `continue` needs `15.0`.
+- The shared-instance race has no regression fixture: it requires overlapping compilation passes against different `alcops.json` files, which unit tests cannot reproduce.
+
+## Settings
+
+| Setting | Default | Effect |
+|---|---|---|
+| `CognitiveComplexityThreshold` | `15` | Score above which LC0090 is reported. |

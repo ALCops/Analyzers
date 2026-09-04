@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/ALCops.PlatformCop/**/PageVariableSetRecordTemporaryRecord*"
+  - "src/ALCops.PlatformCop.Test/Rules/PageVariableSetRecordTemporaryRecord/**"
 ---
 
 # PC0036: PageVariableSetRecordTemporaryRecord
@@ -9,17 +10,21 @@ paths:
 
 Detects calls to `Page.SetRecord()` where the record argument is a temporary record. The SDK explicitly states "You cannot use a temporary record for the Record parameter" and such calls will fail at runtime.
 
+Registers `RegisterOperationAction` on `InvocationExpression`; main type `PageVariableSetRecordTemporaryRecord`.
+
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| Scope — Only `SetRecord` | SDK only documents restriction for SetRecord; other page methods (GetRecord, SetTableView, SetSelectionFilter) have no documented restriction |
-| TableType = Temporary — Not flagged unless variable has `temporary` keyword | `IRecordTypeSymbol.Temporary` is only true when the variable is declared as temporary |
-| Page.Run/RunModal — Not covered | Strict scope matching original LC0058 intent |
-| Standalone vs embedded in PC0017 — Standalone | ALCops one-concern-per-ID pattern |
+| Only `SetRecord` | The SDK documents the restriction for `SetRecord` alone; `GetRecord`, `SetTableView` and `SetSelectionFilter` have none |
+| Standalone rule instead of embedding in PC0017 | ALCops one-concern-per-ID pattern |
 
-## Architecture
+## Deliberate non-reports
 
-- Registers `OperationAction` for `InvocationExpression`
-- Checks: built-in method, name is "SetRecord", containing type is Page, single argument is a conversion from a temporary record
-- Reports with page variable name as `{0}` argument
+- Records of `TableType = Temporary` tables declared without the `temporary` keyword: `IRecordTypeSymbol.Temporary` is only true for the keyword.
+- `Page.Run`/`Page.RunModal` with a temporary record: strict scope matching the original LC0058 intent.
+- Other page methods (`GetRecord`, `SetTableView`, `SetSelectionFilter`): no documented restriction.
+
+## SDK facts
+
+- `IRecordTypeSymbol.Temporary` reflects the `temporary` variable keyword only, not the table's `TableType`.
