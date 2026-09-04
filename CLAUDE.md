@@ -55,6 +55,7 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.H
 - New shared component or convention → new `.claude/rules/<area>.md` with a `paths:` frontmatter scoped as narrowly as possible. Never add a rules file without `paths:` (it would load in every session).
 - Rules files document *why*, not *what*: no diagnostic-property tables, test-case lists, or file inventories — the code is the source of truth for those.
 - Knowledge needed whenever you edit matching files lives in `.claude/rules/`; procedural templates and checklists used only while running a skill live in `.claude/skills/*/references/`. Never keep the same content in both — leave a pointer.
+- Before opening a PR that touches `.claude/`, run `pwsh .claude/scripts/Validate-Rules.ps1`: it checks frontmatter, live `paths:` globs, rule-doc sections, link targets, and stale-fact patterns in the general guides.
 - If none of this applies to a change, say "No `.claude` doc changes needed" in the plan.
 
 ## Where to look
