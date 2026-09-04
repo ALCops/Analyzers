@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/ALCops.LinterCop/**/BuiltInDateTimeMethod*"
+  - "src/ALCops.LinterCop.Test/Rules/BuiltInDateTimeMethod/**"
 ---
 
 # LC0083: BuiltInDateTimeMethod
@@ -9,39 +10,35 @@ paths:
 
 Detects calls to outdated built-in date/time functions (`Date2DMY`, `Date2DWY`, `DT2Date`, `DT2Time`, `Format(... , 0, '<HOURS24|MINUTES|SECONDS|THOUSANDS>')`) and suggests the modern extension methods on `Date`, `Time`, and `DateTime` values (`.Date()`, `.Time()`, `.Day()`, `.Month()`, `.Year()`, `.DayOfWeek()`, `.WeekNo()`, `.Hour()`, `.Minute()`, `.Second()`, `.Millisecond()`). Ships with `BuiltInDateTimeMethodCodeFixProvider`.
 
+Registers `OperationAction` on `OperationKind.InvocationExpression`; main type `BuiltInDateTimeMethod`.
+
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| Version gate: `Fall2024OrGreater` | Extension methods introduced in BC25 |
-| Registration: `RegisterOperationAction` on `InvocationExpression` | Analyzer works on invocation operations, not raw syntax |
-| Method filter: `MethodKind == BuiltInMethod` | Cheap early exit; user-defined methods are never candidates |
-| Replacement selection: static `switch` in `GetReplacementMethod` keyed by method name (+ arg count where relevant) | Deterministic mapping; no reflection or metadata lookup |
-| `Date2DWY(x, 3)` no fix: returns `null` on purpose | Year part of `Date2DWY` can disagree with `.Year()` in ISO weeks spanning two years — silent skip is safer than incorrect fix |
-| Guard order: `IsFieldRefValueAccess` → `IsVariantOrJokerArgument` → replacement | FieldRef guard is a specific case; variant/joker guard is the general fallback; both must run before replacement generation |
-| `IsVariantOrJokerArgument`: skip when type is `Variant` **or** `Joker` | `FieldRef.Value` returns `NavTypeKind.Joker` (AL wildcard), **not** `Variant`. Without the Joker branch the analyzer would emit invalid `.Date()`/`.Time()` suggestions for dynamic values |
-| `IsFieldRefValueAccess`: explicit `.Value`-on-FieldRef guard (belt & suspenders alongside the Joker check) | Defensive redundancy: even if a future SDK version stopped typing `.Value` as `Joker`, this guard still catches the case via the operation shape |
-| `IsFieldRefValueAccess` operation shapes: both `IInvocationExpression` **and** `IFieldAccess` | Current SDK models `FieldRef.Value` as a getter invocation. `IFieldAccess` branch is intentionally defensive against future SDK versions remodelling it as a property/field access — must not be pruned as dead code |
-| `IsFieldRefValueAccess` member scope: only `.Value` (via `IsSameName`) | Other FieldRef members (`.Name`, `.GetFilter()`, `.Number`, …) intentionally flow through the normal analysis path |
-| Diagnostic properties bag: `ReplacementMethodName` string only | Minimal state passed to the code fix; syntax reconstruction happens in the code fix itself |
+| Version gate `Fall2024OrGreater` | The extension methods were introduced in BC25. |
+| Explicit `IsFieldRefValueAccess` guard kept alongside the `Variant`/`Joker` type check, matching both `IInvocationExpression` and `IFieldAccess` shapes | Defensive redundancy: if a future SDK stops typing `FieldRef.Value` as `Joker` or remodels it as a property access, the shape-based guard still catches it. The `IFieldAccess` branch must not be pruned as dead code. |
+| Only `.Value` is guarded among `FieldRef` members | `.Name`, `.GetFilter()`, `.Number` and the rest intentionally flow through the normal analysis path. |
+| Diagnostic properties carry only `ReplacementMethodName` | Minimal state handed to the CodeFix; syntax reconstruction happens in the fix itself. |
 
-## Architecture
+## Deliberate non-reports
 
-### Analysis flow
-
-1. Skip obsolete symbols and non-invocation operations.
-2. Skip non-`BuiltInMethod` invocations and calls with zero arguments.
-3. `IsFieldRefValueAccess` — early return when the first argument is `.Value` on a `FieldRef` receiver.
-4. `IsVariantOrJokerArgument` — early return when the first argument's static type is `Variant` or `Joker`.
-5. `GetReplacementMethod` — map `(methodName, argCount, discriminator)` to a synthetic `InvocationExpressionSyntax`.
-6. Report LC0083 with the replacement carried in `ImmutableDictionary` properties for the code fix.
+- User-defined methods: only `MethodKind == BuiltInMethod` invocations are candidates.
+- `Date2DWY(x, 3)`: the year part can disagree with `x.Year()` in ISO weeks straddling January, so neither a diagnostic nor a fix is produced.
+- Calls whose first argument is statically typed `Variant` or `Joker` (including `FieldRef.Value`): a `.Date()`/`.Time()` suggestion on a dynamic value would be invalid.
+- Obsolete symbols (standard ALCops convention).
 
 ## Known issues
 
-- **`FieldRef.Value` is not `Variant`, it is `Joker`.** The AL SDK exposes the dynamic result type of `FieldRef.Value` (and the like) as `NavTypeKind.Joker`, not `NavTypeKind.Variant`. A plain Variant check therefore misses these expressions. `IsVariantOrJokerArgument` covers both; `IsFieldRefValueAccess` is a defensive second line for the specific `.Value` case.
-- **`Date2DWY(x, 3)` intentionally unfixed.** For week-year splits (ISO week 1/52-53 straddling January), `Date2DWY`'s year output and `x.Year()` can differ. The mapping returns `null` to suppress the fix; the diagnostic is not reported for this combination either.
-- **Format reasoning is string-based.** `GetFormatReplacement` matches on the literal format string only. If someone writes `Format(TextVar, 0, '<HOURS24>')`, the analyzer would still propose `TextVar.Hour()` — nonsensical but pre-existing and unrelated to the FieldRef work. No planned change.
+- `Format` reasoning is string-based: `Format(TextVar, 0, '<HOURS24>')` would still be offered `TextVar.Hour()`. Pre-existing and nonsensical only for misuse; no planned change.
+
+## SDK facts
+
+- `FieldRef.Value` (and similar dynamic accessors) has static type `NavTypeKind.Joker`, not `NavTypeKind.Variant`; a plain Variant check misses it.
+- The current SDK models `FieldRef.Value` as a getter `IInvocationExpression`, not as an `IFieldAccess`.
 
 ## CodeFix: BuiltInDateTimeMethodCodeFixProvider
 
-`BuiltInDateTimeMethodCodeFixProvider` reads `ReplacementMethodName` from the diagnostic properties and rewrites `Outer(<arg>[, extras])` into `<arg>.Replacement()`. `arg` is preserved verbatim from the original source.
+| Decision | Rationale |
+|---|---|
+| Rewrites `Outer(<arg>[, extras])` into `<arg>.Replacement()` using the `ReplacementMethodName` property, keeping `<arg>` verbatim | The analyzer already decided the replacement; preserving the argument text avoids reformatting user code. |

@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/ALCops.ApplicationCop/**/RunPageImplementPageManagement*"
+  - "src/ALCops.ApplicationCop.Test/Rules/RunPageImplementPageManagement/**"
 ---
 
 # AC0006: Use "Page Management" codeunit instead of Page.Run
@@ -9,29 +10,30 @@ paths:
 
 Detects `Page.Run(...)` and `Page.RunModal(...)` calls that can be replaced with the `"Page Management"` codeunit's methods (`PageRun`, `PageRunModal`, `PageRunAtField`). The CodeFix refactors the call and adds the necessary variable declaration and `using` directive.
 
+Registers `RegisterOperationAction` on `InvocationExpression`; main type `RunPageImplementPageManagement`.
+
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| Add `using` only when namespace present | Files without `namespace` resolve globally; adding `using` would be unnecessary |
-| Skip if `using Microsoft.Utilities;` exists | Prevents duplicates during FixAll or when user already has the import |
-| Sorted insertion for usings | Maintains alphabetical order among existing `using` directives |
-| Replicate sorted insertion (not reflection) | SDK's `NamespaceActionUtilities` is `internal`; public API (`CompilationUnitSyntax.WithUsings`) suffices |
-| Case-insensitive duplicate check | AL is case-insensitive; `Microsoft.Utilities` == `microsoft.utilities` |
+| Only a literal `0` or a `Page::MyPage` option access is accepted as the page argument | Any other expression (variables, procedure results) cannot be mapped to a Page Management method statically. |
+| For the `Page::X` form the record argument must be one of the well-known BC tables in the `SupportedRecords` dictionary | Page Management only knows how to open cards and lists for those tables; anything else would be a wrong suggestion. |
 
-## Architecture
+## Deliberate non-reports
 
-Triggers on `InvocationExpression` operations where:
-1. Target method is a `BuiltInMethod` on a `Page` type with >= 2 arguments
-2. Not `EnqueueBackgroundTask`
-3. Return type `Action` is not used (Page Management doesn't support it)
-4. First argument is either literal `0` or an `OptionAccessExpression` (e.g., `Page::MyPage`)
-5. For `OptionAccessExpression`, the record must be in the `SupportedRecords` dictionary (well-known BC tables)
+- Calls whose returned `Action` is consumed: the Page Management methods do not return it.
+- `Page.EnqueueBackgroundTask`, although it is a `Page` built-in with two or more arguments.
+- Calls whose page or record argument falls outside the two decisions above.
+
+## Test notes
+
+- The `HasFixWithNamespace` cases require AL 16.0 (namespaces).
 
 ## CodeFix: RunPageImplementPageManagementCodeFixProvider
 
-The CodeFix (`RunPageImplementPageManagementCodeFixProvider`) performs three transformations:
-
-1. **Replace invocation**: `Page.Run(0, Rec)` → `PageManagement.PageRun(Rec)`
-2. **Add variable**: If no existing `Codeunit "Page Management"` variable exists (local or global), adds `PageManagement: Codeunit "Page Management"` as a local variable
-3. **Add using directive**: If the file has a `namespace` declaration and `using Microsoft.Utilities;` is not already present, adds it in sorted order among existing usings
+| Decision | Rationale |
+|---|---|
+| Reuses an existing local or global `Codeunit "Page Management"` variable; otherwise declares a local `PageManagement` | Avoids a duplicate declaration when the object already has one. |
+| Adds `using Microsoft.Utilities;` only when the file declares a `namespace` | Files without a namespace resolve globally; the `using` would be unnecessary. |
+| Skips the `using` when one already exists, compared case-insensitively | Prevents duplicates during FixAll or when the user already imported it; AL treats `Microsoft.Utilities` and `microsoft.utilities` as the same name. |
+| Inserts the `using` in alphabetical order through the public `CompilationUnitSyntax.WithUsings` instead of reflecting on the SDK's sorter | `NamespaceActionUtilities` is `internal`; replicating the sorted insertion with public API is enough and keeps existing directives ordered. |

@@ -1,56 +1,53 @@
 ---
 paths:
   - "src/ALCops.FormattingCop/**/PermissionValuesShouldBeLowercase*"
+  - "src/ALCops.FormattingCop.Test/Rules/PermissionValuesShouldBeLowercase/**"
 ---
 
 # FC0006: PermissionValuesShouldBeLowercase
 
 ## Purpose
 
-Detects uppercase permission values (e.g. `RIMD`, `Rimd`, `X`) in the `Permissions` property of application objects. Casing has no runtime effect there; both cases grant the same indirect permission, but uppercase wrongly suggests direct permissions are granted (a semantic that only exists in permissionset objects and the `InherentPermissions` property). Applies to read/insert/modify/delete (`rimd`) and execute (`x`) values alike. Provides a CodeFix that lowercases all permission values in the property. Origin: discussion #383 (execute coverage confirmed by rvanbekkum in the discussion).
+Detects uppercase permission values (`RIMD`, `Rimd`, `X`) in the `Permissions` property of application objects. Casing has no runtime effect there, but uppercase wrongly suggests direct permissions are granted, a semantic that only exists in permissionset objects and the `InherentPermissions` property. Applies to read/insert/modify/delete (`rimd`) and execute (`x`) values alike; a CodeFix lowercases all permission values in the property.
+
+Registers `RegisterSyntaxNodeAction` on `SyntaxKind.PermissionPropertyValue`; main type `PermissionValuesShouldBeLowercase`.
+
+**References:** [discussion #383](https://github.com/ALCops/Analyzers/discussions/383) (execute coverage confirmed there by rvanbekkum)
 
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| Syntax-node action on `PermissionPropertyValue` | Rare node, no compilation-wide iteration; reaches nested requestpage properties |
-| One diagnostic per property, not per entry | Matches FC0004; the fix lowercases the whole list |
-| Diagnostic on `PropertySyntax` node | Ensures CodeFix can find the node via `FindNode` + ancestor/descendant traversal (same as FC0004) |
-| Exclude permissionset(extension) via syntax ancestors | Deterministic, no semantic model lookup needed |
-| Exclude `AccessByPermission` by parent property name (denylist) | It shares the `PermissionPropertyValue` node kind (`ParseAccessByPermission`), but is a UI-visibility mask with no direct/indirect semantics; uppercase is the Microsoft-documented form. Denylist keeps the diff small and preserves behaviour for every other property. Issue #474 |
-| Skip obsolete objects | Standard convention (`ctx.IsObsolete()`) |
-| `ContainsUppercase` is `internal static` on the analyzer | Shared with the CodeFix within the assembly |
-| Execute (`X`) coverage via generic uppercase check, tested with error-tolerant fixtures | `X` in scope only occurs in code with a compile error (AL0195); test methods `*InDocumentWithErrors` use `ThrowsWhenInputDocumentContainsError = false` (same pattern as `ApplicationCop.Test/TestHelper.cs`) |
+| Syntax-node action on the rare `PermissionPropertyValue` node instead of compilation-wide object iteration | No compilation-wide work, and it reaches requestpage properties nested in reports/xmlports, which `GetDeclaredApplicationObjectSymbols()` cannot. |
+| One diagnostic per property, reported on the `PropertySyntax` node, not per entry | Matches FC0004; the fix lowercases the whole list and locates the node the same way. |
+| Permissionset(extension) exclusion via syntax ancestors, not the semantic model | Deterministic and cheap. |
+| `AccessByPermission` excluded by parent property name (denylist) | It shares the node kind but is a UI-visibility mask with no direct/indirect semantics, and uppercase is the Microsoft-documented form there. A denylist preserves behaviour for every other property ([#474](https://github.com/ALCops/Analyzers/issues/474)). |
+| Execute (`X`) coverage via a generic any-uppercase check instead of enumerating `RIMD` letters | A future SDK that legalizes non-`tabledata` entries at object level is covered automatically. |
 
-## Architecture
+## Deliberate non-reports
 
-```
-src/ALCops.FormattingCop/
-├── Analyzers/
-│   └── PermissionValuesShouldBeLowercase.cs           # Analyzer (SyntaxNodeAction)
-└── CodeFixes/
-    └── PermissionValuesShouldBeLowercaseCodeFixProvider.cs  # CodeFix (lowercase tokens)
-```
+- `permissionset` and `permissionsetextension` objects: casing is semantic there (uppercase = direct, lowercase = indirect).
+- `AccessByPermission` values (see design decisions).
+- Obsolete objects (`ctx.IsObsolete()`).
+- `InherentPermissions`: a different node kind (`InherentPermissionsPropertyValue`), so it never reaches the analyzer.
+- Non-`tabledata` entries with `X` on object-level `Permissions` (`codeunit Foo = X`): parser error recovery drops them entirely, so the analyzer cannot see the token.
 
-### Analysis flow
+## SDK facts
 
-1. `RegisterSyntaxNodeAction` on `EnumProvider.SyntaxKind.PermissionPropertyValue` (rare node; cheap pre-filter, covers requestpages nested in reports/xmlports which `GetDeclaredApplicationObjectSymbols()` cannot reach)
-2. Skip obsolete symbols via `ctx.IsObsolete()`
-3. Skip when any ancestor is a `PermissionSet`/`PermissionSetExtension` object (casing is semantic there: uppercase = direct, lowercase = indirect)
-4. Skip when the parent `PropertySyntax` is named `AccessByPermission` (same node kind, different property; see SDK facts)
-5. Flag when any `PermissionSyntax.Permissions` token text contains an uppercase char
-6. Report one diagnostic per property on the `PropertySyntax` node (parent of the value node)
-
-## SDK facts (verified against nav-sdk-source and empirically)
-
-- The `Permissions` property exists on: Codeunit, Table, Page, Report, RequestPage, XmlPort, Query, PermissionSet, PermissionSetExtension (`PropertyInfoLookup`). Extension objects do not support it.
-- **The object-level `Permissions` property only accepts `tabledata` entries.** Non-`tabledata` entries (`codeunit X = X` etc.) are rejected with `AL0104: Syntax error, 'tabledata' expected`, despite Microsoft Learn docs showing such examples. Only permissionset objects accept other object types (parsed via `ParsePermissionSetPermissionListPropertyValue`).
-- Both object-level and permissionset permission lists produce `PermissionPropertyValueSyntax` (same `SyntaxKind.PermissionPropertyValue`), hence the explicit permissionset ancestor exclusion.
-- **`AccessByPermission` also produces `PermissionPropertyValueSyntax`** (a single entry, built by `ObjectParser.ParseAccessByPermission`), so registering on the node kind alone does not scope the rule to `Permissions`. It exists on table fields, page fields/parts/actions, pages and reports (`PropertyInfoLookup`) and needs an explicit parent-property-name exclusion.
-- `InherentPermissions` produces a different node kind (`InherentPermissionsPropertyValue`), so it is naturally excluded by the registration.
+- The `Permissions` property exists on Codeunit, Table, Page, Report, RequestPage, XmlPort, Query, PermissionSet and PermissionSetExtension (`PropertyInfoLookup`); extension objects do not support it.
+- The object-level `Permissions` property only accepts `tabledata` entries; other entries are rejected with `AL0104: Syntax error, 'tabledata' expected`, despite Microsoft Learn examples showing them. Only permissionset objects accept other object types (`ParsePermissionSetPermissionListPropertyValue`).
+- Object-level and permissionset permission lists both produce `PermissionPropertyValueSyntax`, hence the explicit permissionset ancestor exclusion.
+- `AccessByPermission` also produces `PermissionPropertyValueSyntax` (a single entry via `ObjectParser.ParseAccessByPermission`) on table fields, page fields/parts/actions, pages and reports, so the node kind alone does not scope the rule to `Permissions`.
 - The parser uppercases permission values before validation (`GetPermissionValuesTokenWithError`), so any casing parses cleanly.
-- **Execute permission (`X`/`x`) reachability**: on object-level `Permissions`, `tabledata Foo = X` parses into the tree but carries `AL0195: Invalid permission kind. Expected: 'RIMD'` — the analyzer still sees the token and flags it. Non-`tabledata` entries (`codeunit Foo = X`) are dropped entirely by parser error recovery (`SkipBadPermissionSyntaxToken`); their `X` token never reaches a `PermissionSyntax` node, so the analyzer cannot see it (verified empirically). Since the analyzer checks every `PermissionSyntax.Permissions` token for any uppercase char, a future SDK that legalizes non-tabledata entries is covered automatically.
+- `tabledata Foo = X` on object-level `Permissions` parses into the tree but carries `AL0195: Invalid permission kind. Expected: 'RIMD'`; non-`tabledata` entries with `X` are dropped by `SkipBadPermissionSyntaxToken` and never form a `PermissionSyntax` node (verified empirically).
+
+## Test notes
+
+- `X` in scope only occurs in code carrying AL0195, so the `*InDocumentWithErrors` test methods set `ThrowsWhenInputDocumentContainsError = false` (same pattern as `ApplicationCop.Test/TestHelper.cs`).
 
 ## CodeFix: PermissionValuesShouldBeLowercaseCodeFixProvider
 
-`PermissionValuesShouldBeLowercaseCodeFixProvider` collects all `Permissions` tokens containing uppercase chars and replaces them via `root.ReplaceTokens` with `SyntaxFactory.Identifier(text.ToLowerInvariant()).WithTriviaFrom(original)`. Entry order, formatting, and trivia are preserved. Supports FixAll via BatchFixer.
+| Decision | Rationale |
+|---|---|
+| All uppercase `Permissions` tokens in the property are replaced in one `ReplaceTokens` call with `ToLowerInvariant()` identifiers carrying `WithTriviaFrom(original)` | Entry order, formatting and trivia are preserved; one fix per property matches the one-diagnostic-per-property report. |
+| FixAll via `BatchFixer` | One diagnostic per property, no overlapping edits. |

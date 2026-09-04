@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/ALCops.PlatformCop/**/ReportLayoutPropertyLength*"
+  - "src/ALCops.PlatformCop.Test/Rules/ReportLayoutPropertyLength/**"
 ---
 
 # PC0032: ReportLayoutPropertyLength
@@ -9,6 +10,8 @@ paths:
 
 Detects `Caption` and `Summary` properties on report layout blocks (`rendering > layout`) that exceed 250 characters. The AL compiler allows any length, but at runtime Business Central throws "The length of the string is N, but it must be less than or equal to 250 characters" when a user opens the Report Layout Selection page. This is a hard crash with no workaround.
 
+Registers `RegisterSyntaxNodeAction` on `SyntaxKind.ReportLayout`; main type `ReportLayoutPropertyLength`.
+
 **References:**
 - [GitHub Issue #176](https://github.com/ALCops/Analyzers/issues/176)
 
@@ -16,31 +19,12 @@ Detects `Caption` and `Summary` properties on report layout blocks (`rendering >
 
 | Decision | Rationale |
 |---|---|
-| Cop — PlatformCop (PC0032) | Undocumented platform DB field limit causing runtime crash, same class as PC0028 (TableRelationFieldLength) |
-| Severity — Error | 100% causes hard runtime crash when user opens Report Layout Selection page |
-| Category — Design | Structural correctness issue |
-| Registration — `RegisterSyntaxNodeAction` on `SyntaxKind.ReportLayout` | Direct syntax access to layout properties |
-| Properties checked — Caption, Summary | Both stored in 250-char DB fields |
-| Max length — 250 (constant) | Empirically confirmed from runtime error; undocumented in MS Learn |
-| CodeFix — None | Auto-truncating text would produce nonsensical content |
-| Version gate — None | `rendering > layout` blocks exist since BC21 (Spring 2023); all supported BC versions have them |
-| Skip obsolete — Yes | Standard ALCops convention |
-| Report/reportextension — Both checked | Layout blocks can appear in either object type |
+| PlatformCop | Undocumented platform DB field limit causing a runtime crash, same class as PC0028 (TableRelationFieldLength) |
+| Severity Error, category Design | Always crashes the Report Layout Selection page; a structural correctness issue |
+| `Caption` and `Summary` checked against a constant 250, in both report and reportextension layouts | Both properties are stored in 250-char DB fields; the limit is confirmed empirically from the runtime error and undocumented on MS Learn |
+| No CodeFix | Auto-truncating text would produce nonsensical content |
+| No version gate | `rendering > layout` blocks exist since BC21; all supported versions have them |
 
-## Architecture
+## Deliberate non-reports
 
-### Registration strategy
-
-Uses `RegisterSyntaxNodeAction` on `SyntaxKind.ReportLayout` to analyze each layout block individually.
-
-### Analysis flow
-
-1. Skip obsolete symbols
-2. Check `Caption` property via `GetPropertyValue("Caption")` as `LabelPropertyValueSyntax`
-3. Extract text via `labelProperty.Value.LabelText.GetLiteralValue()?.ToString()`
-4. If text length > 250, report diagnostic at property location
-5. Repeat for `Summary` property
-
-### Pattern reference
-
-Follows the same approach as `EmptyCaptionLocked` (AC0033), which registers on `SyntaxKind.ReportLayout` and reads Caption via `GetPropertyValue("Caption")` returning `LabelPropertyValueSyntax`.
+- Obsolete symbols (standard ALCops convention).
