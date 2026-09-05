@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "nav-sdk-docs": {
+      "source": {
+        "source": "github",
+        "repo": "ALCops/nav-sdk-docs"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "nav-sdk-docs@nav-sdk-docs": true
+  }
+}

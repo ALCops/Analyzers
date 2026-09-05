@@ -40,7 +40,7 @@ Registers `{Register*Action}` on `{kinds}`; main type `{Class or Walker}`. {One 
 
 <!-- Verified SDK behaviours the rule depends on that are not derivable from the analyzer code. Omit when none. -->
 
-- {Fact} (verified against SDK {version} in `../nav-sdk-source`)
+- {Fact} (docs: nav-sdk-docs `docs/{folder}/{page}.md`; verified against SDK {version} in `../nav-sdk-source`)
 
 ## Test notes
 

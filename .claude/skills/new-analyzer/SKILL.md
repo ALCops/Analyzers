@@ -30,11 +30,12 @@ Knowledge you need loads automatically when you open files under `Analyzers/` an
 
 ## Steps
 
-1. **Study the SDK first (mandatory).** Locate the syntax kinds, operation kinds, and symbol members you need in the decompiled NAV SDK source; note any API absent on `netstandard2.1` (→ version gate or `#if NETSTANDARD2_1` stub). Find an existing analyzer with the same registration shape and reuse its pattern and `ALCops.Common` helpers. Feed the version-gate finding back into the gate above.
+1. **Study the SDK first (mandatory).** Start with `/nav-sdk-docs:sdk-lookup` for every syntax kind, operation kind, symbol member and registration you plan to use; read the docs page it names (registrations and passes: `docs/50-diagnostics/`, operations: `docs/40-operations/`, symbols: `docs/20-symbols/`) and open `../nav-sdk-source` only for what the docs do not cover. Record the four availability cells of every member that is not `yes` at `ns2.0 12.0` (→ version gate or `#if NETSTANDARD2_1` stub) and feed them into the gate above. Find an existing analyzer with the same registration shape and reuse its pattern and `ALCops.Common` helpers.
 2. **Wire the diagnostic.** `DiagnosticIds.cs` field → `ALCops.{Cop}Analyzers.resx` (`{RuleName}Title`, `{RuleName}MessageFormat`, `{RuleName}Description`) → `DiagnosticDescriptors.cs` entry with help URI `https://alcops.dev/docs/analyzers/{copslug}/{id}/`. If configurable: `ALCopsSettings.cs` + `alcops.schema.json` together (`.claude/rules/settings-schema.md`). Code shapes: `references/wiring.md`.
 3. **Write the analyzer** in `src/ALCops.{Cop}/Analyzers/{RuleName}.cs`: `[DiagnosticAnalyzer]`, `sealed`, extends plain `DiagnosticAnalyzer`, narrowest `Register*Action`, no state carried across callbacks, `IsObsolete()` check first, `GetSymbolSafe()` in operation callbacks, report at the most specific location. Templates per registration shape: `references/analyzer-template.md`.
 4. **Write tests** in `src/ALCops.{Cop}.Test/Rules/{RuleName}/`: class from `references/test-class-template.md`; `.al` fixtures in `HasDiagnostic/` and `NoDiagnostic/` with `[|...|]` markers in both; one fixture per confirmed design decision, including the deliberate non-reports.
 5. **Build and run:** `dotnet build ALCops.sln`, then `dotnet test src/ALCops.{Cop}.Test/ --filter "FullyQualifiedName~{RuleName}"`. Report the real output.
+   Then run `/code-review` on the branch: it applies `REVIEW.md` (house rules and the NAV SDK checklist). Fix or justify every correctness finding before committing.
 6. **Document.** Create `.claude/rules/diagnostics/{id-lowercase}-{kebab-slug}.md` from `references/rule-doc.md` with `paths: src/ALCops.{Cop}/**/{RuleName}*`; every gate answer becomes a Design-decision row with its rationale, and every deliberate non-report becomes a bullet under Deliberate non-reports.
 7. **Remind:** docs-site page required at `../alcops.dev/content/docs/analyzers/{copslug}/{ID}.md` (sibling repo; out of scope unless asked).
 8. Commit `feat({ID}): <summary>` on `feat/{id}-<slug>`; never on `main`.
@@ -44,6 +45,7 @@ Knowledge you need loads automatically when you open files under `Analyzers/` an
 | Mistake | Fix |
 |---|---|
 | Inventing severity / enabled-by-default / category because the issue did not say | Stop at the gate and ask; these are never derivable. |
+| Deciding the version gate from memory or from the latest SDK source | Quote the `reference/` availability cells via `/nav-sdk-docs:sdk-lookup`; only the tables know what 12.0 has. |
 | `MessageFormat` placeholder count ≠ arguments passed to `Diagnostic.Create` (#415) | Count `{n}` in the resx and match the `messageArgs`; add a fixture whose message is asserted. |
 | Stray characters in resx text, e.g. an unbalanced backtick (#397) | Proofread the three resx entries; they render verbatim in the editor. |
 | Deriving from `ALCopsDiagnosticAnalyzer` / `{Cop}Analyzer` | Extend plain `DiagnosticAnalyzer` (`analyzer-exception-harness.md`). |
