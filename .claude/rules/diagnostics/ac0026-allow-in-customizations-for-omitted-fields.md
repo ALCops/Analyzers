@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/ALCops.ApplicationCop/**/AllowInCustomizationsForOmittedFields*"
+  - "src/ALCops.ApplicationCop.Test/Rules/AllowInCustomizationsForOmittedFields/**"
 ---
 
 # AC0026: AllowInCustomizationsForOmittedFields
@@ -9,67 +10,30 @@ paths:
 
 Detects table/table extension fields that are not placed on any page and do not have `AllowInCustomizations` explicitly set. Fields omitted from pages should declare `AllowInCustomizations = Always` (or `Never`) so page customizers know whether the field is intentionally hidden.
 
+Registers `RegisterCompilationStartAction` (table-to-page index) with an inner `RegisterSymbolAction` on `Table` and `TableExtension`; main type `AllowInCustomizationsForOmittedFields`.
+
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| Version gate: `AddPageControlInPageCustomization` feature | Full netstandard2.1 support. |
-| Architecture: CompilationStart with lightweight index + lazy field resolution | Cross-object analysis split into two levels: (1) cheap table-to-page index at CompilationStart, (2) per-table field resolution deferred to AnalyzeSymbol via `ConcurrentDictionary<ITableTypeSymbol, Lazy<HashSet<IFieldSymbol>>>`. Tables that exit early never trigger expensive FlattenedControls materialization. |
-| Data structure: `HashSet<ITableTypeSymbol>` + `Dictionary<..., List<IPageTypeSymbol>>` + `Dictionary<..., List<IPageExtensionTypeSymbol>>` + `ConcurrentDictionary<..., Lazy<HashSet<IFieldSymbol>>>` | Level 1: which tables have pages and which pages/extensions reference them (read-only after construction). Level 2: lazy per-table field cache, computed at most once per table on-demand. |
-| Page extensions resolved via `ext.Target.GetTypeSymbol()` to `IPageTypeSymbol` | Extension's `.Target` is the extended page object; its `RelatedTable` gives the source table. |
-| API pages excluded | API pages don't use AllowInCustomizations. |
-| Table extensions with no page: check `BaseTableHasLookupOrDrillDown` | Table extensions should still flag if the base table has LookupPageId or DrillDownPageId (implicit page usage). |
-| Field filtering: user ID range, non-local/protected, non-FlowFilter, enabled, non-obsolete, supported types | Standard field filtering; unsupported types (Blob, Media, MediaSet, RecordId, TableFilter) are excluded. |
-| OriginalDefinition for field comparison: `field.OriginalDefinition` cast to `IFieldSymbol` | Page controls reference field original definitions, not the field instances from table extensions. |
-| Symbol equality: default (reference) equality for `ITableTypeSymbol` keys | SDK uses reference equality within the same compilation's symbol set. |
-| Skip obsolete | Standard ALCops convention. |
+| Version-gated on the `AddPageControlInPageCustomization` feature, no netstandard2.1 stub | `AllowInCustomizations` only exists on runtimes that have the feature; every TFM compiles the same code. |
+| Two-level lazy index: a cheap table-to-pages/page-extensions map at CompilationStart, and per-table field resolution deferred to the symbol callback through a `ConcurrentDictionary<ITableTypeSymbol, Lazy<HashSet<IFieldSymbol>>>` | Calling `GetDeclaredApplicationObjectSymbols()` per table cost 8.6s on the Base App, and eagerly materializing `FlattenedControls` for all 2591 pages still cost 2.9s. Tables that exit early never pay for control materialization, and the remaining work runs in parallel across symbol callbacks. |
+| Fields placed by a page extension (`AddedControlsFlattened`) count as placed | The extension's `Target` is the extended page whose `RelatedTable` identifies the source table. |
+| API pages are not counted as placements | API pages do not use `AllowInCustomizations`. |
+| Table-extension fields are flagged even without a page when the base table declares `LookupPageId` or `DrillDownPageId` | Those properties imply page usage. |
+| Cross-checks page placement, unlike AppSourceCop AS0138 (`RuleUseAllowInCustomizationsProperty`) | AS0138 flags every field without `AllowInCustomizations`; AC0026 only flags fields that appear on no page. |
 
-## Architecture
+## Deliberate non-reports
 
-### Registration strategy
+- Obsolete tables and extensions, and objects that already set `AllowInCustomizations` at table/tableextension level.
+- Fields outside the user ID range, local or protected fields, FlowFilters, disabled or obsolete fields, and unsupported types (`Blob`, `Media`, `MediaSet`, `RecordId`, `TableFilter`).
 
-Uses `RegisterCompilationStartAction` to build page lookups once per compilation, then `RegisterSymbolAction` for `Table` and `TableExtension` symbols.
+## SDK facts
 
-### Performance-critical design
+- Page controls reference a field's `OriginalDefinition`, not the field instance seen through a table extension; compare on `field.OriginalDefinition as IFieldSymbol`.
+- `ITableTypeSymbol` keys use default reference equality, which is stable within one compilation's symbol set.
+- `FlattenedControls` and `AddedControlsFlattened` are SDK `Lazy<ImmutableArray>` properties and are safe to read concurrently.
 
-**Problem:** The original implementation called `compilation.GetDeclaredApplicationObjectSymbols()` per table (~1500 times on the Base App), taking 8.6s. Phase 1 moved to a single call in CompilationStart but eagerly materialized `FlattenedControls` for all 2591 pages and iterated ~75k controls, costing 2.9s.
+## Test notes
 
-**Solution (two-level lazy architecture):**
-
-**Level 1 — `BuildTableToPageIndex()` (CompilationStart, sequential):**
-- Single `GetDeclaredApplicationObjectSymbols()` call
-- For each page: record `table → List<IPageTypeSymbol>` and add table to `tablesWithPages`
-- For each page extension: record `table → List<IPageExtensionTypeSymbol>`
-- Does NOT access `FlattenedControls` or `AddedControlsFlattened` (deferred)
-- Cost: ~500ms (just symbol iteration + `RelatedTable` resolution)
-
-**Level 2 — `ResolveFieldsOnPages()` (AnalyzeSymbol, concurrent, lazy):**
-- `ConcurrentDictionary<ITableTypeSymbol, Lazy<HashSet<IFieldSymbol>>>` caches per-table results
-- Factory: iterates `tableToPages[table]` → `FlattenedControls` + `tableToPageExtensions[table]` → `AddedControlsFlattened`
-- Computed at most once per table (thread-safe via `Lazy<T>` default mode)
-- Parallelized across AnalyzeSymbol threads (4+ cores → ~125ms wall-clock)
-- Tables that exit early (obsolete, no candidates, AllowInCustomizations set, etc.) never trigger computation
-
-### Analysis flow
-
-1. **CompilationStart**: `BuildTableToPageIndex()` builds lightweight index (no control iteration)
-2. **PerSymbol (Table/TableExtension)**:
-   - Version gate check, obsolete check, AllowInCustomizations on object check
-   - Resolve to `ITableTypeSymbol` via `TryGetTableOrTargetTable()`
-   - Get candidate fields via `GetCandidateFields()`
-   - Check if table has pages (HashSet lookup)
-   - For table extensions without pages, check `BaseTableHasLookupOrDrillDown()`
-   - **Lazy resolve:** `fieldRefCache.GetOrAdd(table, Lazy<...>).Value` triggers field resolution only if needed
-   - For each candidate field, check if it's referenced on any page (HashSet lookup)
-   - Report diagnostic for unreferenced fields
-
-### Concurrency safety
-
-- `BuildTableToPageIndex` runs once before any `SymbolAction` callbacks. The `tableToPages` and `tableToPageExtensions` dictionaries are construction-complete and never modified after, safe for concurrent reads.
-- `ConcurrentDictionary.GetOrAdd(key, valueFactory)` with `Lazy<T>` ensures single computation per table key.
-- `Lazy<T>` with default `ExecutionAndPublication` mode ensures thread safety.
-- `FlattenedControls` and `AddedControlsFlattened` are SDK `Lazy<ImmutableArray>` properties, safe for concurrent access.
-
-## Relationship to Microsoft's AS0138
-
-Microsoft's `RuleUseAllowInCustomizationsProperty` (AS0138 in AppSourceCop) is simpler: it only checks if AllowInCustomizations is set on fields, without the page-reference cross-check. AC0026 is more sophisticated, only flagging fields that are NOT on any page.
+- Table-extension fixtures are gated on 13.0 (same-module target); the fixtures with object-level `AllowInCustomizations` are gated on 16.0.

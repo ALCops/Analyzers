@@ -1,91 +1,59 @@
 ---
 paths:
   - "src/ALCops.FormattingCop/**/PermissionDeclarationOrder*"
+  - "src/ALCops.FormattingCop.Test/Rules/PermissionDeclarationOrder/**"
+  - "src/ALCops.Common/Permissions/PermissionEntryComparer.cs"
+  - "src/ALCops.Common/Permissions/NaturalStringComparer.cs"
+  - "src/ALCops.Common/Permissions/PermissionRegionGroup.cs"
 ---
 
 # FC0004: PermissionDeclarationOrder
 
 ## Purpose
 
-Detects `Permissions` property entries that are not sorted alphabetically by (type keyword, object name). Provides a CodeFix that reorders the entries and converts single-line format to multi-line when there are 2+ entries.
+Detects `Permissions` property entries that are not in the order the AZ AL Dev Tools "Sort Permissions" command produces ("Option B" in [#245](https://github.com/ALCops/Analyzers/issues/245), chosen by community vote). Provides a CodeFix that reorders the entries in place, preserving layout and `#region` blocks, and converts single-line lists to multi-line.
+
+Registers `RegisterCompilationAction`, one diagnostic per object on the `PropertySyntax`; main type `PermissionDeclarationOrder` (sorting lives in `ALCops.Common/Permissions`).
 
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| `RegisterCompilationAction` | Same pattern as AC0032; iterates all objects in one pass |
-| One diagnostic per object, not per entry | The fix reorders the entire list; per-entry diagnostics would be noise |
-| Diagnostic on `PropertySyntax` node | Ensures CodeFix can find the node via `FindNode` + ancestor/descendant traversal |
-| Type+name sorting applied globally (affects AC0031/AC0032) | `ArePermissionsSorted` was refactored from name-only to type+name; consistent behavior across all permission rules |
-| CodeFix always outputs multi-line for 2+ entries | Consistent formatting; single-line permissions are hard to scan |
-| Single entry stays single-line | No formatting benefit from multi-line with one entry |
-| Permission chars casing preserved | Each entry keeps its original `r`/`R`/`rimd`/`RIMD`/`X` casing |
+| Mirror AZ AL Dev Tools verbatim, quirks included | The ecosystem has three incompatible orders (AL SDK generator, AZ, old FC0004) and Microsoft's own apps are inconsistent; the community picked AZ so that "Sort Permissions" and FC0004 never disagree. Every rule was read from `anzwdev/al-code-outline` source, not its documentation. |
+| No `alcops.json` switch | Breaking change accepted; AZ order is *the* order. |
+| Unknown type keyword (`system`, anything future) sorts as `table` | AZ's `GetTypePriority` returns 0 outside its map. Arguably an AZ bug, but diverging would create FC0004 hits on AZ-sorted code. |
+| Sort key is the raw `ObjectReference.Identifier` text with outer quotes removed only when the whole text is quoted; AZ's mangling of `"MyNs".Item` into `MyNs".Item` is not reproduced | Mirrors AZ's `DecodeName`: `MyNs."Zulu Table"` sorts before `MyNs.Alpha` because the quote character takes part in the compare. The key AC0031 uses for matching (`GetObjectNameFromPermission`) is a different concern. |
+| `InvariantCultureIgnoreCase` with spaces stripped for name chunks, a deliberate exception to the "use `SemanticFacts` comparers" rule | This is what puts `Post. Appr.` before `Post Inv.` (`.` < `I`), the original report. CA1304/1305/1307/1309/1310 are already `none` in `.editorconfig`. |
+| Digit runs compared without parsing (strip leading zeros, length then ordinal); length tie-break ignores spaces | AZ's `int.Parse` throws above `int.MaxValue`, so ours gives AZ's answer whenever AZ does not throw. AZ tie-breaks on raw lengths after stripping spaces, which makes `x 1`, `x1y`, `x1z` non-transitive and a sort that never converges; we keep the `IComparer` contract. |
+| Wildcard `tabledata * = RIMD` gets an empty key and sorts last | `ObjectReference` is null for the `*` form; AZ would NRE here, and an empty key is what its `NullableStringComparer` does for empties. |
+| `#region` handling is a tree, not flat runs; single-entry regions stay groups | Mirrors AZ's `SyntaxNodesGroupsTree`: a group emits its own entries first, then its child regions, so a root entry placed after a region is moved above it. AZ's `sortSingleNodeRegions` setting is not replicated. |
+| Diagnostic means "the fix would move an entry": the tree is sorted once and each entry's source index is compared with its output position | Analyzer and CodeFix can never disagree, and equal keys (stable sort) never fire. |
+| AC0031's insertion helper (`FindInsertionIndex`) is group-scoped: it positions the new `tabledata` entry with `PermissionEntryComparer` inside its own table/tabledata group only | The AC0031 fix never introduces a new FC0004 violation, even in lists that still keep codeunit/page entries first. |
 
-## Architecture
+## Deliberate non-reports
 
-```
-src/ALCops.Common/
-└── Permissions/
-    └── PermissionSyntaxHelper.cs    # Shared sort logic, multi-line builder
+- Lists containing any non-region directive (`#if`, `#pragma`, ...) or unbalanced regions: AZ refuses to sort them, so no diagnostic and no fix.
+- An `#endregion` on the line after the `;` (a common hand-written layout) is outside the property, so the list counts as unbalanced and is never checked; AZ behaves the same because it does not pass the closing token for separated lists.
+- Entries with equal sort keys in any relative order: the sort is stable, so they are never reported.
 
-src/ALCops.FormattingCop/
-├── Analyzers/
-│   └── PermissionDeclarationOrder.cs           # Analyzer (CompilationAction)
-└── CodeFixes/
-    └── PermissionDeclarationOrderCodeFixProvider.cs  # CodeFix (sort + reformat)
-```
+## Known issues
 
-### Sort order
+- Comments are positional, not attached: a `// ...` line above an entry stays at its slot when the entry moves, so a comment describing an entry (or a region's header comment) can end up above a different entry, even outside the region. Attaching comments to entries would break the "slot keeps its layout" rule for the common uniform-indent case; accepted.
+- When a region group ends up last, its `#endregion` is emitted right before the `;`, which then sits on its own line. AZ produces the same text.
+- Culture comparison depends on the ICU version of the machine running `alc`; exotic punctuation may order differently between machines.
+- AC0031's insertion is region-unaware: in a region-grouped list whose tabledata entries are not globally in order it appends instead of inserting by name.
 
-Entries are sorted by two keys:
-1. **Type keyword** (alphabetical, case-insensitive): `codeunit` < `page` < `query` < `record` < `report` < `table` < `tabledata` < `xmlport`
-2. **Object name** (alphabetical, case-insensitive) within the same type
+## SDK facts
 
-Uses `StringComparison.OrdinalIgnoreCase` for both comparisons. Note that ordinal comparison means `(` < `+` < `0` < `A`, which may differ from culture-specific ordering.
-
-### Analysis flow
-
-1. Iterate all objects via `compilation.GetDeclaredApplicationObjectSymbols()` (including permissionset/permissionsetextension)
-2. For each object with a `Permissions` property containing 2+ entries
-3. Check if entries are sorted using `PermissionSyntaxHelper.ArePermissionsSorted`
-4. Report one diagnostic on the `PropertySyntax` node if not sorted
-
-### Key difference from AC0031/AC0032
-
-- Does NOT skip `permissionset`/`permissionsetextension` objects (AC0031/AC0032 skip them)
-- Does NOT skip test codeunits with `TestPermissions = Disabled`
-- Analyzes all permission types (codeunit, page, report, table, tabledata, etc.), not just `tabledata`
-
-## Refactoring impact
-
-The `PermissionSyntaxHelper.ArePermissionsSorted` method was changed from name-only to type+name comparison. This affects AC0031's `FindInsertionIndex` (used by its CodeFix to decide alphabetical vs append insertion). The behavioral change is:
-- A list sorted by name but not by type is now detected as "unsorted"
-- AC0031's CodeFix will append (instead of inserting alphabetically) for such lists
-- This is the correct behavior since type+name is the canonical sort order
+- `PermissionSyntax.ObjectReference` is null for the wildcard form; the `*` is exposed as `PermissionSyntax.AsteriskToken`.
+- `ObjectReference.Identifier` is an `IdentifierNameSyntax` or `QualifiedNameSyntax`; object ids in `Permissions` entries are rejected by the compiler (AL0653).
 
 ## CodeFix: PermissionDeclarationOrderCodeFixProvider
 
-The `PermissionDeclarationOrderCodeFixProvider` sorts all entries and reformats to multi-line. Supports FixAll via BatchFixer.
-
-### Scenarios
-
-| Scenario | Behavior |
+| Decision | Rationale |
 |---|---|
-| Multi-line, unsorted | Reorder entries, preserve multi-line format with matching indentation |
-| Single-line, 2+ entries, unsorted | Reorder and convert to multi-line format |
-| Single entry | No diagnostic (trivially sorted) |
-
-### Node finding
-
-The CodeFix uses a robust node-finding pattern:
-```csharp
-var propertySyntax = node as PropertySyntax
-    ?? node.FirstAncestorOrSelf<PropertySyntax>()
-    ?? node.DescendantNodes().OfType<PropertySyntax>().FirstOrDefault();
-```
-
-### Shared helpers used
-
-- `PermissionSyntaxHelper.GetSortedPermissions`: Sorts entries by (type, name)
-- `PermissionSyntaxHelper.BuildMultiLinePermissionValue`: Creates multi-line formatted output
-- `PermissionSyntaxHelper.GetEntryIndentation`: Detects existing indentation pattern
+| FixAll via `BatchFixer` | One diagnostic per property, so there are no shared-ancestor conflicts. |
+| Slots stay, entries move: position *i* receives the *i*-th sorted entry but keeps the indentation and comments that were at position *i*; separators are untouched; region directives are re-emitted where their group now starts/ends; trailing `#endregion` trivia after the last entry is prepended to the `;` | Comments attached to a slot stay positional and the issue's `Permissions =\n    entry` layout survives. Newlines the fix inserts reuse an end-of-line trivia found in the list, so CRLF files stay CRLF. |
+| Empty `#region ... #endregion` pairs stay with the entry that carried them | An empty group has nothing to sort; as a tree node it would be flattened after the entries and drift to the end of the list. |
+| Single-line lists (no newline separators, no directives) are rewritten as multi-line via `BuildMultiLinePermissionValue` | Unchanged behaviour from the original rule. |
+| The fix bails out defensively on non-region directives or unbalanced regions | Mirrors the analyzer, which never reports such lists. |

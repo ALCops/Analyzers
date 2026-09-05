@@ -36,13 +36,21 @@ namespace ALCops.PlatformCop.Test
         [TestCase("TableExtension")]
         [TestCase("TableExtensionTypeWithType")]
         [TestCase("TableExtensionTypeWithTypeLength")]
+        [TestCase("InvocationBareSelfInTableExtension")]
+        [TestCase("InvocationThisSelfInTable")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["InvocationWithTableExtension", "TableExt_Multiple_SameBase", "TableExtension", "TableExtensionTypeWithType", "TableExtensionTypeWithTypeLength"],
+                ["InvocationWithTableExtension", "InvocationBareSelfInTableExtension", "TableExt_Multiple_SameBase", "TableExtension", "TableExtensionTypeWithType", "TableExtensionTypeWithTypeLength"],
                 testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");
+
+            SkipTestIfVersionIsTooLow(
+                ["InvocationThisSelfInTable"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);

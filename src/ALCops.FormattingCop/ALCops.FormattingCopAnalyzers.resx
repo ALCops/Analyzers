@@ -163,16 +163,16 @@
     <value>ALCops: Use parenthesis for method call</value>
   </data>
   <data name="PermissionDeclarationOrderTitle" xml:space="preserve">
-    <value>Permission declarations should be ordered alphabetically</value>
+    <value>Permission declarations should be sorted by object type and name</value>
   </data>
   <data name="PermissionDeclarationOrderMessageFormat" xml:space="preserve">
-    <value>The Permissions property entries are not ordered alphabetically by type and name.</value>
+    <value>The Permissions property entries are not sorted in the standard order (table/tabledata by name, then codeunit, page, query, report, xmlport).</value>
   </data>
   <data name="PermissionDeclarationOrderDescription" xml:space="preserve">
-    <value>Permission entries in the Permissions property should be ordered alphabetically, first by object type (codeunit, page, report, table, tabledata, etc.) and then by object name. Consistent ordering improves readability and reduces merge conflicts.</value>
+    <value>Permission entries should follow the order produced by the AZ AL Dev Tools "Sort Permissions" command: table and tabledata entries first, interleaved by object name (a table entry precedes the tabledata entry of the same name), followed by codeunit, page, query, report and xmlport entries, each type sorted by object name. Names compare naturally (Item 2 before Item 10), case-insensitively and ignoring spaces. Entries inside #region blocks are sorted within their region; lists that contain other directives (#if, #pragma) or unbalanced #region directives are not checked. A consistent order improves readability and reduces merge conflicts.</value>
   </data>
   <data name="PermissionDeclarationOrderCodeAction" xml:space="preserve">
-    <value>ALCops: Sort permission declarations alphabetically</value>
+    <value>ALCops: Sort permission declarations</value>
   </data>
   <data name="PermissionValuesShouldBeLowercaseTitle" xml:space="preserve">
     <value>Permission values should be lowercase</value>
@@ -193,7 +193,7 @@
     <value>Statement blocks should be separated. Insert a blank line {0}.</value>
   </data>
   <data name="StatementBlocksSeparatedByBlankLineDescription" xml:space="preserve">
-    <value>Control-flow statement blocks should be visually separated by blank lines before and after the block, and scope-leaving statements such as Exit and Error() should have a blank line before them.</value>
+    <value>Control-flow statement blocks should be visually separated by blank lines before and after the block, and scope-leaving statements such as Exit, Error(), and FieldError() should have a blank line before them.</value>
   </data>
   <data name="AnalyzerExceptionTitle" xml:space="preserve">
     <value>Analyzer threw an unhandled exception</value>

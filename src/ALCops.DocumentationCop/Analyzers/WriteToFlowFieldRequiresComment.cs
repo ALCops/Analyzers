@@ -72,8 +72,7 @@ public sealed class WriteToFlowFieldRequiresComment : DiagnosticAnalyzer
         if (!string.Equals(targetMethod.Name, "Validate", StringComparison.Ordinal))
             return;
 
-        var instance = operation.Instance;
-        if (instance?.Type.NavTypeKind != EnumProvider.NavTypeKind.Record)
+        if (operation.Instance.GetReceiverTableType(ctx.ContainingSymbol, out _) is null)
             return;
 
         if (operation.Arguments.Length == 0)

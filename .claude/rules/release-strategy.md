@@ -121,6 +121,10 @@ Workflow triggers and jobs are defined in `.github/workflows/`. The non-obvious 
 
 Beta tags are created inside the workflow using `GITHUB_TOKEN`, which doesn't trigger new runs, so the beta flow is unaffected.
 
+## Test report gate
+
+Every release channel is gated on the unified dorny test report. `build-test.yml` merges the per-AL-version `.trx` artifacts into one `test-results` artifact; for push/scheduled runs (`publish-report: true`) a `report` job publishes the "Test results" check inline, and because the release job `needs` the workflow call, a failed test on any AL version blocks alpha, beta, and stable alike — before anything is published. Individual `dotnet test` steps stay `continue-on-error` so all cops × all AL versions always run and report together; the dorny check is the failure signal, not the test job. Pull requests get the same check via the `workflow_run` Test Report workflow (`test-report.yml`, 'Pull Request' only) — the fork-safe path, since fork PR tokens lack `checks: write`. That workflow uses dorny's `artifact:` input instead of checking out the PR head (`actions/checkout` refuses fork-PR SHAs in a `workflow_run` context).
+
 ## What external contributors should expect
 
 - PRs are validated by `pull-request.yml` (build + test)

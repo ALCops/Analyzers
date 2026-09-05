@@ -33,17 +33,23 @@ internal static class ALCopsSettingsInheritanceResolver
 #endif
 
     /// <summary>
-    /// Tries to load and merge the external base configuration referenced by the local JSON.
+    /// Tries to load and merge the external base configuration referenced by the local JSON,
+    /// returning a failure for CM0001 when the declared source cannot be applied.
     /// The local JSON is parsed before this method can return <see langword="false"/>, so malformed
     /// local input still follows the provider's existing defaults fallback behavior.
     /// </summary>
     public static bool TryResolve(
         string localJson,
+        string localSource,
+        out string inheritedSource,
         out string inheritedJson,
-        out string effectiveJson)
+        out string effectiveJson,
+        out SettingsLoadFailure? failure)
     {
+        inheritedSource = string.Empty;
         inheritedJson = string.Empty;
         effectiveJson = string.Empty;
+        failure = null;
 
 #if NETSTANDARD2_1
         JObject localConfiguration = JObject.Parse(localJson);
@@ -51,11 +57,21 @@ internal static class ALCopsSettingsInheritanceResolver
         JsonObject localConfiguration = ParseObject(localJson);
 #endif
 
-        if (!TryGetSource(localConfiguration, out string source))
+        ExtendsSourceState sourceState = GetSource(localConfiguration, out string source);
+        if (sourceState == ExtendsSourceState.Absent)
             return false;
 
-        string? externalJson = TryReadExternalConfiguration(source);
-        if (externalJson is null)
+        if (sourceState == ExtendsSourceState.Invalid)
+        {
+            failure = new SettingsLoadFailure(
+                SettingsLoadFailureKind.Invalid,
+                localSource,
+                "Extends.Source must be a non-empty string.");
+            return false;
+        }
+
+        inheritedSource = source;
+        if (!TryReadExternalConfiguration(source, out string externalJson, out failure))
             return false;
 
         try
@@ -68,7 +84,13 @@ internal static class ALCopsSettingsInheritanceResolver
 
             // Keep the initial implementation deliberately limited to one inheritance level.
             if (HasProperty(inheritedConfiguration, "Extends"))
+            {
+                failure = new SettingsLoadFailure(
+                    SettingsLoadFailureKind.Invalid,
+                    source,
+                    "configuration inheritance chains are not supported.");
                 return false;
+            }
 
             inheritedJson = externalJson;
             MergeObjects(inheritedConfiguration, localConfiguration);
@@ -79,15 +101,21 @@ internal static class ALCopsSettingsInheritanceResolver
 #endif
             return true;
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            // An invalid external configuration must not prevent the local configuration from loading.
+            failure = new SettingsLoadFailure(SettingsLoadFailureKind.Invalid, source, ex.Message);
             return false;
         }
     }
 
-    private static string? TryReadExternalConfiguration(string source)
+    private static bool TryReadExternalConfiguration(
+        string source,
+        out string externalJson,
+        out SettingsLoadFailure? failure)
     {
+        externalJson = string.Empty;
+        failure = null;
+
         try
         {
             if (Uri.TryCreate(source, UriKind.Absolute, out Uri? uri) &&
@@ -95,37 +123,56 @@ internal static class ALCopsSettingsInheritanceResolver
                  string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
             {
                 if (!string.IsNullOrEmpty(uri.UserInfo))
-                    return null;
+                {
+                    failure = new SettingsLoadFailure(
+                        SettingsLoadFailureKind.Invalid,
+                        source,
+                        "HTTP(S) configuration URLs containing credentials are not allowed.");
+                    return false;
+                }
 
-                return _httpClient.GetStringAsync(uri).GetAwaiter().GetResult();
+                externalJson = _httpClient.GetStringAsync(uri).GetAwaiter().GetResult();
+                return true;
             }
 
-            return Path.IsPathFullyQualified(source)
-                ? File.ReadAllText(source)
-                : null;
+            if (!Path.IsPathFullyQualified(source))
+            {
+                failure = new SettingsLoadFailure(
+                    SettingsLoadFailureKind.Invalid,
+                    source,
+                    "Extends.Source must be an anonymously accessible HTTP(S) URL or an absolute file path.");
+                return false;
+            }
+
+            externalJson = File.ReadAllText(source);
+            return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // External settings are optional. Timeouts, network failures, inaccessible files, and
-            // unsupported source formats all fall back to the local configuration.
-            return null;
+            failure = new SettingsLoadFailure(SettingsLoadFailureKind.Unreadable, source, ex.Message);
+            return false;
         }
     }
 
 #if NETSTANDARD2_1
-    private static bool TryGetSource(JObject configuration, out string source)
+    private static ExtendsSourceState GetSource(JObject configuration, out string source)
     {
         source = string.Empty;
         JProperty? extendsProperty = FindProperty(configuration, "Extends");
-        if (extendsProperty?.Value is not JObject extendsObject)
-            return false;
+        if (extendsProperty is null)
+            return ExtendsSourceState.Absent;
+
+        if (extendsProperty.Value is not JObject extendsObject)
+            return ExtendsSourceState.Invalid;
 
         JProperty? sourceProperty = FindProperty(extendsObject, "Source");
         if (sourceProperty?.Value.Type != JTokenType.String)
-            return false;
+            return ExtendsSourceState.Invalid;
 
         source = sourceProperty.Value.Value<string>() ?? string.Empty;
-        return !string.IsNullOrWhiteSpace(source);
+        return string.IsNullOrWhiteSpace(source)
+            ? ExtendsSourceState.Invalid
+            : ExtendsSourceState.Valid;
     }
 
     private static bool HasProperty(JObject configuration, string propertyName) =>
@@ -159,23 +206,28 @@ internal static class ALCopsSettingsInheritanceResolver
         JsonNode.Parse(json, _nodeOptions, _documentOptions) as JsonObject ??
         throw new JsonException("The ALCops configuration root must be a JSON object.");
 
-    private static bool TryGetSource(JsonObject configuration, out string source)
+    private static ExtendsSourceState GetSource(JsonObject configuration, out string source)
     {
         source = string.Empty;
         string? extendsPropertyName = FindPropertyName(configuration, "Extends");
-        if (extendsPropertyName is null || configuration[extendsPropertyName] is not JsonObject extendsObject)
-            return false;
+        if (extendsPropertyName is null)
+            return ExtendsSourceState.Absent;
+
+        if (configuration[extendsPropertyName] is not JsonObject extendsObject)
+            return ExtendsSourceState.Invalid;
 
         string? sourcePropertyName = FindPropertyName(extendsObject, "Source");
         if (sourcePropertyName is null ||
             extendsObject[sourcePropertyName] is not JsonValue sourceValue ||
             !sourceValue.TryGetValue(out string? sourceValueText))
         {
-            return false;
+            return ExtendsSourceState.Invalid;
         }
 
         source = sourceValueText ?? string.Empty;
-        return !string.IsNullOrWhiteSpace(source);
+        return string.IsNullOrWhiteSpace(source)
+            ? ExtendsSourceState.Invalid
+            : ExtendsSourceState.Valid;
     }
 
     private static bool HasProperty(JsonObject configuration, string propertyName) =>
@@ -214,4 +266,11 @@ internal static class ALCopsSettingsInheritanceResolver
         }
     }
 #endif
+
+    private enum ExtendsSourceState
+    {
+        Absent,
+        Invalid,
+        Valid
+    }
 }

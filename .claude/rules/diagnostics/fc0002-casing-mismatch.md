@@ -1,6 +1,9 @@
 ---
 paths:
   - "src/ALCops.FormattingCop/**/CasingMismatch*"
+  - "src/ALCops.FormattingCop.Test/Rules/CasingMismatchBuiltInMethod/**"
+  - "src/ALCops.FormattingCop.Test/Rules/CasingMismatchDeclaration/**"
+  - "src/ALCops.FormattingCop.Test/Rules/CasingMismatchKeyword/**"
 ---
 
 # FC0002: CasingMismatch
@@ -9,46 +12,38 @@ paths:
 
 Reports when the casing of a keyword or identifier reference differs from its canonical form: the declaration for user symbols, the SDK's canonical name for built-in keywords, types, and members. AL is case-insensitive; FC0002 enforces the compiler's own spelling.
 
+Registers `RegisterSymbolAction` on the application object symbol kinds; main types `CasingMismatchKeyword` (keyword tokens) and `CasingMismatchIdentifier` (identifiers, data types, properties, option/object access), sharing one descriptor.
+
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| XmlPort casing is context-dependent, mirroring the SDK exactly | The AL compiler itself is inconsistent; FC0002 follows the compiler/IntelliSense, not a single invented spelling. See matrix below. Issue #432 and upstream LinterCop #729 confirmed by-design. |
-| `XmlPort → Xmlport` remap in `_symbolKindDictionary` | The `::` left side and static class bind to the SDK's `XmlportClassTypeSymbol`, literally named `"Xmlport"` (`XmlportClassTypeSymbol.cs`). |
-| `.Run`/`.Import`/`.Export` receiver (`Xmlport.Run`) is NOT analyzed | The `KeywordTexts` filter in `ResolveIdentifiers` skips identifiers named after keywords to avoid false positives on user symbols. Known false negative; kept intentionally. |
-| Identifiers grouped by (text, scope) before `GetSymbolInfo` | Performance: one semantic call per distinct spelling per method scope. |
+| XmlPort casing is context-dependent, mirroring the SDK exactly (see SDK facts) | The AL compiler itself is inconsistent; FC0002 follows the compiler/IntelliSense rather than one invented spelling. Confirmed by-design in [#432](https://github.com/ALCops/Analyzers/issues/432) and upstream [LinterCop #729](https://github.com/StefanMaron/BusinessCentral.LinterCop/issues/729). |
+| Identifiers grouped by (text, method scope) before `GetSymbolInfo` | One semantic call per distinct spelling per scope instead of one per occurrence. |
+| Generic type arguments (`List of [...]`, `Dictionary of [...]`) walked by pushing the `GenericNamedDataTypeSyntax` node onto the existing node stack rather than a dedicated pass | `ChildNodes()` yields only the type-argument nodes, so the outer type name is not double-reported and nested generics recurse for free ([#255](https://github.com/ALCops/Analyzers/issues/255)). |
+| Object references after subtyped data types (`Record MyTable`, `Interface "IMyInterface"`) resolved via `GetSymbolInfo` on the inner `IdentifierNameSyntax`, not the member model | The SDK derives the `SymbolKind` from the enclosing `SubtypedDataTypeSyntax.TypeName`, so one call returns the referenced object's canonical `Name` for declaration nodes. |
+| Object references batched in a dedicated list keyed by `(TypeName, name)`, not in the identifier list | Sharing the (text, scope) groups would let `Record Customer` and a variable named `Customer` cross-contaminate the canonical text (false positive and wrong fix); the kind is in the key because `Record Foo` and `Codeunit Foo` resolve to different symbols. |
+| Namespace-qualified subtypes (`Record Ns.Path.MyTable`) resolved in a separate pass, not fed into the qualified-name resolution | The qualified-name pass assumes a field-in-object shape and early-returns; namespace-part casing is compared right-aligned against `GetContainingNamespaceQualifiedNameWithReflection()` split on `.`. |
 
-## Architecture
+## Deliberate non-reports
 
-- Two analyzers share the descriptor `DiagnosticDescriptors.CasingMismatch`: `CasingMismatchKeyword` (keyword tokens) and `CasingMismatchIdentifier` (identifiers, data types, properties, option/object access).
-- `CasingMismatchKeyword`: `RegisterSymbolAction` per object kind; walks descendant tokens, compares keyword tokens against `SyntaxFactory.Token(kind).ValueText`. Skips tokens whose parent is a `*DataType` node or `IdentifierName`.
-- `CasingMismatchIdentifier`: single iterative tree walk per object symbol. Dictionary-resolvable nodes are handled inline (fast); identifiers, qualified names, and triggers are batched for semantic-model resolution, grouped by (text, scope) so `GetSymbolInfo` runs once per group.
-
-Key dictionaries (all `OrdinalIgnoreCase` keyed, value = canonical text):
-
-| Dictionary | Source | Used for |
-|---|---|---|
-| `_navTypeKindDictionary` | `NavTypeKind` enum names + `Database` | Data type names (`SubtypedDataTypeSyntax`, `DataTypeSyntax`) |
-| `_symbolKindDictionary` | `SymbolKind` enum names, **`XmlPort` remapped to `Xmlport`**, + `Database`, `ObjectType` | Left side of `::` object access and member after `Database::` etc. |
-| `_objectTypeMemberDictionary` | `SymbolKind` enum names verbatim (`XmlPort`) | Members of `ObjectType::` |
-| `_enumPropertyValuesByKind/Name` | Reflection over SDK `PropertyInfoLookup` | Enum property values |
-| `KeywordTexts` | All `*Keyword` token texts | Skip identifiers named after keywords in semantic resolution |
-
-### XmlPort casing matrix (SDK ground truth, `../nav-sdk-source`)
-
-| Context | Canonical | SDK evidence |
-|---|---|---|
-| Object declaration keyword | `xmlport` | `SyntaxFacts` keyword text |
-| Variable/parameter type | `XmlPort` | `NavTypeKindExtensions`: `NavTypeKind.XmlPort => "XmlPort"` |
-| Static class (`Run`/`Import`/`Export`) | `Xmlport` | `XmlportClassTypeSymbol` name |
-| `::` object access left side | `Xmlport` | Binder binds to `XmlportClassTypeSymbol` |
-| `ObjectType::XmlPort` member | `XmlPort` | `SymbolKind` enum name |
+- Receivers named after keywords, such as `XMLPORT.Run` / `.Import` / `.Export`: identifiers matching `KeywordTexts` are skipped during semantic resolution to avoid false positives on user symbols. Known false negative, kept intentionally.
+- `ObjectIdSyntax` subtypes (`Record 18`): IDs have no casing.
+- Namespace parts when `GetContainingNamespaceQualifiedNameWithReflection()` returns null; the object name itself is still checked.
 
 ## Known issues
 
-- `Xmlport.Run` receiver with wrong casing (`XMLPORT.Run`) is not flagged (keyword-named identifier filter, see design decisions).
-- Option members of platform table fields (e.g. `"Object Type"::XMLport`) resolve via semantic model to the platform's own casing.
+- Option members of platform table fields (e.g. `"Object Type"::XMLport`) resolve via the semantic model to the platform's own casing, whatever it is.
 
-## CodeFix: CasingMismatchKeyword
+## SDK facts
 
-`CodeFixes/CasingMismatchKeyword.cs` fixes keyword tokens only; identifier diagnostics carry `CanonicalText` in properties but have no CodeFix yet.
+- XmlPort canonical spelling differs by context: `xmlport` as object keyword (`SyntaxFacts`), `XmlPort` as data type (`NavTypeKindExtensions`) and as `ObjectType::XmlPort` member (`SymbolKind` enum), `Xmlport` as static class and `::` left side (bound to `XmlportClassTypeSymbol`, literally named `"Xmlport"`).
+- `GetSemanticInfoSymbolInNonMemberContext` derives the `SymbolKind` from the enclosing `SubtypedDataTypeSyntax.TypeName`, so `GetSymbolInfo` on the inner identifier of a subtyped data type resolves the referenced object.
+- `GetSymbolInfo` on a `QualifiedNameSyntax` subtype routes through `GetSymbolFromObjectReference`, which has an explicit `QualifiedName` case (`LookupObjectTypeSymbol`).
+
+## CodeFix: CasingMismatchCodeFix
+
+| Decision | Rationale |
+|---|---|
+| One provider (`CodeFixes/CasingMismatchKeyword.cs`) registered for the whole FC0002 ID, fixing every diagnostic that carries `CanonicalText` in its properties | Keyword and identifier diagnostics share the same fix shape, so one provider covers both analyzers. |
+| Replacement text is `CanonicalText.QuoteIdentifierIfNeededWithReflection()` | Re-quotes names that need quotes (`"MY TABLE"` becomes `"My Table"`) and drops unnecessary quotes (`"IMYINTERFACE"` becomes `IMyInterface`) instead of copying the original quoting. |

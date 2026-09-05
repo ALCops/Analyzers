@@ -19,6 +19,7 @@ A collection of custom code analyzers for the AL programming language of Microso
 | [LinterCop](https://alcops.dev/docs/analyzers/lintercop/) | Identifies non-breaking code smells and suggests better implementation patterns. Focuses on maintainability, clarity, and recommended practices where multiple valid options exist. |
 | [PlatformCop](https://alcops.dev/docs/analyzers/platformcop/) | Validates AL language and runtime semantic correctness, preventing patterns that always fail or behave unpredictably. These rules apply universally, independent of the Business Central domain model. |
 | [TestAutomationCop](https://alcops.dev/docs/analyzers/testautomationcop/) | Ensures correctness and structure of test codeunits and related test procedures. Applies exclusively to test logic, not production code. |
+| [Common](https://alcops.dev/docs/analyzers/common/) | Cross-cutting diagnostics from the shared ALCops.Common library, loaded with every cop — for example a warning when your `alcops.json` cannot be loaded. |
 
 Browse the complete rules reference at [alcops.dev/docs/analyzers](https://alcops.dev/docs/analyzers/).
 

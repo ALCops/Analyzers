@@ -26,6 +26,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("RecursionIndirect")]
         [TestCase("RecursionDirectWithoutParentheses")]
         [TestCase("RecursionIndirectWithoutParentheses")]
+        [TestCase("UserDefinedErrorMethodsAreNotGuardClauses")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -54,6 +55,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("IfStatementElseIf")]
         [TestCase("IfStatementGuardClause")]
         [TestCase("IfStatementGuardClauseContinue")]
+        [TestCase("BuiltInFieldErrorGuardClauses")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

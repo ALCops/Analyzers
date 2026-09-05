@@ -36,21 +36,15 @@ public static class RequiredPermissionDetector
         if (operation == DatabaseOperation.None)
             return null;
 
-        IRecordTypeSymbol? recordType;
-
-        if (invocation.Instance is not null)
-            recordType = invocation.Instance.Type as IRecordTypeSymbol;
-        else
-            recordType = containingSymbol.ContainingType as IRecordTypeSymbol;
-
-        if (recordType is null || recordType.Temporary)
-            return null;
-
-        var tableType = recordType.OriginalDefinition as ITableTypeSymbol;
+        var tableType = invocation.Instance.GetReceiverTableType(containingSymbol, out var recordType);
         if (tableType is null || !IsPermissionRelevant(tableType, includeSystemTables))
             return null;
 
-        return new RequiredPermission(tableType, recordType, operation, invocation.Syntax.GetLocation());
+        if (recordType is not null && recordType.Temporary)
+            return null;
+
+        ITypeSymbol variableType = recordType as ITypeSymbol ?? tableType;
+        return new RequiredPermission(tableType, variableType, operation, invocation.Syntax.GetLocation());
     }
 
     /// <summary>

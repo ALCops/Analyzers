@@ -8,6 +8,11 @@ on:
         required: false
         type: boolean
         default: true
+      publish-report:
+        description: "Publish the unified dorny test report as a check in this run (caller needs checks: write; keep false for PRs, fork tokens are read-only)"
+        required: false
+        type: boolean
+        default: false
     outputs:
       bc-devtools-sources:
         description: "BC DevTools sources"
@@ -434,4 +439,57 @@ jobs:
           name: test-results-${{ matrix.version }}
           path: |
             **/TestResults_${{ matrix.version }}.trx
+
+  merge-test-results:
+    if: ${{ always() && (!inputs.draft-check || github.event.pull_request.draft == false) }}
+    needs: test
+    runs-on: ubuntu-latest
+    name: Merge Test Results
+    steps:
+      # Merge the per-version test-results-* artifacts into a single artifact so the
+      # Test Report workflow can consume it via dorny/test-reporter's 'artifact:' input.
+      # That path resolves source files for annotations via the GitHub REST API, avoiding
+      # an unsafe fork-PR checkout in the trusted workflow_run context.
+      - name: Download per-version test result artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+          path: TestResults
+
+      - name: Upload unified test results artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+          if-no-files-found: ignore
+
+  report:
+    # Inline report for push/scheduled runs (trusted context, checks: write available).
+    # PR runs keep publish-report false; their report comes from the workflow_run
+    # Test Report workflow, the fork-safe path. !cancelled() keeps the report coming
+    # when a matrix leg hard-failed; the failed test job still fails the calling job,
+    # so a release stays blocked either way.
+    if: ${{ !cancelled() && inputs.publish-report }}
+    needs: merge-test-results
+    runs-on: ubuntu-latest
+    name: Report
+    # No permissions block: a called workflow may only downgrade the caller's token,
+    # and declaring checks: write here startup-fails callers that don't grant it
+    # (Pull Request). Callers that set publish-report grant checks: write themselves.
+    steps:
+      - name: Publish unified test report
+        uses: dorny/test-reporter@v3
+        with:
+          artifact: test-results
+          name: Test results
+          report-title: 'ALCops Test Results'
+          path: '**/*.trx'
+          reporter: dotnet-trx
+          use-actions-summary: 'false'
+          list-suites: 'failed'
+          list-tests: 'failed'
+          collapsed: 'never'
+          fail-on-error: true
+          fail-on-empty: true
 

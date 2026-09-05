@@ -47,7 +47,11 @@ public sealed class AnalyzeCountMethod : DiagnosticAnalyzer
             invocation.TargetMethod.ContainingSymbol?.Name != "Table")
             return;
 
-        if (invocation.Instance?.Type is not IRecordTypeSymbol recordTypeSymbol || recordTypeSymbol.Temporary)
+        var tableType = invocation.Instance.GetReceiverTableType(ctx.ContainingSymbol, out var recordType);
+        if (tableType is null)
+            return;
+
+        if (recordType is not null && recordType.Temporary)
             return;
 
         if (invocation.Syntax.Parent is not BinaryExpressionSyntax binaryExpression)
@@ -61,29 +65,31 @@ public sealed class AnalyzeCountMethod : DiagnosticAnalyzer
         if (leftValue > MaxRelevantValue)
             return;
 
+        var symbolName = GetSymbolName(invocation, tableType);
+
         if (IsZeroComparison(leftValue, rightValue))
         {
-            ReportUseIsEmptyDiagnostic(ctx, invocation);
+            ReportUseIsEmptyDiagnostic(ctx, invocation, symbolName);
             return;
         }
 
         if (IsLessThanOneComparison(binaryExpression, rightValue) || IsGreaterThanOneComparison(binaryExpression, leftValue))
         {
-            ReportUseIsEmptyDiagnostic(ctx, invocation);
+            ReportUseIsEmptyDiagnostic(ctx, invocation, symbolName);
             return;
         }
 
-        if (IsEligibleUseQueryOrFindWithNext(recordTypeSymbol))
+        if (IsEligibleUseQueryOrFindWithNext(tableType))
         {
             if (IsOneComparison(binaryExpression, leftValue, rightValue))
             {
-                ReportUseFindWithNextDiagnostic(ctx, invocation, binaryExpression, leftValue, rightValue);
+                ReportUseFindWithNextDiagnostic(ctx, invocation, binaryExpression, leftValue, rightValue, symbolName);
                 return;
             }
 
             if (IsLessThanTwoComparison(binaryExpression, rightValue) || IsGreaterThanTwoComparison(binaryExpression, leftValue))
             {
-                ReportUseFindWithNextDiagnostic(ctx, invocation, binaryExpression, leftValue, rightValue);
+                ReportUseFindWithNextDiagnostic(ctx, invocation, binaryExpression, leftValue, rightValue, symbolName);
                 return;
             }
         }
@@ -147,27 +153,23 @@ public sealed class AnalyzeCountMethod : DiagnosticAnalyzer
     private static bool IsGreaterThanTwoComparison(BinaryExpressionSyntax expr, int left) =>
         expr.OperatorToken.Kind == EnumProvider.SyntaxKind.GreaterThanToken && left == Two;
 
-    private static bool IsEligibleUseQueryOrFindWithNext(IRecordTypeSymbol record)
+    private static bool IsEligibleUseQueryOrFindWithNext(ITableTypeSymbol table)
     {
-        if (possibleLargeTableIdentifierKeywords.Any(keyword => record.Name.Contains(keyword, SemanticFacts.NameEqualityComparison)))
+        if (possibleLargeTableIdentifierKeywords.Any(keyword => table.Name.Contains(keyword, SemanticFacts.NameEqualityComparison)))
             return true;
 
-        // Tables with a field "Entry No." could possible have a large amount of records
-        if (record.OriginalDefinition is ITableTypeSymbol table)
-            return table.PrimaryKey.Fields.Any(field => SemanticFacts.IsSameName(field.Name, "Entry No."));
-
-        return false;
+        return table.PrimaryKey.Fields.Any(field => SemanticFacts.IsSameName(field.Name, "Entry No."));
     }
 
-    private static void ReportUseIsEmptyDiagnostic(OperationAnalysisContext ctx, IInvocationExpression operation)
+    private static void ReportUseIsEmptyDiagnostic(OperationAnalysisContext ctx, IInvocationExpression operation, string symbolName)
     {
         ctx.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.UseIsEmptyMethodInsteadOfCount,
             operation.Syntax.Parent.GetLocation(),
-            GetSymbolName(operation)));
+            symbolName));
     }
 
-    private static void ReportUseFindWithNextDiagnostic(OperationAnalysisContext ctx, IInvocationExpression operation, BinaryExpressionSyntax binaryExpression, int leftValue, int rightValue)
+    private static void ReportUseFindWithNextDiagnostic(OperationAnalysisContext ctx, IInvocationExpression operation, BinaryExpressionSyntax binaryExpression, int leftValue, int rightValue, string symbolName)
     {
         // Normalize to "Count() <op> <value>" so the message always reads left-to-right,
         // even when the source has the literal on the left (e.g. "2 > Rec.Count()").
@@ -180,11 +182,12 @@ public sealed class AnalyzeCountMethod : DiagnosticAnalyzer
         ctx.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.UseQueryOrFindWithNextInsteadOfCount,
             operation.Syntax.Parent.GetLocation(),
-            GetSymbolName(operation),
+            symbolName,
             GetOperatorSign(operatorKind),
             comparedValue));
     }
 
-    private static string GetSymbolName(IInvocationExpression operation) =>
-            operation.Instance?.GetSymbol()?.Name.QuoteIdentifierIfNeededWithReflection() ?? string.Empty;
+    private static string GetSymbolName(IInvocationExpression operation, ITableTypeSymbol tableType) =>
+        operation.Instance?.GetSymbolSafe()?.Name.QuoteIdentifierIfNeededWithReflection()
+            ?? tableType.Name.QuoteIdentifierIfNeededWithReflection();
 }

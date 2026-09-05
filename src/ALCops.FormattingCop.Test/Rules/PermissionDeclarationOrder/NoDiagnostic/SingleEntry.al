@@ -1,6 +1,6 @@
-[||]codeunit 50100 "My Codeunit"
+codeunit 50100 "My Codeunit"
 {
-    Permissions = tabledata Alpha = R;
+    [|Permissions = tabledata Alpha = R|];
 }
 
 table 50100 Alpha

@@ -1,3 +1,3 @@
-[||]codeunit 50100 "My Codeunit"
+[|codeunit 50100 "My Codeunit"|]
 {
 }

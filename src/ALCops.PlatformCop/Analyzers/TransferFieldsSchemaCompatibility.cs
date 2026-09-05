@@ -142,9 +142,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         var sourceTable =
             TryResolveSymbolFromArgument(invocation) as ITableTypeSymbol;
 
-        var targetTable =
-            invocation.Instance?.Type.OriginalDefinition as ITableTypeSymbol
-            ?? ctx.ContainingSymbol.GetContainingApplicationObjectTypeSymbol()?.OriginalDefinition as ITableTypeSymbol;
+        var targetTable = invocation.Instance.GetReceiverTableType(ctx.ContainingSymbol, out _);
 
         if (sourceTable is null || targetTable is null)
             return;

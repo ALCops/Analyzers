@@ -52,12 +52,16 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
         var identifiers = new List<(IdentifierNameSyntax Node, SyntaxNode? Scope)>();
         var qualifiedNames = new List<(QualifiedNameSyntax Node, SyntaxNode? Scope)>();
         var triggers = new List<TriggerDeclarationSyntax>();
+        var objectReferences = new List<(string? TypeName, IdentifierNameSyntax Node)>();
+        var qualifiedObjectReferences = new List<(string? TypeName, QualifiedNameSyntax Node)>();
 
-        WalkNode(ctx, root, identifiers, qualifiedNames, triggers);
+        WalkNode(ctx, root, identifiers, qualifiedNames, triggers, objectReferences, qualifiedObjectReferences);
 
         ResolveIdentifiers(ctx, semanticModel, identifiers);
         ResolveQualifiedNames(ctx, semanticModel, qualifiedNames);
         ResolveTriggers(ctx, semanticModel, triggers);
+        ResolveObjectReferences(ctx, semanticModel, objectReferences);
+        ResolveQualifiedObjectReferences(ctx, semanticModel, qualifiedObjectReferences);
     }
 
     #region Tree Walk
@@ -73,6 +77,8 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
         List<(IdentifierNameSyntax Node, SyntaxNode? Scope)> identifiers,
         List<(QualifiedNameSyntax Node, SyntaxNode? Scope)> qualifiedNames,
         List<TriggerDeclarationSyntax> triggers,
+        List<(string? TypeName, IdentifierNameSyntax Node)> objectReferences,
+        List<(string? TypeName, QualifiedNameSyntax Node)> qualifiedObjectReferences,
         bool skipChildIdentifiers = false)
     {
         var stack = new Stack<(SyntaxNode node, bool skipIds, SyntaxNode? scope)>();
@@ -98,7 +104,13 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 if (child is SubtypedDataTypeSyntax subtyped)
                 {
                     if (subtyped.Subtype.Kind == EnumProvider.SyntaxKind.ObjectReference)
+                    {
                         CompareAgainstDictionary(ctx, subtyped.TypeName, _navTypeKindDictionary);
+                        if (subtyped.Subtype.Identifier is IdentifierNameSyntax subtypeName)
+                            objectReferences.Add((subtyped.TypeName.ValueText, subtypeName));
+                        else if (subtyped.Subtype.Identifier is QualifiedNameSyntax qualifiedSubtypeName)
+                            qualifiedObjectReferences.Add((subtyped.TypeName.ValueText, qualifiedSubtypeName));
+                    }
                     continue;
                 }
 
@@ -106,7 +118,8 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 {
                     CompareAgainstDictionary(ctx, dataType.TypeName, _navTypeKindDictionary);
                     if (kind == EnumProvider.SyntaxKind.EnumDataType ||
-                        kind == EnumProvider.SyntaxKind.LabelDataType)
+                        kind == EnumProvider.SyntaxKind.LabelDataType ||
+                        kind == EnumProvider.SyntaxKind.GenericDataType)
                         stack.Push((child, false, currentScope));
                     continue;
                 }
@@ -538,6 +551,98 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 continue;
 
             CompareIdentifier(ctx, trigger.Name.Identifier, symbol.Name);
+        }
+    }
+
+    private static void ResolveObjectReferences(
+        SymbolAnalysisContext ctx,
+        SemanticModel semanticModel,
+        List<(string? TypeName, IdentifierNameSyntax Node)> objectReferences)
+    {
+        var groups = objectReferences
+            .ToLookup(item => (item.TypeName, item.Node.Identifier.ValueText));
+
+        foreach (var group in groups)
+        {
+            ctx.CancellationToken.ThrowIfCancellationRequested();
+
+            IdentifierNameSyntax? representative = null;
+            foreach (var item in group)
+            {
+                if (representative is null || item.Node.Position > representative.Position)
+                    representative = item.Node;
+            }
+
+            if (representative is null)
+                continue;
+
+            if (semanticModel.GetSymbolInfo(representative, ctx.CancellationToken).Symbol is not ISymbol symbol)
+                continue;
+
+            foreach (var item in group)
+                CompareIdentifier(ctx, item.Node.Identifier, symbol.Name);
+        }
+    }
+
+    private static void ResolveQualifiedObjectReferences(
+        SymbolAnalysisContext ctx,
+        SemanticModel semanticModel,
+        List<(string? TypeName, QualifiedNameSyntax Node)> qualifiedObjectReferences)
+    {
+        var groups = qualifiedObjectReferences
+            .ToLookup(item => (item.TypeName, item.Node.ToString()));
+
+        foreach (var group in groups)
+        {
+            ctx.CancellationToken.ThrowIfCancellationRequested();
+
+            QualifiedNameSyntax? representative = null;
+            foreach (var item in group)
+            {
+                if (representative is null || item.Node.Position > representative.Position)
+                    representative = item.Node;
+            }
+
+            if (representative is null)
+                continue;
+
+            if (semanticModel.GetSymbolInfo(representative, ctx.CancellationToken).Symbol is not ISymbol symbol)
+                continue;
+
+            var namespaceParts = symbol.GetContainingNamespaceQualifiedNameWithReflection()?.Split('.');
+
+            foreach (var item in group)
+            {
+                CompareIdentifier(ctx, item.Node.Right.Identifier, symbol.Name);
+                CompareNamespaceParts(ctx, item.Node.Left, namespaceParts);
+            }
+        }
+    }
+
+    // Right-aligned: the qualifier's parts are matched against the tail of the declared
+    // namespace, so a shorter qualifier never walks past its own leftmost part.
+    private static void CompareNamespaceParts(SymbolAnalysisContext ctx, SyntaxNode left, string[]? namespaceParts)
+    {
+        if (namespaceParts is null)
+            return;
+
+        var index = namespaceParts.Length - 1;
+        var current = left;
+
+        while (index >= 0)
+        {
+            if (current is QualifiedNameSyntax qualified)
+            {
+                CompareIdentifier(ctx, qualified.Right.Identifier, namespaceParts[index]);
+                current = qualified.Left;
+                index--;
+                continue;
+            }
+
+            if (current is IdentifierNameSyntax identifier)
+                CompareIdentifier(ctx, identifier.Identifier, namespaceParts[index]);
+
+            break;
         }
     }
 
