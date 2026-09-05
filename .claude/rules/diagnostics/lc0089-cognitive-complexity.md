@@ -22,15 +22,18 @@ Registers `CompilationStartAction` (captures threshold, LC0089i enablement and t
 | Recursion detection in a separate compilation-scoped `CognitiveComplexityRecursionGraphService` | The call graph is built once per compilation while the complexity walk is per method; mixing the two scopes in one class would be wrong. |
 | LC0089 and LC0089i are `Info` and `isEnabledByDefault: false`; LC0089i is gated behind `IsDiagnosticEnabled` | A metric is not a violation and per-increment detail is noise unless a specific method is being investigated; the gate makes the walk-and-report cost zero when disabled. |
 | Guard-clause discount | Standard Cognitive Complexity: an early exit `if <condition> then exit/error/break/continue/skip/quit` simplifies flow and does not increment. |
+| Built-in error guards are recognized through the shared `FlowTerminatingBuiltIns` classifier (`Dialog.Error`, `Table.FieldError`, `FieldRef.FieldError`); user-defined procedures named `Error` or `FieldError` stay ordinary calls | One semantic definition of "terminates the procedure" shared with PC0038 and FC0007; a name match alone would discount a user procedure that merely happens to be called `Error`. |
+| `CurrReport`/`CurrXMLport` `Break`, `Skip` and `Quit` keep their own syntax check instead of joining `FlowTerminatingBuiltIns` | They are valid guard exits for complexity but not general procedure terminators, so they must not leak into PC0038's flow analysis. |
 
 ## Deliberate non-reports
 
 - LC0089 and LC0089i are never emitted unless explicitly enabled via `.editorconfig` or a ruleset.
-- Guard clauses (`if cond then exit/error/break/continue/skip/quit`) add no complexity, so methods made of early exits stay below the threshold.
+- Guard clauses (`if cond then exit/error/fielderror/break/continue/skip/quit`) add no complexity, so methods made of early exits stay below the threshold.
 
 ## Known issues
 
 - `ALCopsSettingsProvider` caches the threshold statically by directory with no invalidation; changing `alcops.json` requires restarting the language server. Cross-cop limitation, not specific to this analyzer.
+- A collectible `Error(ErrorInfo)` inside an `ErrorBehavior::Collect` scope is discounted as a guard although execution continues; inherited from the shared classifier (see PC0038's Known issues).
 
 ## Test notes
 

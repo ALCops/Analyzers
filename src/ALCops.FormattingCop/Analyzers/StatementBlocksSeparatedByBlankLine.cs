@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using ALCops.Common.Settings;
@@ -11,8 +12,6 @@ namespace ALCops.FormattingCop.Analyzers;
 [DiagnosticAnalyzer]
 public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
 {
-    private const string ErrorMethodName = "Error";
-
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.StatementBlocksSeparatedByBlankLine);
 
@@ -46,7 +45,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             EnumProvider.SyntaxKind.ExitStatement);
 
         context.RegisterOperationAction(
-            AnalyzeErrorInvocation,
+            AnalyzeFlowTerminatingInvocation,
             EnumProvider.OperationKind.InvocationExpression);
     }
 
@@ -180,7 +179,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         }
     }
 
-    private void AnalyzeErrorInvocation(OperationAnalysisContext ctx)
+    private void AnalyzeFlowTerminatingInvocation(OperationAnalysisContext ctx)
     {
         if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression invocation)
         {
@@ -199,7 +198,9 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        if (!IsBuiltInErrorInvocation(invocation))
+        var flowTerminatingBuiltInName = FlowTerminatingBuiltIns.GetFlowTerminatingBuiltInName(invocation);
+
+        if (flowTerminatingBuiltInName is null)
         {
             return;
         }
@@ -214,7 +215,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         var diagnostic = GetScopeLeavingSpacingDiagnostic(
             expressionStatement,
             config,
-            "before scope-leaving statement 'Error()'");
+            $"before scope-leaving statement '{flowTerminatingBuiltInName}()'");
 
         if (diagnostic is not null)
         {
@@ -239,17 +240,6 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         var span = statement.GetLocation().GetLineSpan();
 
         return span.StartLinePosition.Line == span.EndLinePosition.Line;
-    }
-
-    private static bool IsBuiltInErrorInvocation(IInvocationExpression invocation)
-    {
-        if (invocation.TargetMethod is not IMethodSymbol targetMethod)
-        {
-            return false;
-        }
-
-        return targetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod &&
-            SemanticFacts.IsSameName(targetMethod.Name, ErrorMethodName);
     }
 
     private static bool IsControlFlowStatement(SyntaxNode node) =>

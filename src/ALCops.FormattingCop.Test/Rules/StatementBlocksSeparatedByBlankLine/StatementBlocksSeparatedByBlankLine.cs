@@ -51,6 +51,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase(null, "ControlFlowSpacingMissing")]
         [TestCase(null, "ControlFlowInteractionSpacing")]
         [TestCase(null, "ScopeLeavingSpacingMissing")]
+        [TestCase(null, "FieldErrorSpacingMissing")]
         // Comment-only lines between statements must not satisfy the blank-line requirement.
         [TestCase(null, "CommentBetweenStatements")]
         // Config-driven positive cases.
@@ -84,6 +85,7 @@ namespace ALCops.FormattingCop.Test
         // Default settings.
         [TestCase(null, "ControlFlowSpacingValid")]
         [TestCase(null, "ScopeLeavingSpacingValid")]
+        [TestCase(null, "FieldErrorSpacingValid")]
         [TestCase(null, "DisabledByDefault")]
         // Disabling ControlFlowBefore/After entirely must silence the ControlFlowSpacingMissing fixture.
         [TestCase("ControlFlowOff", "ControlFlowSpacingMissing")]
@@ -105,6 +107,16 @@ namespace ALCops.FormattingCop.Test
         }
 
         [Test]
+        [TestCase("FieldErrorSpacingMissingInvalid")]
+        public async Task HasDiagnosticInDocumentWithErrors(string fixtureName)
+        {
+            var code = await LoadFixtureAsync(fixtureName);
+
+            CreateFixture(null, throwsWhenInputDocumentContainsError: false)
+                .HasDiagnosticAtAllMarkers(code, DiagnosticIds.StatementBlocksSeparatedByBlankLine);
+        }
+
+        [Test]
         [TestCase("ControlFlowInteractionSpacing", 4)]
         public async Task ReportsExpectedDiagnosticCount(string fixtureName, int expectedCount)
         {
@@ -114,6 +126,20 @@ namespace ALCops.FormattingCop.Test
             Assert.That(
                 fixture.CountDiagnostics(code, DiagnosticIds.StatementBlocksSeparatedByBlankLine),
                 Is.EqualTo(expectedCount));
+        }
+
+        [TestCase("FieldErrorSpacingMissing", 2)]
+        [TestCase("FieldErrorSpacingMissingInvalid", 1)]
+        public async Task ReportsCanonicalScopeLeavingMethodName(string fixtureName, int expectedCount)
+        {
+            var code = await LoadFixtureAsync(fixtureName);
+            var fixture = new DiagnosticCountingFixture(_ruleSetPath);
+            var messages = fixture.GetDiagnosticMessages(
+                code,
+                DiagnosticIds.StatementBlocksSeparatedByBlankLine);
+
+            Assert.That(messages, Has.Length.EqualTo(expectedCount));
+            Assert.That(messages, Is.All.Contains("FieldError()"));
         }
 
         // Fixtures live in either HasDiagnostic/ or NoDiagnostic/ subfolders (repo convention).
@@ -135,7 +161,9 @@ namespace ALCops.FormattingCop.Test
                 $"Fixture '{fixtureName}.al' not found in {nameof(HasDiagnostic)}/ or {nameof(NoDiagnostic)}/ under '{_testCasePath}'.");
         }
 
-        private AnalyzerTestFixture CreateFixture(string? settingsKey) =>
+        private AnalyzerTestFixture CreateFixture(
+            string? settingsKey,
+            bool throwsWhenInputDocumentContainsError = true) =>
             RoslynFixtureFactory.Create<Analyzers.StatementBlocksSeparatedByBlankLine>(
                 new AnalyzerTestFixtureConfig
                 {
@@ -147,7 +175,8 @@ namespace ALCops.FormattingCop.Test
                         : new MemoryFileSystem(new Dictionary<string, byte[]>
                         {
                             { "alcops.json", Settings[settingsKey] }
-                        })
+                        }),
+                    ThrowsWhenInputDocumentContainsError = throwsWhenInputDocumentContainsError
                 });
 
         private static byte[] Utf8(string s) => System.Text.Encoding.UTF8.GetBytes(s);
@@ -162,6 +191,20 @@ namespace ALCops.FormattingCop.Test
 
             public int CountDiagnostics(string markupCode, string diagnosticId)
             {
+                return GetDiagnostics(markupCode)
+                    .Count(diagnostic => diagnostic.Id == diagnosticId);
+            }
+
+            public string[] GetDiagnosticMessages(string markupCode, string diagnosticId)
+            {
+                return GetDiagnostics(markupCode)
+                    .Where(diagnostic => diagnostic.Id == diagnosticId)
+                    .Select(diagnostic => diagnostic.GetMessage())
+                    .ToArray();
+            }
+
+            private ImmutableArray<Diagnostic> GetDiagnostics(string markupCode)
+            {
                 var markup = new CodeMarkup(markupCode);
                 var document = CreateDocumentFromCode(markup.Code);
                 var compilation = document.Project
@@ -172,18 +215,16 @@ namespace ALCops.FormattingCop.Test
 
                 if (compilation is null)
                 {
-                    return 0;
+                    return ImmutableArray<Diagnostic>.Empty;
                 }
 
-                var diagnostics = compilation
+                return compilation
                     .WithAnalyzers(
                         ImmutableArray.Create(CreateAnalyzer()),
                         cancellationToken: CancellationToken.None)
                     .GetAnalyzerDiagnosticsAsync()
                     .GetAwaiter()
                     .GetResult();
-
-                return diagnostics.Count(diagnostic => diagnostic.Id == diagnosticId);
             }
         }
     }
