@@ -38,7 +38,9 @@ Analyzer-specific settings are configured in `alcops.json`. A project can inheri
 
 Local scalar values and arrays replace inherited values. Nested objects are merged property by property. Inheritance chains are deliberately not supported. See the [configuration guide](https://alcops.dev/docs/getting-started/configuration/) for all settings and precedence rules.
 
-HTTP(S) sources must be anonymously accessible. URLs containing embedded credentials such as `https://user:pass@example.com/alcops.json` are rejected.
+HTTP(S) sources must be anonymously accessible. URLs containing embedded credentials such as `https://user:pass@example.com/alcops.json` are rejected before network access, and their username/password are omitted from diagnostics. Committing `alcops.json` means trusting its referenced configuration source.
+
+HTTP responses are limited to 1 MiB (1,048,576 bytes), with a five-second timeout. If a declared `Extends` source cannot be resolved, ALCops uses the built-in defaults for the entire configuration, discards local overrides, and reports `CM0001`.
 
 ## Contributing
 

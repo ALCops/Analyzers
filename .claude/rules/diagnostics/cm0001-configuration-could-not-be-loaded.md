@@ -13,7 +13,7 @@ Warns when an `alcops.json` configuration file is found but cannot be fully appl
 
 Registers `RegisterCompilationAction` (no node or symbol kinds; reports at `Location.None`); main type `ConfigurationCouldNotBeLoaded`.
 
-**References:** [#328](https://github.com/ALCops/Analyzers/issues/328); [discussion #483](https://github.com/ALCops/Analyzers/discussions/483) (remote `Extends` configuration) defers its failure diagnostics here.
+**References:** [#328](https://github.com/ALCops/Analyzers/issues/328); [discussion #483](https://github.com/ALCops/Analyzers/discussions/483) (remote `Extends` configuration); [inheritance review](https://github.com/ALCops/Analyzers/pull/500#pullrequestreview-5112244814) (atomic fallback and HTTP response-size limit).
 
 ## Design decisions
 
@@ -29,6 +29,9 @@ Registers `RegisterCompilationAction` (no node or symbol kinds; reports at `Loca
 | An unreadable app-folder file does **not** fall through to parent-directory traversal | The app-level file was intended to win; silently applying a parent file would mask the problem. Behavior change relative to pre-CM0001. |
 | Virtual-file source path built from `GetDirectoryPath()` + file name, not `IFileSystem.GetAbsolutePath` | `GetAbsolutePath` does not exist on `IFileSystem` at the oldest SDK the netstandard2.1 binary runs on (AL 12); calling it would throw `MissingMethodException` there. |
 | `MessageFormat` carries a free-text reason (`The ALCops configuration '{0}' could not be fully loaded: {1}`) | Remote `Extends` failures such as unreachable URLs, timeouts, credential-bearing URLs, and illegal chains reuse the same descriptor through the existing `Unreadable` and `Invalid` failure kinds. |
+| A failed declared `Extends` discards both the base and local overrides, returning complete built-in defaults | Applying only the overrides would leave a partially configured project; the warning makes the complete fallback visible. Unknown setting names remain non-fatal, preserving recognized values as for local configuration. |
+| HTTP responses are bounded through `HttpClient.MaxResponseContentBufferSize`, while keeping the five-second timeout | The byte limit is enforced during buffering even without Content-Length, so a large response cannot bypass the limit by using chunked transfer. Checking string length after downloading would already have allocated the oversized body. |
+| A rejected URL omits `Uri.UserInfo` from its recorded source | The CM0001 message renders that source directly in IDE diagnostics and build logs; rejecting network access must not expose the credentials in the error message. |
 
 ## Deliberate non-reports
 

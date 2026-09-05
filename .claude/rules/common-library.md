@@ -53,7 +53,7 @@ Settings are resolved using `.editorconfig`-style upward traversal. The first lo
 3. **Assembly location** — directory where `ALCops.Common.dll` is located
 4. **Defaults** — built-in default values from `ALCopsSettings`
 
-The selected local file can declare an external base through `Extends.Source`. Exactly one anonymously accessible HTTP(S) URL or absolute local file path is supported. HTTP(S) URLs with a non-empty `Uri.UserInfo` are rejected before any request is made. `ALCopsSettingsInheritanceResolver` merges the referenced JSON before deserialization: local scalar values and arrays replace inherited values, while nested objects merge property by property. A referenced configuration that declares `Extends` is rejected, so inheritance chains are not followed. Unavailable or invalid external configurations fall back to the local file.
+The selected local file can declare an external base through `Extends.Source`. Exactly one anonymously accessible HTTP(S) URL or absolute local file path is supported. HTTP(S) URLs with a non-empty `Uri.UserInfo` are rejected before any request is made, and the user info is omitted from the diagnostic source. `ALCopsSettingsInheritanceResolver` merges the referenced JSON before deserialization: local scalar values and arrays replace inherited values, while nested objects merge property by property. A referenced configuration that declares `Extends` is rejected, so inheritance chains are not followed. A declared base and its local overrides form one configuration: if inheritance fails, both are discarded in favor of built-in defaults, with CM0001 explaining why.
 
 This allows a multi-root workspace to share a single `alcops.json` at the workspace root:
 ```
@@ -75,7 +75,7 @@ This allows a multi-root workspace to share a single `alcops.json` at the worksp
 - Inaccessible directory during parent traversal: stops traversal (treats as boundary)
 - Unreadable or malformed `alcops.json` (invalid syntax, unknown enum values, wrong types): returns defaults — that fallback contract is unchanged — and records an `Unreadable`/`Invalid` failure that `Analyzers/ConfigurationCouldNotBeLoaded` reports as CM0001. An unreadable app-folder file does **not** fall through to a parent-directory file.
 - Unknown top-level keys (typo'd setting names): recognized settings still apply; one `UnknownSetting` failure per key. The known-key set is reflection-derived from `ALCopsSettings` properties (case-insensitive, `$schema` allowlisted), so new settings extend it automatically.
-- Unavailable, unreadable, chained, or invalid `Extends.Source`: applies the local configuration and records an `Unreadable`/`Invalid` failure for CM0001; HTTP requests time out after five seconds.
+- Unavailable, unreadable, chained, or invalid `Extends.Source`: applies built-in defaults for the entire configuration, including all local overrides, and records an `Unreadable`/`Invalid` failure for CM0001. HTTP requests time out after five seconds and buffer at most 1 MiB (1,048,576 bytes); the limit also covers chunked responses and bodies without Content-Length. The configured source is trusted by the project; no additional host or address restrictions are imposed.
 - `MemoryFileSystem` (in tests, `GetDirectoryPath()` returns `""`): only checks virtual FS, no parent traversal
 - Only `IFileSystem` members present at the AL 12 interface floor may be called (`Exists`, `OpenRead`, `GetDirectoryPath`, …). `GetAbsolutePath` is not among them — the netstandard2.1 binary would throw `MissingMethodException` on old compilers.
 

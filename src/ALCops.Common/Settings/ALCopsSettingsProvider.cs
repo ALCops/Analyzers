@@ -193,7 +193,11 @@ public static class ALCopsSettingsProvider
             }
 
             if (inheritanceFailure is not null)
-                localFailures = localFailures.Add(inheritanceFailure);
+            {
+                // A declared base and its overrides form one configuration. Applying only
+                // the overrides would leave the project in an unexpected partial state.
+                return new ALCopsSettingsLoadResult(new ALCopsSettings(), localFailures.Add(inheritanceFailure));
+            }
 
             return new ALCopsSettingsLoadResult(localSettings, localFailures);
         }

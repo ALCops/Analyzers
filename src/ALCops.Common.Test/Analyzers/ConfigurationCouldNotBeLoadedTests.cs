@@ -14,7 +14,7 @@ namespace ALCops.Common.Test;
 /// </summary>
 public class ConfigurationCouldNotBeLoadedTests
 {
-    private static ImmutableArray<Diagnostic> GetDiagnostics(IFileSystem fileSystem)
+    internal static ImmutableArray<Diagnostic> GetDiagnostics(IFileSystem fileSystem)
     {
         var tree = SyntaxTree.ParseObjectText("codeunit 50100 MyCodeunit { }");
         var compilation = Compilation.Create("Test", syntaxTrees: new[] { tree }, fileSystem: fileSystem);
@@ -79,15 +79,21 @@ public class ConfigurationCouldNotBeLoadedTests
         Assert.That(diagnostics, Is.Empty);
     }
 
-    [Test]
-    public void CredentialBearingInheritedSource_ReportsCm0001()
+    [TestCase("https://review-user:review-secret@example.invalid/alcops.json")]
+    [TestCase("https://review-user:review%2Dsecret@example.invalid/alcops.json")]
+    [TestCase("http://review-user:review-secret@example.invalid:8080/alcops.json")]
+    public void CredentialBearingInheritedSource_ReportsCm0001WithoutCredentials(string source)
     {
         var diagnostics = GetDiagnostics(CreateFileSystem(
-            """{"Extends":{"Source":"https://user:pass@example.invalid/alcops.json"}}"""));
+            System.Text.Json.JsonSerializer.Serialize(new { Extends = new { Source = source } })));
 
         Assert.That(diagnostics, Has.Length.EqualTo(1));
         Assert.That(diagnostics[0].Id, Is.EqualTo(DiagnosticIds.ConfigurationCouldNotBeLoaded));
         Assert.That(diagnostics[0].GetMessage(), Does.Contain("credentials"));
+        Assert.That(diagnostics[0].GetMessage(), Does.Contain("example.invalid"));
+        Assert.That(diagnostics[0].GetMessage(), Does.Not.Contain("review-user"));
+        Assert.That(diagnostics[0].GetMessage(), Does.Not.Contain("review-secret"));
+        Assert.That(diagnostics[0].GetMessage(), Does.Not.Contain("review%2Dsecret"));
     }
 
     [Test]

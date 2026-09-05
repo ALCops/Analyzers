@@ -14,9 +14,14 @@ namespace ALCops.Common.Settings;
 /// </summary>
 internal static class ALCopsSettingsInheritanceResolver
 {
+    private const int MaxHttpResponseBytes = 1024 * 1024;
+
     private static readonly HttpClient _httpClient = new()
     {
-        Timeout = TimeSpan.FromSeconds(5)
+        Timeout = TimeSpan.FromSeconds(5),
+        // GetStringAsync enforces this while buffering, including chunked responses
+        // and responses without Content-Length, before JSON deserialization starts.
+        MaxResponseContentBufferSize = MaxHttpResponseBytes
     };
 
 #if !NETSTANDARD2_1
@@ -124,9 +129,12 @@ internal static class ALCopsSettingsInheritanceResolver
             {
                 if (!string.IsNullOrEmpty(uri.UserInfo))
                 {
+                    // CM0001 includes the source verbatim, even for a rejected request.
+                    string diagnosticSource = uri.GetComponents(
+                        UriComponents.AbsoluteUri & ~UriComponents.UserInfo, UriFormat.UriEscaped);
                     failure = new SettingsLoadFailure(
                         SettingsLoadFailureKind.Invalid,
-                        source,
+                        diagnosticSource,
                         "HTTP(S) configuration URLs containing credentials are not allowed.");
                     return false;
                 }

@@ -189,7 +189,7 @@ public class ALCopsSettingsProviderTests
     }
 
     [Test]
-    public void GetSettings_ExtendsFallsBackToLocalWhenSourceIsUnavailable()
+    public void GetSettings_ExtendsFallsBackToDefaultsWhenSourceIsUnavailable()
     {
         var appFolder = Path.Combine(_tempRoot, "UnavailableSourceApp");
         Directory.CreateDirectory(appFolder);
@@ -207,13 +207,13 @@ public class ALCopsSettingsProviderTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(settings.CyclomaticComplexityThreshold, Is.EqualTo(41));
+            Assert.That(settings.CyclomaticComplexityThreshold, Is.EqualTo(8));
             Assert.That(settings.CognitiveComplexityThreshold, Is.EqualTo(15));
         });
     }
 
     [Test]
-    public void GetSettings_ExtendsFallsBackToLocalWhenInheritedSettingsAreInvalid()
+    public void GetSettings_ExtendsFallsBackToDefaultsWhenInheritedSettingsAreInvalid()
     {
         var inheritedFile = Path.Combine(_tempRoot, "invalid.alcops.json");
         File.WriteAllText(inheritedFile, """{"StatementBlockSpacing":{"ScopeLeavingMode":"Invalid"}}""");
@@ -234,13 +234,13 @@ public class ALCopsSettingsProviderTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(settings.CyclomaticComplexityThreshold, Is.EqualTo(43));
+            Assert.That(settings.CyclomaticComplexityThreshold, Is.EqualTo(8));
             Assert.That(settings.StatementBlockSpacing.ScopeLeavingMode, Is.EqualTo(ScopeLeavingMode.ExitAndError));
         });
     }
 
     [Test]
-    public void GetSettings_ExtendsFallsBackToLocalWhenInheritedJsonIsMalformed()
+    public void GetSettings_ExtendsFallsBackToDefaultsWhenInheritedJsonIsMalformed()
     {
         var inheritedFile = Path.Combine(_tempRoot, "malformed.alcops.json");
         File.WriteAllText(inheritedFile, "{ not valid JSON");
@@ -259,7 +259,7 @@ public class ALCopsSettingsProviderTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(settings.MaintainabilityIndexThreshold, Is.EqualTo(44));
+            Assert.That(settings.MaintainabilityIndexThreshold, Is.EqualTo(20));
             Assert.That(settings.CognitiveComplexityThreshold, Is.EqualTo(15));
         });
     }
@@ -294,7 +294,7 @@ public class ALCopsSettingsProviderTests
         Assert.Multiple(() =>
         {
             Assert.That(settings.CognitiveComplexityThreshold, Is.EqualTo(15));
-            Assert.That(settings.CyclomaticComplexityThreshold, Is.EqualTo(47));
+            Assert.That(settings.CyclomaticComplexityThreshold, Is.EqualTo(8));
         });
     }
 
@@ -377,7 +377,7 @@ public class ALCopsSettingsProviderTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(settings.MaintainabilityIndexThreshold, Is.EqualTo(39));
+            Assert.That(settings.MaintainabilityIndexThreshold, Is.EqualTo(20));
             Assert.That(settings.CognitiveComplexityThreshold, Is.EqualTo(15));
             Assert.That(listener.Pending(), Is.False, "A credential-bearing URL must be rejected before connecting.");
         });
