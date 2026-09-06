@@ -1,10 +1,11 @@
+using System.Text.Json;
 using ALCops.Common.Settings;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 
 namespace ALCops.Common.Test;
 
 /// <summary>
-/// Tests for the load-failure reporting of <see cref="ALCopsSettingsProvider.GetLoadResult"/>:
+/// Tests for the load-failure reporting of <see cref="ALCopsSettingsProvider.GetLoadResult(IFileSystem, CancellationToken)"/>:
 /// unreadable files, malformed JSON, and unknown top-level settings.
 /// </summary>
 [NonParallelizable]
@@ -39,6 +40,25 @@ public class ALCopsSettingsLoadFailureTests
         Directory.CreateDirectory(appFolder);
         File.WriteAllText(Path.Combine(appFolder, "alcops.json"), settingsJson);
         return appFolder;
+    }
+
+    [TestCase("null")]
+    [TestCase("")]
+    [TestCase("/* no base configuration */")]
+    [TestCase("[]")]
+    public void EmptyOrNonObjectInheritedDocument_StillDiscardsLocalOverrides(string inheritedJson)
+    {
+        var inheritedFile = Path.Combine(_tempRoot, "empty-base.json");
+        File.WriteAllText(inheritedFile, inheritedJson);
+        var appFolder = CreateAppFolder(JsonSerializer.Serialize(new
+        {
+            Extends = new { Source = inheritedFile },
+            CognitiveComplexityThreshold = 41
+        }));
+        var result = ALCopsSettingsProvider.GetLoadResult(new RelativeFileSystem(appFolder));
+        Assert.That(result.Settings.CognitiveComplexityThreshold, Is.EqualTo(15));
+        Assert.That(result.Failures, Has.Length.EqualTo(1));
+        Assert.That(result.Failures[0].Kind, Is.EqualTo(SettingsLoadFailureKind.Invalid));
     }
 
     [Test]
@@ -123,6 +143,208 @@ public class ALCopsSettingsLoadFailureTests
 
         Assert.That(result.Settings.CyclomaticComplexityThreshold, Is.EqualTo(42));
         Assert.That(result.Failures, Is.Empty);
+    }
+
+    [Test]
+    public void GetLoadResult_ValidInheritedSettings_AppliesWithoutFailures()
+    {
+        var inheritedFile = Path.Combine(_tempRoot, "company.alcops.json");
+        File.WriteAllText(inheritedFile, """{"CognitiveComplexityThreshold": 31}""");
+        var appFolder = CreateAppFolder(
+            $$"""
+            {
+                "Extends": { "Source": {{JsonSerializer.Serialize(inheritedFile)}} },
+                "CyclomaticComplexityThreshold": 17
+            }
+            """);
+
+        var result = ALCopsSettingsProvider.GetLoadResult(new RelativeFileSystem(appFolder));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Settings.CognitiveComplexityThreshold, Is.EqualTo(31));
+            Assert.That(result.Settings.CyclomaticComplexityThreshold, Is.EqualTo(17));
+            Assert.That(result.Failures, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void GetLoadResult_MissingInheritedFile_ReturnsDefaultsWithUnreadableFailure()
+    {
+        var inheritedFile = Path.Combine(_tempRoot, "missing.alcops.json");
+        var appFolder = CreateAppFolder(
+            $$"""
+            {
+                "Extends": { "Source": {{JsonSerializer.Serialize(inheritedFile)}} },
+                "CyclomaticComplexityThreshold": 41
+            }
+            """);
+
+        var result = ALCopsSettingsProvider.GetLoadResult(new RelativeFileSystem(appFolder));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Settings.CyclomaticComplexityThreshold, Is.EqualTo(8));
+            Assert.That(result.Failures, Has.Length.EqualTo(1));
+            Assert.That(result.Failures[0].Kind, Is.EqualTo(SettingsLoadFailureKind.Unreadable));
+            Assert.That(result.Failures[0].Source, Is.EqualTo(inheritedFile));
+        });
+    }
+
+    [Test]
+    public void GetLoadResult_MalformedInheritedJson_ReturnsDefaultsWithInvalidFailure()
+    {
+        var inheritedFile = Path.Combine(_tempRoot, "malformed.alcops.json");
+        File.WriteAllText(inheritedFile, "{ not valid JSON");
+        var appFolder = CreateAppFolder(
+            $$"""
+            {
+                "Extends": { "Source": {{JsonSerializer.Serialize(inheritedFile)}} },
+                "MaintainabilityIndexThreshold": 44
+            }
+            """);
+
+        var result = ALCopsSettingsProvider.GetLoadResult(new RelativeFileSystem(appFolder));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Settings.MaintainabilityIndexThreshold, Is.EqualTo(20));
+            Assert.That(result.Failures, Has.Length.EqualTo(1));
+            Assert.That(result.Failures[0].Kind, Is.EqualTo(SettingsLoadFailureKind.Invalid));
+            Assert.That(result.Failures[0].Source, Is.EqualTo(inheritedFile));
+        });
+    }
+
+    [Test]
+    public void GetLoadResult_InheritanceChain_ReturnsDefaultsWithInvalidFailure()
+    {
+        var inheritedFile = Path.Combine(_tempRoot, "chained.alcops.json");
+        File.WriteAllText(
+            inheritedFile,
+            """{"Extends":{"Source":"https://example.invalid/base.json"},"CognitiveComplexityThreshold":99}""");
+        var appFolder = CreateAppFolder(
+            $$"""
+            {
+                "Extends": { "Source": {{JsonSerializer.Serialize(inheritedFile)}} },
+                "CyclomaticComplexityThreshold": 47
+            }
+            """);
+
+        var result = ALCopsSettingsProvider.GetLoadResult(new RelativeFileSystem(appFolder));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Settings.CognitiveComplexityThreshold, Is.EqualTo(15));
+            Assert.That(result.Settings.CyclomaticComplexityThreshold, Is.EqualTo(8));
+            Assert.That(result.Failures, Has.Length.EqualTo(1));
+            Assert.That(result.Failures[0].Kind, Is.EqualTo(SettingsLoadFailureKind.Invalid));
+            Assert.That(result.Failures[0].Source, Is.EqualTo(inheritedFile));
+            Assert.That(result.Failures[0].Detail, Does.Contain("inheritance chains"));
+        });
+    }
+
+    [Test]
+    public void GetLoadResult_CredentialBearingHttpSource_ReturnsDefaultsWithSanitizedFailure()
+    {
+        const string inheritedUrl = "https://user:pass@example.invalid/alcops.json";
+        var appFolder = CreateAppFolder(
+            $$"""
+            {
+                "Extends": { "Source": "{{inheritedUrl}}" },
+                "MaintainabilityIndexThreshold": 39
+            }
+            """);
+
+        var result = ALCopsSettingsProvider.GetLoadResult(new RelativeFileSystem(appFolder));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Settings.MaintainabilityIndexThreshold, Is.EqualTo(20));
+            Assert.That(result.Failures, Has.Length.EqualTo(1));
+            Assert.That(result.Failures[0].Kind, Is.EqualTo(SettingsLoadFailureKind.Invalid));
+            Assert.That(result.Failures[0].Source, Is.EqualTo("https://example.invalid/alcops.json"));
+            Assert.That(result.Failures[0].Detail, Does.Contain("credentials"));
+        });
+    }
+
+    [TestCase("null")]
+    [TestCase("{}")]
+    [TestCase("{\"Source\":\"\"}")]
+    [TestCase("{\"Source\":\"relative/alcops.json\"}")]
+    public void GetLoadResult_InvalidExtends_DiscardsAllLocalOverrides(string extendsJson)
+    {
+        var appFolder = CreateAppFolder(
+            $$"""
+            {
+                "Extends": {{extendsJson}},
+                "CognitiveComplexityThreshold": 31,
+                "CyclomaticComplexityThreshold": 41,
+                "KnownAcronyms": ["Local"],
+                "StatementBlockSpacing": {"ScopeLeavingMode":"ExitOnly"}
+            }
+            """);
+
+        var result = ALCopsSettingsProvider.GetLoadResult(new RelativeFileSystem(appFolder));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Settings.CognitiveComplexityThreshold, Is.EqualTo(15));
+            Assert.That(result.Settings.CyclomaticComplexityThreshold, Is.EqualTo(8));
+            Assert.That(result.Settings.KnownAcronyms, Is.Null);
+            Assert.That(result.Settings.StatementBlockSpacing.ScopeLeavingMode, Is.EqualTo(ScopeLeavingMode.ExitAndError));
+            Assert.That(result.Failures, Has.Length.EqualTo(1));
+            Assert.That(result.Failures[0].Kind, Is.EqualTo(SettingsLoadFailureKind.Invalid));
+        });
+    }
+
+    [Test]
+    public void GetLoadResult_InvalidInheritedValueHiddenByOverride_ReturnsDefaultsWithFailure()
+    {
+        var inheritedFile = Path.Combine(_tempRoot, "invalid-setting.alcops.json");
+        File.WriteAllText(inheritedFile, """{"CognitiveComplexityThreshold":"invalid"}""");
+        var appFolder = CreateAppFolder(JsonSerializer.Serialize(new
+        {
+            Extends = new { Source = inheritedFile },
+            CognitiveComplexityThreshold = 31
+        }));
+
+        var result = ALCopsSettingsProvider.GetLoadResult(new RelativeFileSystem(appFolder));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Settings.CognitiveComplexityThreshold, Is.EqualTo(15));
+            Assert.That(result.Failures, Has.Length.EqualTo(1));
+            Assert.That(result.Failures[0].Kind, Is.EqualTo(SettingsLoadFailureKind.Invalid));
+            Assert.That(result.Failures[0].Source, Is.EqualTo(inheritedFile));
+        });
+    }
+
+    [Test]
+    public void GetLoadResult_UnknownInheritedKey_AppliesRecognizedSettingsWithFailure()
+    {
+        var inheritedFile = Path.Combine(_tempRoot, "unknown-setting.alcops.json");
+        File.WriteAllText(
+            inheritedFile,
+            """{"CognitiveComplexityThreshold":31,"InheritedTypo":true}""");
+        var appFolder = CreateAppFolder(
+            $$"""
+            {
+                "Extends": { "Source": {{JsonSerializer.Serialize(inheritedFile)}} },
+                "CyclomaticComplexityThreshold": 17
+            }
+            """);
+
+        var result = ALCopsSettingsProvider.GetLoadResult(new RelativeFileSystem(appFolder));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Settings.CognitiveComplexityThreshold, Is.EqualTo(31));
+            Assert.That(result.Settings.CyclomaticComplexityThreshold, Is.EqualTo(17));
+            Assert.That(result.Failures, Has.Length.EqualTo(1));
+            Assert.That(result.Failures[0].Kind, Is.EqualTo(SettingsLoadFailureKind.UnknownSetting));
+            Assert.That(result.Failures[0].Source, Is.EqualTo(inheritedFile));
+            Assert.That(result.Failures[0].Detail, Does.Contain("InheritedTypo"));
+        });
     }
 
     [Test]

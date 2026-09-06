@@ -5,10 +5,10 @@ namespace ALCops.Common.Settings;
 /// </summary>
 public enum SettingsLoadFailureKind
 {
-    /// <summary>The file exists but could not be read (I/O or permission error).</summary>
+    /// <summary>The configuration source could not be read (I/O, network, or permission error).</summary>
     Unreadable,
 
-    /// <summary>The file content could not be deserialized (invalid JSON, wrong value types, unknown enum values).</summary>
+    /// <summary>The source content could not be applied (invalid JSON, wrong value types, unknown enum values, or invalid inheritance).</summary>
     Invalid,
 
     /// <summary>A top-level property is not a recognized ALCops setting.</summary>
@@ -21,18 +21,22 @@ public enum SettingsLoadFailureKind
 /// </summary>
 public sealed class SettingsLoadFailure
 {
-    public SettingsLoadFailure(SettingsLoadFailureKind kind, string source, string detail)
+    public SettingsLoadFailure(SettingsLoadFailureKind kind, string source, string detail, bool retryOnNextCompilation = false)
     {
         Kind = kind;
         Source = source;
         Detail = detail;
+        RetryOnNextCompilation = retryOnNextCompilation;
     }
 
     public SettingsLoadFailureKind Kind { get; }
 
-    /// <summary>The file path (or virtual-file name) the configuration was loaded from.</summary>
+    /// <summary>The file path, URL, or virtual-file name the configuration was loaded from.</summary>
     public string Source { get; }
 
     /// <summary>Human-readable reason; may contain OS-localized exception text.</summary>
     public string Detail { get; }
+
+    /// <summary>A failed HTTP request may succeed in a later compilation without restarting the host.</summary>
+    public bool RetryOnNextCompilation { get; }
 }

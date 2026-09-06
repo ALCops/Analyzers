@@ -13,7 +13,7 @@ Warns when an `alcops.json` configuration file is found but cannot be fully appl
 
 Registers `RegisterCompilationAction` (no node or symbol kinds; reports at `Location.None`); main type `ConfigurationCouldNotBeLoaded`.
 
-**References:** [#328](https://github.com/ALCops/Analyzers/issues/328); [discussion #483](https://github.com/ALCops/Analyzers/discussions/483) (remote `Extends` configuration) defers its failure diagnostics here.
+**References:** [#328](https://github.com/ALCops/Analyzers/issues/328); [discussion #483](https://github.com/ALCops/Analyzers/discussions/483) (remote `Extends` configuration); [inheritance review](https://github.com/ALCops/Analyzers/pull/500#pullrequestreview-5112244814) (atomic fallback and HTTP response-size limit).
 
 ## Design decisions
 
@@ -28,7 +28,14 @@ Registers `RegisterCompilationAction` (no node or symbol kinds; reports at `Loca
 | One diagnostic per unknown key | Each typo is independently fixable; `Unreadable`/`Invalid` are inherently single. |
 | An unreadable app-folder file does **not** fall through to parent-directory traversal | The app-level file was intended to win; silently applying a parent file would mask the problem. Behavior change relative to pre-CM0001. |
 | Virtual-file source path built from `GetDirectoryPath()` + file name, not `IFileSystem.GetAbsolutePath` | `GetAbsolutePath` does not exist on `IFileSystem` at the oldest SDK the netstandard2.1 binary runs on (AL 12); calling it would throw `MissingMethodException` there. |
-| `MessageFormat` carries a free-text reason (`The ALCops configuration '{0}' could not be fully loaded: {1}`) | Future failure kinds (remote `Extends`: unreachable URL, timeout, illegal chain) reuse the same descriptor via new `SettingsLoadFailureKind` members. |
+| `MessageFormat` carries a free-text reason (`The ALCops configuration '{0}' could not be fully loaded: {1}`) | Remote `Extends` failures such as unreachable URLs, timeouts, credential-bearing URLs, and illegal chains reuse the same descriptor through the existing `Unreadable` and `Invalid` failure kinds. |
+| A failed declared `Extends` discards both the base and local overrides, returning complete built-in defaults | Applying only the overrides would leave a partially configured project; the warning makes the complete fallback visible. Unknown setting names remain non-fatal, preserving recognized values as for local configuration. |
+| HTTP responses are bounded through `HttpClient.MaxResponseContentBufferSize`, while keeping the five-second timeout | The byte limit is enforced during buffering even without Content-Length, so a large response cannot bypass the limit by using chunked transfer. Checking string length after downloading would already have allocated the oversized body. |
+| A rejected URL omits `Uri.UserInfo` from its recorded source | The CM0001 message renders that source directly in IDE diagnostics and build logs; rejecting network access must not expose the credentials in the error message. |
+| HTTP request failures remain stable within a compilation but are retried by a later compilation | A temporary outage must not permanently poison the workspace cache. All consumers use the compilation from CompilationStart so the SDK's different SemanticModel.Compilation object cannot split that snapshot. |
+| Caller cancellation propagates without a diagnostic or cached result; cache waiters can cancel independently | Editing or reloading a workspace must stop both the pending HTTP body read and unnecessary waits behind another caller. Synchronous SDK callbacks still wait for the first uncached load; all async continuations avoid context capture. |
+| JSON parsing, key lookup, merge and type validation share ALCopsSettingsDocument | Local and external configuration use the same comment/trailing-comma/casing policy on both serializer stacks. Retaining local type validation before network access prevents unnecessary requests for invalid local values. |
+| Null, empty or comment-only local input uses defaults silently; an inherited document still requires an object | An empty local settings file declares no policy. A declared base is required input and must pass its own validation. |
 
 ## Deliberate non-reports
 
@@ -39,7 +46,7 @@ Registers `RegisterCompilationAction` (no node or symbol kinds; reports at `Loca
 ## Known issues
 
 - TOCTOU between `Exists` and `OpenRead`: a file deleted in between is reported as `Unreadable` with a file-not-found message. Rare, accepted.
-- The settings cache has no invalidation, so a stale entry (file fixed after first load) keeps reporting until the analyzer process restarts; this is the same staleness the settings themselves already have.
+- Successfully loaded settings and deterministic configuration errors have no invalidation. Correcting those still requires restarting the analyzer process; failed HTTP requests instead retry on a later compilation.
 
 ## SDK facts
 

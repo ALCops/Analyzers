@@ -30,15 +30,15 @@ public sealed class ToolTipPunctuation : DiagnosticAnalyzer
     private const int MaxTooltipLength = 202;
 
     public override void Initialize(AnalysisContext context) =>
-        context.RegisterSyntaxNodeAction(
-            AnalyzeToolTipPunctuation,
+        context.RegisterCompilationStartAction(start => start.RegisterSyntaxNodeAction(
+            ctx => AnalyzeToolTipPunctuation(ctx, start.Compilation),
             EnumProvider.SyntaxKind.PageField,
             EnumProvider.SyntaxKind.PageAction,
             EnumProvider.SyntaxKind.Field,
             EnumProvider.SyntaxKind.PageAnalysisView
-        );
+        ));
 
-    private void AnalyzeToolTipPunctuation(SyntaxNodeAnalysisContext ctx)
+    private static void AnalyzeToolTipPunctuation(SyntaxNodeAnalysisContext ctx, Compilation compilation)
     {
         if (ctx.IsObsolete())
             return;
@@ -59,7 +59,7 @@ public sealed class ToolTipPunctuation : DiagnosticAnalyzer
             AnalyzeMaximumLength(ctx, tooltipText, tooltipProperty);
 
         if (ctx.IsDiagnosticEnabled(DiagnosticDescriptors.ToolTipMustEndWithPunctuation))
-            AnalyzeEndsWithPunctuation(ctx, tooltipText, tooltipProperty);
+            AnalyzeEndsWithPunctuation(ctx, tooltipText, tooltipProperty, compilation);
 
         if (ctx.IsDiagnosticEnabled(DiagnosticDescriptors.ToolTipShouldStartWithSpecifies))
             AnalyzeStartsWithSpecifies(ctx, tooltipText, tooltipProperty);
@@ -85,10 +85,9 @@ public sealed class ToolTipPunctuation : DiagnosticAnalyzer
         }
     }
 
-    private static void AnalyzeEndsWithPunctuation(SyntaxNodeAnalysisContext ctx, string tooltipText, PropertyValueSyntax tooltipProperty)
+    private static void AnalyzeEndsWithPunctuation(SyntaxNodeAnalysisContext ctx, string tooltipText, PropertyValueSyntax tooltipProperty, Compilation compilation)
     {
-        var fileSystem = ctx.SemanticModel.Compilation.FileSystem;
-        var settings = ALCopsSettingsProvider.GetSettings(fileSystem);
+        var settings = ALCopsSettingsProvider.GetSettings(compilation, ctx.CancellationToken);
 
         var allowedPunctuations = ResolveAllowedPunctuations(settings);
 

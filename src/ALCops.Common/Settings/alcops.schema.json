@@ -11,6 +11,19 @@
       "format": "uri",
       "description": "URL to the ALCops settings JSON schema. Adding this property enables IntelliSense in editors that support JSON Schema without the ALCops VS Code extension."
     },
+    "Extends": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Source"],
+      "description": "Loads one external ALCops configuration as a base. Local scalar and array values replace inherited values, while nested objects are merged property by property. Inheritance chains are not supported. If the declared source cannot be resolved, the entire configuration uses built-in defaults and CM0001 is reported.",
+      "properties": {
+        "Source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "An anonymously accessible HTTP(S) URL without embedded credentials, or an absolute local file path to the base alcops.json configuration. HTTP responses are limited to 1 MiB (1,048,576 bytes) with a five-second timeout. Failed HTTP requests are retried by a later compilation; cancelling analysis cancels the request. Committing this setting means trusting the referenced source."
+        }
+      }
+    },
     "CognitiveComplexityThreshold": {
       "type": "integer",
       "default": 15,

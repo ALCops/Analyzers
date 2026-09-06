@@ -4,8 +4,8 @@ namespace ALCops.Common.Settings;
 
 /// <summary>
 /// The outcome of loading an alcops.json configuration: the effective settings
-/// plus any failures encountered while producing them. Failures never prevent
-/// settings from being returned; unreadable or invalid files yield the defaults.
+/// plus any failures encountered while producing them. Unreadable or invalid files
+/// yield defaults; requested cancellation instead propagates without caching a result.
 /// </summary>
 public sealed class ALCopsSettingsLoadResult
 {

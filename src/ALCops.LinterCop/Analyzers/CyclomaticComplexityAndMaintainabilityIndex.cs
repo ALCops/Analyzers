@@ -38,10 +38,9 @@ public sealed class CyclomaticComplexityAndMaintainabilityIndex : DiagnosticAnal
             DiagnosticDescriptors.MaintainabilityIndexThresholdExceeded);
 
     public override void Initialize(AnalysisContext context) =>
-        context.RegisterCodeBlockAction(
-            this.Analyze);
+        context.RegisterCompilationStartAction(start => start.RegisterCodeBlockAction(ctx => Analyze(ctx, start.Compilation)));
 
-    private void Analyze(CodeBlockAnalysisContext context)
+    private static void Analyze(CodeBlockAnalysisContext context, Compilation compilation)
     {
         if (context.IsObsolete() || context.CodeBlock is not MethodOrTriggerDeclarationSyntax methodOrTrigger)
             return;
@@ -72,7 +71,7 @@ public sealed class CyclomaticComplexityAndMaintainabilityIndex : DiagnosticAnal
         }
 
         var settings = ALCopsSettingsProvider.GetSettings(
-            context.SemanticModel.Compilation.FileSystem);
+            compilation, context.CancellationToken);
 
         var descendantNodesAndTokens = methodOrTrigger.Body.DescendantNodesAndTokens(static _ => true);
         var cyclomaticComplexity = CalculateCyclomaticComplexityMetric(context, body, descendantNodesAndTokens);
@@ -94,7 +93,6 @@ public sealed class CyclomaticComplexityAndMaintainabilityIndex : DiagnosticAnal
                 cyclomaticComplexity,
                 settings.CyclomaticComplexityThreshold));
 
-        var compilation = context.SemanticModel.Compilation;
         if (!compilation.IsDiagnosticEnabled(DiagnosticDescriptors.MaintainabilityIndexMetric) ||
             !compilation.IsDiagnosticEnabled(DiagnosticDescriptors.MaintainabilityIndexThresholdExceeded))
             return;

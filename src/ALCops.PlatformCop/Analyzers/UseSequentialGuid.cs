@@ -20,9 +20,9 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         VersionProvider.VersionCompatibility.Fall2025OrGreater;
 
     public override void Initialize(AnalysisContext context) =>
-        context.RegisterCodeBlockAction(AnalyzeCodeBlock);
+        context.RegisterCompilationStartAction(start => start.RegisterCodeBlockAction(ctx => AnalyzeCodeBlock(ctx, start.Compilation)));
 
-    private static void AnalyzeCodeBlock(CodeBlockAnalysisContext context)
+    private static void AnalyzeCodeBlock(CodeBlockAnalysisContext context, Compilation compilation)
     {
         if (context.IsObsolete() ||
             context.CodeBlock is not MethodOrTriggerDeclarationSyntax methodOrTrigger)
@@ -32,7 +32,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         if (body is null)
             return;
 
-        var settings = ALCopsSettingsProvider.GetSettings(context.SemanticModel.Compilation.FileSystem);
+        var settings = ALCopsSettingsProvider.GetSettings(compilation, context.CancellationToken);
         bool flagAllGuidFields = string.Equals(
             settings.UseSequentialGuidScope, "AllGuidFields", StringComparison.OrdinalIgnoreCase);
 

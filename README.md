@@ -23,6 +23,27 @@ A collection of custom code analyzers for the AL programming language of Microso
 
 Browse the complete rules reference at [alcops.dev/docs/analyzers](https://alcops.dev/docs/analyzers/).
 
+## Configuration
+
+Analyzer-specific settings are configured in `alcops.json`. A project can inherit a centrally maintained base configuration from one anonymously accessible HTTP(S) URL or absolute local file path and override only the values it needs:
+
+```json
+{
+  "Extends": {
+    "Source": "https://example.com/company.alcops.json"
+  },
+  "SubscriberNamingPattern": "{Event Source}_{Event Name}[_{Element Name}]"
+}
+```
+
+Local scalar values and arrays replace inherited values. Nested objects are merged property by property. Inheritance chains are deliberately not supported. See the [configuration guide](https://alcops.dev/docs/getting-started/configuration/) for all settings and precedence rules.
+
+HTTP(S) sources must be anonymously accessible. URLs containing embedded credentials such as `https://user:pass@example.com/alcops.json` are rejected before network access, and their username/password are omitted from diagnostics. Committing `alcops.json` means trusting its referenced configuration source.
+
+HTTP responses are limited to 1 MiB (1,048,576 bytes), with a five-second timeout. If a declared `Extends` source cannot be resolved, ALCops uses the built-in defaults for the entire configuration, discards local overrides, and reports `CM0001`.
+
+Failed HTTP requests are retried by a later compilation; successful loads remain cached for the analyzer session. The first analysis using an uncached HTTP source can wait for the request, and cancelling that analysis also cancels the request. Empty, comment-only or JSON-null local configuration uses defaults without a warning; an inherited configuration must contain a JSON object.
+
 ## Contributing
 
 Contributions are welcome! Whether it's a new rule idea, a bug report, or a pull request — all input helps improve ALCops for the community.
