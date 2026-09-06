@@ -20,7 +20,7 @@
         "Source": {
           "type": "string",
           "minLength": 1,
-          "description": "An anonymously accessible HTTP(S) URL without embedded credentials, or an absolute local file path to the base alcops.json configuration. HTTP responses are limited to 1 MiB (1,048,576 bytes) with a five-second timeout. Committing this setting means trusting the referenced source."
+          "description": "An anonymously accessible HTTP(S) URL without embedded credentials, or an absolute local file path to the base alcops.json configuration. HTTP responses are limited to 1 MiB (1,048,576 bytes) with a five-second timeout. Failed HTTP requests are retried by a later compilation; cancelling analysis cancels the request. Committing this setting means trusting the referenced source."
         }
       }
     },

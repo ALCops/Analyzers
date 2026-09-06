@@ -1,118 +1,81 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 #if NETSTANDARD2_1
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
 #else
 using System.Text.Json;
-using System.Text.Json.Serialization;
 #endif
-
 
 namespace ALCops.Common.Settings;
 
 /// <summary>
-/// Provides cached access to ALCops settings.
-/// Settings are loaded once per workspace path and cached for the analyzer session.
+/// Shares successfully loaded settings across a workspace and keeps a consistent snapshot per
+/// compilation. Failed HTTP requests are retried by later compilations; cancellation is never cached.
 /// </summary>
 public static class ALCopsSettingsProvider
 {
-    private static readonly ConcurrentDictionary<string, Lazy<ALCopsSettingsLoadResult>> _cache = new();
-#if NETSTANDARD2_1
-    private static readonly JsonSerializerSettings _jsonSettings = new()
-    {
-        Converters = { new StringEnumConverter() }
-    };
-#else
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-        Converters = { new JsonStringEnumConverter() }
-    };
-
-    // Must mirror _jsonOptions: a file with comments or trailing commas that deserializes
-    // fine would otherwise throw in the unknown-key scan and be misreported as Invalid.
-    private static readonly JsonDocumentOptions _documentOptions = new()
-    {
-        CommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true
-    };
-#endif
-
+    private static readonly ConcurrentDictionary<string, ALCopsSettingsCacheEntry> _cache = new();
+    private static readonly ConditionalWeakTable<Compilation, ALCopsSettingsCacheEntry> _compilationCache = new();
     private const string SettingsFileName = "alcops.json";
-    private const string SchemaKey = "$schema";
-    private const string ExtendsKey = "Extends";
 
-    // Both serializers match properties case-insensitively, so the unknown-key check must too.
-    private static readonly HashSet<string> _knownTopLevelKeys = BuildKnownTopLevelKeys();
+    public static ALCopsSettings GetSettings(Compilation compilation, CancellationToken cancellationToken) =>
+        GetLoadResult(compilation, cancellationToken).Settings;
 
-    /// <summary>
-    /// Gets the settings from the compilation's file system.
-    /// First checks the app folder via the virtual file system, then walks up parent directories
-    /// on the physical file system, and finally falls back to the assembly location.
-    /// Results are cached per directory path.
-    /// </summary>
-    public static ALCopsSettings GetSettings(IFileSystem? fileSystem) => GetLoadResult(fileSystem).Settings;
+    /// <summary>All callbacks for a compilation share the same settings and failures, independent of callback order.</summary>
+    public static ALCopsSettingsLoadResult GetLoadResult(Compilation compilation, CancellationToken cancellationToken) =>
+        _compilationCache.GetValue(compilation, _ => new ALCopsSettingsCacheEntry()).GetOrLoad(
+            () => GetLoadResult(compilation.FileSystem, cancellationToken), cacheHttpFailures: true, cancellationToken);
+
+    public static ALCopsSettings GetSettings(IFileSystem? fileSystem, CancellationToken cancellationToken = default) =>
+        GetLoadResult(fileSystem, cancellationToken).Settings;
 
     /// <summary>
-    /// Gets the settings plus any failures recorded while loading them (unreadable local or external source,
-    /// malformed JSON, invalid inheritance, unknown top-level settings). Failures are surfaced as diagnostic CM0001
-    /// by <see cref="Analyzers.ConfigurationCouldNotBeLoaded"/>; the cache keeps them so every
-    /// compilation re-reports.
+    /// Loads outside a compilation snapshot. Analyzer callbacks use the Compilation overload so
+    /// failed HTTP requests are attempted at most once in each compilation, not once per callback.
     /// </summary>
-    public static ALCopsSettingsLoadResult GetLoadResult(IFileSystem? fileSystem)
+    public static ALCopsSettingsLoadResult GetLoadResult(IFileSystem? fileSystem, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (fileSystem is null)
-            return new ALCopsSettingsLoadResult(new ALCopsSettings(), ImmutableArray<SettingsLoadFailure>.Empty);
-
+            return Defaults();
         string directoryPath = fileSystem.GetDirectoryPath();
-
         if (string.IsNullOrEmpty(directoryPath))
-            return LoadSettingsFromFileSystem(fileSystem, directoryPath);
-
-        return _cache.GetOrAdd(
-            directoryPath,
-            _ => new Lazy<ALCopsSettingsLoadResult>(
-                () => LoadSettingsFromFileSystem(fileSystem, directoryPath),
-                LazyThreadSafetyMode.ExecutionAndPublication)).Value;
+            return LoadSettingsFromFileSystem(fileSystem, directoryPath, cancellationToken);
+        return _cache.GetOrAdd(directoryPath, _ => new ALCopsSettingsCacheEntry()).GetOrLoad(
+            () => LoadSettingsFromFileSystem(fileSystem, directoryPath, cancellationToken), cacheHttpFailures: false, cancellationToken);
     }
 
-    private static ALCopsSettingsLoadResult LoadSettingsFromFileSystem(IFileSystem fileSystem, string directoryPath)
-    {
-        var json = TryReadFromVirtualFileSystem(fileSystem, directoryPath, out var readFailure);
-        if (json != null)
-            return DeserializeSettings(json, GetVirtualSource(directoryPath));
+    private static ALCopsSettingsLoadResult Defaults() => new(new ALCopsSettings(), ImmutableArray<SettingsLoadFailure>.Empty);
 
-        // An app-folder alcops.json that exists but cannot be read was intended to win;
-        // do not fall through to a parent-directory file.
-        if (readFailure != null)
+    private static ALCopsSettingsLoadResult LoadSettingsFromFileSystem(IFileSystem fileSystem, string directoryPath, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        string? json = TryReadFromVirtualFileSystem(fileSystem, directoryPath, out var readFailure);
+        if (json is not null)
+            return DeserializeSettings(json, GetVirtualSource(directoryPath), cancellationToken);
+
+        // An unreadable app-folder file was intended to win; never use a parent file instead.
+        if (readFailure is not null)
             return new ALCopsSettingsLoadResult(new ALCopsSettings(), ImmutableArray.Create(readFailure));
 
         if (!string.IsNullOrEmpty(directoryPath))
         {
-            var settingsFilePath = FindSettingsFileInParentOrAssemblyDirectory(directoryPath);
-            if (settingsFilePath != null)
+            string? path = FindSettingsFileInParentOrAssemblyDirectory(directoryPath);
+            if (path is not null)
             {
                 string physicalJson;
-                try
-                {
-                    physicalJson = File.ReadAllText(settingsFilePath);
-                }
+                try { physicalJson = File.ReadAllText(path); }
                 catch (Exception ex)
                 {
                     return new ALCopsSettingsLoadResult(new ALCopsSettings(), ImmutableArray.Create(
-                        new SettingsLoadFailure(SettingsLoadFailureKind.Unreadable, settingsFilePath, ex.Message)));
+                        new SettingsLoadFailure(SettingsLoadFailureKind.Unreadable, path, ex.Message)));
                 }
-                return DeserializeSettings(physicalJson, settingsFilePath);
+                return DeserializeSettings(physicalJson, path, cancellationToken);
             }
         }
-
-        return new ALCopsSettingsLoadResult(new ALCopsSettings(), ImmutableArray<SettingsLoadFailure>.Empty);
+        return Defaults();
     }
 
     private static string? TryReadFromVirtualFileSystem(IFileSystem fileSystem, string directoryPath, out SettingsLoadFailure? failure)
@@ -156,50 +119,41 @@ public static class ALCopsSettingsProvider
         return Path.Combine(directoryPath, SettingsFileName);
     }
 
-    private static ALCopsSettingsLoadResult DeserializeSettings(string json, string source)
+    private static ALCopsSettingsLoadResult DeserializeSettings(string json, string source, CancellationToken cancellationToken)
     {
-        // Malformed JSON (invalid syntax, unknown enum values, wrong types) falls back to defaults —
-        // consumers rely on always getting a usable settings object — and the failure is recorded
-        // so CM0001 can tell the user why the file was not applied.
+        cancellationToken.ThrowIfCancellationRequested();
         try
         {
-            ALCopsSettings localSettings = DeserializeSettingsCore(json);
-            ImmutableArray<SettingsLoadFailure> localFailures = GetUnknownSettingFailures(json, source);
+            ALCopsSettingsDocument? local = ALCopsSettingsDocument.ParseLocal(json);
+            if (local is null)
+                return Defaults();
 
-            if (ALCopsSettingsInheritanceResolver.TryResolve(
-                    json,
-                    source,
-                    out string inheritedSource,
-                    out string inheritedJson,
-                    out string effectiveJson,
-                    out SettingsLoadFailure? inheritanceFailure))
+            // Validate local values before network access. This is still required when the
+            // effective settings will later be deserialized from the merged document.
+            ALCopsSettings localSettings = local.DeserializeSettings();
+            ImmutableArray<SettingsLoadFailure> localFailures = local.GetUnknownSettingFailures(source);
+            if (!local.HasExtends)
+                return new ALCopsSettingsLoadResult(localSettings, localFailures);
+
+            if (ALCopsSettingsInheritanceResolver.TryResolve(local, source, out string inheritedSource,
+                    out ALCopsSettingsDocument? inherited, out SettingsLoadFailure? failure, cancellationToken))
             {
                 try
                 {
-                    // Validate the inherited document independently. Otherwise an invalid inherited
-                    // value hidden by a local override could make a broken base configuration appear valid.
-                    _ = DeserializeSettingsCore(inheritedJson);
-                    return new ALCopsSettingsLoadResult(
-                        DeserializeSettingsCore(effectiveJson),
-                        localFailures.AddRange(GetUnknownSettingFailures(inheritedJson, inheritedSource)));
+                    // Invalid base values must not be hidden by local overrides.
+                    _ = inherited!.DeserializeSettings();
+                    ImmutableArray<SettingsLoadFailure> failures = localFailures.AddRange(inherited.GetUnknownSettingFailures(inheritedSource));
+                    inherited.MergeOverrides(local);
+                    return new ALCopsSettingsLoadResult(inherited.DeserializeSettings(), failures);
                 }
                 catch (JsonException ex)
                 {
-                    inheritanceFailure = new SettingsLoadFailure(
-                        SettingsLoadFailureKind.Invalid,
-                        inheritedSource,
-                        ex.Message);
+                    failure = new SettingsLoadFailure(SettingsLoadFailureKind.Invalid, inheritedSource, ex.Message);
                 }
             }
 
-            if (inheritanceFailure is not null)
-            {
-                // A declared base and its overrides form one configuration. Applying only
-                // the overrides would leave the project in an unexpected partial state.
-                return new ALCopsSettingsLoadResult(new ALCopsSettings(), localFailures.Add(inheritanceFailure));
-            }
-
-            return new ALCopsSettingsLoadResult(localSettings, localFailures);
+            // A declared base and its overrides form one configuration, including on failure.
+            return new ALCopsSettingsLoadResult(new ALCopsSettings(), localFailures.Add(failure!));
         }
         catch (JsonException ex)
         {
@@ -207,74 +161,6 @@ public static class ALCopsSettingsProvider
                 new SettingsLoadFailure(SettingsLoadFailureKind.Invalid, source, ex.Message)));
         }
     }
-
-    private static ALCopsSettings DeserializeSettingsCore(string json)
-    {
-#if NETSTANDARD2_1
-        var settings = JsonConvert.DeserializeObject<ALCopsSettings>(json, _jsonSettings) ?? new ALCopsSettings();
-#else
-        var settings = JsonSerializer.Deserialize<ALCopsSettings>(json, _jsonOptions) ?? new ALCopsSettings();
-#endif
-        // Explicit `null` on nested settings deserializes without JsonException; restore defaults
-        // so consumers can rely on the property being non-null.
-        settings.StatementBlockSpacing ??= new StatementBlockSpacingSettings();
-
-        return settings;
-    }
-
-    private static ImmutableArray<SettingsLoadFailure> GetUnknownSettingFailures(string json, string source)
-    {
-        var unknownKeys = GetUnknownTopLevelKeys(json);
-        if (unknownKeys is null)
-            return ImmutableArray<SettingsLoadFailure>.Empty;
-
-        return unknownKeys
-            .Select(key => new SettingsLoadFailure(
-                SettingsLoadFailureKind.UnknownSetting,
-                source,
-                $"unknown setting '{key}'"))
-            .ToImmutableArray();
-    }
-
-    private static HashSet<string> BuildKnownTopLevelKeys()
-    {
-        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { SchemaKey, ExtendsKey };
-        foreach (var property in typeof(ALCopsSettings).GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            keys.Add(property.Name);
-        return keys;
-    }
-
-#if NETSTANDARD2_1
-    private static List<string>? GetUnknownTopLevelKeys(string json)
-    {
-        // Newtonsoft tolerates comments and trailing commas by default, matching _jsonSettings.
-        if (JToken.Parse(json) is not JObject root)
-            return null;
-
-        List<string>? unknown = null;
-        foreach (var property in root.Properties())
-        {
-            if (!_knownTopLevelKeys.Contains(property.Name))
-                (unknown ??= new List<string>()).Add(property.Name);
-        }
-        return unknown;
-    }
-#else
-    private static List<string>? GetUnknownTopLevelKeys(string json)
-    {
-        using var document = JsonDocument.Parse(json, _documentOptions);
-        if (document.RootElement.ValueKind != JsonValueKind.Object)
-            return null;
-
-        List<string>? unknown = null;
-        foreach (var property in document.RootElement.EnumerateObject())
-        {
-            if (!_knownTopLevelKeys.Contains(property.Name))
-                (unknown ??= new List<string>()).Add(property.Name);
-        }
-        return unknown;
-    }
-#endif
 
     private static string? FindSettingsFileInParentOrAssemblyDirectory(string directoryPath)
     {

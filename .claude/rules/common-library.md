@@ -38,9 +38,9 @@ The `Microsoft.Dynamics.Nav.CodeAnalysis` SDK treats many types, properties, and
 
 ## Settings System
 
-Analyzers access settings via the `IFileSystem` overload (preferred):
+Analyzers pass the compilation captured from `CompilationStart` and the current callback's cancellation token. Compilation actions can use their own `context.Compilation`. Do not substitute `SemanticModel.Compilation`: the SDK can supply a different object there, splitting the configuration snapshot across callbacks.
 ```csharp
-var settings = ALCopsSettingsProvider.GetSettings(context.SemanticModel.Compilation.FileSystem);
+var settings = ALCopsSettingsProvider.GetSettings(compilation, context.CancellationToken);
 int threshold = settings.CognitiveComplexityThreshold;
 ```
 
@@ -68,13 +68,17 @@ This allows a multi-root workspace to share a single `alcops.json` at the worksp
 
 ### Public API
 
-`ALCopsSettingsProvider` exposes two entry points: `GetSettings(IFileSystem?)` (what analyzers use) and `GetLoadResult(IFileSystem?)` (settings **plus** recorded `SettingsLoadFailure`s; `GetSettings` is a thin wrapper over it, and the CM0001 analyzer is its only failure consumer). Behavior: virtual FS check → parent traversal → assembly fallback → optional external-base resolution. Load results (including failures) are cached as `Lazy<ALCopsSettingsLoadResult>` values in a `ConcurrentDictionary` keyed by `IFileSystem.GetDirectoryPath()`, which guarantees that an external source is loaded at most once for each workspace path; a `MemoryFileSystem` returning `""` bypasses the cache. JSON parsing is case-insensitive and allows comments and trailing commas.
+`GetSettings(Compilation, CancellationToken)` returns settings; `GetLoadResult(Compilation, CancellationToken)` adds recorded failures for CM0001. A weak compilation cache keeps one immutable load-result snapshot across callbacks. The workspace cache, keyed by `IFileSystem.GetDirectoryPath()`, retains successful loads and deterministic configuration failures. Failed HTTP requests are retained only in the compilation snapshot so a later compilation can retry. Timed monitor acquisition lets a waiting caller cancel independently; cancellation exceptions are never memoized. The `IFileSystem` overloads omit compilation snapshots and are used by isolated provider tests; an empty directory path bypasses the workspace cache.
+
+`ALCopsSettingsDocument` owns both TFM JSON implementations, parsing each local/base document once and reusing it for type validation, unknown-key scanning and merge. Comments, trailing commas and case-insensitive keys share one policy. Local type validation deliberately precedes network access; inherited type validation precedes the merge so an override cannot hide an invalid base value.
 
 ### Error handling
 
 - Inaccessible directory during parent traversal: stops traversal (treats as boundary)
 - Unreadable or malformed `alcops.json` (invalid syntax, unknown enum values, wrong types): returns defaults — that fallback contract is unchanged — and records an `Unreadable`/`Invalid` failure that `Analyzers/ConfigurationCouldNotBeLoaded` reports as CM0001. An unreadable app-folder file does **not** fall through to a parent-directory file.
 - Unknown top-level keys (typo'd setting names): recognized settings still apply; one `UnknownSetting` failure per key. The known-key set is reflection-derived from `ALCopsSettings` properties (case-insensitive, `$schema` allowlisted), so new settings extend it automatically.
+- Empty, whitespace-only, comment-only or JSON-null local input means defaults without CM0001. An inherited document must still be an object; malformed comments, other root types and invalid settings remain failures.
+- HTTP request failures (transport errors, timeout, non-success status or buffer-limit rejection) retry on a later compilation. Caller cancellation propagates through the provider and HTTP body read, without CM0001 or a cached result. Synchronous NAV callbacks must still wait for an uncached source; the async HTTP helper uses `ConfigureAwait(false)` throughout, independent of a host synchronization context.
 - Unavailable, unreadable, chained, or invalid `Extends.Source`: applies built-in defaults for the entire configuration, including all local overrides, and records an `Unreadable`/`Invalid` failure for CM0001. HTTP requests time out after five seconds and buffer at most 1 MiB (1,048,576 bytes); the limit also covers chunked responses and bodies without Content-Length. The configured source is trusted by the project; no additional host or address restrictions are imposed.
 - `MemoryFileSystem` (in tests, `GetDirectoryPath()` returns `""`): only checks virtual FS, no parent traversal
 - Only `IFileSystem` members present at the AL 12 interface floor may be called (`Exists`, `OpenRead`, `GetDirectoryPath`, …). `GetAbsolutePath` is not among them — the netstandard2.1 binary would throw `MissingMethodException` on old compilers.
@@ -88,7 +92,7 @@ Users configure settings by placing an `alcops.json` file in their AL project ro
 }
 ```
 
-Settings are cached per directory path for the analyzer session lifetime. There is no public cache-invalidation API, so an edited `alcops.json` takes effect only after the language server restarts; tests inject an isolated `IFileSystem` (typically `MemoryFileSystem` or a purpose-built `RelativeFileSystem`) to avoid contaminating the cache.
+Successful settings and deterministic configuration failures remain cached for the analyzer session. A local edit or corrected malformed source therefore requires a process restart. HTTP request failures can recover on a later compilation without restarting; there is no timer, file watcher or background refresh. Tests inject isolated workspace paths to avoid contaminating the cache.
 
 ## Coding Standards
 
@@ -121,8 +125,8 @@ Settings are cached per directory path for the analyzer session lifetime. There 
 ### How to Add a New Setting
 1. Add a new property with a default value to `ALCopsSettings.cs`.
 2. No changes needed to `ALCopsSettingsProvider.cs` for scalar / string / list / dictionary properties — JSON deserialization picks them up automatically.
-3. **For enum-typed properties**, add a converter registration to `ALCopsSettingsProvider.cs`: `JsonStringEnumConverter` in `_jsonOptions.Converters` (net8+) and `StringEnumConverter` in `_jsonSettings.Converters` (netstandard2.1). Both are case-insensitive by default. Then add a schema-parity guard test that compares `Enum.GetNames(typeof(YourEnum))` with the `enum` array in `alcops.schema.json` (see `StatementBlockSpacingSchema` in `src/ALCops.FormattingCop.Test/Rules/StatementBlocksSeparatedByBlankLine/` for a template).
-4. **For nested-class properties with a default instance** (e.g. `public MySettings MyGroup { get; set; } = new();`): JSON deserializers ignore NRT annotations and happily set the property to `null` when the JSON contains `"MyGroup": null`, which then NREs on the first consumer access — violating the "malformed alcops.json → defaults" contract. Keep the public property non-nullable and normalize in `ALCopsSettingsProvider.DeserializeSettings` after the deserialize call: `settings.MyGroup ??= new MySettings();`. Consumers then use the property directly without `!` or a duplicate fallback.
+3. **For enum-typed properties**, `ALCopsSettingsDocument` registers `JsonStringEnumConverter` (net8+) and `StringEnumConverter` (netstandard2.1); both are case-insensitive. Add a schema-parity guard test that compares `Enum.GetNames(typeof(YourEnum))` with the `enum` array in `alcops.schema.json` (see `StatementBlockSpacingSchema` in `src/ALCops.FormattingCop.Test/Rules/StatementBlocksSeparatedByBlankLine/` for a template).
+4. **For nested-class properties with a default instance** (e.g. `public MySettings MyGroup { get; set; } = new();`): JSON deserializers ignore NRT annotations and happily set the property to `null` when the JSON contains `"MyGroup": null`, which then NREs on the first consumer access — violating the "malformed alcops.json → defaults" contract. Keep the public property non-nullable and normalize in `ALCopsSettingsDocument.DeserializeSettings` after the deserialize call: `settings.MyGroup ??= new MySettings();`. Consumers then use the property directly without `!` or a duplicate fallback.
    - Add a regression fixture that injects `{"MyGroup": null}` and asserts the analyzer falls back to defaults without NRE (see `StatementBlockSpacingNull` test case in `StatementBlocksSeparatedByBlankLine.cs` for a template). An explicit `null` is normalized, not reported as CM0001.
 5. Document the new setting in the project README and update `alcops.schema.json` (`.claude/rules/settings-schema.md`).
 

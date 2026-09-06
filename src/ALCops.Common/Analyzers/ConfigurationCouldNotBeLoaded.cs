@@ -23,7 +23,7 @@ public sealed class ConfigurationCouldNotBeLoaded : DiagnosticAnalyzer
     {
         // Compilation-level actions run under every partial-analysis pass, and the settings
         // cache keeps load failures, so each compilation re-reports them here.
-        var result = ALCopsSettingsProvider.GetLoadResult(ctx.Compilation.FileSystem);
+        var result = ALCopsSettingsProvider.GetLoadResult(ctx.Compilation, ctx.CancellationToken);
         foreach (var failure in result.Failures)
         {
             ctx.ReportDiagnostic(Diagnostic.Create(

@@ -5,7 +5,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 namespace ALCops.Common.Test;
 
 /// <summary>
-/// Tests for the load-failure reporting of <see cref="ALCopsSettingsProvider.GetLoadResult"/>:
+/// Tests for the load-failure reporting of <see cref="ALCopsSettingsProvider.GetLoadResult(IFileSystem, CancellationToken)"/>:
 /// unreadable files, malformed JSON, and unknown top-level settings.
 /// </summary>
 [NonParallelizable]
@@ -40,6 +40,25 @@ public class ALCopsSettingsLoadFailureTests
         Directory.CreateDirectory(appFolder);
         File.WriteAllText(Path.Combine(appFolder, "alcops.json"), settingsJson);
         return appFolder;
+    }
+
+    [TestCase("null")]
+    [TestCase("")]
+    [TestCase("/* no base configuration */")]
+    [TestCase("[]")]
+    public void EmptyOrNonObjectInheritedDocument_StillDiscardsLocalOverrides(string inheritedJson)
+    {
+        var inheritedFile = Path.Combine(_tempRoot, "empty-base.json");
+        File.WriteAllText(inheritedFile, inheritedJson);
+        var appFolder = CreateAppFolder(JsonSerializer.Serialize(new
+        {
+            Extends = new { Source = inheritedFile },
+            CognitiveComplexityThreshold = 41
+        }));
+        var result = ALCopsSettingsProvider.GetLoadResult(new RelativeFileSystem(appFolder));
+        Assert.That(result.Settings.CognitiveComplexityThreshold, Is.EqualTo(15));
+        Assert.That(result.Failures, Has.Length.EqualTo(1));
+        Assert.That(result.Failures[0].Kind, Is.EqualTo(SettingsLoadFailureKind.Invalid));
     }
 
     [Test]

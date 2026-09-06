@@ -17,7 +17,7 @@ Registers `CompilationStartAction` (captures threshold, LC0089i enablement and t
 | Decision | Rationale |
 |---|---|
 | Threshold and LC0089i enablement live in the `CompilationStart` closure, not instance fields | Analyzer instances are shared across passes and projects (see `.claude/rules/sdk-analysis-scope.md`); instance fields would be overwritten by an overlapping pass with a different `alcops.json` or ruleset. |
-| Threshold read once from `ALCopsSettingsProvider` at compilation start, not per method | The provider caches statically by directory with no invalidation, so an `alcops.json` edit only applies after restart wherever it is read; a per-method read adds cost without changing staleness. |
+| Threshold read once from the compilation settings snapshot with the callback's cancellation token | Every method uses the same threshold. Failed HTTP requests can retry on a later compilation; successful settings and deterministic configuration errors remain cached across compilations. |
 | `CodeBlockAction` rather than `SyntaxNodeAction`/`OperationAction` | The score needs one walk of the full body with nesting tracking; the body is available directly and the pre-computed operation tree serves recursion detection. |
 | Recursion detection in a separate compilation-scoped `CognitiveComplexityRecursionGraphService` | The call graph is built once per compilation while the complexity walk is per method; mixing the two scopes in one class would be wrong. |
 | LC0089 and LC0089i are `Info` and `isEnabledByDefault: false`; LC0089i is gated behind `IsDiagnosticEnabled` | A metric is not a violation and per-increment detail is noise unless a specific method is being investigated; the gate makes the walk-and-report cost zero when disabled. |
@@ -32,7 +32,7 @@ Registers `CompilationStartAction` (captures threshold, LC0089i enablement and t
 
 ## Known issues
 
-- `ALCopsSettingsProvider` caches the threshold statically by directory with no invalidation; changing `alcops.json` requires restarting the language server. Cross-cop limitation, not specific to this analyzer.
+- Successful settings and deterministic configuration errors remain cached by workspace path; editing those requires restarting the language server. Failed HTTP requests retry on a later compilation. This is shared provider behavior.
 - A collectible `Error(ErrorInfo)` inside an `ErrorBehavior::Collect` scope is discounted as a guard although execution continues; inherited from the shared classifier (see PC0038's Known issues).
 
 ## Test notes

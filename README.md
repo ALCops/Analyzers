@@ -42,6 +42,8 @@ HTTP(S) sources must be anonymously accessible. URLs containing embedded credent
 
 HTTP responses are limited to 1 MiB (1,048,576 bytes), with a five-second timeout. If a declared `Extends` source cannot be resolved, ALCops uses the built-in defaults for the entire configuration, discards local overrides, and reports `CM0001`.
 
+Failed HTTP requests are retried by a later compilation; successful loads remain cached for the analyzer session. The first analysis using an uncached HTTP source can wait for the request, and cancelling that analysis also cancels the request. Empty, comment-only or JSON-null local configuration uses defaults without a warning; an inherited configuration must contain a JSON object.
+
 ## Contributing
 
 Contributions are welcome! Whether it's a new rule idea, a bug report, or a pull request — all input helps improve ALCops for the community.

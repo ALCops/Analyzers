@@ -21,11 +21,12 @@ public enum SettingsLoadFailureKind
 /// </summary>
 public sealed class SettingsLoadFailure
 {
-    public SettingsLoadFailure(SettingsLoadFailureKind kind, string source, string detail)
+    public SettingsLoadFailure(SettingsLoadFailureKind kind, string source, string detail, bool retryOnNextCompilation = false)
     {
         Kind = kind;
         Source = source;
         Detail = detail;
+        RetryOnNextCompilation = retryOnNextCompilation;
     }
 
     public SettingsLoadFailureKind Kind { get; }
@@ -35,4 +36,7 @@ public sealed class SettingsLoadFailure
 
     /// <summary>Human-readable reason; may contain OS-localized exception text.</summary>
     public string Detail { get; }
+
+    /// <summary>A failed HTTP request may succeed in a later compilation without restarting the host.</summary>
+    public bool RetryOnNextCompilation { get; }
 }

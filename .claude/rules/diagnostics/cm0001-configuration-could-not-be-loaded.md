@@ -32,6 +32,10 @@ Registers `RegisterCompilationAction` (no node or symbol kinds; reports at `Loca
 | A failed declared `Extends` discards both the base and local overrides, returning complete built-in defaults | Applying only the overrides would leave a partially configured project; the warning makes the complete fallback visible. Unknown setting names remain non-fatal, preserving recognized values as for local configuration. |
 | HTTP responses are bounded through `HttpClient.MaxResponseContentBufferSize`, while keeping the five-second timeout | The byte limit is enforced during buffering even without Content-Length, so a large response cannot bypass the limit by using chunked transfer. Checking string length after downloading would already have allocated the oversized body. |
 | A rejected URL omits `Uri.UserInfo` from its recorded source | The CM0001 message renders that source directly in IDE diagnostics and build logs; rejecting network access must not expose the credentials in the error message. |
+| HTTP request failures remain stable within a compilation but are retried by a later compilation | A temporary outage must not permanently poison the workspace cache. All consumers use the compilation from CompilationStart so the SDK's different SemanticModel.Compilation object cannot split that snapshot. |
+| Caller cancellation propagates without a diagnostic or cached result; cache waiters can cancel independently | Editing or reloading a workspace must stop both the pending HTTP body read and unnecessary waits behind another caller. Synchronous SDK callbacks still wait for the first uncached load; all async continuations avoid context capture. |
+| JSON parsing, key lookup, merge and type validation share ALCopsSettingsDocument | Local and external configuration use the same comment/trailing-comma/casing policy on both serializer stacks. Retaining local type validation before network access prevents unnecessary requests for invalid local values. |
+| Null, empty or comment-only local input uses defaults silently; an inherited document still requires an object | An empty local settings file declares no policy. A declared base is required input and must pass its own validation. |
 
 ## Deliberate non-reports
 
@@ -42,7 +46,7 @@ Registers `RegisterCompilationAction` (no node or symbol kinds; reports at `Loca
 ## Known issues
 
 - TOCTOU between `Exists` and `OpenRead`: a file deleted in between is reported as `Unreadable` with a file-not-found message. Rare, accepted.
-- The settings cache has no invalidation, so a stale entry (file fixed after first load) keeps reporting until the analyzer process restarts; this is the same staleness the settings themselves already have.
+- Successfully loaded settings and deterministic configuration errors have no invalidation. Correcting those still requires restarting the analyzer process; failed HTTP requests instead retry on a later compilation.
 
 ## SDK facts
 

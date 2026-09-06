@@ -10,14 +10,14 @@ paths:
 
 Checks that ToolTip text ends with an allowed punctuation character. The allowed set is configurable through `ToolTipAllowedPunctuations` in `alcops.json`.
 
-Registers `RegisterSyntaxNodeAction` on `PageField`, `PageAction`, `Field` and `PageAnalysisView`; main type `ToolTipPunctuation` (shared with the other ToolTip rules).
+Registers syntax-node actions from CompilationStart on `PageField`, `PageAction`, `Field` and `PageAnalysisView`; main type `ToolTipPunctuation` (shared with the other ToolTip rules).
 
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
 | Implemented inside the shared `ToolTipPunctuation` analyzer rather than its own class | One extraction of the ToolTip text serves all ToolTip punctuation and phrasing checks. |
-| Allowed punctuation comes from `ToolTipAllowedPunctuations` via `ALCopsSettingsProvider.GetSettings(compilation.FileSystem)` | Makes the set configurable per workspace/app on the existing settings infrastructure. |
+| Allowed punctuation uses the settings snapshot for the compilation captured at CompilationStart, with the current callback's cancellation token | Keeps every rule and CM0001 on one snapshot despite the SDK's different SemanticModel.Compilation object; interrupted HTTP loads stop promptly. |
 | Missing, empty or fully invalid settings fall back to the dot (`.` / `dot`) | Preserves the pre-configuration AC0014 behaviour instead of disabling the check. |
 | The message lists the configured punctuation names, not the characters | Gives guidance that matches the user's own configuration. |
 

@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using ALCops.Common.Settings;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
 namespace ALCops.Common.Test;
 
@@ -71,8 +72,11 @@ public class ALCopsSettingsInheritanceHttpTests
         }));
 
         var fileSystem = new RelativeFileSystem(_tempRoot);
-        var result = ALCopsSettingsProvider.GetLoadResult(fileSystem);
-        var diagnostics = ConfigurationCouldNotBeLoadedTests.GetDiagnostics(fileSystem);
+        var tree = SyntaxTree.ParseObjectText("codeunit 50100 HttpSettingsTest { }");
+        var compilation = Compilation.Create("HttpSettingsTest", syntaxTrees: new[] { tree }, fileSystem: fileSystem);
+        var driver = ConfigurationCouldNotBeLoadedTests.CreateDriver(compilation);
+        var result = ALCopsSettingsProvider.GetLoadResult(driver.Compilation, CancellationToken.None);
+        var diagnostics = await driver.GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
         await responseTask.ConfigureAwait(false);
 
         if (!rejected)

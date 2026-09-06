@@ -18,19 +18,44 @@ public class ConfigurationCouldNotBeLoadedTests
     {
         var tree = SyntaxTree.ParseObjectText("codeunit 50100 MyCodeunit { }");
         var compilation = Compilation.Create("Test", syntaxTrees: new[] { tree }, fileSystem: fileSystem);
-        var withAnalyzers = new CompilationWithAnalyzers(
+        return GetDiagnosticsAsync(compilation).GetAwaiter().GetResult();
+    }
+
+    internal static Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync(Compilation compilation, CancellationToken cancellationToken = default)
+    {
+        return CreateDriver(compilation, cancellationToken).GetAnalyzerDiagnosticsAsync(cancellationToken);
+    }
+
+    internal static CompilationWithAnalyzers CreateDriver(Compilation compilation, CancellationToken cancellationToken = default) =>
+        new(
             compilation,
             ImmutableArray.Create<DiagnosticAnalyzer>(new Common.Analyzers.ConfigurationCouldNotBeLoaded()),
             options: null!,
-            CancellationToken.None);
-        return withAnalyzers.GetAnalyzerDiagnosticsAsync().GetAwaiter().GetResult();
-    }
+            cancellationToken);
 
     private static MemoryFileSystem CreateFileSystem(string settingsJson) =>
         new(new Dictionary<string, byte[]>
         {
             { "alcops.json", System.Text.Encoding.UTF8.GetBytes(settingsJson) }
         });
+
+    [TestCase("null")]
+    [TestCase("")]
+    [TestCase(" \r\n\t")]
+    [TestCase("// No local settings yet\n")]
+    [TestCase("/* No local settings yet */")]
+    public void EmptyLocalConfiguration_NoDiagnostic(string json) =>
+        Assert.That(GetDiagnostics(CreateFileSystem(json)), Is.Empty);
+
+    [TestCase("[]")]
+    [TestCase("42")]
+    [TestCase("/* unterminated")]
+    public void InvalidLocalRoot_StillReportsCm0001(string json)
+    {
+        var diagnostics = GetDiagnostics(CreateFileSystem(json));
+        Assert.That(diagnostics, Has.Length.EqualTo(1));
+        Assert.That(diagnostics[0].Id, Is.EqualTo(DiagnosticIds.ConfigurationCouldNotBeLoaded));
+    }
 
     [Test]
     public void MalformedJson_ReportsSingleCm0001()

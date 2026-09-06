@@ -81,7 +81,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
         context.RegisterCompilationStartAction(compilationContext =>
         {
             var compilation = compilationContext.Compilation;
-            var complexityThreshold = LoadCognitiveComplexityThreshold(compilation);
+            var complexityThreshold = LoadCognitiveComplexityThreshold(compilation, compilationContext.CancellationToken);
             var isIncrementDiagnosticsEnabled = compilation.IsDiagnosticEnabled(DiagnosticDescriptors.CognitiveComplexityIncrement);
             var recursion = new CognitiveComplexityRecursionGraphService(compilation);
 
@@ -362,9 +362,9 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
     #endregion
 
-    private static int LoadCognitiveComplexityThreshold(Compilation compilation)
+    private static int LoadCognitiveComplexityThreshold(Compilation compilation, CancellationToken cancellationToken)
     {
-        var settings = ALCopsSettingsProvider.GetSettings(compilation.FileSystem);
+        var settings = ALCopsSettingsProvider.GetSettings(compilation, cancellationToken);
 
         return settings.CognitiveComplexityThreshold;
     }
