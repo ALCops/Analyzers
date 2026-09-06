@@ -111,6 +111,7 @@ namespace ALCops.DocumentationCop.Test
         }
 
         [Test]
+        [TestCase("ControlAddIn")]
         [TestCase("InterfaceProcedure")]
         [TestCase("Procedure")]
         [TestCase("ProcedureWithAttribute")]
