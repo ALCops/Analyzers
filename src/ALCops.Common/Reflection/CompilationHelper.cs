@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Immutable;
 using System.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
@@ -12,6 +13,10 @@ namespace ALCops.Common.Reflection;
 public static class CompilationHelper
 {
     private static readonly BindingFlags Flags = BindingFlags.Instance | BindingFlags.NonPublic;
+    private static readonly MethodInfo? GetEnumValuesMethod = typeof(Compilation).Assembly
+        .GetType("Microsoft.Dynamics.Nav.CodeAnalysis.CompilationUtilities")?
+        .GetMethod("GetEnumValues", BindingFlags.Static | BindingFlags.NonPublic);
+
     private static T GetNonPublicProp<T>(object obj, string name) where T : class
         => (obj.GetType().GetProperty(name, Flags)?.GetValue(obj) as T)!;
 
@@ -40,5 +45,26 @@ public static class CompilationHelper
         var symbolWithId = referenceManager.GetObjectSymbolsByKindAcrossModules(referencingModule, kind);
 
         return symbolWithId.OfType<IApplicationObjectTypeSymbol>().ToImmutableArray();
+    }
+
+    public static ImmutableArray<IEnumValueSymbol> GetEnumValuesIncludingExtensionsWithReflection(
+        this Compilation compilation,
+        IEnumBaseTypeSymbol enumType)
+    {
+        try
+        {
+            if (GetEnumValuesMethod?.Invoke(null, new object[] { compilation, enumType }) is IEnumerable values)
+            {
+                return values.OfType<IEnumValueSymbol>().ToImmutableArray();
+            }
+        }
+        catch (ArgumentException)
+        {
+        }
+        catch (TargetInvocationException)
+        {
+        }
+
+        return enumType.Values;
     }
 }

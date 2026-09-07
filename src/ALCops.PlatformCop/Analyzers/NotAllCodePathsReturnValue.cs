@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Immutable;
+using ALCops.Common;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Semantics;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
 namespace ALCops.PlatformCop.Analyzers;
@@ -64,7 +66,9 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
 
         var hasNamedReturn = returnValue.IsNamed;
 
-        var finalStates = AnalyzeOperation(
+        var flowAnalyzer = new FlowAnalyzer(ctx.SemanticModel, ctx.CancellationToken);
+
+        var finalStates = flowAnalyzer.AnalyzeOperation(
             bodyOperation,
             ImmutableHashSet.Create(false),
             hasNamedReturn,
@@ -86,326 +90,612 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
             methodSymbol.GetDiagnosticDisplayText(MethodSymbolDisplayFormat.MethodSignature)));
     }
 
-    private static ImmutableHashSet<bool> AnalyzeOperation(
-        IOperation? operation,
-        ImmutableHashSet<bool> states,
-        bool hasNamedReturn,
-        string returnVariableName,
-        out bool hasPathWithoutValue)
+    private sealed class FlowAnalyzer(SemanticModel semanticModel, CancellationToken cancellationToken)
     {
-        hasPathWithoutValue = false;
+        private readonly SemanticModel _semanticModel = semanticModel;
+        private readonly CancellationToken _cancellationToken = cancellationToken;
+        private readonly Stack<ImmutableHashSet<bool>> _breakStates = new();
 
-        if (operation is null || states.Count == 0)
+        public ImmutableHashSet<bool> AnalyzeOperation(
+            IOperation? operation,
+            ImmutableHashSet<bool> states,
+            bool hasNamedReturn,
+            string returnVariableName,
+            out bool hasPathWithoutValue)
         {
-            return states;
-        }
+            hasPathWithoutValue = false;
 
-        switch (operation)
-        {
-            case IBlockStatement block:
-                return AnalyzeStatements(block.Statements, states, hasNamedReturn, returnVariableName, out hasPathWithoutValue);
-
-            case IStatementList statementList:
-                return AnalyzeStatements(statementList.Statements, states, hasNamedReturn, returnVariableName, out hasPathWithoutValue);
-
-            case IAssignmentStatement assignment:
-                if (hasNamedReturn && assignment.Target.IsNamedReturnTarget(returnVariableName))
-                {
-                    return ImmutableHashSet.Create(true);
-                }
-
+            if (operation is null || states.Count == 0)
+            {
                 return states;
+            }
 
-            case IExitStatement exitStatement:
-                var returnsValue = exitStatement.ReturnedValue is not null;
+            switch (operation)
+            {
+                case IBlockStatement block:
+                    return AnalyzeStatements(block.Statements, states, hasNamedReturn, returnVariableName, out hasPathWithoutValue);
 
-                if (!returnsValue)
-                {
-                    if (!hasNamedReturn)
+                case IStatementList statementList:
+                    return AnalyzeStatements(statementList.Statements, states, hasNamedReturn, returnVariableName, out hasPathWithoutValue);
+
+                case IAssignmentStatement assignment:
+                    if (hasNamedReturn && assignment.Target.IsNamedReturnTarget(returnVariableName))
                     {
-                        hasPathWithoutValue = true;
+                        return ImmutableHashSet.Create(true);
                     }
-                    else
+
+                    return states;
+
+                case IExitStatement exitStatement:
+                    var returnsValue = exitStatement.ReturnedValue is not null;
+
+                    if (!returnsValue)
                     {
-                        foreach (var assigned in states)
+                        if (!hasNamedReturn)
                         {
-                            if (!assigned)
+                            hasPathWithoutValue = true;
+                        }
+                        else
+                        {
+                            foreach (var assigned in states)
                             {
-                                hasPathWithoutValue = true;
-                                break;
+                                if (!assigned)
+                                {
+                                    hasPathWithoutValue = true;
+                                    break;
+                                }
                             }
                         }
                     }
-                }
 
-                return ImmutableHashSet<bool>.Empty;
+                    return ImmutableHashSet<bool>.Empty;
 
-            case IIfStatement ifStatement:
-                var trueStates = AnalyzeOperation(
-                    ifStatement.IfTrueStatement,
-                    states,
-                    hasNamedReturn,
-                    returnVariableName,
-                    out var truePathWithoutValue);
+                case IBreakStatement:
+                    if (_breakStates.Count == 0)
+                    {
+                        return states;
+                    }
 
-                var falsePathWithoutValue = false;
+                    var breakStates = _breakStates.Pop().Union(states);
+                    _breakStates.Push(breakStates);
 
-                var falseStates = ifStatement.IfFalseStatement is null
-                    ? states
-                    : AnalyzeOperation(
-                        ifStatement.IfFalseStatement,
+                    return ImmutableHashSet<bool>.Empty;
+
+                case IIfStatement ifStatement:
+                    var conditionStates = AnalyzeCondition(
+                        ifStatement.Condition,
                         states,
                         hasNamedReturn,
-                        returnVariableName,
-                        out falsePathWithoutValue);
+                        returnVariableName);
 
-                hasPathWithoutValue = truePathWithoutValue || falsePathWithoutValue;
+                    var trueStates = AnalyzeOperation(
+                        ifStatement.IfTrueStatement,
+                        conditionStates,
+                        hasNamedReturn,
+                        returnVariableName,
+                        out var truePathWithoutValue);
+
+                    var falsePathWithoutValue = false;
+
+                    var falseStates = ifStatement.IfFalseStatement is null
+                        ? conditionStates
+                        : AnalyzeOperation(
+                            ifStatement.IfFalseStatement,
+                            conditionStates,
+                            hasNamedReturn,
+                            returnVariableName,
+                            out falsePathWithoutValue);
+
+                    hasPathWithoutValue = truePathWithoutValue || falsePathWithoutValue;
+
+                    return trueStates.Union(falseStates);
+
+                case ICaseStatement caseStatement:
+                    // Case selector is evaluated exactly once, no short-circuit; treat like an if condition.
+                    var caseSelectorStates = AnalyzeCondition(
+                        caseStatement.Value,
+                        states,
+                        hasNamedReturn,
+                        returnVariableName);
+
+                    if (caseSelectorStates.Count == 0)
+                    {
+                        return caseSelectorStates;
+                    }
+
+                    var mergedStates = ImmutableHashSet<bool>.Empty;
+                    var caseHasPathWithoutValue = false;
+
+                    foreach (var caseLine in caseStatement.CaseLines)
+                    {
+                        var caseLineStates = AnalyzeCaseLine(
+                            caseLine,
+                            caseSelectorStates,
+                            hasNamedReturn,
+                            returnVariableName,
+                            out var caseLineHasPathWithoutValue);
+
+                        caseHasPathWithoutValue |= caseLineHasPathWithoutValue;
+                        mergedStates = mergedStates.Union(caseLineStates);
+                    }
+
+                    if (caseStatement.ElseStatement is not null)
+                    {
+                        var elseStates = AnalyzeOperation(
+                            caseStatement.ElseStatement,
+                            caseSelectorStates,
+                            hasNamedReturn,
+                            returnVariableName,
+                            out var elseHasPathWithoutValue);
+
+                        caseHasPathWithoutValue |= elseHasPathWithoutValue;
+                        mergedStates = mergedStates.Union(elseStates);
+                    }
+                    else if (!IsExhaustiveCase(caseStatement))
+                    {
+                        mergedStates = mergedStates.Union(caseSelectorStates);
+                    }
+
+                    hasPathWithoutValue = caseHasPathWithoutValue;
+
+                    return mergedStates;
+
+                case IWhileRepeatLoopStatement loopStatement:
+                    if (loopStatement.LoopKind == EnumProvider.LoopKind.Repeat)
+                    {
+                        // repeat-until: body runs at least once, then the condition is evaluated at least once.
+                        var repeatBodyStates = AnalyzeLoopBody(
+                            loopStatement.Body,
+                            states,
+                            hasNamedReturn,
+                            returnVariableName,
+                            out var repeatHasPathWithoutValue,
+                            out var repeatBreakStates);
+
+                        hasPathWithoutValue = repeatHasPathWithoutValue;
+
+                        if (repeatBodyStates.Count == 0)
+                        {
+                            return repeatBreakStates;
+                        }
+
+                        var repeatConditionStates = AnalyzeCondition(
+                            loopStatement.Condition,
+                            repeatBodyStates,
+                            hasNamedReturn,
+                            returnVariableName);
+
+                        return repeatConditionStates.Union(repeatBreakStates);
+                    }
+
+                    // while-do: condition is evaluated at least once before the body, body may not run.
+                    var whileConditionStates = AnalyzeCondition(
+                        loopStatement.Condition,
+                        states,
+                        hasNamedReturn,
+                        returnVariableName);
+
+                    if (whileConditionStates.Count == 0)
+                    {
+                        return whileConditionStates;
+                    }
+
+                    var bodyStates = AnalyzeLoopBody(
+                        loopStatement.Body,
+                        whileConditionStates,
+                        hasNamedReturn,
+                        returnVariableName,
+                        out var loopHasPathWithoutValue,
+                        out var whileBreakStates);
+
+                    hasPathWithoutValue = loopHasPathWithoutValue;
+
+                    return whileConditionStates.Union(bodyStates).Union(whileBreakStates);
+
+                case IForLoopStatement forLoop:
+                    // for i := from to to do: from and to are evaluated at least once, body may not run.
+                    var forFromStates = AnalyzeCondition(
+                        forLoop.InitialValue,
+                        states,
+                        hasNamedReturn,
+                        returnVariableName);
+
+                    if (forFromStates.Count == 0)
+                    {
+                        return forFromStates;
+                    }
+
+                    var forRangeStates = AnalyzeCondition(
+                        forLoop.EndValue,
+                        forFromStates,
+                        hasNamedReturn,
+                        returnVariableName);
+
+                    if (forRangeStates.Count == 0)
+                    {
+                        return forRangeStates;
+                    }
+
+                    var forBodyStates = AnalyzeLoopBody(
+                        forLoop.Body,
+                        forRangeStates,
+                        hasNamedReturn,
+                        returnVariableName,
+                        out var forHasPathWithoutValue,
+                        out var forBreakStates);
+
+                    hasPathWithoutValue = forHasPathWithoutValue;
+
+                    return forRangeStates.Union(forBodyStates).Union(forBreakStates);
+
+                case IForEachLoopStatement forEachLoop:
+                    // foreach x in collection: collection expression is evaluated once, body may not run.
+                    var forEachExprStates = AnalyzeCondition(
+                        forEachLoop.Expression,
+                        states,
+                        hasNamedReturn,
+                        returnVariableName);
+
+                    if (forEachExprStates.Count == 0)
+                    {
+                        return forEachExprStates;
+                    }
+
+                    var forEachBodyStates = AnalyzeLoopBody(
+                        forEachLoop.Body,
+                        forEachExprStates,
+                        hasNamedReturn,
+                        returnVariableName,
+                        out var forEachHasPathWithoutValue,
+                        out var forEachBreakStates);
+
+                    hasPathWithoutValue = forEachHasPathWithoutValue;
+
+                    return forEachExprStates.Union(forEachBodyStates).Union(forEachBreakStates);
+
+                case IInvocationExpression invocation:
+                    return AnalyzeInvocation(invocation, states, hasNamedReturn, returnVariableName);
+
+                case IExpressionStatement expressionStatement
+                    when expressionStatement.Expression is IInvocationExpression wrappedInvocation:
+                    return AnalyzeInvocation(wrappedInvocation, states, hasNamedReturn, returnVariableName);
+
+                default:
+                    return states;
+            }
+        }
+
+        private static ImmutableHashSet<bool> AnalyzeInvocation(
+            IInvocationExpression invocation,
+            ImmutableHashSet<bool> states,
+            bool hasNamedReturn,
+            string returnVariableName)
+        {
+            if (FlowTerminatingBuiltIns.IsFlowTerminatingCall(invocation))
+            {
+                return ImmutableHashSet<bool>.Empty;
+            }
+
+            if (hasNamedReturn && InvocationAssignsNamedReturn(invocation, returnVariableName))
+            {
+                return ImmutableHashSet.Create(true);
+            }
+
+            return states;
+        }
+
+        private bool IsExhaustiveCase(ICaseStatement caseStatement)
+        {
+            var selectorType = GetCaseSelectorType(caseStatement.Value.UnwrapConversions());
+
+            return selectorType switch
+            {
+                IEnumBaseTypeSymbol enumType => IsExhaustiveCase(
+                    caseStatement,
+                    _semanticModel.Compilation
+                        .GetEnumValuesIncludingExtensionsWithReflection(enumType)
+                        .Select(static enumValue => enumValue.Ordinal)),
+                IOptionTypeSymbol optionType => IsExhaustiveCase(
+                    caseStatement,
+                    optionType.Values.Select(static optionValue => optionValue.Ordinal)),
+                IContainerSymbol container => IsExhaustiveCase(
+                    caseStatement,
+                    container.GetMembers().OfType<IOptionSymbol>().Select(static optionValue => optionValue.Ordinal)),
+                _ => false
+            };
+        }
+
+        private ITypeSymbol? GetCaseSelectorType(IOperation selector) =>
+            selector.Type ?? GetOperationSymbol(selector)?.GetTypeSymbol();
+
+        private bool IsExhaustiveCase(ICaseStatement caseStatement, IEnumerable<int> possibleOrdinals)
+        {
+            var expectedOrdinals = possibleOrdinals.ToImmutableHashSet();
+
+            if (expectedOrdinals.Count == 0)
+            {
+                return false;
+            }
+
+            var handledOrdinals = ImmutableHashSet<int>.Empty;
+
+            foreach (var caseLine in caseStatement.CaseLines)
+            {
+                foreach (var expression in caseLine.Expressions)
+                {
+                    if (GetCaseLabelOrdinal(expression) is int ordinal)
+                    {
+                        handledOrdinals = handledOrdinals.Add(ordinal);
+                    }
+                }
+            }
+
+            return expectedOrdinals.IsSubsetOf(handledOrdinals);
+        }
+
+        private int? GetCaseLabelOrdinal(IOperation expression)
+        {
+            return GetOperationSymbol(expression) switch
+            {
+                IEnumValueSymbol enumValue => enumValue.Ordinal,
+                IOptionSymbol optionValue => optionValue.Ordinal,
+                _ => null
+            };
+        }
+
+        private ISymbol? GetOperationSymbol(IOperation operation)
+        {
+            var unwrappedOperation = operation.UnwrapConversions();
+            var operationSymbol = unwrappedOperation.GetSymbolSafe();
+
+            if (operationSymbol is not null)
+            {
+                return operationSymbol;
+            }
+
+            try
+            {
+                return _semanticModel.GetSymbolInfo(unwrappedOperation.Syntax, _cancellationToken).Symbol;
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
+        }
+
+        private static ImmutableHashSet<bool> AnalyzeCondition(
+            IOperation condition,
+            ImmutableHashSet<bool> states,
+            bool hasNamedReturn,
+            string returnVariableName)
+        {
+            condition = condition.UnwrapConversions();
+
+            if (condition is IBinaryOperatorExpression binaryExpression
+                && (condition.Syntax.IsKind(EnumProvider.SyntaxKind.LogicalAndExpression)
+                    || condition.Syntax.IsKind(EnumProvider.SyntaxKind.LogicalOrExpression)))
+            {
+                var leftStates = AnalyzeCondition(
+                    binaryExpression.LeftOperand,
+                    states,
+                    hasNamedReturn,
+                    returnVariableName);
+
+                var rightStates = AnalyzeCondition(
+                    binaryExpression.RightOperand,
+                    leftStates,
+                    hasNamedReturn,
+                    returnVariableName);
+
+                return leftStates.Union(rightStates);
+            }
+
+            var conditionalExpressionKind = EnumProvider.OperationKind.ConditionalExpression;
+            if (conditionalExpressionKind != default
+                && condition.Kind == conditionalExpressionKind
+                && condition.GetPropertyIfExists<IOperation>("Condition") is IOperation conditionalCondition
+                && condition.GetPropertyIfExists<IOperation>("WhenTrue") is IOperation whenTrue
+                && condition.GetPropertyIfExists<IOperation>("WhenFalse") is IOperation whenFalse)
+            {
+                var conditionStates = AnalyzeCondition(
+                    conditionalCondition,
+                    states,
+                    hasNamedReturn,
+                    returnVariableName);
+
+                var trueStates = AnalyzeCondition(
+                    whenTrue,
+                    conditionStates,
+                    hasNamedReturn,
+                    returnVariableName);
+
+                var falseStates = AnalyzeCondition(
+                    whenFalse,
+                    conditionStates,
+                    hasNamedReturn,
+                    returnVariableName);
 
                 return trueStates.Union(falseStates);
+            }
 
-            case ICaseStatement caseStatement:
-                var mergedStates = ImmutableHashSet<bool>.Empty;
-                var caseHasPathWithoutValue = false;
-
-                foreach (var caseLine in caseStatement.CaseLines)
-                {
-                    var caseLineStates = AnalyzeCaseLine(
-                        caseLine,
-                        states,
-                        hasNamedReturn,
-                        returnVariableName,
-                        out var caseLineHasPathWithoutValue);
-
-                    caseHasPathWithoutValue |= caseLineHasPathWithoutValue;
-                    mergedStates = mergedStates.Union(caseLineStates);
-                }
-
-                if (caseStatement.ElseStatement is not null)
-                {
-                    var elseStates = AnalyzeOperation(
-                        caseStatement.ElseStatement,
-                        states,
-                        hasNamedReturn,
-                        returnVariableName,
-                        out var elseHasPathWithoutValue);
-
-                    caseHasPathWithoutValue |= elseHasPathWithoutValue;
-                    mergedStates = mergedStates.Union(elseStates);
-                }
-                else
-                {
-                    mergedStates = mergedStates.Union(states);
-                }
-
-                hasPathWithoutValue = caseHasPathWithoutValue;
-
-                return mergedStates;
-
-            case IWhileRepeatLoopStatement loopStatement:
-                var bodyStates = AnalyzeOperation(
-                    loopStatement.Body,
+            if (condition is IUnaryOperatorExpression unaryExpression)
+            {
+                return AnalyzeCondition(
+                    unaryExpression.Operand,
                     states,
                     hasNamedReturn,
-                    returnVariableName,
-                    out var loopHasPathWithoutValue);
+                    returnVariableName);
+            }
 
-                hasPathWithoutValue = loopHasPathWithoutValue;
-
-                if (loopStatement.LoopKind == EnumProvider.LoopKind.Repeat)
-                {
-                    return bodyStates;
-                }
-
-                return states.Union(bodyStates);
-
-            case IForLoopStatement forLoop:
-                var forBodyStates = AnalyzeOperation(
-                    forLoop.Body,
-                    states,
-                    hasNamedReturn,
-                    returnVariableName,
-                    out var forHasPathWithoutValue);
-
-                hasPathWithoutValue = forHasPathWithoutValue;
-
-                return states.Union(forBodyStates);
-
-            case IForEachLoopStatement forEachLoop:
-                var forEachBodyStates = AnalyzeOperation(
-                    forEachLoop.Body,
-                    states,
-                    hasNamedReturn,
-                    returnVariableName,
-                    out var forEachHasPathWithoutValue);
-
-                hasPathWithoutValue = forEachHasPathWithoutValue;
-
-                return states.Union(forEachBodyStates);
-
-            case IInvocationExpression invocation:
-                return AnalyzeInvocation(invocation, states, hasNamedReturn, returnVariableName);
-
-            case IExpressionStatement expressionStatement
-                when expressionStatement.Expression is IInvocationExpression wrappedInvocation:
-                return AnalyzeInvocation(wrappedInvocation, states, hasNamedReturn, returnVariableName);
-
-            default:
+            if (ContainsBranchingExpression(condition))
+            {
                 return states;
-        }
-    }
-
-    private static ImmutableHashSet<bool> AnalyzeInvocation(
-        IInvocationExpression invocation,
-        ImmutableHashSet<bool> states,
-        bool hasNamedReturn,
-        string returnVariableName)
-    {
-        if (IsFlowTerminatingCall(invocation))
-        {
-            return ImmutableHashSet<bool>.Empty;
-        }
-
-        if (hasNamedReturn && InvocationAssignsNamedReturn(invocation, returnVariableName))
-        {
-            return ImmutableHashSet.Create(true);
-        }
-
-        return states;
-    }
-
-    // Named return is considered "assigned" when it is either the receiver of an invocation
-    // (e.g. `Customer.Get(No)` where `Customer` is the return variable, populating the record)
-    // or is passed as a by-reference (`var`) argument (e.g. `ComputeInto(Result)`).
-    // This is intentionally conservative to avoid false positives on common AL idioms.
-    private static bool InvocationAssignsNamedReturn(IInvocationExpression invocation, string returnVariableName)
-    {
-        if (invocation.Instance.IsNamedReturnTarget(returnVariableName))
-        {
-            return true;
-        }
-
-        foreach (var argument in invocation.Arguments)
-        {
-            if (argument.Parameter is IParameterSymbol parameter
-                && parameter.IsVar
-                && argument.Value.IsNamedReturnTarget(returnVariableName))
-            {
-                return true;
             }
-        }
 
-        return false;
-    }
-
-    // Built-in AL methods that never return control to the caller (they throw).
-    // Treating them as path terminators prevents PC0038 false positives on guard clauses
-    // such as `if Cond then exit(x) else Error('...');`.
-    private static bool IsFlowTerminatingCall(IInvocationExpression invocation)
-    {
-        if (invocation.TargetMethod is not IMethodSymbol targetMethod)
-        {
-            return false;
-        }
-
-        if (targetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
-        {
-            return false;
-        }
-
-        return string.Equals(targetMethod.Name, "Error", StringComparison.Ordinal)
-            || string.Equals(targetMethod.Name, "ThrowError", StringComparison.Ordinal);
-    }
-
-    private static ImmutableHashSet<bool> AnalyzeStatements(
-        IEnumerable<IOperation> statements,
-        ImmutableHashSet<bool> initialStates,
-        bool hasNamedReturn,
-        string returnVariableName,
-        out bool hasPathWithoutValue)
-    {
-        var states = initialStates;
-        var anyPathWithoutValue = false;
-
-        foreach (var statement in statements)
-        {
-            states = AnalyzeOperation(
-                statement,
-                states,
-                hasNamedReturn,
-                returnVariableName,
-                out var statementHasPathWithoutValue);
-
-            anyPathWithoutValue |= statementHasPathWithoutValue;
-
-            if (states.Count == 0)
+            foreach (var operation in condition.DescendantsAndSelf())
             {
-                break;
+                if (operation is IInvocationExpression invocation)
+                {
+                    states = AnalyzeInvocation(invocation, states, hasNamedReturn, returnVariableName);
+
+                    if (states.Count == 0)
+                    {
+                        break;
+                    }
+                }
             }
+
+            return states;
         }
 
-        hasPathWithoutValue = anyPathWithoutValue;
-
-        return states;
-    }
-
-    private static ImmutableHashSet<bool> AnalyzeCaseLine(
-        object caseLine,
-        ImmutableHashSet<bool> states,
-        bool hasNamedReturn,
-        string returnVariableName,
-        out bool hasPathWithoutValue)
-    {
-        hasPathWithoutValue = false;
-
-        if (caseLine is IOperation caseOperation)
+        private ImmutableHashSet<bool> AnalyzeLoopBody(
+            IOperation loopBody,
+            ImmutableHashSet<bool> states,
+            bool hasNamedReturn,
+            string returnVariableName,
+            out bool hasPathWithoutValue,
+            out ImmutableHashSet<bool> breakStates)
         {
-            var bodyOperation = caseOperation.GetPropertyIfExists<IOperation>("Body")
-                ?? caseOperation.GetPropertyIfExists<IOperation>("Statement");
+            _breakStates.Push(ImmutableHashSet<bool>.Empty);
 
-            if (bodyOperation is not null)
+            try
             {
                 return AnalyzeOperation(
-                    bodyOperation,
+                    loopBody,
                     states,
                     hasNamedReturn,
                     returnVariableName,
                     out hasPathWithoutValue);
             }
-
-            var statements = caseOperation.GetPropertyIfExists<IEnumerable>("Statements");
-
-            if (statements is null)
+            finally
             {
-                return states;
+                breakStates = _breakStates.Pop();
+            }
+        }
+
+        // Skip conditions where an operand may not execute: short-circuit `and`/`or` or a
+        // conditional (ternary-like) expression. Treating them as no-op keeps PC0038 conservative.
+        private static bool ContainsBranchingExpression(IOperation condition) =>
+            condition.Syntax.DescendantNodesAndSelf().Any(static node =>
+                node.IsKind(EnumProvider.SyntaxKind.LogicalAndExpression) ||
+                node.IsKind(EnumProvider.SyntaxKind.LogicalOrExpression) ||
+                node.IsKind(EnumProvider.SyntaxKind.ConditionalExpression));
+
+        // Named return is considered "assigned" when it is either the receiver of an invocation
+        // (e.g. `Customer.Get(No)` where `Customer` is the return variable, populating the record)
+        // or is passed as a by-reference (`var`) argument (e.g. `ComputeInto(Result)`).
+        // This is intentionally conservative to avoid false positives on common AL idioms.
+        private static bool InvocationAssignsNamedReturn(IInvocationExpression invocation, string returnVariableName)
+        {
+            if (invocation.Instance.IsNamedReturnTarget(returnVariableName))
+            {
+                return true;
             }
 
-            var result = states;
+            foreach (var argument in invocation.Arguments)
+            {
+                if (argument.Parameter is IParameterSymbol parameter
+                    && parameter.IsVar
+                    && argument.Value.IsNamedReturnTarget(returnVariableName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private ImmutableHashSet<bool> AnalyzeStatements(
+            IEnumerable<IOperation> statements,
+            ImmutableHashSet<bool> initialStates,
+            bool hasNamedReturn,
+            string returnVariableName,
+            out bool hasPathWithoutValue)
+        {
+            var states = initialStates;
+            var anyPathWithoutValue = false;
 
             foreach (var statement in statements)
             {
-                if (statement is not IOperation statementOperation)
-                {
-                    continue;
-                }
-
-                result = AnalyzeOperation(
-                    statementOperation,
-                    result,
+                states = AnalyzeOperation(
+                    statement,
+                    states,
                     hasNamedReturn,
                     returnVariableName,
                     out var statementHasPathWithoutValue);
 
-                hasPathWithoutValue |= statementHasPathWithoutValue;
+                anyPathWithoutValue |= statementHasPathWithoutValue;
 
-                if (result.Count == 0)
+                if (states.Count == 0)
                 {
                     break;
                 }
             }
 
-            return result;
+            hasPathWithoutValue = anyPathWithoutValue;
+
+            return states;
         }
 
-        return states;
+        private ImmutableHashSet<bool> AnalyzeCaseLine(
+            object caseLine,
+            ImmutableHashSet<bool> states,
+            bool hasNamedReturn,
+            string returnVariableName,
+            out bool hasPathWithoutValue)
+        {
+            hasPathWithoutValue = false;
+
+            if (caseLine is IOperation caseOperation)
+            {
+                var bodyOperation = caseOperation.GetPropertyIfExists<IOperation>("Body")
+                    ?? caseOperation.GetPropertyIfExists<IOperation>("Statement");
+
+                if (bodyOperation is not null)
+                {
+                    return AnalyzeOperation(
+                        bodyOperation,
+                        states,
+                        hasNamedReturn,
+                        returnVariableName,
+                        out hasPathWithoutValue);
+                }
+
+                var statements = caseOperation.GetPropertyIfExists<IEnumerable>("Statements");
+
+                if (statements is null)
+                {
+                    return states;
+                }
+
+                var result = states;
+
+                foreach (var statement in statements)
+                {
+                    if (statement is not IOperation statementOperation)
+                    {
+                        continue;
+                    }
+
+                    result = AnalyzeOperation(
+                        statementOperation,
+                        result,
+                        hasNamedReturn,
+                        returnVariableName,
+                        out var statementHasPathWithoutValue);
+
+                    hasPathWithoutValue |= statementHasPathWithoutValue;
+
+                    if (result.Count == 0)
+                    {
+                        break;
+                    }
+                }
+
+                return result;
+            }
+
+            return states;
+        }
     }
 }

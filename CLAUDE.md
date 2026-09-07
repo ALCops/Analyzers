@@ -33,7 +33,7 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.H
 
 ## Hard constraints
 
-- **Read the decompiled NAV SDK source before using any SDK API.** Syntax kinds, operation shapes, and symbol members are undocumented and version-dependent. See `.claude/rules/analyzer-development.md` (§NAV SDK source) and `.claude/rules/symbol-resolution.md`.
+- **Consult the `nav-sdk-docs` plugin first, then the decompiled NAV SDK source, before using any SDK API.** `/nav-sdk-docs:sdk-lookup` gives the per-version availability and the documented behaviour; `../nav-sdk-source` is the evidence for what the docs do not cover. Syntax kinds, operation shapes, and symbol members are undocumented and version-dependent. See `.claude/rules/analyzer-development.md` (§NAV SDK source) and `.claude/rules/symbol-resolution.md`.
 - **Every analyzer must compile on `netstandard2.1`.** Guard newer C# features and missing SDK APIs; net8.0-only analyzers compile as empty stubs under `#if NETSTANDARD2_1`. See `.claude/rules/netstandard21-compatibility.md`.
 - **Never assume analyzer callback ordering or that every callback runs** (the host's partial-analysis module pass skips all per-declaration callbacks). No two-phase accumulator patterns. See `.claude/rules/sdk-analysis-scope.md`.
 - **Analyzers extend plain `DiagnosticAnalyzer`.** Do not switch them to the `ALCopsDiagnosticAnalyzer` / `{Cop}Analyzer` exception harness: deriving from a Common-based type makes `alc` fail with `AL1003` (issue #389). The harness stays test-only until a loader-safe approach exists. See `.claude/rules/analyzer-exception-harness.md`.
@@ -47,6 +47,7 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.H
 - Commit messages: conventional commits scoped by rule ID — `feat(LC0095): …`, `fix(PC0021): …`, `test(FC0002): …`, `docs: …`, `chore: …`.
 - Code comments and XML docs must be self-contained: explain the mechanism, never cite issue or PR numbers. Deep context and issue links belong in the rule's `.claude/rules/diagnostics/{id}-{slug}.md`. Docs and config describe current state only — no PR numbers anywhere.
 - Bug fixes start with a failing regression fixture (`NoDiagnostic/` for false positives, `HasDiagnostic/` for false negatives) before touching the analyzer.
+- Run `/code-review` before opening a PR. It reads `REVIEW.md` (house rules plus the NAV SDK checklist); fix or justify every correctness finding.
 - Releases use GitVersion with alpha/beta/stable channels. See `.claude/rules/release-strategy.md`; use `/release`.
 
 ## Keeping `.claude/` in sync
@@ -55,6 +56,7 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.H
 - New shared component or convention → new `.claude/rules/<area>.md` with a `paths:` frontmatter scoped as narrowly as possible. Never add a rules file without `paths:` (it would load in every session).
 - Rules files document *why*, not *what*: no diagnostic-property tables, test-case lists, or file inventories — the code is the source of truth for those.
 - Knowledge needed whenever you edit matching files lives in `.claude/rules/`; procedural templates and checklists used only while running a skill live in `.claude/skills/*/references/`. Never keep the same content in both — leave a pointer.
+- A new house convention that reviewers must enforce also gets a row in `REVIEW.md` (house section); the SDK section there is a copy of nav-sdk-docs `templates/REVIEW.md` and is updated from that repository, not edited here.
 - Before opening a PR that touches `.claude/`, run `pwsh .claude/scripts/Validate-Rules.ps1`: it checks frontmatter, live `paths:` globs, rule-doc sections, link targets, and stale-fact patterns in the general guides.
 - If none of this applies to a change, say "No `.claude` doc changes needed" in the plan.
 
@@ -62,4 +64,5 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.H
 
 - `.claude/rules/*.md` — path-scoped guides, auto-loaded when you touch matching files: analyzer development (core rules), SDK analysis scope (how callbacks run), symbol resolution, record receiver forms, analyzer performance, CodeFixes, testing, Common library, exception harness, record-method classification, settings schema, netstandard2.1, code analysis, release strategy, BC DevTools action.
 - `.claude/rules/diagnostics/{id}-{slug}.md` — one file per rule: purpose, design decisions, deliberate non-reports, known issues, SDK facts, CodeFix decisions.
-- Skills: `/new-analyzer <ID> <ClassName> <Cop>`, `/new-codefix <ID>`, `/fix-false-positive <issue-or-description>`, `/release`.
+- Skills: `/new-analyzer <ID> <ClassName> <Cop>`, `/new-codefix <ID>`, `/fix-false-positive <issue-or-description>`, `/release`. From the `nav-sdk-docs` plugin (auto-enabled by `.claude/settings.json` after trusting the folder): `/nav-sdk-docs:sdk-lookup <question>`, `/nav-sdk-docs:write-sdk-doc <folder>/<page>`.
+- `REVIEW.md` — what the built-in `/code-review` checks on this repository: house rules with pointers into `.claude/rules/`, then the NAV SDK checklist copied from nav-sdk-docs.

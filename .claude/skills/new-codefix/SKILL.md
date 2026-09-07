@@ -21,13 +21,14 @@ Work out the fix, then **stop and confirm before editing any file**:
 | FixAll: `BatchFixer` or custom `FixAllProvider`? | Custom when several diagnostics edit a shared ancestor node (`ParameterListSyntax`, property lists). |
 | Does the fix need analyzer data via `Diagnostic.Properties` (`CodeFixProperties`)? | If yes, the analyzer and its tests change in the same PR. |
 | Does the cop already reference `…CodeAnalysis.Workspaces.dll` and `System.Composition.AttributedModel.dll`? | `DocumentationCop` and `TestAutomationCop` currently have no `CodeFixes/`; adding one means adding these references to the `.csproj`. |
+| Which nav-sdk-docs pages back the fix shape? | `/nav-sdk-docs:sdk-lookup` on the `SyntaxEditor`, `CodeAction` or `FixAllProvider` member you intend to use; the `docs/60-code-fixes/` pages name the pitfalls (`FindNode` ties, trivia, `BatchFixer` merge semantics). |
 
 ## Steps
 
 1. **Resx:** add `{RuleName}CodeAction` (the fix title) to `ALCops.{Cop}Analyzers.resx`.
 2. **Provider:** create `src/ALCops.{Cop}/CodeFixes/{RuleName}CodeFixProvider.cs` from `references/codefix-template.md`; `FixableDiagnosticIds` from `DiagnosticDescriptors.{RuleName}.Id`; preserve trivia; compare AL names via `SemanticFacts`; use `SyntaxFactory` per the reference section in `codefix-development.md`.
 3. **Tests:** `HasFix/{Case}/current.al` + `expected.al` and the `HasFix` method from `references/hasfix-tests.md`; add `HasFixAll` with ≥2 markers on sibling nodes when the answer to the FixAll question was "custom".
-4. **Run:** `dotnet build ALCops.sln`; `dotnet test src/ALCops.{Cop}.Test/ --filter "FullyQualifiedName~{RuleName}"`. Report real output.
+4. **Run:** `dotnet build ALCops.sln`; `dotnet test src/ALCops.{Cop}.Test/ --filter "FullyQualifiedName~{RuleName}"`. Report real output. Then `/code-review` on the branch (`REVIEW.md` carries the code-fix checklist); fix or justify every correctness finding.
 5. **Document:** append `## CodeFix: {RuleName}CodeFixProvider` with a Decision | Rationale table (fix shape, FixAll choice, trivia handling, intentionally unfixed cases) to the rule doc.
 6. Commit `feat({ID}): add CodeFix …` on a `feat/` branch.
 

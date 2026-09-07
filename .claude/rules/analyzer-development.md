@@ -9,6 +9,8 @@ Core rules for every analyzer in the six cops. Sibling guides that load with thi
 
 ## NAV SDK source (mandatory)
 
+First stop: the `nav-sdk-docs` plugin (enabled through `.claude/settings.json`; sibling checkout `../nav-sdk-docs`). Its `reference/` tables give every public member's availability at the `ns2.0 12.0`, `net8 16.0`, `net10 18.0.36` and latest SDK versions, its `docs/` pages explain how registrations, passes, symbols, operations, semantic model and code fixes behave with citations into the decompiled source, and `/nav-sdk-docs:sdk-lookup` answers a question from both. Take availability from the tables, never from memory or from the latest source; a member that is `no` at `ns2.0 12.0` needs a guard or a version gate.
+
 `../nav-sdk-source` (sibling of this repo) holds the decompiled `Microsoft.Dynamics.Nav.CodeAnalysis` SDK, Microsoft's own CodeCops, and the compiler and editor host. It is the only documentation of syntax kinds, operation shapes, symbol members and driver behaviour. Read it before using an SDK API, when an SDK shape surprises you, and when a build fails on one TFM only. Its `.github/instructions/` folder explains how to navigate it; Microsoft's `Rule0xxx` classes are the reference implementations for callback shapes and fix registration.
 
 The repo is version-controlled per AL release: `git -C ../nav-sdk-source tag` lists the releases, `git diff <refA>..<refB> -- Microsoft.Dynamics.Nav.CodeAnalysis/...` shows what changed in the binder or semantic model between two AL versions, and `git checkout <ref>` browses one version (`VERSION.json` records what is checked out; restore the original ref afterwards). Pin a "behaviour X changed in AL y" claim with such a diff, not with an empirical probe alone.
