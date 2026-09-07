@@ -42,7 +42,7 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
         }
 
         ctx.ReportDiagnostic(Diagnostic.Create(
-            DiagnosticDescriptors.PublicProcedureRequiresDocumentation,
+            DiagnosticDescriptors.EventRequiresDocumentation,
             eventDeclaration.Name.GetLocation(),
             GetEventDisplayText(eventSymbol)));
     }

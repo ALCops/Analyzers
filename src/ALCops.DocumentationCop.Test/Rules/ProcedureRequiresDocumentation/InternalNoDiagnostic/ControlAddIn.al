@@ -1,4 +1,0 @@
-controladdin MyControlAddIn
-{
-    procedure [|MyProcedure|]()
-}

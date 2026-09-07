@@ -30,6 +30,7 @@ namespace ALCops.DocumentationCop.Test
         [TestCase("IntegrationEvent")]
         [TestCase("IntegrationEventWithComment")]
         [TestCase("IntegrationEventWithParameters")]
+        [TestCase("ControlAddIn")]
         public async Task IntegrationEventHasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(IntegrationEventHasDiagnostic), $"{testCase}.al"))
@@ -49,6 +50,32 @@ namespace ALCops.DocumentationCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.EventRequiresDocumentation);
+        }
+
+        [Test]
+        public async Task ControlAddInEventNoDiagnostic()
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(PublicNoDiagnostic), "ControlAddIn.al"))
+                .ConfigureAwait(false);
+
+            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.EventRequiresDocumentation);
+        }
+
+        [Test]
+        public void ControlAddInDiagnosticDescriptorsHaveAccurateMessages()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    DiagnosticDescriptors.PublicProcedureRequiresDocumentation.MessageFormat.ToString(),
+                    Is.EqualTo("Public procedure '{0}' must include XML documentation comments."));
+                Assert.That(
+                    DiagnosticDescriptors.EventRequiresDocumentation.Title.ToString(),
+                    Is.EqualTo("Events must include XML documentation comments"));
+                Assert.That(
+                    DiagnosticDescriptors.EventRequiresDocumentation.Description.ToString(),
+                    Does.StartWith("Public events are part of the exposed API"));
+            });
         }
 
         [Test]
@@ -95,7 +122,6 @@ namespace ALCops.DocumentationCop.Test
         [TestCase("CodeunitAccessInternalProcedureDocumentationComment")]
         [TestCase("CodeunitAccessInternalProcedureDocumentationCommentWithAttribute")]
         [TestCase("CodeunitAccessInternalProcedureDocumentationCommentWithMultipleAttributes")]
-        [TestCase("ControlAddIn")]
         [TestCase("Interface")]
         [TestCase("InterfaceAccessInternalProcedureDocumentationComment")]
         [TestCase("Procedure")]

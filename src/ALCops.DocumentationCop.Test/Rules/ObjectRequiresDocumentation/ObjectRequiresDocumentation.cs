@@ -36,6 +36,7 @@ namespace ALCops.DocumentationCop.Test
 
         [Test]
         [TestCase("PublicCodeunit")]
+        [TestCase("PublicInterfaceAndControlAddIn")]
         public async Task PublicNoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(PublicNoDiagnostic), $"{testCase}.al"))
@@ -57,6 +58,7 @@ namespace ALCops.DocumentationCop.Test
 
         [Test]
         [TestCase("InternalCodeunit")]
+        [TestCase("InternalInterface")]
         public async Task InternalNoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(InternalNoDiagnostic), $"{testCase}.al"))
