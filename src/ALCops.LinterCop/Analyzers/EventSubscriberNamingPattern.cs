@@ -30,7 +30,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
 
     private void CompilationStart(CompilationStartAnalysisContext ctx)
     {
-        var settings = ALCopsSettingsProvider.GetSettings(ctx.Compilation.FileSystem);
+        var settings = ALCopsSettingsProvider.GetSettings(ctx.Compilation, ctx.CancellationToken);
         var template = string.IsNullOrWhiteSpace(settings.SubscriberNamingPattern)
             ? DefaultTemplate
             : settings.SubscriberNamingPattern!;

@@ -35,7 +35,7 @@ Registers `CompilationStartAction` (settings, AppSourceCop affixes, `NamingPatte
 | Four-tier message: description, auto-suggestion for recognized patterns, `RegexExplainer` for simple regexes, raw regex fallback; users can supply `AllowDescription`/`DisallowDescription` | Progressive enhancement so most users see a human-readable message; the explainer returns null for constructs it cannot parse rather than guessing. |
 | Regex safety: 2-second match timeout, `ArgumentException`/`RegexMatchTimeoutException` caught and the pattern disabled | Protects against ReDoS and invalid user patterns without failing the analysis. |
 | `GetAppSourceCopConfiguration` wrapped in try-catch at compilation start, continuing with null affixes | It may throw in minimal (test) runtime environments. |
-| Settings loaded through the `IFileSystem` overload | Respects the SDK file abstraction and allows `MemoryFileSystem` in tests. |
+| Settings loaded through the compilation snapshot with the callback's cancellation token | Retains virtual-file lookup and MemoryFileSystem tests while sharing one configuration with CM0001 and the other cops. |
 | Independent of LC0098: a subscriber violating both rules receives two diagnostics | LC0092 constrains the character class of the first character, LC0098 the structural template; their settings are decoupled. Teams whose source objects start lowercase or non-letter (the LC0098 default emits a quoted identifier) should relax `NamingPatterns.EventSubscriber` to accept the leading quote. |
 
 ## Deliberate non-reports

@@ -8,6 +8,7 @@
         <BcDevToolsDir Condition="'$(BcDevToolsDir)'==''">../../Microsoft.Dynamics.BusinessCentral.Development.Tools</BcDevToolsDir>
     </PropertyGroup>
     <ItemGroup>
+        <InternalsVisibleTo Include="ALCops.Common.Test" />
         <EmbeddedResource Update="ALCops.CommonAnalyzers.resx">
             <LogicalName>ALCops.Common.CommonAnalyzers.resources</LogicalName>
             <Generator>MSBuild:Compile</Generator>

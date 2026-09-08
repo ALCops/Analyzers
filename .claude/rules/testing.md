@@ -346,6 +346,10 @@ table 50100 MyTable
 
 Tests run in parallel across assemblies (`[assembly: Parallelizable(ParallelScope.All)]` in `AssemblyInfo.cs`).
 
+### Concurrent synchronous HTTP tests
+
+When a test deliberately starts many synchronous settings lookups, use dedicated callers (`TaskCreationOptions.LongRunning` with `TaskScheduler.Default`) and a bounded start barrier. Scheduling blocking callers with `Task.Run` can occupy the same worker pool needed by the loopback server and HTTP continuations, producing artificial five-second timeouts on small CI runners. `[NonParallelizable]` only controls NUnit scheduling; it does not isolate those workers. Keep server continuations queued in the regression fixture so inline loopback I/O cannot hide this dependency. Preserve the real timeout and assertions; do not mask starvation with retries, higher thread-pool minimums or longer production timeouts.
+
 ## Common Mistakes to Avoid
 
 - **Forgetting markers in NoDiagnostic files.** Both HasDiagnostic and NoDiagnostic .al files need `[|...|]` markers. The difference is whether a diagnostic is expected at those locations.

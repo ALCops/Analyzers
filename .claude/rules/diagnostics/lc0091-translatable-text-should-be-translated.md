@@ -29,7 +29,7 @@ Registers `CompilationStartAction` (XLIFF files parsed once into a `TranslationI
 | Old-SDK fallback temporarily rewrites the symbol's private `name` field via reflection under a per-symbol `ConditionalWeakTable` lock | The public 2-param overloads read `symbol.Name` internally and offer no injection seam; the weak table lets lock objects die with their symbols instead of leaking across compilations. Skipped entirely when the override equals `symbol.Name`. |
 | `FileNotFoundException` from `ManifestHelper.GetManifest` is caught and a null manifest lets analysis proceed | The assembly it loads is absent in test contexts, and test compilations have no manifest; real projects always do. |
 | One analyzer for every translatable element, XLIFF loaded once per compilation | A single parse pass serves all symbol types instead of re-parsing per symbol. |
-| Settings read through `GetSettings(workspacePath, fileSystem)` | Reads `alcops.json` from the `IFileSystem` first, eliminating shared mutable state so settings-dependent tests are parallel-safe. |
+| Settings read through the compilation snapshot with the callback's cancellation token | Preserves virtual-file lookup and shares the same effective configuration as CM0001 and the other cops, including after a failed HTTP request. |
 | Locked detection is syntactic (`CommaSeparatedIdentifierEqualsLiteralList`) | Label sub-properties are not exposed as semantic symbols. |
 | Empty target or `state="needs-translation"` counts as missing | Neither is a usable translation. |
 | Analysis views read via reflection (`FlattenedAnalysisViews` / `AddedAnalysisViewsFlattened`) | The properties exist only in the net10.0+ SDK; reflection avoids a compile-time dependency. |

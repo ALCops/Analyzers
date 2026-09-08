@@ -10,7 +10,7 @@ paths:
 
 Reports missing blank lines around statement blocks: before/after control-flow constructs (`if`, `case`, `repeat`, `while`, `for`, `foreach`) and before scope-leaving statements (`exit`, built-in `Error(...)` and `FieldError(...)`). It is highly opinionated and therefore disabled by default; enable it explicitly and configure it via `alcops.json`.
 
-Registers `RegisterSyntaxNodeAction` on the control-flow statement kinds and `ExitStatement`, plus `RegisterOperationAction` on `InvocationExpression` for the built-in terminators classified by `ALCops.Common.FlowTerminatingBuiltIns`; main type `StatementBlocksSeparatedByBlankLine`.
+Registers syntax-node actions from CompilationStart for control-flow statements, ExitStatement and InvocationExpression. Standalone calls are bound to operations and classified by `ALCops.Common.FlowTerminatingBuiltIns`; main type `StatementBlocksSeparatedByBlankLine`.
 
 ## Design decisions
 
@@ -23,6 +23,7 @@ Registers `RegisterSyntaxNodeAction` on the control-flow statement kinds and `Ex
 | Each statement gap has exactly one configuration-aware diagnostic owner: an adjacent block owns its "before" gap only when that check actually runs, otherwise the previous block's "after" check or the scope-leaver's "before" check does | Avoids duplicate diagnostics (e.g. a block followed by `exit`) while still reporting next to one-liners or when `ControlFlowBefore` is disabled. |
 | Scope-leaving calls are the shared `FlowTerminatingBuiltIns` set (`Dialog.Error`, `Table.FieldError`, `FieldRef.FieldError`), including incomplete calls whose receiver binds to those types | One semantic definition shared with PC0038 and LC0089; the exact class-and-method match keeps user-defined `Error`/`FieldError` procedures out, and accepting the invalid binding avoids flicker while a call is being typed. |
 | The diagnostic names the terminating call that was found (`Error()`, `FieldError()`) | The message must match the statement the developer is looking at, not always say `Error()`. |
+| Callbacks capture the compilation from CompilationStart; standalone invocations use GetOperation after cheap syntax checks | Settings and CM0001 must share one snapshot. The NAV SDK exposes no RegisterOperationAction on CompilationStart and supplies a different compilation through semantic-model contexts. Binding the invocation retains the same semantic classifier without relying on callback order. |
 
 ## Deliberate non-reports
 

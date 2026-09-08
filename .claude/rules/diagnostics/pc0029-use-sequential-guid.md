@@ -10,7 +10,7 @@ paths:
 
 Detects `CreateGuid()` calls whose result flows into a Guid field that is part of a table key, and suggests using `CreateSequentialGuid()` instead. Random GUIDs cause SQL index fragmentation; sequential GUIDs reduce it by 20-40%.
 
-Registers `RegisterCodeBlockAction` on method/trigger bodies; main type `CreateGuidFlowWalker`.
+Registers code-block actions from CompilationStart on method/trigger bodies, capturing its compilation for the shared settings snapshot; main type `CreateGuidFlowWalker`.
 
 **References:**
 - [MS Docs: Guid.CreateSequentialGuid](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/guid/guid-createsequentialguid-method)

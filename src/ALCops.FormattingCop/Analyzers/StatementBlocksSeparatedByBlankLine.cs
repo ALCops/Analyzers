@@ -36,27 +36,27 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
     private static readonly ImmutableHashSet<SyntaxKind> ControlFlowStatementKinds =
         ImmutableHashSet.CreateRange(ControlFlowStatementNames.Keys);
 
-    public override void Initialize(AnalysisContext context)
+    public override void Initialize(AnalysisContext context) => context.RegisterCompilationStartAction(start =>
     {
-        context.RegisterSyntaxNodeAction(AnalyzeControlFlowNode, ControlFlowStatementKindsArray);
+        start.RegisterSyntaxNodeAction(ctx => AnalyzeControlFlowNode(ctx, start.Compilation), ControlFlowStatementKindsArray);
 
-        context.RegisterSyntaxNodeAction(
-            AnalyzeExitStatement,
+        start.RegisterSyntaxNodeAction(
+            ctx => AnalyzeExitStatement(ctx, start.Compilation),
             EnumProvider.SyntaxKind.ExitStatement);
 
-        context.RegisterOperationAction(
-            AnalyzeFlowTerminatingInvocation,
-            EnumProvider.OperationKind.InvocationExpression);
-    }
+        start.RegisterSyntaxNodeAction(
+            ctx => AnalyzeFlowTerminatingInvocation(ctx, start.Compilation),
+            EnumProvider.SyntaxKind.InvocationExpression);
+    });
 
-    private void AnalyzeControlFlowNode(SyntaxNodeAnalysisContext ctx)
+    private static void AnalyzeControlFlowNode(SyntaxNodeAnalysisContext ctx, Compilation compilation)
     {
         if (ctx.IsObsolete() || ctx.Node is not StatementSyntax statement)
         {
             return;
         }
 
-        var config = GetConfig(ctx.SemanticModel.Compilation.FileSystem);
+        var config = GetConfig(compilation, ctx.CancellationToken);
 
         AnalyzeControlFlowStatement(ctx, statement, config);
         AnalyzeElseChain(ctx, statement, config);
@@ -147,7 +147,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         ReportIfNoBlankLineBetween(ctx, tokenBeforeElse, elseToken, "before 'else' keyword");
     }
 
-    private void AnalyzeExitStatement(SyntaxNodeAnalysisContext ctx)
+    private static void AnalyzeExitStatement(SyntaxNodeAnalysisContext ctx, Compilation compilation)
     {
         if (ctx.IsObsolete() || ctx.Node is not StatementSyntax statement)
         {
@@ -161,7 +161,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        var config = GetConfig(ctx.SemanticModel.Compilation.FileSystem);
+        var config = GetConfig(compilation, ctx.CancellationToken);
 
         if (!IncludesExit(config))
         {
@@ -179,14 +179,14 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         }
     }
 
-    private void AnalyzeFlowTerminatingInvocation(OperationAnalysisContext ctx)
+    private static void AnalyzeFlowTerminatingInvocation(SyntaxNodeAnalysisContext ctx, Compilation compilation)
     {
-        if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression invocation)
+        if (ctx.IsObsolete())
         {
             return;
         }
 
-        if (invocation.Syntax.Parent is not ExpressionStatementSyntax expressionStatement)
+        if (ctx.Node.Parent is not ExpressionStatementSyntax expressionStatement)
         {
             return;
         }
@@ -198,6 +198,11 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
+        // CompilationStart cannot register operation actions in the NAV SDK. Bind this
+        // standalone invocation so it can use the same compilation snapshot as other callbacks.
+        if (ctx.SemanticModel.GetOperation(ctx.Node, ctx.CancellationToken) is not IInvocationExpression invocation)
+            return;
+
         var flowTerminatingBuiltInName = FlowTerminatingBuiltIns.GetFlowTerminatingBuiltInName(invocation);
 
         if (flowTerminatingBuiltInName is null)
@@ -205,7 +210,7 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
             return;
         }
 
-        var config = GetConfig(ctx.Compilation.FileSystem);
+        var config = GetConfig(compilation, ctx.CancellationToken);
 
         if (!IncludesError(config))
         {
@@ -223,8 +228,8 @@ public sealed class StatementBlocksSeparatedByBlankLine : DiagnosticAnalyzer
         }
     }
 
-    private static StatementBlockSpacingSettings GetConfig(IFileSystem? fileSystem) =>
-        ALCopsSettingsProvider.GetSettings(fileSystem).StatementBlockSpacing;
+    private static StatementBlockSpacingSettings GetConfig(Compilation compilation, CancellationToken cancellationToken) =>
+        ALCopsSettingsProvider.GetSettings(compilation, cancellationToken).StatementBlockSpacing;
 
     private static bool IncludesExit(StatementBlockSpacingSettings config) =>
         config.ScopeLeavingMode is ScopeLeavingMode.ExitOnly or ScopeLeavingMode.ExitAndError;
