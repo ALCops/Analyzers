@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
+using ALCops.DocumentationCop.Helpers;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 
@@ -47,25 +48,32 @@ public sealed class ObjectRequiresDocumentation : DiagnosticAnalyzer
             return;
         }
 
-        var xmlComment = objectTypeSymbol.GetDocumentationCommentXml();
-
-        if (string.IsNullOrWhiteSpace(xmlComment))
+        if (!string.IsNullOrWhiteSpace(objectTypeSymbol.GetDocumentationCommentXml()))
         {
-            if (objectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Public)
-            {
-                ctx.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.PublicObjectRequiresDocumentation,
-                    objectTypeSymbol.GetLocation(),
-                    objectTypeSymbol.Name));
-            }
+            return;
+        }
 
-            else if (objectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Internal)
-            {
-                ctx.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.InternalObjectRequiresDocumentation,
-                    objectTypeSymbol.GetLocation(),
-                    objectTypeSymbol.Name));
-            }
+        var declaration = objectTypeSymbol.DeclaringSyntaxReference?.GetSyntax(ctx.CancellationToken);
+
+        if (declaration is not null && DocumentationTrivia.HasDocumentation(declaration))
+        {
+            return;
+        }
+
+        if (objectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Public)
+        {
+            ctx.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.PublicObjectRequiresDocumentation,
+                objectTypeSymbol.GetLocation(),
+                objectTypeSymbol.Name));
+        }
+
+        else if (objectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Internal)
+        {
+            ctx.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.InternalObjectRequiresDocumentation,
+                objectTypeSymbol.GetLocation(),
+                objectTypeSymbol.Name));
         }
     }
 }

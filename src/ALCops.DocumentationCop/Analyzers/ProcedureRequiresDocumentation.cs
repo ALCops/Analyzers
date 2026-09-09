@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
+using ALCops.DocumentationCop.Helpers;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
@@ -34,7 +35,7 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
     {
         if (ctx.IsObsolete() ||
             ctx.Node is not EventDeclarationSyntax eventDeclaration ||
-            HasXmlDocumentation(eventDeclaration) ||
+            DocumentationTrivia.HasDocumentation(eventDeclaration) ||
             ctx.ContainingSymbol is not IEventSymbol eventSymbol ||
             eventSymbol.GetContainingObjectTypeSymbol()?.Kind != EnumProvider.SymbolKind.ControlAddIn)
         {
@@ -64,7 +65,7 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
         if (containingApplicationObject.IsTestCodeunit())
             return;
 
-        if (HasXmlDocumentation(method))
+        if (DocumentationTrivia.HasDocumentation(method))
             return;
 
         var accessibilityToken = method.ProcedureKeyword.GetPreviousToken();
@@ -124,13 +125,4 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
 #else
         => typeSymbol.ToDisplayString();
 #endif
-
-    private static bool HasXmlDocumentation(SyntaxNode declaration)
-    {
-        var trivia = declaration.GetLeadingTrivia();
-
-        return trivia.Any(t =>
-            t.Kind == EnumProvider.SyntaxKind.SingleLineDocumentationCommentTrivia ||
-            t.Kind == EnumProvider.SyntaxKind.MultiLineDocumentationCommentTrivia);
-    }
 }

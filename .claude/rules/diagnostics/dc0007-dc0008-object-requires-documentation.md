@@ -23,6 +23,7 @@ Registers `RegisterSymbolAction` on the top-level object kinds (codeunit, contro
 | Interfaces raise DC0007 or DC0008 according to their `Access` property | Interface definitions are cross-extension API contracts, consistent with the procedure-level rule DC0004/DC0006. |
 | Control add-ins raise DC0007 and never DC0008 | A control add-in is referenced through `usercontrol` and needs object-level documentation; AL allows no `Access` property on it, so it is always public. |
 | The test-codeunit exemption applies only to symbols that also implement `IApplicationObjectTypeSymbol` | Only application objects can be test codeunits; keeping the check on that interface avoids a reflective subtype lookup for interfaces and control add-ins. |
+| Symbol XML documentation falls back to declaration leading trivia | Older AL Language SDKs do not expose XML documentation through symbols for every object kind; source trivia reliably represents documentation in those versions. |
 
 ## Deliberate non-reports
 
