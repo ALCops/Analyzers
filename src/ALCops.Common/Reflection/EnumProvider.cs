@@ -1007,6 +1007,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EnumValue)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _entitlement =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Entitlement)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _eventDeclaration =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EventDeclaration)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _exitStatement =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ExitStatement)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _expressionStatement =
@@ -1309,6 +1311,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind EnumType => _enumType.Value;
         public static NavCodeAnalysis.SyntaxKind EnumValue => _enumValue.Value;
         public static NavCodeAnalysis.SyntaxKind Entitlement => _entitlement.Value;
+        public static NavCodeAnalysis.SyntaxKind EventDeclaration => _eventDeclaration.Value;
         public static NavCodeAnalysis.SyntaxKind ExitStatement => _exitStatement.Value;
         public static NavCodeAnalysis.SyntaxKind ExpressionStatement => _expressionStatement.Value;
         public static NavCodeAnalysis.SyntaxKind FalseKeyword => _falseKeyword.Value;

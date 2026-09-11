@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
+using ALCops.DocumentationCop.Helpers;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
@@ -17,11 +18,35 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
             DiagnosticDescriptors.EventRequiresDocumentation,
             DiagnosticDescriptors.InternalEventRequiresDocumentation);
 
-    public override void Initialize(AnalysisContext context) =>
+    public override void Initialize(AnalysisContext context)
+    {
         context.RegisterSyntaxNodeAction(
             AnalyzeProcedures,
             EnumProvider.SyntaxKind.MethodDeclaration
         );
+
+        context.RegisterSyntaxNodeAction(
+            AnalyzeControlAddInEvents,
+            EnumProvider.SyntaxKind.EventDeclaration
+        );
+    }
+
+    private static void AnalyzeControlAddInEvents(SyntaxNodeAnalysisContext ctx)
+    {
+        if (ctx.IsObsolete() ||
+            ctx.Node is not EventDeclarationSyntax eventDeclaration ||
+            DocumentationTrivia.HasDocumentation(eventDeclaration) ||
+            ctx.ContainingSymbol is not IEventSymbol eventSymbol ||
+            eventSymbol.GetContainingObjectTypeSymbol()?.Kind != EnumProvider.SymbolKind.ControlAddIn)
+        {
+            return;
+        }
+
+        ctx.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticDescriptors.EventRequiresDocumentation,
+            eventDeclaration.Name.GetLocation(),
+            GetEventDisplayText(eventSymbol)));
+    }
 
     private void AnalyzeProcedures(SyntaxNodeAnalysisContext ctx)
     {
@@ -37,13 +62,10 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
         var containingObject = (ISymbol?)containingApplicationObject
             ?? ctx.ContainingSymbol.GetContainingObjectTypeSymbol();
 
-        if (containingObject?.Kind == EnumProvider.SymbolKind.ControlAddIn)
-            return;
-
         if (containingApplicationObject.IsTestCodeunit())
             return;
 
-        if (HasXmlDocumentation(method))
+        if (DocumentationTrivia.HasDocumentation(method))
             return;
 
         var accessibilityToken = method.ProcedureKeyword.GetPreviousToken();
@@ -94,12 +116,13 @@ public sealed class ProcedureRequiresDocumentation : DiagnosticAnalyzer
         }
     }
 
-    private static bool HasXmlDocumentation(MethodDeclarationSyntax method)
-    {
-        var trivia = method.GetLeadingTrivia();
+    private static string GetEventDisplayText(IEventSymbol eventSymbol) =>
+        $"{eventSymbol.Name.QuoteIdentifierIfNeededWithReflection()}({string.Join(", ", eventSymbol.Parameters.Select(parameter => GetTypeDisplayText(parameter.ParameterType)))})";
 
-        return trivia.Any(t =>
-            t.Kind == EnumProvider.SyntaxKind.SingleLineDocumentationCommentTrivia ||
-            t.Kind == EnumProvider.SyntaxKind.MultiLineDocumentationCommentTrivia);
-    }
+    private static string GetTypeDisplayText(ITypeSymbol typeSymbol)
+#if NETSTANDARD2_1
+        => typeSymbol.ToDisplayStringWithReflection();
+#else
+        => typeSymbol.ToDisplayString();
+#endif
 }

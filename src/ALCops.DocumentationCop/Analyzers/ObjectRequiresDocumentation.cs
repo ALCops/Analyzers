@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
+using ALCops.DocumentationCop.Helpers;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 
@@ -36,46 +37,43 @@ public sealed class ObjectRequiresDocumentation : DiagnosticAnalyzer
             return;
         }
 
-        if (ctx.Symbol is not IApplicationObjectTypeSymbol appObjectTypeSymbol)
+        if (ctx.Symbol is not IObjectTypeSymbol objectTypeSymbol)
         {
             return;
         }
 
-        if (appObjectTypeSymbol.IsTestCodeunit())
+        if (objectTypeSymbol is IApplicationObjectTypeSymbol appObjectTypeSymbol &&
+            appObjectTypeSymbol.IsTestCodeunit())
         {
             return;
         }
 
-        var hasXmlDocumentation = HasXmlDocumentation(appObjectTypeSymbol, ctx.CancellationToken);
-
-        if (!hasXmlDocumentation)
+        if (!string.IsNullOrWhiteSpace(objectTypeSymbol.GetDocumentationCommentXml()))
         {
-            if (appObjectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Public)
-            {
-                ctx.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.PublicObjectRequiresDocumentation,
-                    appObjectTypeSymbol.GetLocation(),
-                    appObjectTypeSymbol.Name));
-            }
-
-            else if (appObjectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Internal)
-            {
-                ctx.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.InternalObjectRequiresDocumentation,
-                    appObjectTypeSymbol.GetLocation(),
-                    appObjectTypeSymbol.Name));
-            }
+            return;
         }
-    }
 
-    private static bool HasXmlDocumentation(
-        IApplicationObjectTypeSymbol appObjectTypeSymbol,
-        CancellationToken cancellationToken)
-    {
-        var declaration = appObjectTypeSymbol.DeclaringSyntaxReference?.GetSyntax(cancellationToken);
+        var declaration = objectTypeSymbol.DeclaringSyntaxReference?.GetSyntax(ctx.CancellationToken);
 
-        return declaration?.GetLeadingTrivia().Any(trivia =>
-            trivia.Kind == EnumProvider.SyntaxKind.SingleLineDocumentationCommentTrivia ||
-            trivia.Kind == EnumProvider.SyntaxKind.MultiLineDocumentationCommentTrivia) == true;
+        if (declaration is not null && DocumentationTrivia.HasDocumentation(declaration))
+        {
+            return;
+        }
+
+        if (objectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Public)
+        {
+            ctx.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.PublicObjectRequiresDocumentation,
+                objectTypeSymbol.GetLocation(),
+                objectTypeSymbol.Name));
+        }
+
+        else if (objectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Internal)
+        {
+            ctx.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.InternalObjectRequiresDocumentation,
+                objectTypeSymbol.GetLocation(),
+                objectTypeSymbol.Name));
+        }
     }
 }

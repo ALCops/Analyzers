@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/ALCops.DocumentationCop/Analyzers/ObjectRequiresDocumentation*"
+  - "src/ALCops.DocumentationCop/**/ObjectRequiresDocumentation*"
   - "src/ALCops.DocumentationCop.Test/Rules/ObjectRequiresDocumentation/**"
 ---
 
@@ -8,27 +8,38 @@ paths:
 
 ## Purpose
 
-Requires XML documentation comments on public and internal application objects. DC0007 applies to public objects; DC0008 applies to internal objects and is disabled by default.
+Requires XML documentation comments on objects that form the extension's API surface: DC0007 for public objects, DC0008 for internal ones.
 
-Registers `RegisterSymbolAction` on application object symbol kinds; main type `ObjectRequiresDocumentation`.
+Registers `RegisterSymbolAction` on the top-level object kinds (codeunit, control add-in, enum, interface, page, permission set, profile, query, report, table, xmlport); main type `ObjectRequiresDocumentation`.
+
+**References:** [#451](https://github.com/ALCops/Analyzers/issues/451).
 
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
-| Determine documentation from the declaration's leading trivia | The symbol API can return an empty XML comment for a `Profile` even when the source contains a valid `///` comment. The rule checks the source declaration directly so all registered object kinds use the same behavior. |
 | Keep `Profile` in the analyzed symbol kinds | Profiles are application objects and undocumented profiles must still receive DC0007; the documented-profile regression case must not be fixed by excluding the entire symbol kind. |
+
+| DC0008 (internal objects) is disabled by default; DC0007 is enabled | Internal objects are not cross-extension API surface. |
+| The callback works on `IObjectTypeSymbol`, not `IApplicationObjectTypeSymbol` | Interfaces and control add-ins implement only `IObjectTypeSymbol`; gating on the application-object interface silently dropped both kinds even though they were registered. |
+| Interfaces raise DC0007 or DC0008 according to their `Access` property | Interface definitions are cross-extension API contracts, consistent with the procedure-level rule DC0004/DC0006. |
+| Control add-ins raise DC0007 and never DC0008 | A control add-in is referenced through `usercontrol` and needs object-level documentation; AL allows no `Access` property on it, so it is always public. |
+| The test-codeunit exemption applies only to symbols that also implement `IApplicationObjectTypeSymbol` | Only application objects can be test codeunits; keeping the check on that interface avoids a reflective subtype lookup for interfaces and control add-ins. |
+| Symbol XML documentation falls back to declaration leading trivia | Older AL Language SDKs do not expose XML documentation through symbols for every object kind; source trivia reliably represents documentation in those versions. |
 
 ## Deliberate non-reports
 
 - Obsolete objects, following the standard cop convention.
-- Test codeunits, because they are not part of an extension's public documentation surface.
+- Test codeunits: test code is not part of an extension API surface.
+- Objects that already carry XML documentation.
 
-## Known issues
+## SDK facts
 
-- Interfaces and control add-ins are registered but do not implement `IApplicationObjectTypeSymbol`, so the analyzer currently skips their object-level documentation checks. This is a separate SDK type-hierarchy limitation.
+- `IApplicationObjectTypeSymbol` and `IObjectTypeSymbol` are siblings; the general pitfall is in `.claude/rules/symbol-resolution.md`.
+- `ObjectTypeSymbol.DeclaredAccessibility` reads the `Access` property (default Public) for every object kind, so interfaces resolve their accessibility without special handling.
 
 ## Test notes
 
-- The test class injects `ObjectRequiresDocumentation.ruleset.json` to enable DC0008, which is disabled by default.
+- Fixtures are split by diagnostic and outcome: `PublicHasDiagnostic`, `PublicNoDiagnostic`, `InternalHasDiagnostic`, `InternalNoDiagnostic`, with a test method per folder.
+- The test class injects `ObjectRequiresDocumentation.ruleset.json` to enable DC0008 (`isEnabledByDefault: false`).
 - The profile regression fixtures include a namespace, a quoted profile name, a documentation comment, and a local RoleCenter page so the AL input is self-contained.
