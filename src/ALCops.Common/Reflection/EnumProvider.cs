@@ -61,6 +61,10 @@ public static class EnumProvider
     /// </summary>
     public static class ActionKind
     {
+        // default(ActionKind) is Area, so a member missing from the loaded SDK must not fall back to it.
+        // An out-of-range value matches no real kind and keeps every comparison false.
+        private const NavCodeAnalysis.ActionKind Unresolved = (NavCodeAnalysis.ActionKind)int.MaxValue;
+
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _action =
             new(() => ParseEnum<NavCodeAnalysis.ActionKind>(nameof(NavCodeAnalysis.ActionKind.Action)));
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _actionRef =
@@ -69,11 +73,16 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.ActionKind>(nameof(NavCodeAnalysis.ActionKind.Area)));
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _group =
             new(() => ParseEnum<NavCodeAnalysis.ActionKind>(nameof(NavCodeAnalysis.ActionKind.Group)));
+        // String form: the member is absent from the oldest supported SDK, which also cannot compile a
+        // systemaction, so it resolves to the sentinel there.
+        private static readonly Lazy<NavCodeAnalysis.ActionKind> _systemAction =
+            new(() => ParseEnum("SystemAction", Unresolved));
 
         public static NavCodeAnalysis.ActionKind Action => _action.Value;
         public static NavCodeAnalysis.ActionKind ActionRef => _actionRef.Value;
         public static NavCodeAnalysis.ActionKind Area => _area.Value;
         public static NavCodeAnalysis.ActionKind Group => _group.Value;
+        public static NavCodeAnalysis.ActionKind SystemAction => _systemAction.Value;
     }
 
     /// <summary>

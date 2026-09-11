@@ -156,15 +156,29 @@ public sealed class NamingPattern : DiagnosticAnalyzer
 
     private static void AnalyzeAction(SymbolAnalysisContext ctx, NamingPatternConfig config)
     {
-        if (ctx.IsObsolete())
+        if (ctx.IsObsolete() || ctx.Symbol is not IActionSymbol action)
             return;
 
-        CheckName(ctx, ctx.Symbol.Name, NamingTarget.Action, config, "Action");
+        // Every node of an actions block is one Action symbol, so only the kinds whose name the
+        // developer picks are checked. Action areas take their name from ActionAreaKind and system
+        // actions from SystemActionKind; a group named after a predefined promoted category binds
+        // the group to that platform category slot.
+        if (action.ActionKind == EnumProvider.ActionKind.Area ||
+            action.ActionKind == EnumProvider.ActionKind.SystemAction ||
+            (action.ActionKind == EnumProvider.ActionKind.Group &&
+                SyntaxFacts.PromotedCategoriesSynthesizedSymbolNames.Contains(action.Name)))
+            return;
+
+        CheckName(ctx, action.Name, NamingTarget.Action, config, "Action");
     }
 
     private static void AnalyzeControl(SymbolAnalysisContext ctx, NamingPatternConfig config)
     {
-        if (ctx.IsObsolete())
+        if (ctx.IsObsolete() || ctx.Symbol is not IControlSymbol control)
+            return;
+
+        // Layout areas (Content, FactBoxes, RoleCenter, ...) take their name from the platform.
+        if (control.ControlKind == EnumProvider.ControlKind.Area)
             return;
 
         // Skip controls on API objects (pages with PageType=API, queries with QueryType=API).
@@ -172,7 +186,7 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         if (IsInApiObject(ctx.Symbol))
             return;
 
-        CheckName(ctx, ctx.Symbol.Name, NamingTarget.Control, config, "Control");
+        CheckName(ctx, control.Name, NamingTarget.Control, config, "Control");
     }
 
     private static bool IsInApiObject(ISymbol symbol)

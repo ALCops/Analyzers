@@ -8,8 +8,8 @@ namespace ALCops.LinterCop.Test
         private AnalyzerTestFixture _fixture;
         private string _testCasePath;
 
-        private static readonly byte[] EnumValueNamingSettings = System.Text.Encoding.UTF8.GetBytes(
-            """{"NamingPatterns": {"EnumValue": {"AllowPattern": "^[A-Z]", "AllowDescription": "should start with an uppercase letter"}}}""");
+        private static readonly byte[] CustomNamingSettings = System.Text.Encoding.UTF8.GetBytes(
+            """{"NamingPatterns": {"EnumValue": {"AllowPattern": "^[A-Z]", "AllowDescription": "should start with an uppercase letter"}, "Action": {"AllowPattern": "act[A-Za-z0-9]", "AllowDescription": "should begin with 'act'."}, "Control": {"AllowPattern": "ctl[A-Za-z0-9]", "AllowDescription": "should begin with 'ctl'."}}}""");
 
         [SetUp]
         public void Setup()
@@ -60,6 +60,8 @@ namespace ALCops.LinterCop.Test
         [TestCase("EnumValueBlankSpace")]
         [TestCase("EnumValueLowerCaseStart")]
         [TestCase("ParameterPascalCase")]
+        [TestCase("ActionAreaLowerCase")]
+        [TestCase("ControlAreaLowerCase")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
@@ -70,6 +72,7 @@ namespace ALCops.LinterCop.Test
 
         [Test]
         [TestCase("EnumValueLowerCaseStartCustomSettings")]
+        [TestCase("ActionGroupCustomPattern")]
         public async Task HasDiagnosticWithCustomSettings(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -77,7 +80,7 @@ namespace ALCops.LinterCop.Test
 
             var files = new Dictionary<string, byte[]>
             {
-                { "alcops.json", EnumValueNamingSettings }
+                { "alcops.json", CustomNamingSettings }
             };
             var fileSystem = new MemoryFileSystem(files);
 
@@ -88,6 +91,37 @@ namespace ALCops.LinterCop.Test
                 });
 
             fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.NamingPattern);
+        }
+
+        [Test]
+        [TestCase("ActionAreaCustomPattern")]
+        [TestCase("ControlAreaCustomPattern")]
+        [TestCase("PromotedCategoryGroupCustomPattern")]
+        [TestCase("SystemActionCustomPattern")]
+        public async Task NoDiagnosticWithCustomSettings(string testCase)
+        {
+            SkipTestIfVersionIsTooLow(
+                ["SystemActionCustomPattern"],
+                testCase,
+                "14.0",
+                "The fixture's 'ConfigurationDialog' page type requires runtime version 14.0.");
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var files = new Dictionary<string, byte[]>
+            {
+                { "alcops.json", CustomNamingSettings }
+            };
+            var fileSystem = new MemoryFileSystem(files);
+
+            var fixture = RoslynFixtureFactory.Create<Analyzers.NamingPattern>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = fileSystem
+                });
+
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.NamingPattern);
         }
     }
 }
