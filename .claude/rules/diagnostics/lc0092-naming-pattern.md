@@ -63,7 +63,7 @@ Registers `CompilationStartAction` (settings, AppSourceCop affixes, `NamingPatte
 ## Test notes
 
 - Custom patterns are injected as `alcops.json` through a `MemoryFileSystem`; `NamingPatternSettings.cs` unit-tests the inheritance-chain resolution of `NamingPatternConfig` directly.
-- The `systemaction` fixture is gated with `SkipTestIfVersionIsTooLow(..., "14.0", ...)`. `systemaction` itself arrives with `PageType = PromptDialog` in 12.1, but the fixture uses `ConfigurationDialog`, which the parser gates at 14.0; the gate follows the page type, not the action. The page also needs `Extensible = false` (AL0223) and a system-action name the page type supports (`Ok` or `Cancel`).
+- The `systemaction` fixture is gated with `SkipTestIfVersionIsTooLow(..., "16.2.31", ...)`. `systemaction` itself arrives with `PageType = PromptDialog` in 12.1, but the fixture uses `ConfigurationDialog`: the parser accepts it from 14.0, yet SDKs up to 16.2.28 still reject it as a feature under development (AL0574), and 16.2.31 downgrades that to a public-preview warning. The gate follows the first SDK that compiles the page type, not the parser or the action. The page also needs `Extensible = false` (AL0223) and a system-action name the page type supports (`Ok` or `Cancel`).
 
 ## Settings
 

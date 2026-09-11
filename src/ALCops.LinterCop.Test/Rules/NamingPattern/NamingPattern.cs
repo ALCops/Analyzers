@@ -103,8 +103,8 @@ namespace ALCops.LinterCop.Test
             SkipTestIfVersionIsTooLow(
                 ["SystemActionCustomPattern"],
                 testCase,
-                "14.0",
-                "The fixture's 'ConfigurationDialog' page type requires runtime version 14.0.");
+                "16.2.31",
+                "The fixture's 'ConfigurationDialog' page type is rejected as a feature under development (AL0574) before SDK 16.2.31.");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
