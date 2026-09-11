@@ -46,9 +46,9 @@ public sealed class ObjectRequiresDocumentation : DiagnosticAnalyzer
             return;
         }
 
-        var xmlComment = appObjectTypeSymbol.GetDocumentationCommentXml();
+        var hasXmlDocumentation = HasXmlDocumentation(appObjectTypeSymbol, ctx.CancellationToken);
 
-        if (string.IsNullOrWhiteSpace(xmlComment))
+        if (!hasXmlDocumentation)
         {
             if (appObjectTypeSymbol.DeclaredAccessibility == EnumProvider.Accessibility.Public)
             {
@@ -66,5 +66,16 @@ public sealed class ObjectRequiresDocumentation : DiagnosticAnalyzer
                     appObjectTypeSymbol.Name));
             }
         }
+    }
+
+    private static bool HasXmlDocumentation(
+        IApplicationObjectTypeSymbol appObjectTypeSymbol,
+        CancellationToken cancellationToken)
+    {
+        var declaration = appObjectTypeSymbol.DeclaringSyntaxReference?.GetSyntax(cancellationToken);
+
+        return declaration?.GetLeadingTrivia().Any(trivia =>
+            trivia.Kind == EnumProvider.SyntaxKind.SingleLineDocumentationCommentTrivia ||
+            trivia.Kind == EnumProvider.SyntaxKind.MultiLineDocumentationCommentTrivia) == true;
     }
 }

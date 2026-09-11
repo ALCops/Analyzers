@@ -25,6 +25,7 @@ namespace ALCops.DocumentationCop.Test
 
         [Test]
         [TestCase("PublicCodeunit")]
+        [TestCase("ProfileWithoutXmlDocumentation")]
         public async Task PublicHasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(PublicHasDiagnostic), $"{testCase}.al"))
@@ -35,6 +36,7 @@ namespace ALCops.DocumentationCop.Test
 
         [Test]
         [TestCase("PublicCodeunit")]
+        [TestCase("NamespacedQuotedProfileWithXmlDocumentation")]
         public async Task PublicNoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(PublicNoDiagnostic), $"{testCase}.al"))
