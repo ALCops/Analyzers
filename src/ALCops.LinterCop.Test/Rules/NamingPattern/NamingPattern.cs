@@ -78,17 +78,7 @@ namespace ALCops.LinterCop.Test
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
-            var files = new Dictionary<string, byte[]>
-            {
-                { "alcops.json", CustomNamingSettings }
-            };
-            var fileSystem = new MemoryFileSystem(files);
-
-            var fixture = RoslynFixtureFactory.Create<Analyzers.NamingPattern>(
-                new AnalyzerTestFixtureConfig
-                {
-                    FileSystem = fileSystem
-                });
+            var fixture = CreateFixtureWithSettings(CustomNamingSettings);
 
             fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.NamingPattern);
         }
@@ -109,19 +99,24 @@ namespace ALCops.LinterCop.Test
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
+            var fixture = CreateFixtureWithSettings(CustomNamingSettings);
+
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.NamingPattern);
+        }
+
+        private static AnalyzerTestFixture CreateFixtureWithSettings(byte[] settings)
+        {
             var files = new Dictionary<string, byte[]>
             {
-                { "alcops.json", CustomNamingSettings }
+                { "alcops.json", settings }
             };
             var fileSystem = new MemoryFileSystem(files);
 
-            var fixture = RoslynFixtureFactory.Create<Analyzers.NamingPattern>(
+            return RoslynFixtureFactory.Create<Analyzers.NamingPattern>(
                 new AnalyzerTestFixtureConfig
                 {
                     FileSystem = fileSystem
                 });
-
-            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.NamingPattern);
         }
     }
 }
