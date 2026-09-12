@@ -52,8 +52,11 @@ namespace ALCops.PlatformCop.Test
         [TestCase("GuidVariableNotInKey")]
         [TestCase("NonGuidKeyField")]
         [TestCase("AssignedToGuidVariableUsedElsewhere")]
+        [TestCase("AlreadySequentialGuid")]
         public async Task NoDiagnostic(string testCase)
         {
+            RequireMinimumVersion("16.0", "Available with runtime version 16.0.");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -65,6 +68,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("QualifiedCreateGuid")]
         public async Task HasFix(string testCase)
         {
+            RequireMinimumVersion("16.0", "Available with runtime version 16.0.");
+
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
                 .ConfigureAwait(false);
 
