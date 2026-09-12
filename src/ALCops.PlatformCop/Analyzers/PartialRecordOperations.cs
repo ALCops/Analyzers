@@ -152,7 +152,8 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             if (targetName is null || !trackedVariables.TryGetValue(targetName, out var targetState))
                 return true;
 
-            if (targetState.EverHadFullRecordAccess || targetState.EverPassedToFunction || targetState.EverHadLoadFields)
+            if (targetState.EverHadFullRecordAccess || targetState.EverPassedToFunction || targetState.EverHadLoadFields
+                || targetState.IsSetupOrReferenceTable)
                 return true;
         }
 
