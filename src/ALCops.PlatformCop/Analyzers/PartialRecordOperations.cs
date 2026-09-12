@@ -127,9 +127,9 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
                 result[local.Name] = new VariableState
                 {
                     IsRecordRef = local.Type?.NavTypeKind == EnumProvider.NavTypeKind.RecordRef,
-                    IsSetupTable = local.Type is IRecordTypeSymbol recordType
+                    IsSetupOrReferenceTable = local.Type is IRecordTypeSymbol recordType
                         && recordType.OriginalDefinition is ITableTypeSymbol tableType
-                        && TableHelper.IsSetupTable(tableType)
+                        && TableHelper.IsSetupOrReferenceTable(tableType)
                 };
         }
 
@@ -186,7 +186,7 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
         public List<LoadFieldsInfo> LoadFieldsLocations { get; } = new();
         public HashSet<string> WriteMethodNames { get; } = new(SemanticFacts.NameEqualityComparer);
         public bool IsRecordRef { get; set; }
-        public bool IsSetupTable { get; set; }
+        public bool IsSetupOrReferenceTable { get; set; }
         public List<string?> SetTableTargets { get; } = new();
 
         public bool EverHadLoadFields { get; set; }
@@ -622,10 +622,9 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             if (flowFlags.HasLoadFields)
                 flowFlags.HasPartialRead = true;
 
-            // Suppress on setup table parameterless Get() - near-zero performance benefit
-            if (state.IsSetupTable
-                && SemanticFacts.IsSameName(methodName, "Get")
-                && operation.Arguments.IsEmpty)
+            // Suppress all reads on setup and reference tables: their few rows stay in
+            // the NST record cache, and SetLoadFields bypasses that cache - net slower.
+            if (state.IsSetupOrReferenceTable)
                 return;
 
             // Only flag reads where no suppression condition exists.
