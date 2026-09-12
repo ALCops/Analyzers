@@ -4,8 +4,8 @@ codeunit 50100 MyCodeunit
     var
         MyTable: Record MyTable;
     begin
-        [|MyTable.Find()|];
-        exit(MyTable.MyField);
+        [|MyTable.Get('POSTING')|];
+        exit(MyTable.Description);
     end;
 }
 
@@ -13,12 +13,12 @@ table 50100 MyTable
 {
     fields
     {
-        field(1; "No."; Code[20]) { }
-        field(2; MyField; Text[100]) { }
+        field(1; "Code"; Code[20]) { }
+        field(2; Description; Text[100]) { }
     }
 
     keys
     {
-        key(PK; "No.") { }
+        key(PK; "Code") { }
     }
 }

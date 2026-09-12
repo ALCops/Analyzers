@@ -17,12 +17,12 @@ table 50100 MyTable
 {
     fields
     {
-        field(1; "No."; Code[20]) { }
+        field(1; "Code"; Code[20]) { }
         field(2; Amount; Decimal) { }
     }
 
     keys
     {
-        key(PK; "No.") { }
+        key(PK; "Code") { }
     }
 }
