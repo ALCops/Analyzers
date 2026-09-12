@@ -32,6 +32,9 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         if (body is null)
             return;
 
+        if (body.ToString().IndexOf("CreateGuid", StringComparison.OrdinalIgnoreCase) < 0)
+            return;
+
         var settings = ALCopsSettingsProvider.GetSettings(compilation, context.CancellationToken);
         bool flagAllGuidFields = string.Equals(
             settings.UseSequentialGuidScope, "AllGuidFields", StringComparison.OrdinalIgnoreCase);
@@ -102,7 +105,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         {
             _ct.ThrowIfCancellationRequested();
 
-            var value = UnwrapConversion(operation.Value);
+            var value = operation.Value.UnwrapConversions();
             if (IsCreateGuidCall(value, out var createGuidInvocation))
             {
                 if (_flagAllGuidFields)
@@ -164,7 +167,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
             for (int i = 0; i < operation.Arguments.Length; i++)
             {
-                var argValue = UnwrapConversion(operation.Arguments[i].Value);
+                var argValue = operation.Arguments[i].Value.UnwrapConversions();
                 if (!IsCreateGuidCall(argValue, out var createGuidInvocation))
                     continue;
 
@@ -374,7 +377,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
         private bool IsTrackedSymbol(IOperation operation)
         {
-            var op = UnwrapConversion(operation);
+            var op = operation.UnwrapConversions();
             var symbol = op.GetSymbolSafe();
             return symbol is not null && symbol.Equals(_tracked);
         }
@@ -418,7 +421,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         if (recordType is not null && recordType.Temporary)
             return null;
 
-        var firstArg = UnwrapConversion(validateCall.Arguments[0].Value);
+        var firstArg = validateCall.Arguments[0].Value.UnwrapConversions();
 
         if (firstArg.GetSymbolSafe() is not IFieldSymbol fieldSymbol)
             return null;
@@ -444,9 +447,6 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
         return false;
     }
-
-    private static IOperation UnwrapConversion(IOperation operation) =>
-        operation is IConversionExpression conv ? conv.Operand : operation;
 
     #endregion
 }

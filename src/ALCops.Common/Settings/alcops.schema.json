@@ -89,7 +89,7 @@
       "type": ["string", "null"],
       "enum": ["AllGuidFields", null],
       "default": null,
-      "description": "Controls the scope of the sequential GUID check. When set to 'AllGuidFields', all CreateGuid() calls are flagged, not just those in primary key fields. Used by PC0029. Default: null"
+      "description": "Controls the scope of the sequential GUID check. When set to 'AllGuidFields', all CreateGuid() calls are flagged, not just those whose value flows to a field that is part of a table key. Used by PC0029. Default: null"
     },
     "ToolTipAllowedPunctuations": {
       "type": "array",
