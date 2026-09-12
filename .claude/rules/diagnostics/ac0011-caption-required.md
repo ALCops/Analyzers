@@ -27,7 +27,7 @@ Registers `RegisterSymbolAction` on `Page`, `Query`, `Table`, `Field`, `Action`,
 - Field controls in HeadlinePart pages, including those added by a pageextension targeting one, are skipped (`IsInHeadlinePartPage`): the runtime ignores `Caption` there and only honours `Expression`, `Visible`, `ApplicationArea`, `Drilldown` and `DrillDownPageID` ([docs](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-create-role-center-headline#in-development), [#293](https://github.com/ALCops/Analyzers/issues/293)). The page object, actions and groups of a HeadlinePart page remain checked.
 - Area, Grid, Repeater, UserControl and SystemPart controls have no user-facing caption requirement.
 - System tables and fields (Id >= 2000000000) are Microsoft-owned.
-- Predefined action category groups (`Category_Process` and friends) get their captions from the platform.
+- Predefined action category groups (`Category_Process` and friends) get their captions from the platform. The test is Common's `IActionSymbol.IsPredefinedPromotedCategoryGroup()`, shared with LC0092 so both cops skip the same groups.
 - Empty enum values conventionally have no caption.
 - Non-assignable permission sets are never shown in the assignment UI.
 
