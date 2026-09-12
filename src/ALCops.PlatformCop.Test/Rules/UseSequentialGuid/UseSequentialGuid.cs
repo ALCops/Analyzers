@@ -35,6 +35,10 @@ namespace ALCops.PlatformCop.Test
         [TestCase("DirectAssignmentThisSelf")]
         [TestCase("ValidateBareSelf")]
         [TestCase("ValidateThisSelf")]
+        [TestCase("GlobalVariableAssignedInSiblingProcedure")]
+        [TestCase("GlobalVariableValidateInSiblingProcedure")]
+        [TestCase("GlobalVariableBareSelfInTable")]
+        [TestCase("GlobalVariableSameProcedure")]
         public async Task HasDiagnostic(string testCase)
         {
             // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/guid/guid-createsequentialguid-method
@@ -53,6 +57,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("NonGuidKeyField")]
         [TestCase("AssignedToGuidVariableUsedElsewhere")]
         [TestCase("AlreadySequentialGuid")]
+        [TestCase("GlobalVariableNotInKey")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireMinimumVersion("16.0", "Available with runtime version 16.0.");

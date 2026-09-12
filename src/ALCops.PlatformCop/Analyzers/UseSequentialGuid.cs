@@ -121,9 +121,12 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                 }
                 else
                 {
-                    // Variable assignment: v := CreateGuid()
                     var targetSymbol = operation.Target?.GetSymbolSafe();
-                    if (targetSymbol is not null && targetSymbol.Kind == EnumProvider.SymbolKind.LocalVariable)
+                    if (targetSymbol is null)
+                    {
+                        // Unresolvable target; nothing to trace
+                    }
+                    else if (targetSymbol.Kind == EnumProvider.SymbolKind.LocalVariable)
                     {
                         var bodyOp = _context.SemanticModel.GetOperation(
                             ((MethodOrTriggerDeclarationSyntax)_context.CodeBlock).Body!,
@@ -138,6 +141,15 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                                 ReportDiagnostic(_context, createGuidInvocation,
                                     $"The value flows to key field '{result.Value.FieldName}' in table '{result.Value.TableName}'.");
                             }
+                        }
+                    }
+                    else if (targetSymbol.Kind == EnumProvider.SymbolKind.GlobalVariable)
+                    {
+                        var result = TraceGlobalVariable(targetSymbol);
+                        if (result is not null)
+                        {
+                            ReportDiagnostic(_context, createGuidInvocation,
+                                $"The value flows to key field '{result.Value.FieldName}' in table '{result.Value.TableName}'.");
                         }
                     }
                 }
@@ -191,6 +203,36 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
             }
 
             base.VisitInvocationExpression(operation);
+        }
+
+        private KeyFieldResult? TraceGlobalVariable(ISymbol globalVariable)
+        {
+            var objectSyntax = _context.CodeBlock.FirstAncestorOrSelf<ObjectSyntax>();
+            if (objectSyntax is null)
+                return null;
+
+            foreach (var member in objectSyntax.DescendantNodes().OfType<MethodOrTriggerDeclarationSyntax>())
+            {
+                if (member.Body is null)
+                    continue;
+
+                _ct.ThrowIfCancellationRequested();
+
+                var bodyOp = _context.SemanticModel.GetOperation(member.Body, _ct);
+                if (bodyOp is null)
+                    continue;
+
+                var containing = _context.SemanticModel.GetDeclaredSymbol(member) as ISymbol;
+                var tracer = new SymbolFlowTracer(
+                    globalVariable, _context.SemanticModel.Compilation,
+                    new HashSet<IMethodSymbol>(), _ct, containing);
+                tracer.Visit(bodyOp);
+
+                if (tracer.Result is not null)
+                    return tracer.Result;
+            }
+
+            return null;
         }
 
         private static bool IsCreateGuidCall(
@@ -271,17 +313,20 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         private readonly Compilation _compilation;
         private readonly CancellationToken _ct;
         private readonly HashSet<IMethodSymbol> _visited;
+        private readonly ISymbol? _containingSymbol;
 
         public KeyFieldResult? Result { get; private set; }
 
         public SymbolFlowTracer(
             ISymbol tracked, Compilation compilation,
-            HashSet<IMethodSymbol> visited, CancellationToken ct)
+            HashSet<IMethodSymbol> visited, CancellationToken ct,
+            ISymbol? containingSymbol = null)
         {
             _tracked = tracked;
             _compilation = compilation;
             _ct = ct;
             _visited = visited;
+            _containingSymbol = containingSymbol ?? tracked.ContainingSymbol;
         }
 
         public override void VisitAssignmentStatement(IAssignmentStatement operation)
@@ -291,7 +336,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
             if (IsTrackedSymbol(operation.Value) && operation.Target is IFieldAccess fieldAccess)
             {
-                Result = CheckFieldInKey(fieldAccess, _tracked.ContainingSymbol);
+                Result = CheckFieldInKey(fieldAccess, _containingSymbol);
                 if (Result is not null) return;
             }
 
@@ -306,7 +351,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
             if (IsValidateCall(operation) && operation.Arguments.Length >= 2 &&
                 IsTrackedSymbol(operation.Arguments[1].Value))
             {
-                Result = CheckValidateTarget(operation, _tracked.ContainingSymbol);
+                Result = CheckValidateTarget(operation, _containingSymbol);
                 if (Result is not null) return;
             }
 
