@@ -221,6 +221,11 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
                 _ct.ThrowIfCancellationRequested();
 
+                // Text pre-filter: a body that never spells the variable name cannot reference it,
+                // so skip the bind. False positives only cost one bind; the tracer decides by symbol.
+                if (member.Body.ToString().IndexOf(globalVariable.Name, SemanticFacts.NameEqualityComparison) < 0)
+                    continue;
+
                 var bodyOp = _context.SemanticModel.GetOperation(member.Body, _ct);
                 if (bodyOp is null)
                     continue;
