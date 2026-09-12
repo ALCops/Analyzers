@@ -61,22 +61,26 @@ public static class EnumProvider
     /// </summary>
     public static class ActionKind
     {
-        // default(ActionKind) is Area, so a member missing from the loaded SDK must not fall back to it.
-        // An out-of-range value matches no real kind and keeps every comparison false.
+        // default(ActionKind) is Area, so no member of this class may fall back to it: an unresolved kind
+        // would then read as an action area and match every comparison against Area. Every member goes
+        // through Parse, whose out-of-range sentinel matches no real kind and keeps every comparison false.
         private const NavCodeAnalysis.ActionKind Unresolved = (NavCodeAnalysis.ActionKind)int.MaxValue;
 
+        private static NavCodeAnalysis.ActionKind Parse(string name) =>
+            ParseEnum(name, Unresolved);
+
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _action =
-            new(() => ParseEnum<NavCodeAnalysis.ActionKind>(nameof(NavCodeAnalysis.ActionKind.Action)));
+            new(() => Parse(nameof(NavCodeAnalysis.ActionKind.Action)));
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _actionRef =
-            new(() => ParseEnum<NavCodeAnalysis.ActionKind>(nameof(NavCodeAnalysis.ActionKind.ActionRef)));
+            new(() => Parse(nameof(NavCodeAnalysis.ActionKind.ActionRef)));
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _area =
-            new(() => ParseEnum<NavCodeAnalysis.ActionKind>(nameof(NavCodeAnalysis.ActionKind.Area)));
+            new(() => Parse(nameof(NavCodeAnalysis.ActionKind.Area)));
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _group =
-            new(() => ParseEnum<NavCodeAnalysis.ActionKind>(nameof(NavCodeAnalysis.ActionKind.Group)));
+            new(() => Parse(nameof(NavCodeAnalysis.ActionKind.Group)));
         // String form: the member is absent from the oldest supported SDK, which also cannot compile a
         // systemaction, so it resolves to the sentinel there.
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _systemAction =
-            new(() => ParseEnum("SystemAction", Unresolved));
+            new(() => Parse("SystemAction"));
 
         public static NavCodeAnalysis.ActionKind Action => _action.Value;
         public static NavCodeAnalysis.ActionKind ActionRef => _actionRef.Value;
@@ -228,20 +232,28 @@ public static class EnumProvider
     /// </summary>
     public static class ControlKind
     {
+        // default(ControlKind) is Area, so no member of this class may fall back to it: an unresolved kind
+        // would then read as a layout area and match every comparison against Area. Every member goes
+        // through Parse, whose out-of-range sentinel matches no real kind and keeps every comparison false.
+        private const NavCodeAnalysis.ControlKind Unresolved = (NavCodeAnalysis.ControlKind)int.MaxValue;
+
+        private static NavCodeAnalysis.ControlKind Parse(string name) =>
+            ParseEnum(name, Unresolved);
+
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _area =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.Area)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.Area)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _field =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.Field)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.Field)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _grid =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.Grid)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.Grid)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _part =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.Part)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.Part)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _repeater =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.Repeater)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.Repeater)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _systemPart =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.SystemPart)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.SystemPart)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _userControl =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.UserControl)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.UserControl)));
 
         public static NavCodeAnalysis.ControlKind Area => _area.Value;
         public static NavCodeAnalysis.ControlKind Field => _field.Value;
