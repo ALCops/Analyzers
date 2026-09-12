@@ -165,8 +165,7 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         // the group to that platform category slot.
         if (action.ActionKind == EnumProvider.ActionKind.Area ||
             action.ActionKind == EnumProvider.ActionKind.SystemAction ||
-            (action.ActionKind == EnumProvider.ActionKind.Group &&
-                SyntaxFacts.PromotedCategoriesSynthesizedSymbolNames.Contains(action.Name)))
+            action.IsPredefinedPromotedCategoryGroup())
             return;
 
         CheckName(ctx, action.Name, NamingTarget.Action, config, "Action");

@@ -14,9 +14,6 @@ public sealed class CaptionRequired : DiagnosticAnalyzer
         ImmutableArray.Create(
             DiagnosticDescriptors.CaptionRequired);
 
-    private static readonly HashSet<string> _predefinedActionCategoryNames =
-        SyntaxFacts.PredefinedActionCategoryNames.Select(x => x.Key.ToLowerInvariant()).ToHashSet();
-
     public override void Initialize(AnalysisContext context) =>
         context.RegisterSymbolAction(
             CheckForMissingCaptions,
@@ -175,7 +172,7 @@ public sealed class CaptionRequired : DiagnosticAnalyzer
                 return false;
         }
 
-        if (Symbol.Kind == EnumProvider.SymbolKind.Action && ((IActionSymbol)Symbol).ActionKind == EnumProvider.ActionKind.Group && _predefinedActionCategoryNames.Contains(Symbol.Name.ToLowerInvariant()))
+        if (Symbol is IActionSymbol action && action.IsPredefinedPromotedCategoryGroup())
             return false;
 
         if (Symbol.GetBooleanPropertyValue(EnumProvider.PropertyKind.ShowCaption) != false)

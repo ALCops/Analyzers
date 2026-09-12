@@ -48,7 +48,7 @@ Registers `CompilationStartAction` (settings, AppSourceCop affixes, `NamingPatte
 - Whitespace-only names such as `value(0; " ")`: a common "empty" enum value, not a naming issue.
 - Action areas (`area(Processing)`, `area(Promoted)`, ...) and layout areas (`area(Content)`, `area(FactBoxes)`, ...): the name selects a platform area, so it is fixed by `ActionAreaKind` / the page layout rather than chosen.
 - `systemaction(OK)` and friends: the name selects a `SystemActionKind` member.
-- Action groups named after a predefined promoted category (`Category_New`, `Category_Process`, `Category_Report`, `Category_Category4` .. `Category_Category20`): the name binds the group to that platform category slot, the same skip AC0011 applies.
+- Action groups named after a predefined promoted category (`Category_New`, `Category_Process`, `Category_Report`, `Category_Category4` .. `Category_Category20`): the name binds the group to that platform category slot. AC0011 skips them through the same Common helper.
 - Ordinary action groups, separators, action references, custom actions and file-upload actions stay checked under `Action`; every control kind other than the layout area stays checked under `Control`.
 - Enum values, unless a pattern is configured.
 - Obsolete symbols (standard ALCops convention).
@@ -58,7 +58,7 @@ Registers `CompilationStartAction` (settings, AppSourceCop affixes, `NamingPatte
 - Every node inside an `actions { }` block is a single `SymbolKind.Action` symbol; `IActionSymbol.ActionKind` is the only thing distinguishing `area` from `group`, `action`, `separator`, `actionref`, `customaction`, `systemaction` and `fileuploadaction`. `SymbolKind.Control` is shaped the same way, with `IControlSymbol.ControlKind` telling the layout `area` apart from groups, fields and parts.
 - Action and control names come from the source text (`syntax.Name.Unquoted()`), not from the canonical enum member, so `area(processing)` really is named `processing` and fails an uppercase-start pattern.
 - `ActionKind.SystemAction` is absent from the oldest supported SDK (it arrives in 12.1), so `EnumProvider` resolves it through the string overload with an out-of-range sentinel: `default(ActionKind)` is `Area`, and falling back to it would make every action area read as a system action.
-- The predefined promoted-category names come from `SyntaxFacts.PromotedCategoriesSynthesizedSymbolNames`, an `ImmutableHashSet<string>` the SDK already builds over `PromotedCategoryKind` with `SemanticFacts.NameEqualityComparer`. It holds the same `Category_*` names as `SyntaxFacts.PredefinedActionCategoryNames` (which AC0011 uses) but is immutable and needs no local copy.
+- The predefined promoted-category test lives in Common as `IActionSymbol.IsPredefinedPromotedCategoryGroup()` and is shared with AC0011, so both cops skip exactly the same groups. It wraps `SyntaxFacts.PromotedCategoriesSynthesizedSymbolNames`, an `ImmutableHashSet<string>` the SDK already builds over `PromotedCategoryKind` with a case-insensitive comparer, so no local copy or lowercasing is needed.
 
 ## Test notes
 
