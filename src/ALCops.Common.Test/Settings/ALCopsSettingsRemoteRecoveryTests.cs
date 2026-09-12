@@ -285,9 +285,11 @@ public class ALCopsSettingsRemoteRecoveryTests
 
         public async ValueTask DisposeAsync()
         {
+            // Stop listening only after the serve loop has exited: a stopped listener makes
+            // AcceptTcpClientAsync throw InvalidOperationException before it observes the token.
             _shutdown.Cancel();
-            _listener.Stop();
             await _serve.ConfigureAwait(false);
+            _listener.Stop();
             _shutdown.Dispose();
         }
     }
