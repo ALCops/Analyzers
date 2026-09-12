@@ -25,6 +25,7 @@ namespace ALCops.DocumentationCop.Test
 
         [Test]
         [TestCase("PublicCodeunit")]
+        [TestCase("ProfileWithoutXmlDocumentation")]
         [TestCase("PublicInterfaceAndControlAddIn")]
         public async Task PublicHasDiagnostic(string testCase)
         {
@@ -36,6 +37,7 @@ namespace ALCops.DocumentationCop.Test
 
         [Test]
         [TestCase("PublicCodeunit")]
+        [TestCase("NamespacedQuotedProfileWithXmlDocumentation")]
         [TestCase("PublicInterfaceAndControlAddIn")]
         public async Task PublicNoDiagnostic(string testCase)
         {

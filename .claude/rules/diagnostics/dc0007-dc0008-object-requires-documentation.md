@@ -18,6 +18,8 @@ Registers `RegisterSymbolAction` on the top-level object kinds (codeunit, contro
 
 | Decision | Rationale |
 |---|---|
+| Keep `Profile` in the analyzed symbol kinds | Profiles are application objects and undocumented profiles must still receive DC0007; the documented-profile regression case must not be fixed by excluding the entire symbol kind. |
+
 | DC0008 (internal objects) is disabled by default; DC0007 is enabled | Internal objects are not cross-extension API surface. |
 | The callback works on `IObjectTypeSymbol`, not `IApplicationObjectTypeSymbol` | Interfaces and control add-ins implement only `IObjectTypeSymbol`; gating on the application-object interface silently dropped both kinds even though they were registered. |
 | Interfaces raise DC0007 or DC0008 according to their `Access` property | Interface definitions are cross-extension API contracts, consistent with the procedure-level rule DC0004/DC0006. |
@@ -27,6 +29,7 @@ Registers `RegisterSymbolAction` on the top-level object kinds (codeunit, contro
 
 ## Deliberate non-reports
 
+- Obsolete objects, following the standard cop convention.
 - Test codeunits: test code is not part of an extension API surface.
 - Objects that already carry XML documentation.
 
@@ -39,3 +42,4 @@ Registers `RegisterSymbolAction` on the top-level object kinds (codeunit, contro
 
 - Fixtures are split by diagnostic and outcome: `PublicHasDiagnostic`, `PublicNoDiagnostic`, `InternalHasDiagnostic`, `InternalNoDiagnostic`, with a test method per folder.
 - The test class injects `ObjectRequiresDocumentation.ruleset.json` to enable DC0008 (`isEnabledByDefault: false`).
+- The profile regression fixtures include a namespace, a quoted profile name, a documentation comment, and a local RoleCenter page so the AL input is self-contained.
