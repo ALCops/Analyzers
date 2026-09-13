@@ -40,7 +40,7 @@ Registers `RegisterOperationAction` on `AssignmentStatement` and `CompoundAssign
 
 - Bare table self field assignment does not fire (accepted limitation pinned by `NoDiagnostic/InsideOnValidateTrigger.al`); page bare references resolve to `Rec` via implicit-with and do fire.
 - Do not replace the table-type gate with `IRecordTypeSymbol.IsTemporary()` from Common: that OR-merges the keyword and `TableType` cases this rule must keep apart.
-- Detection of `this` and of `Rec` versus `xRec` follows `.claude/rules/record-receiver-forms.md`.
+- Detection of `this` and of `Rec` versus `xRec` follows `.claude/rules/receiver-forms.md`.
 
 ## SDK facts
 

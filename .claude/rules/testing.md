@@ -306,8 +306,8 @@ Rules for .al fixtures:
 3. Keep fixtures minimal: only include code relevant to the rule being tested.
 4. Place `[|...|]` markers precisely around the syntax node the analyzer targets.
 5. Every `HasDiagnostic` fixture must have at least one marker. Every `NoDiagnostic` fixture must also have markers (on the same kind of syntax node, but in a valid scenario).
-6. Receiver-relevant rules (those that detect record method calls or field access) need the four-form fixture set: `{Scenario}NamedVariable`, `{Scenario}RecSelf`, `{Scenario}BareSelf`, `{Scenario}ThisSelf` (+ `.InTableExtension` variant where applicable; background in `record-receiver-forms.md`). Every `this` fixture must be version-gated with `SkipTestIfVersionIsTooLow([...], testCase, "14.0", "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).")`.
-7. When adding or creating tests, consider both a fixture **without** namespaces and one **with** a `namespace` declaration (if applicable to the analyzed syntax) — analyzers must support both. Use a generic multi-part namespace such as `MyPublisher.MyExtension.MyAppDomain`, and where relevant include fully-qualified object references (`MyPublisher.MyExtension.MyAppDomain.MyTable`). See `Rules/CasingMismatchDeclaration/HasDiagnostic/NamespacedObjectReference.al` in FormattingCop.Test for an example.
+6. Receiver-relevant rules (those that detect record method calls, user procedure calls or field access) need the receiver-form fixture set: `{Scenario}NamedVariable`, `{Scenario}RecSelf`, `{Scenario}BareSelf`, `{Scenario}ThisSelf`, the `InTableExtension` variants, `{Scenario}OnRunRec` (a codeunit with `TableNo` writing through `Rec` in `trigger OnRun`), and `{Scenario}PageRec` where the rule can apply to pages or request pages (background in `receiver-forms.md`: bare self binds with a null instance only inside tables and tableextensions, `Rec` is a local rather than a global in `OnRun`). Every `this` fixture must be version-gated with `SkipTestIfVersionIsTooLow([...], testCase, "14.0", "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).")`. A rule that reads table keys also needs one fixture whose table has **no** `keys` section: the compiler synthesizes a primary key that `ITableTypeSymbol.Keys` never lists.
+7. When adding or creating tests, consider both a fixture **without** namespaces and one **with** a `namespace` declaration and a fully qualified object reference (if applicable to the analyzed syntax) — analyzers must support both, and a fixture set that only has the unqualified spelling has hidden namespace-related false negatives before. Use a generic multi-part namespace such as `MyPublisher.MyExtension.MyAppDomain`, and where relevant include fully-qualified object references (`MyPublisher.MyExtension.MyAppDomain.MyTable`). See `Rules/CasingMismatchDeclaration/HasDiagnostic/NamespacedObjectReference.al` in FormattingCop.Test for an example.
 
 ### Fixtures must compile
 
@@ -343,6 +343,8 @@ table 50100 MyTable
     }
 }
 ```
+
+A supporting table without a `keys` section is fine, but note that it has an implicit primary key over `MyField`; add an explicit `keys` section when the rule under test must not see that field as a key.
 
 Tests run in parallel across assemblies (`[assembly: Parallelizable(ParallelScope.All)]` in `AssemblyInfo.cs`).
 

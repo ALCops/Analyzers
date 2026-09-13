@@ -5,7 +5,7 @@ paths:
 
 # Analyzer Development
 
-Core rules for every analyzer in the six cops. Sibling guides that load with this one: `sdk-analysis-scope.md` (how the host runs callbacks), `symbol-resolution.md` (symbols, canonical names, the `GetSymbol()` bug), `record-receiver-forms.md` (the four ways AL reaches a record), `analyzer-performance.md` (cost model and patterns). Creating a rule: `/new-analyzer`. Tests: `.claude/rules/testing.md`.
+Core rules for every analyzer in the six cops. Sibling guides that load with this one: `sdk-analysis-scope.md` (how the host runs callbacks), `symbol-resolution.md` (symbols, canonical names, the `GetSymbol()` bug), `receiver-forms.md` (the four ways AL reaches a record), `analyzer-performance.md` (cost model and patterns). Creating a rule: `/new-analyzer`. Tests: `.claude/rules/testing.md`.
 
 ## NAV SDK source (mandatory)
 

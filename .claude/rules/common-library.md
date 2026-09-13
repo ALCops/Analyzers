@@ -13,7 +13,7 @@ Target frameworks, LangVersion, nullable enforcement and conditional package ref
 
 ## Directory Purposes
 
-- `Extensions/` — Extension methods on SDK types, one static class per extended type. Home of `GetSymbolSafe()` and `GetReceiverTableType` (`.claude/rules/symbol-resolution.md`, `record-receiver-forms.md`) and the shared `IsTemporary()` checks.
+- `Extensions/` — Extension methods on SDK types, one static class per extended type. Home of `GetSymbolSafe()` and `GetReceiverTableType` (`.claude/rules/symbol-resolution.md`, `receiver-forms.md`) and the shared `IsTemporary()` checks.
 - `Helpers/` — Utilities wrapping SDK functionality: AppSourceCop configuration and mandatory affixes (not cached; cache per compilation at the call site), manifest access (`ManifestHelper.GetManifest` throws `FileNotFoundException` in test compilations; treat as null), OData name mangling, acronym registry.
 - `Reflection/` — Runtime access to internal or version-dependent SDK members; the most sensitive area of Common. `EnumProvider` is the only allowed way to name an SDK enum value.
 - `Settings/` — `ALCopsSettings` (defaults) and `ALCopsSettingsProvider` (hierarchical `alcops.json` lookup, below). Load failures become CM0001. Schema parity: `.claude/rules/settings-schema.md`.

@@ -31,6 +31,8 @@ Registers code-block actions from CompilationStart on method/trigger bodies, cap
 | Case-insensitive text pre-filter on `CreateGuid` before binding a body | Without it the rule binds and walks every body in the compilation; a false positive costs one bind and `IsCreateGuidCall` still decides by symbol |
 | Common `UnwrapConversions()` instead of a private one-level unwrap | It also peels `IParenthesizedExpression`, so `(CreateGuid())` is detected |
 | Single-pass walker that inspects assignments and invocations inline, instead of a collect-then-find-parents pass | The SDK `OperationWalker` does not preserve `IOperation` reference identity across walks (see SDK facts) |
+| Key membership reads `PrimaryKey` first, then the declared `Keys` | `Keys` lists declared keys only; a table without a `keys` section has a synthesized primary key (lowest-Id field with a valid key type) that only `PrimaryKey` exposes, also for tables from referenced apps (`receiver-forms.md`) |
+| Receiver resolution stays entirely in `GetReceiverTableType`, with no per-form code in the analyzer | The helper already covers the null instance of bare self in tables and tableextensions, the synthesized `Rec` global of the page family, the synthesized `Rec` local of a `TableNo` codeunit's `OnRun`, report dataitem access and `this`; fixtures pin every origin so a helper regression surfaces here |
 | Diagnostic at the `CreateGuid()` call site | Where the developer makes the change |
 | Version gate `Fall2025OrGreater` (runtime 16.0); full netstandard2.1 support | `CreateSequentialGuid()` ships with runtime 16.0 |
 
@@ -52,6 +54,7 @@ Registers code-block actions from CompilationStart on method/trigger bodies, cap
 ## Test notes
 
 - All three test methods call `RequireMinimumVersion("16.0")` because `CreateSequentialGuid()` must compile in the HasFix expected output and in the `AlreadySequentialGuid` NoDiagnostic fixture.
+- The HasDiagnostic set covers every `Rec` origin and receiver form of `receiver-forms.md` (table trigger and procedure, tableextension, page, pageextension, request page, report and xmlport via request page, report dataitem, `TableNo` `OnRun`), plus tables without a `keys` section and a namespaced file with a fully qualified record type; the NoDiagnostic set pins the temporary check through a page `Rec` and a non-key field of a table without a `keys` section.
 
 ## Settings
 

@@ -28,6 +28,7 @@ Input: `$ARGUMENTS`. For an issue number/URL, `gh issue view <n> --comments` and
 | "Fixing" by excluding the whole construct (widening the false-negative surface) | Fix the cause; if a bail-out is genuinely required (e.g. `RecordRef` in AC0032, #448), record it as a Design decision. |
 | Changing a documented Design decision silently | Stop and ask; then update the row if the decision changes. |
 | Only the one temporary-table form from the report is handled | Cover all three forms (`TableType = Temporary`, `Record X temporary`, temporary page source). |
+| Only the reported receiver form or object context is fixed | Cover every form and context in `receiver-forms.md` (named, `Rec`, bare, `this`, tableextension, `TableNo` `OnRun`, page family) and pin each with a fixture; a report about one form is usually a gap in several. |
 | Markdown-only issue link in the PR body | `Fixes #n` so GitHub links and auto-closes. |
 | Sibling rules sharing the helper left unchecked | Grep for the helper; fix or file an issue (#449 is the precedent). |
 | Rule doc not updated | Step 5 is part of "done". |
