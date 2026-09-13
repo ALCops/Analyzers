@@ -32,9 +32,6 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         if (body is null)
             return;
 
-        if (body.ToString().IndexOf("CreateGuid", StringComparison.OrdinalIgnoreCase) < 0)
-            return;
-
         var settings = ALCopsSettingsProvider.GetSettings(compilation, context.CancellationToken);
         bool flagAllGuidFields = string.Equals(
             settings.UseSequentialGuidScope, "AllGuidFields", StringComparison.OrdinalIgnoreCase);
