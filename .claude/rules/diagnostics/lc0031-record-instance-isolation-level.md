@@ -35,7 +35,7 @@ Registers `RegisterOperationAction` on `InvocationExpression`; matches built-in 
 | `Rec.` (table, tableextension, page, `TableNo` OnRun) | ok, pinned | ok, pinned (table); same path elsewhere, not pinned |
 | Bare self in table and tableextension | ok, pinned | fixed (#530), pinned |
 | Bare self on page and in `TableNo` OnRun | ok, pinned | `IdentifierNameSyntax` path; page pinned, OnRun not pinned |
-| `this.` (table, tableextension) | ok, pinned | ok, pinned |
+| `this.` (table, tableextension) | ok, pinned | ok, pinned (table); tableextension same path, not pinned |
 | Namespaced fully qualified variable | ok, pinned | same path as named variable, not pinned |
 | `RecordRef` variable | ok, pinned | ok, pinned |
 | `LockTable(true)` (arguments) | ok, pinned | arguments dropped, see Known issues |
@@ -58,6 +58,8 @@ Registers `RegisterOperationAction` on `InvocationExpression`; matches built-in 
 ## Test notes
 
 - `this` fixtures are gated on runtime 14.0 with `SkipTestIfVersionIsTooLow` in both `HasDiagnostic` and `HasFix`.
+- Tableextension fixtures are gated on SDK 13.0: older compilers reject a tableextension whose target is declared in the same module (AL0334).
+- `HasFix/BareSelfWithLeadingComment` pins trivia preservation; it fails when `WithTriviaFrom` is removed from the fix.
 
 ## CodeFix: RecordInstanceIsolationLevelCodeFixProvider
 
@@ -65,5 +67,6 @@ Registers `RegisterOperationAction` on `InvocationExpression`; matches built-in 
 |---|---|
 | Single Replace action | Converting never widens locking; deletion is documented, not automated (Known issues) |
 | Keep the author's receiver form: `memberAccess.Expression` reused verbatim, bare stays bare | A `Rec.` prefix on the bare form was rejected; `this.` needs no `ThisExpressionSyntax` reference this way (`netstandard21-compatibility.md`) |
+| `WithTriviaFrom(invocationExpression)` on the replacement | A fresh `SyntaxFactory` identifier carries only elastic trivia, so the bare form would lose the indentation and comments attached to the `LockTable` token; the member-access form kept them only because the receiver node was reused |
 | Any other expression shape returns the unchanged document | Never throw from a fix |
 | `WellKnownFixAllProviders.BatchFixer` | Each diagnostic replaces its own invocation node; no shared ancestor |
