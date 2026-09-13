@@ -30,6 +30,12 @@ public class InvokeActionOnPartTestPage : NavCodeAnalysisBase
     [TestCase("NamespacedListPart")]
     public async Task HasDiagnostic(string testCase)
     {
+        SkipTestIfVersionIsTooLow(
+            ["ListPartActionFromPageExtension"],
+            testCase,
+            "13.0",
+            "No support for pageextensions when target itself is already declared in the same module");
+
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
             .ConfigureAwait(false);
 

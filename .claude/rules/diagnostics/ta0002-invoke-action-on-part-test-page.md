@@ -37,6 +37,10 @@ Registers `RegisterOperationAction` on `InvocationExpression`; main type `Invoke
 - `TestRequestPage`: its receiver type is `RequestPageTypeSymbol`, which is `IPageBaseTypeSymbol` but not `IPageTypeSymbol`; the `OriginalDefinition is not IPageTypeSymbol` cast bails out.
 - Obsolete test code: `ctx.IsObsolete()` returns true when the enclosing method or object is obsolete, skipping the diagnostic.
 
+## Test notes
+
+- `ListPartActionFromPageExtension` is skipped below runtime 13.0: AL 12 rejects a pageextension whose target page is declared in the same module (AL0334).
+
 ## SDK facts
 
 - `TestPage "X"` type is the internal `TestPageTypeSymbol`: `NavTypeKind.TestPage`, `OriginalDefinition` is the `PageTypeSymbol` (public `IPageTypeSymbol`, `PageType` on `IPageBaseTypeSymbol`). No public `ITestPageTypeSymbol`.
