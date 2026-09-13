@@ -60,6 +60,9 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
             reason));
     }
 
+    private static string KeyFieldReason(KeyFieldResult result) =>
+        $"The value flows to key field '{result.FieldName}' in table '{result.TableName}'.";
+
     #region Data types
 
 #if NETSTANDARD2_1
@@ -119,7 +122,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
-                            $"The value flows to key field '{result.Value.FieldName}' in table '{result.Value.TableName}'.");
+                            KeyFieldReason(result.Value));
                     }
                 }
                 else
@@ -142,7 +145,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                             if (result is not null)
                             {
                                 ReportDiagnostic(_context, createGuidInvocation,
-                                    $"The value flows to key field '{result.Value.FieldName}' in table '{result.Value.TableName}'.");
+                                    KeyFieldReason(result.Value));
                             }
                         }
                     }
@@ -152,7 +155,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                         if (result is not null)
                         {
                             ReportDiagnostic(_context, createGuidInvocation,
-                                $"The value flows to key field '{result.Value.FieldName}' in table '{result.Value.TableName}'.");
+                                KeyFieldReason(result.Value));
                         }
                     }
                 }
@@ -185,7 +188,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
-                            $"The value flows to key field '{result.Value.FieldName}' in table '{result.Value.TableName}'.");
+                            KeyFieldReason(result.Value));
                     }
                     continue;
                 }
@@ -200,7 +203,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
-                            $"The value flows to key field '{result.Value.FieldName}' in table '{result.Value.TableName}'.");
+                            KeyFieldReason(result.Value));
                     }
                 }
             }
