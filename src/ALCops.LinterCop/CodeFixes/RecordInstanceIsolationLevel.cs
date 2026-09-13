@@ -69,6 +69,23 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
         if (node is not InvocationExpressionSyntax invocationExpression)
             return document;
 
+        CodeExpressionSyntax target;
+        switch (invocationExpression.Expression)
+        {
+            case MemberAccessExpressionSyntax memberAccess:
+                target = SyntaxFactory.MemberAccessExpression(
+                    memberAccess.Expression,
+                    SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
+                    SyntaxFactory.IdentifierName(ReadIsolationMethodName));
+                break;
+            case IdentifierNameSyntax:
+                // A bare LockTable() inside a table, tableextension or page keeps its bare form.
+                target = SyntaxFactory.IdentifierName(ReadIsolationMethodName);
+                break;
+            default:
+                return document;
+        }
+
         var enumMemberAccess = SyntaxFactory.OptionAccessExpression(
             SyntaxFactory.IdentifierName(IsolationLevelEnumName),
             SyntaxFactory.Token(EnumProvider.SyntaxKind.ColonColonToken),
@@ -77,26 +94,9 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
         var argumentList = SyntaxFactory.ArgumentList(
             new SeparatedSyntaxList<CodeExpressionSyntax>().Add(enumMemberAccess));
 
-        InvocationExpressionSyntax newInvocation;
-
-        if (invocationExpression.Expression is MemberAccessExpressionSyntax memberAccess)
-        {
-            var newMemberAccess = SyntaxFactory.MemberAccessExpression(
-                memberAccess.Expression,
-                SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
-                SyntaxFactory.IdentifierName(ReadIsolationMethodName));
-
-            newInvocation = SyntaxFactory.InvocationExpression(newMemberAccess, argumentList);
-        }
-        else if (invocationExpression.Expression is IdentifierNameSyntax)
-        {
-            newInvocation = SyntaxFactory.InvocationExpression(
-                SyntaxFactory.IdentifierName(ReadIsolationMethodName), argumentList);
-        }
-        else
-        {
-            return document;
-        }
+        // A fresh identifier carries no trivia, so copy the indentation and comments of the original call.
+        var newInvocation = SyntaxFactory.InvocationExpression(target, argumentList)
+            .WithTriviaFrom(invocationExpression);
 
         var root = await syntaxRootTask.ConfigureAwait(false);
         if (root is null)
