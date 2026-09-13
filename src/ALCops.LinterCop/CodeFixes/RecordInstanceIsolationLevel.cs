@@ -69,8 +69,22 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
         if (node is not InvocationExpressionSyntax invocationExpression)
             return document;
 
-        if (invocationExpression.Expression is not MemberAccessExpressionSyntax memberAccess)
-            return document;
+        CodeExpressionSyntax target;
+        switch (invocationExpression.Expression)
+        {
+            case MemberAccessExpressionSyntax memberAccess:
+                target = SyntaxFactory.MemberAccessExpression(
+                    memberAccess.Expression,
+                    SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
+                    SyntaxFactory.IdentifierName(ReadIsolationMethodName));
+                break;
+            case IdentifierNameSyntax:
+                // A bare LockTable() inside a table, tableextension or page keeps its bare form.
+                target = SyntaxFactory.IdentifierName(ReadIsolationMethodName);
+                break;
+            default:
+                return document;
+        }
 
         var enumMemberAccess = SyntaxFactory.OptionAccessExpression(
             SyntaxFactory.IdentifierName(IsolationLevelEnumName),
@@ -80,12 +94,9 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
         var argumentList = SyntaxFactory.ArgumentList(
             new SeparatedSyntaxList<CodeExpressionSyntax>().Add(enumMemberAccess));
 
-        var newMemberAccess = SyntaxFactory.MemberAccessExpression(
-            memberAccess.Expression,
-            SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
-            SyntaxFactory.IdentifierName(ReadIsolationMethodName));
-
-        var newInvocation = SyntaxFactory.InvocationExpression(newMemberAccess, argumentList);
+        // A fresh identifier carries no trivia, so copy the indentation and comments of the original call.
+        var newInvocation = SyntaxFactory.InvocationExpression(target, argumentList)
+            .WithTriviaFrom(invocationExpression);
 
         var root = await syntaxRootTask.ConfigureAwait(false);
         if (root is null)
