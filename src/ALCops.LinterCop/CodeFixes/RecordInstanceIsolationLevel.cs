@@ -69,9 +69,6 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
         if (node is not InvocationExpressionSyntax invocationExpression)
             return document;
 
-        if (invocationExpression.Expression is not MemberAccessExpressionSyntax memberAccess)
-            return document;
-
         var enumMemberAccess = SyntaxFactory.OptionAccessExpression(
             SyntaxFactory.IdentifierName(IsolationLevelEnumName),
             SyntaxFactory.Token(EnumProvider.SyntaxKind.ColonColonToken),
@@ -80,12 +77,26 @@ public sealed class RecordInstanceIsolationLevelCodeFixProvider : CodeFixProvide
         var argumentList = SyntaxFactory.ArgumentList(
             new SeparatedSyntaxList<CodeExpressionSyntax>().Add(enumMemberAccess));
 
-        var newMemberAccess = SyntaxFactory.MemberAccessExpression(
-            memberAccess.Expression,
-            SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
-            SyntaxFactory.IdentifierName(ReadIsolationMethodName));
+        InvocationExpressionSyntax newInvocation;
 
-        var newInvocation = SyntaxFactory.InvocationExpression(newMemberAccess, argumentList);
+        if (invocationExpression.Expression is MemberAccessExpressionSyntax memberAccess)
+        {
+            var newMemberAccess = SyntaxFactory.MemberAccessExpression(
+                memberAccess.Expression,
+                SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
+                SyntaxFactory.IdentifierName(ReadIsolationMethodName));
+
+            newInvocation = SyntaxFactory.InvocationExpression(newMemberAccess, argumentList);
+        }
+        else if (invocationExpression.Expression is IdentifierNameSyntax)
+        {
+            newInvocation = SyntaxFactory.InvocationExpression(
+                SyntaxFactory.IdentifierName(ReadIsolationMethodName), argumentList);
+        }
+        else
+        {
+            return document;
+        }
 
         var root = await syntaxRootTask.ConfigureAwait(false);
         if (root is null)
