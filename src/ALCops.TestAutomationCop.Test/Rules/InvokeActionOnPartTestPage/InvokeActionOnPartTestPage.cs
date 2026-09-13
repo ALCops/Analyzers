@@ -28,6 +28,7 @@ public class InvokeActionOnPartTestPage : NavCodeAnalysisBase
     [TestCase("ListPartInvokeWithoutParentheses")]
     [TestCase("ObsoletePartPage")]
     [TestCase("NamespacedListPart")]
+    [TestCase("ObsoleteTestMethod")]
     public async Task HasDiagnostic(string testCase)
     {
         SkipTestIfVersionIsTooLow(
@@ -52,7 +53,6 @@ public class InvokeActionOnPartTestPage : NavCodeAnalysisBase
     [TestCase("OpenViewOnPart")]
     [TestCase("BuiltInOkOnPart")]
     [TestCase("TestRequestPage")]
-    [TestCase("ObsoleteTestMethod")]
     public async Task NoDiagnostic(string testCase)
     {
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

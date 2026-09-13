@@ -22,8 +22,8 @@ Registers `RegisterOperationAction` on `InvocationExpression`; main type `Invoke
 | All three `TestAction` methods (`Invoke`, `Enabled`, `Visible`) | They are the only members of the built-in `TestAction` class; all three fail identically at runtime on a directly opened part page. |
 | Type-based reach (every body, no `Subtype = Test` gate) | `TestPage` variables can appear in helper codeunits that are not `Subtype = Test`; gating on subtype would miss those. |
 | Only `ListPart` and `CardPart` page types | `HeadlinePart` is not confirmed to fail the same way; silence is safer. A page without an explicit `PageType` property defaults to `Card`, which is not a part type and is therefore silent. |
-| Anchor on the `TestAction` built-in class symbol, not on the method name | A name-only check could match a future built-in on another class; the class identity is stable. |
-| Obsolete part page is still reported | The runtime failure is real even when the page is `ObsoleteState = Pending`; only obsolete test code (`ctx.IsObsolete()`) is skipped. |
+| Identify the call by `invocation.Instance is ITestActionAccess`, not by method name or built-in class | `Enabled` and `Visible` also exist on `TestField` and `Invoke` on the built-in `OK()` path, so names alone cannot identify a page action; the access operation is the binder's statement that the receiver is a test-page action, and every such receiver has type `TestAction`, whose only members are `Invoke`, `Enabled` and `Visible`, so an extra `MethodKind` or class-name check adds nothing. A future fourth `TestAction` method is covered automatically. |
+| No `ctx.IsObsolete()` gate; obsolete test code and obsolete part pages are both reported | The test runner still executes an `[Obsolete]` test method or an `ObsoleteState = Pending` test codeunit, and the action lookup still fails, so the usual "obsolete code is noise" rule would create a false negative on a test that breaks the run. |
 | Severity `Warning`, category `Usage` | The call always fails at runtime, but Warning (not Error) matches the convention for rules that do not prevent compilation. |
 | No CodeFix | The fix requires knowing the hosting page and its part control name; no mechanical rewrite exists. |
 | No `PageTypeKind` sentinel hardening | A missing `PageTypeKind` member would only cause silence (the equality check fails); the sentinel pattern is unnecessary here. |
@@ -35,7 +35,6 @@ Registers `RegisterOperationAction` on `InvocationExpression`; main type `Invoke
 - Built-in actions `OK`/`Cancel`/`Yes`/`No`/`View`/`Edit`: `SubPage.OK().Invoke()` has an invocation (the `OK()` call) as the `Instance` of the outer `Invoke`, not an `ITestActionAccess`.
 - `HeadlinePart` and every other `PageType` not confirmed to fail.
 - `TestRequestPage`: its receiver type is `RequestPageTypeSymbol`, which is `IPageBaseTypeSymbol` but not `IPageTypeSymbol`; the `OriginalDefinition is not IPageTypeSymbol` cast bails out.
-- Obsolete test code: `ctx.IsObsolete()` returns true when the enclosing method or object is obsolete, skipping the diagnostic.
 
 ## Test notes
 

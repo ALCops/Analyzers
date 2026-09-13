@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -22,15 +21,13 @@ public sealed class InvokeActionOnPartTestPage : DiagnosticAnalyzer
 
     private static void AnalyzeInvocation(OperationAnalysisContext ctx)
     {
-        if (ctx.IsObsolete() || ctx.Operation is not IInvocationExpression invocation)
+        // Obsolete test code is not skipped: the test runner still executes an obsolete test
+        // method or codeunit, and the action lookup still fails at runtime.
+        if (ctx.Operation is not IInvocationExpression invocation)
             return;
 
-        var method = invocation.TargetMethod;
-        if (method.MethodKind != EnumProvider.MethodKind.BuiltInMethod ||
-            method.ContainingSymbol is not IClassTypeSymbol cls ||
-            !SemanticFacts.IsSameName(cls.Name, "TestAction"))
-            return;
-
+        // A TestActionAccess receiver is an action of a test page; the built-in TestAction class has
+        // exactly Invoke, Enabled and Visible, all of which fail on a part page opened directly.
         // MainPage.Part.Action binds its receiver as a TestPart; only a TestPage receiver is a part opened directly.
         if (invocation.Instance is not ITestActionAccess access)
             return;
