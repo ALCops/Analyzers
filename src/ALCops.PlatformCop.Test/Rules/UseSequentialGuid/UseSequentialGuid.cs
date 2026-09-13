@@ -40,6 +40,29 @@ namespace ALCops.PlatformCop.Test
         [TestCase("GlobalVariableBareSelfInTable")]
         [TestCase("GlobalVariableSameProcedure")]
         [TestCase("ParenthesizedCreateGuid")]
+        [TestCase("AssignmentBareSelfInTrigger")]
+        [TestCase("ValidateBareSelfInTrigger")]
+        [TestCase("ImplicitPrimaryKeyNamedVariable")]
+        [TestCase("ImplicitPrimaryKeyRecSelf")]
+        [TestCase("ImplicitPrimaryKeyValidate")]
+        [TestCase("NamespacedQualifiedRecordVariable")]
+        [TestCase("NamespacedExplicitKeys")]
+        [TestCase("OnRunRecSelf")]
+        [TestCase("OnRunRecSelfExplicitKeys")]
+        [TestCase("OnRunBareSelf")]
+        [TestCase("OnRunValidateRecSelf")]
+        [TestCase("AssignmentBareSelfInTableExtension")]
+        [TestCase("AssignmentRecSelfInTableExtension")]
+        [TestCase("AssignmentThisSelfInTableExtension")]
+        [TestCase("ValidateBareSelfInTableExtension")]
+        [TestCase("PageRecSelf")]
+        [TestCase("PageBareSelf")]
+        [TestCase("PageExtensionRecSelf")]
+        [TestCase("RequestPageRecSelf")]
+        [TestCase("ReportRecSelfViaRequestPage")]
+        [TestCase("XmlPortRecSelfViaRequestPage")]
+        [TestCase("ReportDataItemNamed")]
+        [TestCase("ReportDataItemBareSelf")]
         public async Task HasDiagnostic(string testCase)
         {
             // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/guid/guid-createsequentialguid-method
@@ -59,6 +82,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("AssignedToGuidVariableUsedElsewhere")]
         [TestCase("AlreadySequentialGuid")]
         [TestCase("GlobalVariableNotInKey")]
+        [TestCase("PageTemporarySourceTable")]
+        [TestCase("ImplicitPrimaryKeyNonKeyField")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireMinimumVersion("16.0", "Available with runtime version 16.0.");
