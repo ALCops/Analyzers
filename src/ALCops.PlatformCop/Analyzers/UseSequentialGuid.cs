@@ -441,6 +441,18 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
     private static bool IsFieldInAnyKey(IFieldSymbol field, ITableTypeSymbol table)
     {
+        // Keys holds declared keys only; a table without a keys section exposes
+        // its synthesized primary key solely through PrimaryKey.
+        var primaryKey = table.PrimaryKey;
+        if (primaryKey is not null)
+        {
+            foreach (var keyField in primaryKey.Fields)
+            {
+                if (SemanticFacts.IsSameName(keyField.Name, field.Name))
+                    return true;
+            }
+        }
+
         foreach (var key in table.Keys)
         {
             foreach (var keyField in key.Fields)
