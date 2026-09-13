@@ -71,6 +71,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("BareSelfInTableExtension")]
         [TestCase("ThisSelf")]
         [TestCase("RecordRefVariable")]
+        [TestCase("PageBareSelf")]
         public async Task HasFix(string testCase)
         {
             SkipTestIfVersionIsTooLow(
