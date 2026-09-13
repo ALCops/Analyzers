@@ -15,6 +15,16 @@ public static class DiagnosticDescriptors
         description: TestAutomationCopAnalyzers.GlobalMethodRequiresTestAttributeDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.GlobalMethodRequiresTestAttribute));
 
+    public static readonly DiagnosticDescriptor InvokeActionOnPartTestPage = new(
+        id: DiagnosticIds.InvokeActionOnPartTestPage,
+        title: TestAutomationCopAnalyzers.InvokeActionOnPartTestPageTitle,
+        messageFormat: TestAutomationCopAnalyzers.InvokeActionOnPartTestPageMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: TestAutomationCopAnalyzers.InvokeActionOnPartTestPageDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.InvokeActionOnPartTestPage));
+
     public static readonly DiagnosticDescriptor AnalyzerException = new(
         id: DiagnosticIds.AnalyzerException,
         title: TestAutomationCopAnalyzers.AnalyzerExceptionTitle,

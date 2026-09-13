@@ -431,6 +431,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.TableExtension)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _tableFilter =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.TableFilter)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _testPage =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.TestPage)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _text =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Text)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _variant =
@@ -480,6 +482,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind String => _string.Value;
         public static NavCodeAnalysis.NavTypeKind TableExtension => _tableExtension.Value;
         public static NavCodeAnalysis.NavTypeKind TableFilter => _tableFilter.Value;
+        public static NavCodeAnalysis.NavTypeKind TestPage => _testPage.Value;
         public static NavCodeAnalysis.NavTypeKind Text => _text.Value;
         public static NavCodeAnalysis.NavTypeKind Variant => _variant.Value;
         public static NavCodeAnalysis.NavTypeKind XmlPort => _xmlPort.Value;
@@ -574,6 +577,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.API)));
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _card =
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.Card)));
+        private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _cardPart =
+            new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.CardPart)));
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _document =
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.Document)));
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _headlinePart =
@@ -589,6 +594,7 @@ public static class EnumProvider
 
         public static NavCodeAnalysis.PageTypeKind API => _api.Value;
         public static NavCodeAnalysis.PageTypeKind Card => _card.Value;
+        public static NavCodeAnalysis.PageTypeKind CardPart => _cardPart.Value;
         public static NavCodeAnalysis.PageTypeKind Document => _document.Value;
         public static NavCodeAnalysis.PageTypeKind HeadlinePart => _headlinePart.Value;
         public static NavCodeAnalysis.PageTypeKind List => _list.Value;
