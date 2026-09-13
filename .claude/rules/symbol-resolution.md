@@ -77,7 +77,7 @@ Facts about method symbols that look discriminating but are not:
 | `IVariableSymbol` | `Name`, `Type`, `VariableKind` |
 | `IParameterSymbol` | `Name`, `ParameterType`, `IsVar`, `Ordinal` |
 | `IMethodSymbol` | `Name`, `MethodKind`, `LocalVariables`, `Parameters`, `ReturnValueSymbol`, `ContainingModule` |
-| `IRecordTypeSymbol` | `BaseTable`, `Temporary`, `OriginalDefinition` (the `ITableTypeSymbol`); see `record-receiver-forms.md` |
+| `IRecordTypeSymbol` | `BaseTable`, `Temporary`, `OriginalDefinition` (the `ITableTypeSymbol`); see `receiver-forms.md` |
 | `ITableTypeSymbol` | `Id`, `Name`, `TableType` |
 | `IApplicationObjectTypeSymbol` | `Kind`, `Id`, `Name`, `GetMembers()`, `GetProperty()` |
 | `IApplicationObjectExtensionTypeSymbol` | `Target` (the extended object) |

@@ -45,7 +45,7 @@ Registers `SyntaxNodeAction` on `SyntaxKind.StringLiteralValue`; main type `Page
 
 ## SDK facts
 
-- `GetSymbolInfo` on a `this` receiver returns no symbol before AL 14.2 (`BoundThisReference` gained its `ExpressionSymbol => Type` override in 14.2.19, verified by diffing v14.1.18.1238..v14.2.19.4832); see `.claude/rules/record-receiver-forms.md`. The member-name resolution in `IsWritingToTableField` binds through the field-access node, not `BoundThisReference`, so it needs no fallback.
+- `GetSymbolInfo` on a `this` receiver returns no symbol before AL 14.2 (`BoundThisReference` gained its `ExpressionSymbol => Type` override in 14.2.19, verified by diffing v14.1.18.1238..v14.2.19.4832); see `.claude/rules/receiver-forms.md`. The member-name resolution in `IsWritingToTableField` binds through the field-access node, not `BoundThisReference`, so it needs no fallback.
 
 ## Test notes
 

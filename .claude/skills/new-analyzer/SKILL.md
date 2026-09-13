@@ -10,7 +10,7 @@ argument-hint: <ID> <RuleName> <Cop>   e.g. LC0100 AvoidFooBar LinterCop
 
 Arguments: `$ARGUMENTS` → `{ID}`, `{RuleName}` (PascalCase; also the class, descriptor, `DiagnosticIds` field and test-folder name), `{Cop}` (`ApplicationCop` | `DocumentationCop` | `FormattingCop` | `LinterCop` | `PlatformCop` | `TestAutomationCop`).
 
-Knowledge you need loads automatically when you open files under `Analyzers/` and `*.Test/`: `.claude/rules/analyzer-development.md`, `sdk-analysis-scope.md`, `symbol-resolution.md`, `record-receiver-forms.md`, `analyzer-performance.md`, `netstandard21-compatibility.md`, `testing.md`.
+Knowledge you need loads automatically when you open files under `Analyzers/` and `*.Test/`: `.claude/rules/analyzer-development.md`, `sdk-analysis-scope.md`, `symbol-resolution.md`, `receiver-forms.md`, `analyzer-performance.md`, `netstandard21-compatibility.md`, `testing.md`.
 
 ## Confirm rule parameters (hard gate)
 
@@ -27,6 +27,7 @@ Knowledge you need loads automatically when you open files under `Analyzers/` an
 | CodeFix now / later / never | **Ask** |
 | Configurable via `alcops.json`? (name + default) | **Ask** |
 | Minimum BC/SDK version (version gate) or net8.0-only SDK API | **Propose** after step 1 below; confirm. |
+| Does the rule read a record receiver, a field, a user procedure call or a table key? | **Propose** — if yes, the fixture set of `testing.md` rule 6 (four forms, tableextension, `TableNo` `OnRun`, page where applicable, implicit primary key) and a namespaced fixture are part of step 4; confirm which contexts the rule deliberately excludes. |
 
 ## Steps
 
@@ -57,4 +58,5 @@ Knowledge you need loads automatically when you open files under `Analyzers/` an
 | Name-keyed variable maps that ignore AL scoping (#448) | Consult the full local scope (locals, parameters, named return) before object scope; classify by symbol type, not name. |
 | `[TestCase("Foo")]` without a matching `Foo.al`, or `NoDiagnostic` fixtures without `[|...|]` markers | Names must match exactly; both fixture kinds need markers. |
 | Skipping the rule doc or the docs-site reminder | Steps 6 and 7 are part of "done". |
-| Gating on `invocation.Instance` non-null silently skips bare self calls (#348) | Resolve via `GetReceiverTableType`; fixtures for all four forms plus the tableextension variant (`record-receiver-forms.md`). |
+| Gating on `invocation.Instance` non-null silently skips bare self calls (#348); treating `Rec` as always a global variable skips the `TableNo` `OnRun` local (#544) | Resolve via `GetReceiverTableType`; fixtures for all four forms, the tableextension variant, `TableNo` `OnRun` and the page family (`receiver-forms.md`). |
+| Deciding key membership from `ITableTypeSymbol.Keys` (#544) | Read `PrimaryKey` too; a table without a `keys` section has a synthesized primary key that `Keys` never lists. |

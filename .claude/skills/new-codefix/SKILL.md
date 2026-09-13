@@ -43,6 +43,7 @@ Work out the fix, then **stop and confirm before editing any file**:
 | `equivalenceKey` in `TestFixAll` differs from the provider's key | Must match exactly, otherwise FixAll silently short-circuits and the test passes for the wrong reason. |
 | Fabricating tokens the source never had, e.g. a `;` before `else` (#395 PC0037) | Build the replacement from the existing nodes/tokens; assert with an `expected.al` that has the exact original formatting. |
 | Dropping a qualified receiver (`Rec.`, `Customer.`) when rewriting an invocation (#441 PC0035) | Rewrite only the member/arguments; keep the receiver expression and its trivia. |
+| A fix that assumes a `MemberAccessExpressionSyntax` receiver and returns the document unchanged on bare self or `this` | Handle the receiver-less `IdentifierNameSyntax` / `InvocationExpressionSyntax` shape too, and add `*BareSelf*` and `*ThisSelf*` `HasFix` cases whenever the diagnostic can fire on those forms (`receiver-forms.md`). |
 | Rewriting a node that may be missing (unblocked `then` branch, #398 PC0035) | Guard every navigation step; return the unchanged document instead of throwing. |
 | Comparing AL identifiers with `StringComparison.OrdinalIgnoreCase` | `SemanticFacts` name comparison. |
 | Forgetting the rule doc's CodeFix section | Step 5 is part of "done". |
