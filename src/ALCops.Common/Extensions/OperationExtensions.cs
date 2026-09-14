@@ -72,26 +72,61 @@ public static class OperationSafeExtensions
     }
 
     /// <summary>
-    /// Resolves the table backing the record receiver of an invocation or field access,
-    /// handling all four AL receiver forms uniformly:
+    /// Resolves the table backing the record receiver of a member operation: an
+    /// <see cref="IInvocationExpression"/> (built-in record method or user procedure) or an
+    /// <see cref="IFieldAccess"/>. Handles all four AL receiver forms uniformly:
     /// <list type="bullet">
-    ///   <item><c>MyVar.M()</c> / <c>Rec.M()</c> / <c>this.M()</c>: <paramref name="instance"/> is non-null;
-    ///     the record type comes from <c>instance.Type</c>.</item>
-    ///   <item>Bare <c>M()</c>: <paramref name="instance"/> is null; the table comes from
+    ///   <item><c>MyVar.M()</c> / <c>Rec.M()</c> / <c>this.M()</c>: the operation's <c>Instance</c> is non-null;
+    ///     the record type comes from its <c>Type</c>.</item>
+    ///   <item>Bare <c>M()</c> / <c>F</c>: <c>Instance</c> is null; the table comes from
     ///     <paramref name="containingSymbol"/>'s containing type (table, or target of a table extension).</item>
     /// </list>
+    /// The SDK also returns a null <c>Instance</c> for every static built-in call
+    /// (<c>IsolatedStorage.Get(...)</c>, <c>NumberSequence.Next(...)</c>, bare <c>Error(...)</c>), so only the
+    /// target method can tell that apart from a bare self call; a static built-in has no record receiver.
     /// </summary>
-    /// <param name="instance">The <c>IInvocationExpression.Instance</c> (null for bare implicit-self calls).</param>
-    /// <param name="containingSymbol">The symbol whose body contains the call (e.g. <c>ctx.ContainingSymbol</c>);
-    ///   used only when <paramref name="instance"/> is null.</param>
+    /// <param name="operation">The invocation or field access whose receiver is resolved.</param>
+    /// <param name="containingSymbol">The symbol whose body contains the operation (e.g. <c>ctx.ContainingSymbol</c>);
+    ///   used only when the receiver is implicit.</param>
     /// <param name="recordType">The <see cref="IRecordTypeSymbol"/> when available (non-null for variable / Rec / this
-    ///   receivers); null for bare self calls where only the table shape is known.</param>
+    ///   receivers); null for bare self access where only the table shape is known.</param>
     /// <returns>The backing <see cref="ITableTypeSymbol"/>, or null when the receiver is not a record/table
-    ///   (e.g. inside a codeunit or page).</returns>
+    ///   (e.g. inside a codeunit or page), the invoked method is static, or <paramref name="operation"/> is neither
+    ///   an invocation nor a field access.</returns>
     public static ITableTypeSymbol? GetReceiverTableType(
-        this IOperation? instance, ISymbol? containingSymbol, out IRecordTypeSymbol? recordType)
+        this IOperation operation, ISymbol? containingSymbol, out IRecordTypeSymbol? recordType)
     {
         recordType = null;
+        IOperation? instance;
+
+        switch (operation)
+        {
+            case IInvocationExpression invocation:
+                if (invocation.Instance is null)
+                {
+#if NETSTANDARD2_1
+                    // IMethodSymbol.IsStatic does not exist at the AL 12 floor. Static built-ins are declared on a
+                    // language class other than Table (IsolatedStorage, NumberSequence, Dialog, System, ...), while
+                    // the record built-ins live on the Table class and user procedures on the object symbol.
+                    bool isStatic = invocation.TargetMethod is { ContainingSymbol: IClassTypeSymbol containingClass } &&
+                        !SemanticFacts.IsSameName(containingClass.Name, "Table");
+#else
+                    bool isStatic = invocation.TargetMethod is { IsStatic: true };
+#endif
+                    if (isStatic)
+                        return null;
+                }
+
+                instance = invocation.Instance;
+                break;
+
+            case IFieldAccess fieldAccess:
+                instance = fieldAccess.Instance;
+                break;
+
+            default:
+                return null;
+        }
 
         if (instance is not null)
         {

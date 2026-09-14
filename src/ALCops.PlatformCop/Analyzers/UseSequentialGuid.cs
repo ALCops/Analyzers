@@ -405,7 +405,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         if (fieldSymbol.GetTypeSymbol().GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Guid)
             return null;
 
-        var tableType = fieldAccess.Instance.GetReceiverTableType(containingSymbol, out var recordType);
+        var tableType = fieldAccess.GetReceiverTableType(containingSymbol, out var recordType);
         if (tableType is null || tableType.TableType != EnumProvider.TableTypeKind.Normal)
             return null;
 
@@ -419,7 +419,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
     private static KeyFieldResult? CheckValidateTarget(IInvocationExpression validateCall, ISymbol? containingSymbol = null)
     {
-        var tableType = validateCall.Instance.GetReceiverTableType(containingSymbol, out var recordType);
+        var tableType = validateCall.GetReceiverTableType(containingSymbol, out var recordType);
         if (tableType is null || tableType.TableType != EnumProvider.TableTypeKind.Normal)
             return null;
 

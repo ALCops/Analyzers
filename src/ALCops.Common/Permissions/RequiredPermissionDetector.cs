@@ -36,7 +36,7 @@ public static class RequiredPermissionDetector
         if (operation == DatabaseOperation.None)
             return null;
 
-        var tableType = invocation.Instance.GetReceiverTableType(containingSymbol, out var recordType);
+        var tableType = invocation.GetReceiverTableType(containingSymbol, out var recordType);
         if (tableType is null || !IsPermissionRelevant(tableType, includeSystemTables))
             return null;
 
