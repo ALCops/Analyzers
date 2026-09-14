@@ -32,7 +32,7 @@ public sealed class SetRangeWithFilterOperators : DiagnosticAnalyzer
 
         if (operation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod ||
             operation.TargetMethod.Name != SetRangeMethodName ||
-            operation.Instance.GetReceiverTableType(ctx.ContainingSymbol, out _) is null ||
+            operation.GetReceiverTableType(ctx.ContainingSymbol, out _) is null ||
             operation.Arguments.Length < 2)
             return;
 

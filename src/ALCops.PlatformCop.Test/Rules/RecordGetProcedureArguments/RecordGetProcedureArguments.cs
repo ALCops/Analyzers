@@ -77,8 +77,17 @@ public class RecordGetProcedureArguments : NavCodeAnalysisBase
     [TestCase("RecordGetSetupTableCorrectArgumentsProvided")]
     [TestCase("RecordGetSetupTableNoArgumentsProvided")]
     [TestCase("RecordGetXmlPortTableElement")]
+    [TestCase("IsolatedStorageGetInTableProcedure")]
+    [TestCase("IsolatedStorageGetInTableTrigger")]
+    [TestCase("IsolatedStorageGetInTableExtension")]
     public async Task NoDiagnostic(string testCase)
     {
+        SkipTestIfVersionIsTooLow(
+            ["IsolatedStorageGetInTableExtension"],
+            testCase,
+            "13.0",
+            "AL 12 rejects a tableextension whose target is in the same module (AL0334).");
+
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
             .ConfigureAwait(false);
 
