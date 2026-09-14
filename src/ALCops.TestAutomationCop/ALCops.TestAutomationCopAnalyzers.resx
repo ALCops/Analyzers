@@ -129,6 +129,18 @@
     <value>Codeunits with Subtype = Test define the executable surface for automated tests and must contain only explicit test entry points. Any global procedure declared in a test codeunit is implicitly exposed as callable logic and therefore must represent an actual test, explicitly marked with the [Test] attribute. A global procedure without this attribute indicates either an incomplete test or misplaced reusable logic.</value>
     <comment/>
   </data>
+  <data name="InvokeActionOnPartTestPageTitle" xml:space="preserve">
+    <value>Actions cannot be invoked on a part page opened directly through its own TestPage variable</value>
+    <comment/>
+  </data>
+  <data name="InvokeActionOnPartTestPageMessageFormat" xml:space="preserve">
+    <value>Action '{0}' cannot be invoked on page '{1}' opened directly because its PageType is {2}; invoke it through the part control of the hosting page instead.</value>
+    <comment/>
+  </data>
+  <data name="InvokeActionOnPartTestPageDescription" xml:space="preserve">
+    <value>A ListPart or CardPart page opened directly through its own TestPage variable renders no actions at runtime. Invoking, querying Enabled or querying Visible on any action will fail with 'The action with ID = xxx is not found on the page.' To reach the action, open the hosting page and invoke it through the part control (e.g. HostPage.SubPagePart.MyAction.Invoke()).</value>
+    <comment/>
+  </data>
   <data name="AnalyzerExceptionTitle" xml:space="preserve">
     <value>Analyzer threw an unhandled exception</value>
   </data>

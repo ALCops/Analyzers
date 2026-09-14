@@ -13,7 +13,7 @@ Target frameworks, LangVersion, nullable enforcement and conditional package ref
 
 ## Directory Purposes
 
-- `Extensions/` — Extension methods on SDK types, one static class per extended type. Home of `GetSymbolSafe()` and `GetReceiverTableType` (`.claude/rules/symbol-resolution.md`, `record-receiver-forms.md`) and the shared `IsTemporary()` checks.
+- `Extensions/` — Extension methods on SDK types, one static class per extended type. Home of `GetSymbolSafe()` and `GetReceiverTableType` (`.claude/rules/symbol-resolution.md`, `receiver-forms.md`) and the shared `IsTemporary()` checks.
 - `Helpers/` — Utilities wrapping SDK functionality: AppSourceCop configuration and mandatory affixes (not cached; cache per compilation at the call site), manifest access (`ManifestHelper.GetManifest` throws `FileNotFoundException` in test compilations; treat as null), OData name mangling, acronym registry.
 - `Reflection/` — Runtime access to internal or version-dependent SDK members; the most sensitive area of Common. `EnumProvider` is the only allowed way to name an SDK enum value.
 - `Settings/` — `ALCopsSettings` (defaults) and `ALCopsSettingsProvider` (hierarchical `alcops.json` lookup, below). Load failures become CM0001. Schema parity: `.claude/rules/settings-schema.md`.
@@ -28,7 +28,7 @@ Target frameworks, LangVersion, nullable enforcement and conditional package ref
 
 The `Microsoft.Dynamics.Nav.CodeAnalysis` SDK treats many types, properties, and enum values as internal or changes their signatures between Business Central releases. Direct references would break compilation against older (or newer) SDK versions. The reflection pattern used throughout Common:
 
-1. **Enum values**: `EnumProvider` wraps every enum value in `Lazy<T>` using `Enum.Parse`. A value missing from the loaded SDK resolves to a fallback, identical in Debug and Release: `default(T)` for most enums, but for `SymbolKind` an out-of-range sentinel (`int.MaxValue`), because `default(SymbolKind)` is `Module` (an unresolved kind passed to `RegisterSymbolAction` would fire for the module symbol) and `Undefined` (-1) crashes the SDK driver's per-kind bucketing; the driver skips kinds above the loaded enum's maximum.
+1. **Enum values**: `EnumProvider` wraps every enum value in `Lazy<T>` using `Enum.Parse`. A value missing from the loaded SDK resolves to a fallback, identical in Debug and Release: `default(T)` for most enums, but for `SymbolKind`, `ActionKind` and `ControlKind` an out-of-range sentinel (`int.MaxValue`), because their zero member is a real value an unresolved member would impersonate — `Module` for `SymbolKind` (an unresolved kind passed to `RegisterSymbolAction` would fire for the module symbol) and `Area` for the other two (an unresolved kind would read as an action or layout area). `Undefined` (-1) is no alternative: it crashes the SDK driver's per-kind bucketing, while the driver skips kinds above the loaded enum's maximum.
 2. **Properties**: `PropertyAccessor`, `SymbolHelper` use `Lazy<PropertyInfo?>` with `GetProperty()` and cache results.
 3. **Methods**: `StringHelper`, `ManifestHelper` use `Lazy<MethodInfo?>` with `GetMethod()` and create typed delegates. `StringHelper` detects the SDK method signature at runtime (with/without bool parameter); `ManifestHelper` on netstandard2.1 tries two type paths for AL version compatibility.
 4. **Static fields**: `VersionProvider` uses `GetField()` with a "never supported" fallback when a field does not exist in the loaded SDK version.
@@ -118,7 +118,7 @@ Successful settings and deterministic configuration failures remain cached for t
 
 ### How to Add a New Enum Value to EnumProvider
 1. Open `Reflection/EnumProvider.cs` and find the nested class for the enum type.
-2. Add a new `private static readonly Lazy<T>` field using `ParseEnum<T>(nameof(...))` or a string literal for values that may not exist in all SDK versions. In the `SymbolKind` class use its `Parse(...)` helper so a missing member resolves to the out-of-range `Unresolved` sentinel, never `Module`. Before relying on `default(T)` for a new enum, check that its zero member is inert; if it is a real, dispatchable value, give that nested class its own fallback helper like `SymbolKind.Parse`.
+2. Add a new `private static readonly Lazy<T>` field using `ParseEnum<T>(nameof(...))` or a string literal for values that may not exist in all SDK versions. In the `SymbolKind`, `ActionKind` and `ControlKind` classes use that class's `Parse(...)` helper so a missing member resolves to its out-of-range `Unresolved` sentinel, never the zero member. Before relying on `default(T)` for a new enum, check that its zero member is inert; if it is a real, dispatchable value, give that nested class its own fallback helper like `SymbolKind.Parse`.
 3. Add a public static property that returns `_field.Value`.
 4. If the enum value requires conditional compilation for different frameworks, use `#if` guards.
 

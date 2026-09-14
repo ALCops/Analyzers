@@ -43,7 +43,7 @@ Registers `RegisterOperationAction` on `InvocationExpression` and `RegisterSymbo
 
 - `IRecordTypeSymbol.Temporary` reflects only the `temporary` keyword (`Binder` checks `syntax.Temporary.Kind == TemporaryKeyword`); `TableType = Temporary` must be read from `ITableTypeSymbol.TableType`.
 - XmlPort `UseTemporary` makes the node's record `Temporary`, but nodes are not variables, so the check must be made on the node record itself in `GetFromXmlPortNode`.
-- Receiver forms and self-reference symbol shapes: see `record-receiver-forms.md`.
+- Receiver forms and self-reference symbol shapes: see `receiver-forms.md`.
 
 ## Test notes
 

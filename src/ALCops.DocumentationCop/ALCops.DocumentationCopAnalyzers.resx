@@ -139,7 +139,7 @@
     <value>Public procedures must include XML documentation comments</value>
   </data>
   <data name="PublicProcedureRequiresDocumentationMessageFormat" xml:space="preserve">
-    <value>Public procedure '{0}' must include XML documentation comments (or be restricted to local or internal scope).</value>
+    <value>Public procedure '{0}' must include XML documentation comments.</value>
   </data>
   <data name="PublicProcedureRequiresDocumentationDescription" xml:space="preserve">
     <value>Public procedures are part of the exposed API and must be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
@@ -190,13 +190,13 @@
     <value>Internal objects can be part of the exposed API (internalsVisibleTo) and should be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
   </data>
   <data name="EventRequiresDocumentationTitle" xml:space="preserve">
-    <value>An integration or business event must include XML documentation comments</value>
+    <value>Events must include XML documentation comments</value>
   </data>
   <data name="EventRequiresDocumentationMessageFormat" xml:space="preserve">
     <value>Event '{0}' must include XML documentation comments.</value>
   </data>
   <data name="EventRequiresDocumentationDescription" xml:space="preserve">
-    <value>Integration events and business events are part of the exposed API and must be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
+    <value>Public events are part of the exposed API and must be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
   </data>
   <data name="InternalEventRequiresDocumentationTitle" xml:space="preserve">
     <value>Internal event must include XML documentation comments</value>

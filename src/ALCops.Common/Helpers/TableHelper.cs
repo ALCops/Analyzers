@@ -1,3 +1,4 @@
+using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
@@ -17,9 +18,31 @@ public static class TableHelper
     /// or a parameterless, return-less <c>GetRecordOnce</c> method declared on the table itself.
     /// </summary>
     public static bool IsSetupTable(ITableTypeSymbol table)
-        => HasSetupTablePrimaryKey(table) || HasGetRecordOnceMethod(table);
+        => HasSingleCodePrimaryKeyNamed(table, "Primary Key", "PrimaryKey") || HasGetRecordOnceMethod(table);
 
-    private static bool HasSetupTablePrimaryKey(ITableTypeSymbol table)
+    /// <summary>
+    /// Matches setup singletons and small reference/lookup tables. Signals (cheapest first):
+    /// a single Code-type PK field named <c>Primary Key</c>, <c>PrimaryKey</c>, <c>Code</c>
+    /// or <c>Name</c>; a namespace ending in <c>.Setup</c>; a parameterless <c>GetRecordOnce</c>
+    /// method. Any <c>AutoIncrement</c> field in the primary key vetoes the match.
+    /// </summary>
+    public static bool IsSetupOrReferenceTable(ITableTypeSymbol table)
+        => (HasSingleCodePrimaryKeyNamed(table, "Primary Key", "PrimaryKey", "Code", "Name")
+            || IsInSetupNamespace(table)
+            || HasGetRecordOnceMethod(table))
+           && !HasAutoIncrementPrimaryKey(table);
+
+    private static bool IsInSetupNamespace(ITableTypeSymbol table)
+    {
+        var ns = table.GetContainingNamespaceQualifiedNameWithReflection();
+        if (string.IsNullOrEmpty(ns))
+            return false;
+
+        return SemanticFacts.IsSameName(ns, "Setup")
+            || ns.EndsWith(".Setup", SemanticFacts.NameEqualityComparison);
+    }
+
+    private static bool HasSingleCodePrimaryKeyNamed(ITableTypeSymbol table, params string[] names)
     {
         if (table.PrimaryKey is null || table.PrimaryKey.Fields.Length != 1)
             return false;
@@ -29,9 +52,28 @@ public static class TableHelper
         if (pkField.GetTypeSymbol().GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Code)
             return false;
 
-        var name = pkField.Name;
-        return SemanticFacts.IsSameName(name, "Primary Key")
-            || SemanticFacts.IsSameName(name, "PrimaryKey");
+        var fieldName = pkField.Name;
+        foreach (var name in names)
+        {
+            if (SemanticFacts.IsSameName(fieldName, name))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool HasAutoIncrementPrimaryKey(ITableTypeSymbol table)
+    {
+        if (table.PrimaryKey is null || table.PrimaryKey.Fields.Length == 0)
+            return false;
+
+        foreach (var field in table.PrimaryKey.Fields)
+        {
+            if (field.GetBooleanPropertyValue(EnumProvider.PropertyKind.AutoIncrement) == true)
+                return true;
+        }
+
+        return false;
     }
 
     private static bool HasGetRecordOnceMethod(ITableTypeSymbol table)

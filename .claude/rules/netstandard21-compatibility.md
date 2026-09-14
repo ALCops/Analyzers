@@ -22,7 +22,7 @@ Some `Microsoft.Dynamics.Nav.CodeAnalysis` APIs only exist in newer SDK versions
 | API | Available in | netstandard2.1 workaround |
 |---|---|---|
 | `IFieldSymbol.Type` | net8.0 only | `fieldSymbol.OriginalDefinition.GetTypeSymbol()` (requires `using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols`) |
-| `ThisExpressionSyntax`, `SyntaxKind.ThisExpression`, `IInstanceReferenceOperation` (AL `this`) | net8.0+ only | **Do not reference them at all** (a guard would silently drop `this` handling on the netstandard2.1 binary that serves AL 14.0 to 15.2). Resolve the receiver through the operation tree, which exists at the floor: `.claude/rules/record-receiver-forms.md`. |
+| `ThisExpressionSyntax`, `SyntaxKind.ThisExpression`, `IInstanceReferenceOperation` (AL `this`) | net8.0+ only | **Do not reference them at all** (a guard would silently drop `this` handling on the netstandard2.1 binary that serves AL 14.0 to 15.2). Resolve the receiver through the operation tree, which exists at the floor: `.claude/rules/receiver-forms.md`. |
 | `IMethodSymbol.IsStatic` | net8.0+ (AL 16+) | `TargetMethod.ContainingSymbol is IClassTypeSymbol` whose name is not `"Table"` identifies a static built-in; see `GetReceiverTableType` in `OperationExtensions.cs`. |
 
 ### Pattern for `IFieldSymbol.Type`

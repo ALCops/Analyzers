@@ -32,7 +32,7 @@ Registers `RegisterSyntaxNodeAction` on the nine application object syntax kinds
 | `SetTables` and executor must sit in the same method or trigger body; one `DataTransferTableResolver` per body, held callback-local | Following the variable across procedures needs call-graph analysis and shared state, which the design rules out; the cross-procedure case falls to the bailout. |
 | Pairing is flow-sensitive: a `SetTables` replaces the pending pair for that variable, each executor is charged only for the pair that reaches it, and an executor does not clear the pair | `SetTables; CopyRows; SetTables; CopyFields` is the standard upgrade pattern; the earlier union over every `SetTables` in the body made never-needed permissions look used and hid true positives such as an `i` on a `CopyFields`-only destination. |
 | Branch merges are the union of pairs; `break` feeds the post-loop state; loop bodies are visited twice | Union is the conservative direction (it can only make a permission look used); the second pass lets a `SetTables` written after the executor reach it via the back edge, and is the fixed point because the transfer function is constant or pass-through. |
-| Executor and `SetTables` are matched on the variable name, with `this.<variable>` normalized to the bare name via `EnumProvider.OperationKind.ThisReference` | Mixed spellings of the same variable must pair; `ThisExpressionSyntax` is unavailable at the netstandard2.1 floor (`record-receiver-forms.md`). |
+| Executor and `SetTables` are matched on the variable name, with `this.<variable>` normalized to the bare name via `EnumProvider.OperationKind.ThisReference` | Mixed spellings of the same variable must pair; `ThisExpressionSyntax` is unavailable at the netstandard2.1 floor (`receiver-forms.md`). |
 | Only `Database::"X"` literals resolve (`IApplicationObjectAccess`, possibly wrapped in `IConversionExpression`) | Constant propagation of integer locals is unbounded and the bailout already covers the case safely. |
 
 ## Deliberate non-reports
@@ -59,7 +59,7 @@ Registers `RegisterSyntaxNodeAction` on the nine application object syntax kinds
 - `IApplicationObjectTypeSymbol.GetMembers()` returns only top-level data items and schema nodes.
 - `IRecordTypeSymbol.Temporary` reflects only the `temporary` keyword; `TableType = Temporary` must be read from `ITableTypeSymbol.TableType`.
 - The `SetTables` argument operation is an `IApplicationObjectAccess`, optionally wrapped in an `IConversionExpression`.
-- Receiver forms, self-reference symbol shapes and name-map scoping: see `record-receiver-forms.md`; `GetOperation` cost in `SyntaxNodeAction` and the method-call-without-parentheses syntax shape: see `analyzer-performance.md`.
+- Receiver forms, self-reference symbol shapes and name-map scoping: see `receiver-forms.md`; `GetOperation` cost in `SyntaxNodeAction` and the method-call-without-parentheses syntax shape: see `analyzer-performance.md`.
 
 ## Test notes
 

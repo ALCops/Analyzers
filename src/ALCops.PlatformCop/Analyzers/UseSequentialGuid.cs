@@ -57,6 +57,9 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
             reason));
     }
 
+    private static string KeyFieldReason(KeyFieldResult result) =>
+        $"The value flows to key field '{result.FieldName}' in table '{result.TableName}'.";
+
     #region Data types
 
 #if NETSTANDARD2_1
@@ -102,7 +105,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         {
             _ct.ThrowIfCancellationRequested();
 
-            var value = UnwrapConversion(operation.Value);
+            var value = operation.Value.UnwrapConversions();
             if (IsCreateGuidCall(value, out var createGuidInvocation))
             {
                 if (_flagAllGuidFields)
@@ -116,14 +119,17 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
-                            $"The value flows to key field '{result.Value.FieldName}' in table '{result.Value.TableName}'.");
+                            KeyFieldReason(result.Value));
                     }
                 }
                 else
                 {
-                    // Variable assignment: v := CreateGuid()
                     var targetSymbol = operation.Target?.GetSymbolSafe();
-                    if (targetSymbol is not null && targetSymbol.Kind == EnumProvider.SymbolKind.LocalVariable)
+                    if (targetSymbol is null)
+                    {
+                        // Unresolvable target; nothing to trace
+                    }
+                    else if (targetSymbol.Kind == EnumProvider.SymbolKind.LocalVariable)
                     {
                         var bodyOp = _context.SemanticModel.GetOperation(
                             ((MethodOrTriggerDeclarationSyntax)_context.CodeBlock).Body!,
@@ -136,8 +142,17 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                             if (result is not null)
                             {
                                 ReportDiagnostic(_context, createGuidInvocation,
-                                    $"The value flows to key field '{result.Value.FieldName}' in table '{result.Value.TableName}'.");
+                                    KeyFieldReason(result.Value));
                             }
+                        }
+                    }
+                    else if (targetSymbol.Kind == EnumProvider.SymbolKind.GlobalVariable)
+                    {
+                        var result = TraceGlobalVariable(targetSymbol);
+                        if (result is not null)
+                        {
+                            ReportDiagnostic(_context, createGuidInvocation,
+                                KeyFieldReason(result.Value));
                         }
                     }
                 }
@@ -152,7 +167,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
             for (int i = 0; i < operation.Arguments.Length; i++)
             {
-                var argValue = UnwrapConversion(operation.Arguments[i].Value);
+                var argValue = operation.Arguments[i].Value.UnwrapConversions();
                 if (!IsCreateGuidCall(argValue, out var createGuidInvocation))
                     continue;
 
@@ -170,7 +185,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
-                            $"The value flows to key field '{result.Value.FieldName}' in table '{result.Value.TableName}'.");
+                            KeyFieldReason(result.Value));
                     }
                     continue;
                 }
@@ -185,12 +200,47 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
-                            $"The value flows to key field '{result.Value.FieldName}' in table '{result.Value.TableName}'.");
+                            KeyFieldReason(result.Value));
                     }
                 }
             }
 
             base.VisitInvocationExpression(operation);
+        }
+
+        private KeyFieldResult? TraceGlobalVariable(ISymbol globalVariable)
+        {
+            var objectSyntax = _context.CodeBlock.FirstAncestorOrSelf<ObjectSyntax>();
+            if (objectSyntax is null)
+                return null;
+
+            foreach (var member in objectSyntax.DescendantNodes().OfType<MethodOrTriggerDeclarationSyntax>())
+            {
+                if (member.Body is null)
+                    continue;
+
+                _ct.ThrowIfCancellationRequested();
+
+                // Text pre-filter: a body that never spells the variable name cannot reference it,
+                // so skip the bind. False positives only cost one bind; the tracer decides by symbol.
+                if (member.Body.ToString().IndexOf(globalVariable.Name, SemanticFacts.NameEqualityComparison) < 0)
+                    continue;
+
+                var bodyOp = _context.SemanticModel.GetOperation(member.Body, _ct);
+                if (bodyOp is null)
+                    continue;
+
+                var containing = _context.SemanticModel.GetDeclaredSymbol(member) as ISymbol;
+                var tracer = new SymbolFlowTracer(
+                    globalVariable, _context.SemanticModel.Compilation,
+                    new HashSet<IMethodSymbol>(), _ct, containing);
+                tracer.Visit(bodyOp);
+
+                if (tracer.Result is not null)
+                    return tracer.Result;
+            }
+
+            return null;
         }
 
         private static bool IsCreateGuidCall(
@@ -271,17 +321,20 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         private readonly Compilation _compilation;
         private readonly CancellationToken _ct;
         private readonly HashSet<IMethodSymbol> _visited;
+        private readonly ISymbol? _containingSymbol;
 
         public KeyFieldResult? Result { get; private set; }
 
         public SymbolFlowTracer(
             ISymbol tracked, Compilation compilation,
-            HashSet<IMethodSymbol> visited, CancellationToken ct)
+            HashSet<IMethodSymbol> visited, CancellationToken ct,
+            ISymbol? containingSymbol = null)
         {
             _tracked = tracked;
             _compilation = compilation;
             _ct = ct;
             _visited = visited;
+            _containingSymbol = containingSymbol ?? tracked.ContainingSymbol;
         }
 
         public override void VisitAssignmentStatement(IAssignmentStatement operation)
@@ -291,7 +344,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
             if (IsTrackedSymbol(operation.Value) && operation.Target is IFieldAccess fieldAccess)
             {
-                Result = CheckFieldInKey(fieldAccess, _tracked.ContainingSymbol);
+                Result = CheckFieldInKey(fieldAccess, _containingSymbol);
                 if (Result is not null) return;
             }
 
@@ -306,7 +359,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
             if (IsValidateCall(operation) && operation.Arguments.Length >= 2 &&
                 IsTrackedSymbol(operation.Arguments[1].Value))
             {
-                Result = CheckValidateTarget(operation, _tracked.ContainingSymbol);
+                Result = CheckValidateTarget(operation, _containingSymbol);
                 if (Result is not null) return;
             }
 
@@ -329,7 +382,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
         private bool IsTrackedSymbol(IOperation operation)
         {
-            var op = UnwrapConversion(operation);
+            var op = operation.UnwrapConversions();
             var symbol = op.GetSymbolSafe();
             return symbol is not null && symbol.Equals(_tracked);
         }
@@ -373,7 +426,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         if (recordType is not null && recordType.Temporary)
             return null;
 
-        var firstArg = UnwrapConversion(validateCall.Arguments[0].Value);
+        var firstArg = validateCall.Arguments[0].Value.UnwrapConversions();
 
         if (firstArg.GetSymbolSafe() is not IFieldSymbol fieldSymbol)
             return null;
@@ -388,6 +441,18 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
     private static bool IsFieldInAnyKey(IFieldSymbol field, ITableTypeSymbol table)
     {
+        // Keys holds declared keys only; a table without a keys section exposes
+        // its synthesized primary key solely through PrimaryKey.
+        var primaryKey = table.PrimaryKey;
+        if (primaryKey is not null)
+        {
+            foreach (var keyField in primaryKey.Fields)
+            {
+                if (SemanticFacts.IsSameName(keyField.Name, field.Name))
+                    return true;
+            }
+        }
+
         foreach (var key in table.Keys)
         {
             foreach (var keyField in key.Fields)
@@ -399,9 +464,6 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
         return false;
     }
-
-    private static IOperation UnwrapConversion(IOperation operation) =>
-        operation is IConversionExpression conv ? conv.Operand : operation;
 
     #endregion
 }

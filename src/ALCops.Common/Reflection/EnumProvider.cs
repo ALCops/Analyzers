@@ -61,19 +61,32 @@ public static class EnumProvider
     /// </summary>
     public static class ActionKind
     {
+        // default(ActionKind) is Area, so no member of this class may fall back to it: an unresolved kind
+        // would then read as an action area and match every comparison against Area. Every member goes
+        // through Parse, whose out-of-range sentinel matches no real kind and keeps every comparison false.
+        private const NavCodeAnalysis.ActionKind Unresolved = (NavCodeAnalysis.ActionKind)int.MaxValue;
+
+        private static NavCodeAnalysis.ActionKind Parse(string name) =>
+            ParseEnum(name, Unresolved);
+
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _action =
-            new(() => ParseEnum<NavCodeAnalysis.ActionKind>(nameof(NavCodeAnalysis.ActionKind.Action)));
+            new(() => Parse(nameof(NavCodeAnalysis.ActionKind.Action)));
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _actionRef =
-            new(() => ParseEnum<NavCodeAnalysis.ActionKind>(nameof(NavCodeAnalysis.ActionKind.ActionRef)));
+            new(() => Parse(nameof(NavCodeAnalysis.ActionKind.ActionRef)));
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _area =
-            new(() => ParseEnum<NavCodeAnalysis.ActionKind>(nameof(NavCodeAnalysis.ActionKind.Area)));
+            new(() => Parse(nameof(NavCodeAnalysis.ActionKind.Area)));
         private static readonly Lazy<NavCodeAnalysis.ActionKind> _group =
-            new(() => ParseEnum<NavCodeAnalysis.ActionKind>(nameof(NavCodeAnalysis.ActionKind.Group)));
+            new(() => Parse(nameof(NavCodeAnalysis.ActionKind.Group)));
+        // String form: the member is absent from the oldest supported SDK, which also cannot compile a
+        // systemaction, so it resolves to the sentinel there.
+        private static readonly Lazy<NavCodeAnalysis.ActionKind> _systemAction =
+            new(() => Parse("SystemAction"));
 
         public static NavCodeAnalysis.ActionKind Action => _action.Value;
         public static NavCodeAnalysis.ActionKind ActionRef => _actionRef.Value;
         public static NavCodeAnalysis.ActionKind Area => _area.Value;
         public static NavCodeAnalysis.ActionKind Group => _group.Value;
+        public static NavCodeAnalysis.ActionKind SystemAction => _systemAction.Value;
     }
 
     /// <summary>
@@ -219,20 +232,28 @@ public static class EnumProvider
     /// </summary>
     public static class ControlKind
     {
+        // default(ControlKind) is Area, so no member of this class may fall back to it: an unresolved kind
+        // would then read as a layout area and match every comparison against Area. Every member goes
+        // through Parse, whose out-of-range sentinel matches no real kind and keeps every comparison false.
+        private const NavCodeAnalysis.ControlKind Unresolved = (NavCodeAnalysis.ControlKind)int.MaxValue;
+
+        private static NavCodeAnalysis.ControlKind Parse(string name) =>
+            ParseEnum(name, Unresolved);
+
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _area =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.Area)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.Area)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _field =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.Field)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.Field)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _grid =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.Grid)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.Grid)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _part =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.Part)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.Part)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _repeater =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.Repeater)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.Repeater)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _systemPart =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.SystemPart)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.SystemPart)));
         private static readonly Lazy<NavCodeAnalysis.ControlKind> _userControl =
-            new(() => ParseEnum<NavCodeAnalysis.ControlKind>(nameof(NavCodeAnalysis.ControlKind.UserControl)));
+            new(() => Parse(nameof(NavCodeAnalysis.ControlKind.UserControl)));
 
         public static NavCodeAnalysis.ControlKind Area => _area.Value;
         public static NavCodeAnalysis.ControlKind Field => _field.Value;
@@ -410,6 +431,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.TableExtension)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _tableFilter =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.TableFilter)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _testPage =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.TestPage)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _text =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Text)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _variant =
@@ -459,6 +482,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind String => _string.Value;
         public static NavCodeAnalysis.NavTypeKind TableExtension => _tableExtension.Value;
         public static NavCodeAnalysis.NavTypeKind TableFilter => _tableFilter.Value;
+        public static NavCodeAnalysis.NavTypeKind TestPage => _testPage.Value;
         public static NavCodeAnalysis.NavTypeKind Text => _text.Value;
         public static NavCodeAnalysis.NavTypeKind Variant => _variant.Value;
         public static NavCodeAnalysis.NavTypeKind XmlPort => _xmlPort.Value;
@@ -553,6 +577,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.API)));
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _card =
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.Card)));
+        private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _cardPart =
+            new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.CardPart)));
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _document =
             new(() => ParseEnum<NavCodeAnalysis.PageTypeKind>(nameof(NavCodeAnalysis.PageTypeKind.Document)));
         private static readonly Lazy<NavCodeAnalysis.PageTypeKind> _headlinePart =
@@ -568,6 +594,7 @@ public static class EnumProvider
 
         public static NavCodeAnalysis.PageTypeKind API => _api.Value;
         public static NavCodeAnalysis.PageTypeKind Card => _card.Value;
+        public static NavCodeAnalysis.PageTypeKind CardPart => _cardPart.Value;
         public static NavCodeAnalysis.PageTypeKind Document => _document.Value;
         public static NavCodeAnalysis.PageTypeKind HeadlinePart => _headlinePart.Value;
         public static NavCodeAnalysis.PageTypeKind List => _list.Value;
@@ -1007,6 +1034,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EnumValue)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _entitlement =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Entitlement)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _eventDeclaration =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.EventDeclaration)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _exitStatement =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ExitStatement)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _expressionStatement =
@@ -1309,6 +1338,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind EnumType => _enumType.Value;
         public static NavCodeAnalysis.SyntaxKind EnumValue => _enumValue.Value;
         public static NavCodeAnalysis.SyntaxKind Entitlement => _entitlement.Value;
+        public static NavCodeAnalysis.SyntaxKind EventDeclaration => _eventDeclaration.Value;
         public static NavCodeAnalysis.SyntaxKind ExitStatement => _exitStatement.Value;
         public static NavCodeAnalysis.SyntaxKind ExpressionStatement => _expressionStatement.Value;
         public static NavCodeAnalysis.SyntaxKind FalseKeyword => _falseKeyword.Value;

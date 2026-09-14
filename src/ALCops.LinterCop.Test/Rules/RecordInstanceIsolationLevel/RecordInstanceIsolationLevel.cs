@@ -22,28 +22,77 @@ namespace ALCops.LinterCop.Test
 
         [Test]
         [TestCase("LockTable")]
+        [TestCase("NamedVariable")]
+        [TestCase("BareSelfInProcedure")]
+        [TestCase("BareSelfInTrigger")]
+        [TestCase("RecSelfInTrigger")]
+        [TestCase("ThisSelfInProcedure")]
+        [TestCase("ThisSelfInTrigger")]
+        [TestCase("BareSelfInTableExtension")]
+        [TestCase("RecSelfInTableExtension")]
+        [TestCase("ThisSelfInTableExtension")]
+        [TestCase("PageRecSelf")]
+        [TestCase("PageBareSelf")]
+        [TestCase("OnRunRecSelf")]
+        [TestCase("OnRunBareSelf")]
+        [TestCase("NamespacedQualifiedRecordVariable")]
+        [TestCase("RecordRefVariable")]
+        [TestCase("LockTableWithArguments")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ThisSelfInProcedure", "ThisSelfInTrigger", "ThisSelfInTableExtension"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
+            SkipTestIfVersionIsTooLow(
+                ["BareSelfInTableExtension", "RecSelfInTableExtension"],
+                testCase,
+                "13.0",
+                "No support for tableextensions when target itself is already declared in the same module");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
             _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.RecordInstanceIsolationLevel);
         }
 
-        // [Test]
-        // public async Task NoDiagnostic(string testCase)
-        // {
-        //     var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
-        //         .ConfigureAwait(false);
+        [Test]
+        [TestCase("ObsoleteProcedure")]
+        [TestCase("ReadIsolationMethodForm")]
+        [TestCase("ReadIsolationPropertyForm")]
+        public async Task NoDiagnostic(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
 
-        //     _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.RecordInstanceIsolationLevel);
-        // }
+            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.RecordInstanceIsolationLevel);
+        }
 
         [Test]
         [TestCase("ReplaceLockTableWithReadIsolation")]
         [TestCase("ReplaceLockTableWithReadIsolationUsingRec")]
+        [TestCase("BareSelfInTrigger")]
+        [TestCase("BareSelfInTableExtension")]
+        [TestCase("ThisSelf")]
+        [TestCase("RecordRefVariable")]
+        [TestCase("PageBareSelf")]
+        [TestCase("BareSelfWithLeadingComment")]
         public async Task HasFix(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ThisSelf"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
+            SkipTestIfVersionIsTooLow(
+                ["BareSelfInTableExtension"],
+                testCase,
+                "13.0",
+                "No support for tableextensions when target itself is already declared in the same module");
+
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
                 .ConfigureAwait(false);
 

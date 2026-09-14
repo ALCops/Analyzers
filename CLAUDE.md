@@ -62,7 +62,7 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.H
 
 ## Where to look
 
-- `.claude/rules/*.md` — path-scoped guides, auto-loaded when you touch matching files: analyzer development (core rules), SDK analysis scope (how callbacks run), symbol resolution, record receiver forms, analyzer performance, CodeFixes, testing, Common library, exception harness, record-method classification, settings schema, netstandard2.1, code analysis, release strategy, BC DevTools action.
+- `.claude/rules/*.md` — path-scoped guides, auto-loaded when you touch matching files: analyzer development (core rules), SDK analysis scope (how callbacks run), symbol resolution, receiver forms (fields, methods, where `Rec` comes from, implicit primary key), analyzer performance, CodeFixes, testing, Common library, exception harness, record-method classification, settings schema, netstandard2.1, code analysis, release strategy, BC DevTools action.
 - `.claude/rules/diagnostics/{id}-{slug}.md` — one file per rule: purpose, design decisions, deliberate non-reports, known issues, SDK facts, CodeFix decisions.
 - Skills: `/new-analyzer <ID> <ClassName> <Cop>`, `/new-codefix <ID>`, `/fix-false-positive <issue-or-description>`, `/release`. From the `nav-sdk-docs` plugin (auto-enabled by `.claude/settings.json` after trusting the folder): `/nav-sdk-docs:sdk-lookup <question>`, `/nav-sdk-docs:write-sdk-doc <folder>/<page>`.
 - `REVIEW.md` — what the built-in `/code-review` checks on this repository: house rules with pointers into `.claude/rules/`, then the NAV SDK checklist copied from nav-sdk-docs.

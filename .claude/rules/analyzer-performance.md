@@ -49,7 +49,7 @@ For bulk invocation analysis inside an object (permissions, partial records) the
 
 1. Object scope: from `containingObject.GetMembers()` collect `IVariableSymbol`s whose `Type` is a record (plus report data items and xmlport table elements via `GetTypeSymbol()`), keyed by name with `SemanticFacts.NameEqualityComparer`.
 2. Per method: `GetDeclaredSymbol(methodSyntax)` gives `LocalVariables`, `Parameters` and the named `ReturnValueSymbol` pre-typed; build the local map.
-3. Walk the body's invocations; resolve identifier receivers through the local map, then the object map (`record-receiver-forms.md` for the scoping rules and the bare and `this` forms); fall back to `GetSymbolInfo` or `GetOperation(receiver)?.Type` only for the rare complex receivers.
+3. Walk the body's invocations; resolve identifier receivers through the local map, then the object map (`receiver-forms.md` for the scoping rules and the bare and `this` forms); fall back to `GetSymbolInfo` or `GetOperation(receiver)?.Type` only for the rare complex receivers.
 
 On the Base Application this was several times faster than binding every body, because most receivers are plain identifiers.
 

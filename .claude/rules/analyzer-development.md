@@ -5,7 +5,7 @@ paths:
 
 # Analyzer Development
 
-Core rules for every analyzer in the six cops. Sibling guides that load with this one: `sdk-analysis-scope.md` (how the host runs callbacks), `symbol-resolution.md` (symbols, canonical names, the `GetSymbol()` bug), `record-receiver-forms.md` (the four ways AL reaches a record), `analyzer-performance.md` (cost model and patterns). Creating a rule: `/new-analyzer`. Tests: `.claude/rules/testing.md`.
+Core rules for every analyzer in the six cops. Sibling guides that load with this one: `sdk-analysis-scope.md` (how the host runs callbacks), `symbol-resolution.md` (symbols, canonical names, the `GetSymbol()` bug), `receiver-forms.md` (the four ways AL reaches a record), `analyzer-performance.md` (cost model and patterns). Creating a rule: `/new-analyzer`. Tests: `.claude/rules/testing.md`.
 
 ## NAV SDK source (mandatory)
 
@@ -19,7 +19,7 @@ The repo is version-controlled per AL release: `git -C ../nav-sdk-source tag` li
 
 - **Plain `DiagnosticAnalyzer`, `[DiagnosticAnalyzer]`, `sealed`.** Never derive from the `ALCopsDiagnosticAnalyzer` / `{Cop}Analyzer` harness (`analyzer-exception-harness.md`).
 - **`IsObsolete()` first** in every callback (available on all four analysis contexts). Reporting on obsolete code is noise.
-- **`EnumProvider` for every SDK enum value** (`ALCops.Common.Reflection`). Direct `SymbolKind.X` / `PropertyKind.X` references break on other SDK versions. A member missing from the loaded SDK resolves to an inert fallback: `default(T)` for most enums, an out-of-range sentinel for `SymbolKind` (because `default(SymbolKind)` is `Module`, and the driver ignores kinds above the enum's maximum). Guard with `!= default` only for enums whose zero member is `None`; never for `SymbolKind`.
+- **`EnumProvider` for every SDK enum value** (`ALCops.Common.Reflection`). Direct `SymbolKind.X` / `PropertyKind.X` references break on other SDK versions. A member missing from the loaded SDK resolves to an inert fallback: `default(T)` for most enums, an out-of-range sentinel for `SymbolKind`, `ActionKind` and `ControlKind`, whose zero member is a dispatchable value (`Module`, `Area`, `Area`) that an unresolved member would otherwise impersonate; the driver ignores kinds above the enum's maximum. Guard with `!= default` only for enums whose zero member is `None`; never for those three.
 - **Typed property access.** `GetEnumPropertyValue<T>(EnumProvider.PropertyKind.X)`, `GetBooleanPropertyValue()`, `GetProperty()`. Never compare `ValueText` strings for property values.
 - **`GetSymbolSafe()`, never `GetSymbol()`**, on operations. `symbol-resolution.md` explains the SDK bug.
 - **Symbols, not text, identify things.** Resolve via the operation tree or `SemanticModel`, then compare symbols or `ISymbol.Name` (`symbol-resolution.md`).
