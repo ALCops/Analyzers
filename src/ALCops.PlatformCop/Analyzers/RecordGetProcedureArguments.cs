@@ -62,7 +62,7 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
             return;
         }
 
-        if (invocation.Instance.GetReceiverTableType(ctx.ContainingSymbol, out _) is not ITableTypeSymbol table)
+        if (invocation.GetReceiverTableType(ctx.ContainingSymbol, out _) is not ITableTypeSymbol table)
             return;
 
         if (IsSingletonTable(table))

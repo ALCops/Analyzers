@@ -47,7 +47,7 @@ public sealed class AnalyzeCountMethod : DiagnosticAnalyzer
             invocation.TargetMethod.ContainingSymbol?.Name != "Table")
             return;
 
-        var tableType = invocation.Instance.GetReceiverTableType(ctx.ContainingSymbol, out var recordType);
+        var tableType = invocation.GetReceiverTableType(ctx.ContainingSymbol, out var recordType);
         if (tableType is null)
             return;
 
