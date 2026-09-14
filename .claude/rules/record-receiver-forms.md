@@ -13,10 +13,10 @@ Any rule that looks at record method calls or field access (`Modify`, `Get`, `Se
 |---|---|---|---|---|
 | Named variable | `Customer.Modify()` | `MemberAccessExpressionSyntax` with an `IdentifierNameSyntax` receiver | `IInvocationExpression.Instance` is a variable reference | variable map, or `Instance.GetSymbolSafe()` then `IVariableSymbol.Type` |
 | Implicit `Rec` | `Rec.Modify()` | same (`Rec` is an ordinary identifier) | `Instance` is the synthesized global **variable** named `"Rec"` | same as named variable |
-| Bare self | `Modify()` | `InvocationExpressionSyntax` whose `Expression` is an `IdentifierNameSyntax`; no receiver | `Instance` is **null** | the containing object: a table's declared symbol is an `ITableTypeSymbol` |
+| Bare self | `Modify()` | `InvocationExpressionSyntax` whose `Expression` is an `IdentifierNameSyntax`; no receiver | `Instance` is **null** (ambiguous: also null for any `IsStatic` target — `IsolatedStorage.Get`, `NumberSequence.Next`, bare `Error`, `Format`) | the containing object: a table's declared symbol is an `ITableTypeSymbol` |
 | `this` (runtime 14.0+) | `this.Modify()` | `MemberAccessExpressionSyntax` whose receiver is not an `IdentifierNameSyntax` | `Instance.Kind == OperationKind.ThisReference`; `Instance.Type` is the record **type** named after the table | `Instance.Type`, or `SemanticModel.GetOperation(receiver)?.Type` |
 
-`GetReceiverTableType` in `ALCops.Common/Extensions/OperationExtensions.cs` is the canonical resolver for `IInvocationExpression.Instance` and `IFieldAccess.Instance`, including the null-instance bare form. Use it instead of re-deriving the table.
+`GetReceiverTableType` in `ALCops.Common/Extensions/OperationExtensions.cs` is the canonical resolver. Two overloads: the `IInvocationExpression` overload (for invocations) rejects static built-in targets before falling through — `BoundCall.Instance` is null for any `IsStatic` method, not just bare self; the `IOperation?` overload (for `IFieldAccess.Instance` and other operations) handles the null-instance bare form directly. Always use the invocation overload for `IInvocationExpression`; the `IOperation?` overload alone cannot distinguish bare self from a static built-in. The AL 12 netstandard2.1 guard uses `TargetMethod.ContainingSymbol is IClassTypeSymbol` whose name is not `"Table"` (static built-ins live on IsolatedStorage, NumberSequence, Dialog, System, etc.; record built-ins live on the `Table` class).
 
 ## Symbol shapes
 
