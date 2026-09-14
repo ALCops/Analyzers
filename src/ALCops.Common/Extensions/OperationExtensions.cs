@@ -84,20 +84,23 @@ public static class OperationSafeExtensions
     public static ITableTypeSymbol? GetReceiverTableType(
         this IInvocationExpression invocation, ISymbol? containingSymbol, out IRecordTypeSymbol? recordType)
     {
+        if (invocation.Instance is null)
+        {
 #if NETSTANDARD2_1
-        // IMethodSymbol.IsStatic does not exist at the AL 12 floor. Static built-ins are declared on a
-        // language class other than Table (IsolatedStorage, NumberSequence, Dialog, System, ...), while
-        // the record built-ins live on the Table class and user procedures on the object symbol.
-        bool isStatic = invocation.TargetMethod is { ContainingSymbol: IClassTypeSymbol containingClass } &&
-            !SemanticFacts.IsSameName(containingClass.Name, "Table");
+            // IMethodSymbol.IsStatic does not exist at the AL 12 floor. Static built-ins are declared on a
+            // language class other than Table (IsolatedStorage, NumberSequence, Dialog, System, ...), while
+            // the record built-ins live on the Table class and user procedures on the object symbol.
+            bool isStatic = invocation.TargetMethod is { ContainingSymbol: IClassTypeSymbol containingClass } &&
+                !SemanticFacts.IsSameName(containingClass.Name, "Table");
 #else
-        bool isStatic = invocation.TargetMethod is { IsStatic: true };
+            bool isStatic = invocation.TargetMethod is { IsStatic: true };
 #endif
 
-        if (invocation.Instance is null && isStatic)
-        {
-            recordType = null;
-            return null;
+            if (isStatic)
+            {
+                recordType = null;
+                return null;
+            }
         }
 
         return invocation.Instance.GetReceiverTableType(containingSymbol, out recordType);
