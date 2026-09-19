@@ -21,8 +21,7 @@ public static class StringExtensions
     /// Quotes the identifier if needed.
     /// COMPAT(netstandard2.1, net8.0, net10.0): Uses reflection to handle breaking changes
     /// in Microsoft.Dynamics.Nav.CodeAnalysis where the QuoteIdentifierIfNeeded signature
-    /// varies between SDK versions (1-parameter in older SDKs, 2-parameter in AL v16,
-    /// 3-parameter in AL v17).
+    /// changed between SDK versions (1-parameter in older SDKs, 2-parameter in AL v16+).
     /// TODO: When netstandard2.1, net8.0 and net10.0 are dropped, replace all calls with
     /// Microsoft.Dynamics.Nav.CodeAnalysis.Utilities.StringExtensions.QuoteIdentifierIfNeeded()
     /// and delete Reflection/StringHelper.cs.
