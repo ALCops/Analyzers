@@ -52,6 +52,7 @@ This approach reads PE metadata directly from the file bytes without loading the
 | TFM parsing | Regex on `TargetFrameworkAttribute` value | Handles `.NETStandard`, `.NETCoreApp`, and `.NETFramework` monikers. Future .NET versions are handled automatically. |
 | Cache key strategy | Content-based (SHA256 hash) | Only creates new cache entries when data actually changes |
 | VSIX DLL discovery | Ordered candidate-path list (flat `extension/bin` first, legacy `extension/bin/Analyzers` fallback) | BC 29 moved the SDK DLLs out of the `Analyzers` folder. Candidate list is predictable and cheap; the remote path resolves all candidates in one Central Directory pass. Bin-first because the `Analyzers` folder is legacy. |
+| Lowest-version TFM source | Exclude `BCArtifact` from `tfm-*-version-lowest` | BCArtifact sandbox snapshots include very old SDK versions (v12.x) that predate the RoslynTestKit compilation target, causing CS1705 assembly-version mismatches in the Build job. Only VSIX and NuGet sources define the compile-time floor; BCArtifact sources still participate in the test matrix. |
 
 ## Maintenance
 
