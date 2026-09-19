@@ -40,22 +40,24 @@ runs:
         $unwantedVersions = @('16.0.21.41228', '16.0.21.42129', '16.0.21.53261', '16.0.21.57573')
         $deduped = $deduped | Where-Object { $unwantedVersions -notcontains $_.version }
 
-        # The Build job compiles the analyzers once per TFM against the lowest VSIX/NuGet SDK. A test leg whose SDK is
-        # older than that floor cannot load the pre-built DLLs (CS1705: referenced assembly has a higher version), so
-        # BCArtifact entries below the floor for their TFM are dropped. Entries at or above it stay (preview artifacts).
+        # The Build job compiles the analyzers once per TFM against the lowest VSIX/NuGet SDK (the rule get-bc-devtools
+        # applies to this same source list, so both floors always agree). A test leg whose SDK is older than that floor
+        # cannot load the pre-built DLLs (CS1705: referenced assembly has a higher version), so BCArtifact entries below
+        # the floor for their TFM are dropped. Entries at or above it stay (preview artifacts). '-as [version]' yields
+        # $null for an unparseable version (the analysis-error sentinel) instead of throwing.
         $buildFloor = @{}
-        $deduped | Where-Object { $_.packageType -ne 'BCArtifact' -and $_.version } |
+        $sources | Where-Object { $_.packageType -ne 'BCArtifact' -and ($_.version -as [version]) } |
             Group-Object tfm |
             ForEach-Object {
-                $lowest = $_.Group | Sort-Object { [version]$_.version } | Select-Object -First 1
-                $buildFloor[$_.Name] = [version]$lowest.version
+                $buildFloor[$_.Name] = $_.Group | ForEach-Object { $_.version -as [version] } | Sort-Object | Select-Object -First 1
             }
         $deduped = $deduped | Where-Object {
             $_.packageType -ne 'BCArtifact' -or
             -not $buildFloor.ContainsKey($_.tfm) -or
-            [version]$_.version -ge $buildFloor[$_.tfm]
+            ($_.version -as [version]) -ge $buildFloor[$_.tfm]
         }
 
         echo "isempty=$([string]($deduped.Count -eq 0).ToString().ToLower())" >> $env:GITHUB_OUTPUT
-        $matrix = @{'include' = $deduped } | ConvertTo-Json -Compress
+        # @() keeps 'include' a JSON array when a single entry survives (the pipeline would unwrap it to a scalar)
+        $matrix = @{'include' = @($deduped) } | ConvertTo-Json -Compress
         echo "matrix=$($matrix)" >> $env:GITHUB_OUTPUT
