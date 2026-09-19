@@ -3,12 +3,13 @@ using System.Reflection;
 namespace ALCops.Common.Reflection;
 
 /// <summary>
-/// COMPAT(netstandard2.1, net8.0): Reflection-based wrapper for QuoteIdentifierIfNeeded.
-/// This file exists because the SDK method signature changed between versions:
+/// COMPAT(netstandard2.1, net8.0, net10.0): Reflection-based wrapper for QuoteIdentifierIfNeeded.
+/// This file exists because the SDK method signature varies between versions:
 /// - Older SDKs: QuoteIdentifierIfNeeded(string)
-/// - Newer SDKs (net10.0+): QuoteIdentifierIfNeeded(string, bool)
-/// On net10.0+, StringExtensions.cs calls the SDK directly and this class is unused.
-/// TODO: Delete this file when netstandard2.1 and net8.0 TFMs are dropped.
+/// - AL v16: QuoteIdentifierIfNeeded(string, bool)
+/// - AL v17+: QuoteIdentifierIfNeeded(string, bool, ...) (3-parameter)
+/// On net11.0+, StringExtensions.cs calls the SDK directly and this class is unused.
+/// TODO: Delete this file when netstandard2.1, net8.0 and net10.0 TFMs are dropped.
 /// </summary>
 public static class StringHelper
 {

@@ -909,7 +909,7 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _xmlPortNode =
             new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.XmlPortNode)));
         private static readonly Lazy<NavCodeAnalysis.SymbolKind> _analysisView =
-#if NETSTANDARD2_1 || NET8_0
+#if !NET11_0_OR_GREATER
             new(() => Parse("AnalysisView"));
 #else
             new(() => Parse(nameof(NavCodeAnalysis.SymbolKind.AnalysisView)));
@@ -1163,31 +1163,31 @@ public static class EnumProvider
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageView =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageView)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageAnalysisView =
-#if NETSTANDARD2_1 || NET8_0
+#if !NET11_0_OR_GREATER
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>("PageAnalysisView"));
 #else
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageAnalysisView)));
 #endif
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageAnalysisViewList =
-#if NETSTANDARD2_1 || NET8_0
+#if !NET11_0_OR_GREATER
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>("PageAnalysisViewList"));
 #else
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageAnalysisViewList)));
 #endif
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageExtensionAnalysisViewList =
-#if NETSTANDARD2_1 || NET8_0
+#if !NET11_0_OR_GREATER
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>("PageExtensionAnalysisViewList"));
 #else
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageExtensionAnalysisViewList)));
 #endif
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _analysisViewAddChange =
-#if NETSTANDARD2_1 || NET8_0
+#if !NET11_0_OR_GREATER
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>("AnalysisViewAddChange"));
 #else
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.AnalysisViewAddChange)));
 #endif
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _analysisViewModifyChange =
-#if NETSTANDARD2_1 || NET8_0
+#if !NET11_0_OR_GREATER
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>("AnalysisViewModifyChange"));
 #else
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.AnalysisViewModifyChange)));
