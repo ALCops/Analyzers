@@ -50,17 +50,17 @@ runs:
 
         # Lowest source per TFM
         # AL Language ships as netstandard2.0; ALCops consumes these from a netstandard2.1 build target
-        $ns21 = $sources | Where-Object { $_.tfm -eq 'netstandard2.0' -and $_.version } |
+        $ns21 = $sources | Where-Object { $_.tfm -eq 'netstandard2.0' -and $_.version -and $_.packageType -ne 'BCArtifact' } |
                   Sort-Object { [version]($_.version) } |
                   Select-Object -First 1 -ExpandProperty version
         Write-Host "Lowest netstandard2.0 (AL Language) version for netstandard2.1 (ALCops) builds: $ns21"
 
-        $net80 = $sources | Where-Object { $_.tfm -eq 'net8.0' -and $_.version } |
+        $net80 = $sources | Where-Object { $_.tfm -eq 'net8.0' -and $_.version -and $_.packageType -ne 'BCArtifact' } |
                   Sort-Object { [version]($_.version) } |
                   Select-Object -First 1 -ExpandProperty version
         Write-Host "Lowest net8.0 version: $net80"
 
-        $net100 = $sources | Where-Object { $_.tfm -eq 'net10.0' -and $_.version } |
+        $net100 = $sources | Where-Object { $_.tfm -eq 'net10.0' -and $_.version -and $_.packageType -ne 'BCArtifact' } |
                   Sort-Object { [version]($_.version) } |
                   Select-Object -First 1 -ExpandProperty version
         Write-Host "Lowest net10.0 version: $net100"

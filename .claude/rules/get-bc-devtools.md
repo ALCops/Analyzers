@@ -1,6 +1,7 @@
 ---
 paths:
   - ".github/actions/get-bc-devtools/**"
+  - ".github/actions/setup-test-matrix/**"
 ---
 
 # Get BC DevTools Action
@@ -52,6 +53,7 @@ This approach reads PE metadata directly from the file bytes without loading the
 | TFM parsing | Regex on `TargetFrameworkAttribute` value | Handles `.NETStandard`, `.NETCoreApp`, and `.NETFramework` monikers. Future .NET versions are handled automatically. |
 | Cache key strategy | Content-based (SHA256 hash) | Only creates new cache entries when data actually changes |
 | VSIX DLL discovery | Ordered candidate-path list (flat `extension/bin` first, legacy `extension/bin/Analyzers` fallback) | BC 29 moved the SDK DLLs out of the `Analyzers` folder. Candidate list is predictable and cheap; the remote path resolves all candidates in one Central Directory pass. Bin-first because the `Analyzers` folder is legacy. |
+| Lowest-version TFM source | `get-bc-devtools` excludes `BCArtifact` from `tfm-*-version-lowest`; `setup-test-matrix` drops BCArtifact test legs below the per-TFM build floor | BC sandbox artifacts carry net10.0 SDKs older than every marketplace VSIX or NuGet net10.0 release (BC 27.5 ships 16.4.41.39421, BC 28.5 ships 17.0.41.39411, vs. the NuGet floor 18.0.41.39415). Only VSIX and NuGet sources define the compile-time floor. Pre-built analyzer DLLs reference the floor SDK assembly version, so a test leg whose SDK is older fails with CS1705. `setup-test-matrix` computes the lowest non-BCArtifact version per TFM and drops BCArtifact entries below it; preview artifacts above the floor (e.g. BC 29 at 18.0.41.62505) stay and catch forward-compatibility breaks. **Accepted limitation:** an API gap between the compile floor and the net10.0 SDK shipped inside BC 27.5/28.5 containers is not detected by CI. **RoslynTestKit contract:** each of its per-TFM libs must reference an SDK version at or below the corresponding floor (1.5.0: netstandard2.1 12.0.13.24028, net8.0 16.0.22.22232, net10.0 18.0.41.39415), otherwise test legs between the two versions fail with CS1705 from RoslynTestKit itself. |
 
 ## Maintenance
 
