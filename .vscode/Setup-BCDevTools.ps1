@@ -37,8 +37,8 @@ $sources = @(
         PathInArchive   = 'extension/bin/Analyzers'
     }
     @{
-        AssemblyVersion = '18.0.36.33307'
-        PackageVersion  = '18.0.36.33307-beta'
+        AssemblyVersion = '18.0.41.39415'
+        PackageVersion  = '18.0.41.39415'
         TFM             = 'net10.0'
         Type            = 'NuGet'
         PathInArchive   = 'tools/net10.0/any'
