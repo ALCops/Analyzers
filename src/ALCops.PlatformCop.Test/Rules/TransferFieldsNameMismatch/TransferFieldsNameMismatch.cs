@@ -100,6 +100,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("TableExt_NamespaceCasingMismatch")]
         [TestCase("InvocationBareSelfInTableExtension")]
         [TestCase("InvocationThisSelfInTable")]
+        [TestCase("ReverseOnlyPair_MicrosoftNamespace")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

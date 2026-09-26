@@ -1,6 +1,7 @@
 // Purchase Header Archive -> Purchase Header is a curated TransferFields relation. The tables
 // have no namespace (pre-namespace Base App), so ownership falls back to the module publisher,
-// which the test fixture sets to "Microsoft". Field 5043 differs by name and type in the Base App.
+// which the test fixture sets to "Microsoft". In the Base App field 5043 is a FlowField, which the
+// rule skips; the fixture models it as Normal fields to exercise the type path.
 codeunit 50100 MyCodeunit
 {
     procedure MyProcedure()

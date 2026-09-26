@@ -534,6 +534,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         return location is not null && location.IsInSource && IsLocationInCompilation(location, compilation);
     }
 
+    // Only meaningful once the caller has established that both tables are Microsoft's.
     private static bool IsMicrosoftOwnedField(IFieldSymbol field, Compilation compilation)
     {
         // Declared on the (Microsoft) table itself
