@@ -21,23 +21,32 @@ internal static class TransferFieldsRelations
     }
 
     /// <summary>
-    /// Determines whether a table relation exists where the given table
-    /// matches either Source or Target.
+    /// Determines whether a curated relation exists for exactly this direction:
+    /// source = the record passed to TransferFields, target = the receiver.
     /// </summary>
-    /// <param name="table">The table symbol to match.</param>
+    /// <param name="source">The table passed to TransferFields.</param>
+    /// <param name="target">The table calling TransferFields.</param>
     /// <returns>true if a matching relation exists; otherwise, false.</returns>
-    public static bool HasTableRelation(ITableTypeSymbol table)
+    public static bool HasTableRelation(ITableTypeSymbol source, ITableTypeSymbol target)
     {
+        var sourceNs = source.GetContainingNamespaceQualifiedNameWithReflection() ?? string.Empty;
+        var sourceName = source.Name ?? string.Empty;
+        var targetNs = target.GetContainingNamespaceQualifiedNameWithReflection() ?? string.Empty;
+        var targetName = target.Name ?? string.Empty;
+
         return TableRelations.Any(item =>
-            Matches(item.Source, table) ||
-            Matches(item.Target, table));
+            Matches(item.Source, sourceNs, sourceName) &&
+            Matches(item.Target, targetNs, targetName));
     }
 
-    private static bool Matches(ObjectName configured, ITableTypeSymbol table)
-    {
-        var ns = table.GetContainingNamespaceQualifiedNameWithReflection() ?? string.Empty;
-        var name = table.Name ?? string.Empty;
+    private static bool Matches(ObjectName configured, ITableTypeSymbol table) =>
+        Matches(
+            configured,
+            table.GetContainingNamespaceQualifiedNameWithReflection() ?? string.Empty,
+            table.Name ?? string.Empty);
 
+    private static bool Matches(ObjectName configured, string ns, string name)
+    {
         // AL namespaces and object identifiers are case-insensitive, but the runtime-resolved
         // namespace casing (symbol.ContainingNamespace.QualifiedName) is not stable across
         // compilations, so both comparisons must be case-insensitive.

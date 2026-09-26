@@ -1,4 +1,5 @@
 using Microsoft.Dynamics.Nav.CodeAnalysis;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
 using RoslynTestKit;
 
 namespace ALCops.PlatformCop.Test
@@ -52,6 +53,21 @@ namespace ALCops.PlatformCop.Test
                 });
         }
 
+        private static AnalyzerTestFixture CreateFixtureWithMicrosoftPublisher()
+        {
+            return RoslynFixtureFactory.Create<Analyzers.TransferFieldsSchemaCompatibility>(
+                new AnalyzerTestFixtureConfig
+                {
+                    ProjectInfoCustomizer = info => info.WithProjectDefinition(new ProjectDefinition
+                    {
+                        Publisher = "Microsoft",
+                        Name = "TestApp",
+                        Version = new Version(1, 0, 0, 0),
+                        AppId = Guid.NewGuid()
+                    })
+                });
+        }
+
         [SetUp]
         public void Setup()
         {
@@ -64,6 +80,8 @@ namespace ALCops.PlatformCop.Test
         }
 
         [Test]
+        [TestCase("CuratedPair_DefaultPublisher")]
+        [TestCase("CuratedPair_OwnExtensionField")]
         [TestCase("InvocationRecWithCodeunit")]
         [TestCase("InvocationRecWithPage")]
         [TestCase("InvocationRecWithTable")]
@@ -82,10 +100,11 @@ namespace ALCops.PlatformCop.Test
         [TestCase("TableExt_NamespaceCasingMismatch")]
         [TestCase("InvocationBareSelfInTableExtension")]
         [TestCase("InvocationThisSelfInTable")]
+        [TestCase("ReverseOnlyPair_MicrosoftNamespace")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["InvocationWithTableExtension", "InvocationBareSelfInTableExtension", "TableExt_Multiple_SameBase", "TableExtension", "TableExtensionTypeWithLength", "TableExt_NamespaceCasingMismatch"],
+                ["CuratedPair_OwnExtensionField", "InvocationWithTableExtension", "InvocationBareSelfInTableExtension", "TableExt_Multiple_SameBase", "TableExtension", "TableExtensionTypeWithLength", "TableExt_NamespaceCasingMismatch"],
                 testCase,
                 "13.0",
                 "No support for tableextensions when target itself is already declared in the same module");
@@ -104,6 +123,7 @@ namespace ALCops.PlatformCop.Test
 
         [Test]
         [TestCase("BuiltInInvocation")]
+        [TestCase("CuratedPair_MicrosoftNamespace")]
         [TestCase("Invocation_ObsoleteStateRemoved")]
         [TestCase("Invocation_Pragma")]
         [TestCase("Invocation_SourceTableObsoleteStateRemoved")]
@@ -129,6 +149,26 @@ namespace ALCops.PlatformCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TransferFieldsNameMismatch);
+        }
+
+        [Test]
+        [TestCase("NonCuratedPair_MicrosoftTables")]
+        public async Task HasDiagnosticWithMicrosoftPublisher(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            CreateFixtureWithMicrosoftPublisher().HasDiagnosticAtAllMarkers(code, DiagnosticIds.TransferFieldsNameMismatch);
+        }
+
+        [Test]
+        [TestCase("CuratedPair_MicrosoftPublisher")]
+        public async Task NoDiagnosticWithMicrosoftPublisher(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            CreateFixtureWithMicrosoftPublisher().NoDiagnosticAtAllMarkers(code, DiagnosticIds.TransferFieldsNameMismatch);
         }
 
         [Test]

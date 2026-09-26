@@ -54,6 +54,25 @@ public static class SymbolInterfaceExtensions
         return $"{containingNamespace}.{symbolName}";
     }
 
+    /// <summary>
+    /// True when the object is Microsoft-owned: its root namespace is "Microsoft" or "System"
+    /// (both reserved for Microsoft, see AS0008/PTE0021), or, when it has no namespace
+    /// (pre-namespace BC or a bare declaration), its module's publisher is "Microsoft".
+    /// </summary>
+    public static bool IsMicrosoftObject(this ISymbol symbol)
+    {
+        var ns = symbol.GetContainingNamespaceQualifiedNameWithReflection();
+        if (!string.IsNullOrEmpty(ns))
+        {
+            var dot = ns.IndexOf('.');
+            var root = dot < 0 ? ns : ns.Substring(0, dot);
+            return SemanticFacts.IsSameName(root, "Microsoft") || SemanticFacts.IsSameName(root, "System");
+        }
+
+        var publisher = symbol.ContainingModule?.Publisher;
+        return publisher is not null && StringComparer.OrdinalIgnoreCase.Equals(publisher, "Microsoft");
+    }
+
     #region Obsolete Extension Methods
     // COMPAT(netstandard2.1, net8.0): IsObsoletePendingMove and IsObsoleteMoved may not exist in older SDK versions.
     // TODO: When netstandard2.1 and net8.0 are dropped, check if these properties are on ISymbol directly.

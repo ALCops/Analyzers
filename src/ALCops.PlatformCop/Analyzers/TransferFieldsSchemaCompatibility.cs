@@ -165,19 +165,24 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (sourceById.Count == 0 || targetById.Count == 0)
             return;
 
-        var hasTableRelationEntry = HasTableRelation(sourceTable);
+        var isCuratedPair = HasTableRelation(sourceTable, targetTable);
+        // Microsoft ships and supports this transfer; differences between fields Microsoft owns on
+        // both sides are theirs to keep. Fields the developer or a third party added stay checked.
+        var isMicrosoftSupportedPair = isCuratedPair && sourceTable.IsMicrosoftObject() && targetTable.IsMicrosoftObject();
 
         var targetDisplay = targetTable.GetFullyQualifiedObjectName(quoteIdentifierIfNeeded: true);
         var sourceDisplay = sourceTable.GetFullyQualifiedObjectName(quoteIdentifierIfNeeded: true);
 
         var mismatches = FindFieldMismatches(sourceById, targetById, ctx.Compilation);
+        if (isMicrosoftSupportedPair)
+            mismatches.RemoveAll(m => IsMicrosoftOwnedField(m.Source, ctx.Compilation) && IsMicrosoftOwnedField(m.Target, ctx.Compilation));
 
         var result = ReportMismatches(
             mismatches,
             ctx.Compilation,
             sourceDisplay,
             targetDisplay,
-            reportAtFieldLevel: !hasTableRelationEntry,
+            reportAtFieldLevel: !isCuratedPair,
             swapDisplayForTarget: false,
             getLocation: static field => field.Location,
             reportDiagnostic: ctx.ReportDiagnostic);
@@ -527,6 +532,21 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
     {
         var location = field.Location;
         return location is not null && location.IsInSource && IsLocationInCompilation(location, compilation);
+    }
+
+    // Only meaningful once the caller has established that both tables are Microsoft's.
+    private static bool IsMicrosoftOwnedField(IFieldSymbol field, Compilation compilation)
+    {
+        // Declared on the (Microsoft) table itself
+        if (field.ContainingSymbol is not ITableExtensionTypeSymbol extension)
+            return true;
+
+        // The developer controls fields of the analyzed module
+        if (IsDeclaredInCurrentModule(field, compilation))
+            return false;
+
+        // A dependency's tableextension: only Microsoft's own extensions are Microsoft-owned
+        return extension.IsMicrosoftObject();
     }
 
     private static MismatchResult ReportMismatches(
