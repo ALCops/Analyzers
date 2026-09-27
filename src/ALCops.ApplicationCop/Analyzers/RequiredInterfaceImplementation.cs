@@ -80,14 +80,16 @@ public sealed class RequiredInterfaceImplementation : DiagnosticAnalyzer
              codeunit.Subtype == EnumProvider.CodeunitSubtypeKind.TestRunner))
             return;
 
+        var used = new bool[Pairs.Length];
+        CollectUsedPairs(container, used, ctx.CancellationToken);
+
         for (int i = 0; i < Pairs.Length; i++)
         {
-            Pair pair = Pairs[i];
-            if (!Uses(container, pair, ctx.CancellationToken) || implemented.Value[i])
+            if (!used[i] || implemented.Value[i])
                 continue;
 
             ctx.ReportDiagnostic(Diagnostic.Create(
-                pair.Descriptor,
+                Pairs[i].Descriptor,
                 ctx.Symbol.GetLocation(),
                 ctx.Symbol.Kind.ToString(),
                 ctx.Symbol.Name));
@@ -116,35 +118,51 @@ public sealed class RequiredInterfaceImplementation : DiagnosticAnalyzer
         return implemented;
     }
 
-    // GetMembers returns the members declared on the container itself (globals, procedures, triggers,
-    // layout controls, actions, dataitems, nodes, changes); members of a base or related table are not included.
-    private static bool Uses(IContainerSymbol container, Pair pair, CancellationToken cancellationToken)
+    // One walk over the object marks every pair whose trigger codeunit is declared somewhere in it and stops
+    // as soon as all pairs are marked. GetMembers returns the members declared on the container itself
+    // (globals, procedures, triggers, layout controls, actions, dataitems, nodes, changes); members of a base
+    // or related table are not included.
+    private static bool CollectUsedPairs(IContainerSymbol container, bool[] used, CancellationToken cancellationToken)
     {
         foreach (ISymbol member in container.GetMembers())
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            switch (member)
+            bool allUsed = member switch
             {
-                case IVariableSymbol variable when IsTriggerCodeunit(variable.Type, pair):
-                    return true;
-                case IMethodSymbol method when MethodUses(method, pair):
-                    return true;
-                case IContainerSymbol nested when DescendKinds.Contains(member.Kind) && Uses(nested, pair, cancellationToken):
-                    return true;
-            }
+                IVariableSymbol variable => MarkTriggerCodeunit(variable.Type, used),
+                IMethodSymbol method => MarkMethod(method, used),
+                IContainerSymbol nested when DescendKinds.Contains(member.Kind) => CollectUsedPairs(nested, used, cancellationToken),
+                _ => false,
+            };
+
+            if (allUsed)
+                return true;
         }
 
         return false;
     }
 
-    private static bool MethodUses(IMethodSymbol method, Pair pair) =>
-        method.LocalVariables.Any(local => IsTriggerCodeunit(local.Type, pair)) ||
-        method.Parameters.Any(parameter => IsTriggerCodeunit(parameter.ParameterType, pair)) ||
-        IsTriggerCodeunit(method.ReturnValueSymbol?.ReturnType, pair);
+    private static bool MarkMethod(IMethodSymbol method, bool[] used)
+    {
+        foreach (IVariableSymbol local in method.LocalVariables)
+        {
+            if (MarkTriggerCodeunit(local.Type, used))
+                return true;
+        }
 
+        foreach (IParameterSymbol parameter in method.Parameters)
+        {
+            if (MarkTriggerCodeunit(parameter.ParameterType, used))
+                return true;
+        }
+
+        return MarkTriggerCodeunit(method.ReturnValueSymbol?.ReturnType, used);
+    }
+
+    // Marks the pair whose trigger codeunit matches the type; returns true once every pair is marked.
     // The type of a codeunit variable is the codeunit symbol itself; unresolved types fail the cast.
-    private static bool IsTriggerCodeunit(ITypeSymbol? type, Pair pair)
+    private static bool MarkTriggerCodeunit(ITypeSymbol? type, bool[] used)
     {
         if (type is null || type.NavTypeKind != EnumProvider.NavTypeKind.Codeunit)
             return false;
@@ -152,13 +170,22 @@ public sealed class RequiredInterfaceImplementation : DiagnosticAnalyzer
         if ((type.OriginalDefinition as ICodeunitTypeSymbol ?? type as ICodeunitTypeSymbol) is not { } codeunit)
             return false;
 
-        foreach ((int id, string name) in pair.TriggerCodeunits)
+        for (int i = 0; i < Pairs.Length; i++)
         {
-            if (codeunit.Id == id && SemanticFacts.IsSameName(codeunit.Name, name))
-                return true;
+            if (used[i])
+                continue;
+
+            foreach ((int id, string name) in Pairs[i].TriggerCodeunits)
+            {
+                if (codeunit.Id == id && SemanticFacts.IsSameName(codeunit.Name, name))
+                {
+                    used[i] = true;
+                    break;
+                }
+            }
         }
 
-        return false;
+        return Array.TrueForAll(used, static u => u);
     }
 
     private sealed class Pair(
