@@ -123,6 +123,17 @@ HasFix files use current/expected pairs:
 
 `HasFix` / `HasFixAll` test methods and their `current.al` / `expected.al` layout: `.claude/skills/new-codefix/references/hasfix-tests.md` (used by `/new-codefix`). Key rule: `TestCodeFix` takes the `DiagnosticDescriptor` object, `TestFixAll` takes the ID string.
 
+### Directive fixtures (mandatory for fixes that remove, move or rebuild nodes)
+
+Such a fix ships a fixture for each of these around the edited node (or, where the node cannot carry one, around its closest sibling):
+
+1. an active `#if not CLEAN25 ... #endif`;
+2. an inactive `#if CLEAN25 ... #endif` (disabled text);
+3. a `#pragma warning disable ... restore` pair;
+4. a `#region ... #endregion` pair.
+
+Each one is a `HasFix` case whose `expected.al` keeps every directive line, a `NoFix` case (`fixture.NoCodeFix(code, descriptor)`, LC0095 layout) when the fix bails out, or a `NoDiagnostic` case when the analyzer itself declines (FC0004). Tests define no preprocessor symbols, so `#if CLEAN25` is disabled text and `#if not CLEAN25` keeps its contents as real nodes; the two exercise different trees. Confirm a directive `HasFix` case fails when `expected.al` omits one directive line, or it may pass for the wrong reason. The policy behind this is in `codefix-development.md` (Compiler directives and disabled text).
+
 ## Version-Conditional Test Skipping
 
 ### Skipping an entire test method (net8.0-only rules)
