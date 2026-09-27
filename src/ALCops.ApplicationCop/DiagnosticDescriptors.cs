@@ -325,6 +325,26 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.TableDataAccessUnusedPermissionsDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TableDataAccessUnusedPermissions));
 
+    public static readonly DiagnosticDescriptor RestClientRequiresHttpClientHandler = new(
+        id: DiagnosticIds.RestClientRequiresHttpClientHandler,
+        title: ApplicationCopAnalyzers.RestClientRequiresHttpClientHandlerTitle,
+        messageFormat: ApplicationCopAnalyzers.RestClientRequiresHttpClientHandlerMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.RestClientRequiresHttpClientHandlerDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.RestClientRequiresHttpClientHandler));
+
+    public static readonly DiagnosticDescriptor TelemetryRequiresTelemetryLogger = new(
+        id: DiagnosticIds.TelemetryRequiresTelemetryLogger,
+        title: ApplicationCopAnalyzers.TelemetryRequiresTelemetryLoggerTitle,
+        messageFormat: ApplicationCopAnalyzers.TelemetryRequiresTelemetryLoggerMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.TelemetryRequiresTelemetryLoggerDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TelemetryRequiresTelemetryLogger));
+
     public static readonly DiagnosticDescriptor ZeroEnumValueReservedForEmpty = new(
         id: DiagnosticIds.ZeroEnumValueReservedForEmpty,
         title: ApplicationCopAnalyzers.ZeroEnumValueReservedForEmptyTitle,

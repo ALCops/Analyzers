@@ -220,11 +220,14 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.CodeunitSubtypeKind>(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Install)));
         private static readonly Lazy<NavCodeAnalysis.CodeunitSubtypeKind> _test =
             new(() => ParseEnum<NavCodeAnalysis.CodeunitSubtypeKind>(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Test)));
+        private static readonly Lazy<NavCodeAnalysis.CodeunitSubtypeKind> _testRunner =
+            new(() => ParseEnum<NavCodeAnalysis.CodeunitSubtypeKind>(nameof(NavCodeAnalysis.CodeunitSubtypeKind.TestRunner)));
         private static readonly Lazy<NavCodeAnalysis.CodeunitSubtypeKind> _upgrade =
             new(() => ParseEnum<NavCodeAnalysis.CodeunitSubtypeKind>(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Upgrade)));
 
         public static NavCodeAnalysis.CodeunitSubtypeKind Install => _install.Value;
         public static NavCodeAnalysis.CodeunitSubtypeKind Test => _test.Value;
+        public static NavCodeAnalysis.CodeunitSubtypeKind TestRunner => _testRunner.Value;
         public static NavCodeAnalysis.CodeunitSubtypeKind Upgrade => _upgrade.Value;
     }
     /// <summary>
