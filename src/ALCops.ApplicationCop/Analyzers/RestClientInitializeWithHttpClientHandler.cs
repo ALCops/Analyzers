@@ -93,10 +93,20 @@ public sealed class RestClientInitializeWithHttpClientHandler : DiagnosticAnalyz
             }
         }
 
+        if (globalRoots.Count == 0)
+            return;
+
+        var bodies = new List<(BlockSyntax Body, string Text)>();
+        foreach (IMethodSymbol method in methods)
+        {
+            if (GetBody(method, ct) is { } body)
+                bodies.Add((body, body.ToString()));
+        }
+
         foreach (IVariableSymbol global in globalRoots)
         {
             var state = new RootState();
-            foreach (IMethodSymbol method in methods)
+            foreach ((BlockSyntax body, string text) in bodies)
             {
                 ct.ThrowIfCancellationRequested();
 
@@ -104,8 +114,7 @@ public sealed class RestClientInitializeWithHttpClientHandler : DiagnosticAnalyz
                     break;
 
                 // Sound pre-filter: every reference to the global spells its name in the body.
-                if (GetBody(method, ct) is not { } body ||
-                    body.ToString().IndexOf(global.Name, SemanticFacts.NameEqualityComparison) < 0)
+                if (text.IndexOf(global.Name, SemanticFacts.NameEqualityComparison) < 0)
                     continue;
 
                 Walk(global, body, state, model, objectSyntax, ct);
@@ -203,9 +212,11 @@ public sealed class RestClientInitializeWithHttpClientHandler : DiagnosticAnalyz
                     state.Used = true;
             }
 
+            // A call that failed to bind may pair the argument with the wrong parameter.
             for (int i = 0; i < operation.Arguments.Length; i++)
             {
-                if (IsTracked(operation.Arguments[i].Value) && !TryFollow(operation.TargetMethod, i))
+                if (IsTracked(operation.Arguments[i].Value) &&
+                    (operation.IsInvalid || !TryFollow(operation.TargetMethod, i)))
                 {
                     state.Unknown = true;
                     return;

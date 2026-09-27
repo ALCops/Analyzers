@@ -25,6 +25,7 @@ Registers `RegisterSymbolAction` on Codeunit, Table, TableExtension, Page, PageE
 | No ordering analysis and no request-method list: any other member invocation marks the root used | A list of `Get`/`Post`/`Send`... would miss new members; "used before initialization" order is not tracked (a good initialization anywhere counts). |
 | Roots discovered on symbols (`LocalVariables`, `GetMembers()`), with a body-text pre-filter only for globals | A declaration can spell the type `Codeunit 2350`, so text cannot find roots; a reference to a global always spells its name, so skipping bodies that do not contain it is sound and saves binding. |
 | One symbol action per object instead of a code-block action | A global's initialization and use live in different bodies; a per-object callback analyzes and reports in one place (`sdk-analysis-scope.md`) and binds only objects that declare a root. |
+| `DescendKinds` and the member descent are copied from `RequiredInterfaceImplementation` instead of shared through Common | Two call sites do not yet justify a Common helper; extracting one is a follow-up that touches both analyzers. |
 | Warning, enabled by default, `Category.Design`, no settings, no CodeFix, no version gate | Same impact class as AC0033; the right handler codeunit cannot be generated; every SDK member used exists at ns2.0 / AL 12.0 (nav-sdk-docs `reference/`). |
 
 ## Deliberate non-reports
@@ -39,6 +40,7 @@ Registers `RegisterSymbolAction` on Codeunit, Table, TableExtension, Page, PageE
 ## Known issues
 
 - A same-named codeunit 2360 from another module would count as the default handler (id and name match only); accepted.
+- A call that fails to bind (for example a root passed where an `Integer` is expected) makes the root unknown, so a default initialization reachable only through that call is not reported; the compiler error is the signal there.
 
 ## SDK facts
 
