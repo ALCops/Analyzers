@@ -42,6 +42,7 @@ Registers `RegisterSyntaxNodeAction` on the nine application object syntax kinds
 - The whole object is silent when a DB operation runs on a `RecordRef` receiver (see [#420](https://github.com/ALCops/Analyzers/issues/420) above).
 - The whole object is silent when a `DataTransfer` executor cannot be resolved: no `SetTables` reaches it on any path, a reaching `SetTables` has a non-literal table argument, or the receiver is neither a plain identifier nor `this.<variable>`. The executor may then touch any table, exactly like the `RecordRef` case.
 - `FieldRef.Value`/`Field`/`Caption` are in-memory operations on the current row: they neither consume a permission nor trigger the bailout. `FieldRef.CalcField` does read the database but is not traced (see Known issues).
+- `AccessByPermission` is neither a `Permissions` entry nor a table use: its mask is never reported as unused and does not make a `Permissions` entry for that table look used. A `Permissions` entry that duplicates the mask is not flagged either; AC0031 accepts either one as coverage.
 
 ## Known issues
 
