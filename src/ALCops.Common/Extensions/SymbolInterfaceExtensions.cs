@@ -125,6 +125,12 @@ public static class SymbolInterfaceExtensions
         }
         return false;
     }
+
+    /// <summary>
+    /// Returns true when the symbol has ObsoleteState = Moved (false on SDKs without the state).
+    /// </summary>
+    public static bool IsMoved(this ISymbol symbol) =>
+        GetObsoletePropertyValue(symbol, _isObsoleteMovedProperty.Value);
     #endregion
 
 #if NETSTANDARD2_1

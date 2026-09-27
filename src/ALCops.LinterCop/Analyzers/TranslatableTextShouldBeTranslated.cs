@@ -93,10 +93,15 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
 
     private static void AnalyzeSymbol(SymbolAnalysisContext ctx, TranslationIndex translationIndex, bool useCanonicalPropertyName)
     {
-        if (ctx.IsObsolete())
+        ISymbol symbol = ctx.Symbol;
+
+        // The compiler's XLIFF generation skips Moved objects entirely, but still emits trans-units
+        // for Pending symbols and for labels inside obsolete objects, so this rule must not use the
+        // general IsObsolete() gate. GetContainingObjectTypeSymbol returns null when no object type
+        // is in the containment chain.
+        if (symbol.GetContainingObjectTypeSymbol()?.IsMoved() == true)
             return;
 
-        ISymbol symbol = ctx.Symbol;
         SymbolKind kind = symbol.Kind;
 
         if (kind == EnumProvider.SymbolKind.LocalVariable || kind == EnumProvider.SymbolKind.GlobalVariable)
@@ -153,9 +158,6 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
 
     private static void AnalyzeReportLabel(SymbolAnalysisContext ctx, ISymbol symbol, TranslationIndex translationIndex)
     {
-        if (symbol.ContainingSymbol?.IsObsolete() == true)
-            return;
-
         if (IsPropertyLocked(symbol))
             return;
 
@@ -176,7 +178,7 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         {
             foreach (IControlSymbol control in controls)
             {
-                if (control.IsObsolete())
+                if (control.IsRemoved())
                     continue;
 
                 ReportTranslatableProperty(ctx, control, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
@@ -190,7 +192,7 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         {
             foreach (IActionSymbol action in actions)
             {
-                if (action.IsObsolete())
+                if (action.IsRemoved())
                     continue;
 
                 ReportTranslatableProperty(ctx, action, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
@@ -203,7 +205,7 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         {
             foreach (ISymbol analysisView in analysisViews)
             {
-                if (analysisView.IsObsolete())
+                if (analysisView.IsRemoved())
                     continue;
 
                 ReportTranslatableProperty(ctx, analysisView, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
@@ -218,7 +220,7 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         if (property is null)
             return;
 
-        if (property.ContainingSymbol?.IsObsolete() == true)
+        if (IsLockedByCompiler(property.ContainingSymbol))
             return;
 
         if (IsPropertyLocked(property))
@@ -239,6 +241,21 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             return;
 
         ReportMissingTranslation(ctx, property, translationId, translationIndex);
+    }
+
+    // Mirrors the two ways the compiler's LabelWriterVisitor drops a symbol's trans-units: IsObsolete
+    // locks a field when it or its containing table is Removed and any other symbol only when it is
+    // Removed itself, and ShouldSymbolBeVisited skips a Moved symbol (a table or a field) outright.
+    // IsRemoved() covers both states. Pending never locks.
+    private static bool IsLockedByCompiler(ISymbol? symbol)
+    {
+        if (symbol is null)
+            return false;
+
+        if (symbol.IsRemoved())
+            return true;
+
+        return symbol.Kind == EnumProvider.SymbolKind.Field && symbol.ContainingSymbol?.IsRemoved() == true;
     }
 
     private static void ReportMissingTranslation(SymbolAnalysisContext ctx, ISymbol symbol, string translationId, TranslationIndex translationIndex)
