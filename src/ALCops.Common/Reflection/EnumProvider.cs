@@ -623,6 +623,8 @@ public static class EnumProvider
 
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _access =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Access)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _accessByPermission =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.AccessByPermission)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _assignable =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Assignable)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _allowInCustomizations =
@@ -697,6 +699,7 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.UseTemporary)));
 
         public static NavCodeAnalysis.PropertyKind Access => _access.Value;
+        public static NavCodeAnalysis.PropertyKind AccessByPermission => _accessByPermission.Value;
         public static NavCodeAnalysis.PropertyKind Assignable => _assignable.Value;
         public static NavCodeAnalysis.PropertyKind AllowInCustomizations => _allowInCustomizations.Value;
         public static NavCodeAnalysis.PropertyKind ApplicationArea => _applicationArea.Value;

@@ -12,6 +12,7 @@ namespace ALCops.Common.Permissions;
 /// 2. Method-level [InherentPermissions] attribute
 /// 3. Table-level InherentPermissions property
 /// 4. Page SourceTable exemption
+/// 5. Object-level AccessByPermission property of a page or report (tabledata entries only)
 /// </summary>
 public static class PermissionResolver
 {
@@ -41,13 +42,13 @@ public static class PermissionResolver
         if (containingMethod is not null && MethodHasInherentPermission(containingMethod, required.VariableType, required.Operation))
             return true;
 
-        // 4. Object-level Permissions property
-        if (containingObject is not null)
-        {
-            var objectPermissions = containingObject.GetProperty(EnumProvider.PropertyKind.Permissions);
-            if (ObjectPermissionCovers(objectPermissions, required.VariableType, required.Table, required.Operation))
-                return true;
-        }
+        // 4. Object-level Permissions property, or the object-level AccessByPermission mask of a page or report.
+        //    AccessByPermission only hides the object from users who lack the mask, so an object that declares
+        //    it is meant for users who already hold those permissions themselves; the chars in the mask cover.
+        if (containingObject is not null
+            && (ObjectPermissionCovers(containingObject.GetProperty(EnumProvider.PropertyKind.Permissions), required.VariableType, required.Table, required.Operation)
+                || ObjectPermissionCovers(containingObject.GetProperty(EnumProvider.PropertyKind.AccessByPermission), required.VariableType, required.Table, required.Operation)))
+            return true;
 
         return false;
     }

@@ -40,6 +40,9 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferSequentialSetTablesMissing")]
         [TestCase("DataTransferLoopCarriedSetTablesMissing")]
         [TestCase("BareCallInTableExtension")]
+        [TestCase("ReportAccessByPermissionMissingChar")]
+        [TestCase("ReportAccessByPermissionOtherTable")]
+        [TestCase("ReportAccessByPermissionExecute")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -95,6 +98,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferUnresolvable")]
         [TestCase("DataTransferInherentPermissions")]
         [TestCase("DataTransferSequentialSetTablesFirstCovered")]
+        [TestCase("ReportAccessByPermission")]
+        [TestCase("ReportAccessByPermissionDelete")]
+        [TestCase("PageAccessByPermissionOtherTable")]
+        [TestCase("ReportAccessByPermissionLowercase")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
