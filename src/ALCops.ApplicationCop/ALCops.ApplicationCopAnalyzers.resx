@@ -441,6 +441,24 @@
   <data name="TableDataAccessUnusedPermissionsCodeAction" xml:space="preserve">
     <value>ALCops: Remove unused permission for table '{0}'</value>
   </data>
+  <data name="RestClientRequiresHttpClientHandlerTitle" xml:space="preserve">
+    <value>Rest Client requires an Http Client Handler implementation</value>
+  </data>
+  <data name="RestClientRequiresHttpClientHandlerMessageFormat" xml:space="preserve">
+    <value>{0} '{1}' uses the "Rest Client" codeunit, but no codeunit in this app implements the "Http Client Handler" interface; requests are sent by the System Application's default handler.</value>
+  </data>
+  <data name="RestClientRequiresHttpClientHandlerDescription" xml:space="preserve">
+    <value>The "Rest Client" codeunit delegates the HTTP call to an "Http Client Handler" implementation. Without one in the app, the System Application's default handler sends the request, so the external-call permission, outgoing web service telemetry and test mocking attribute the call to the System Application instead of the calling app. Implement the "Http Client Handler" interface and pass it to Initialize or Create.</value>
+  </data>
+  <data name="TelemetryRequiresTelemetryLoggerTitle" xml:space="preserve">
+    <value>Telemetry requires a Telemetry Logger implementation</value>
+  </data>
+  <data name="TelemetryRequiresTelemetryLoggerMessageFormat" xml:space="preserve">
+    <value>{0} '{1}' uses the "Telemetry" or "Feature Telemetry" codeunit, but no codeunit in this app implements the "Telemetry Logger" interface; its telemetry messages are discarded and only warning 0000G7K is logged.</value>
+  </data>
+  <data name="TelemetryRequiresTelemetryLoggerDescription" xml:space="preserve">
+    <value>The "Telemetry" and "Feature Telemetry" codeunits route each message to the "Telemetry Logger" registered for the calling app's publisher. When no logger is registered, the message is not forwarded anywhere: "Telemetry Loggers Impl." logs warning 0000G7K and discards it. Implement the "Telemetry Logger" interface and register it in a subscriber to "Telemetry Loggers".OnRegisterTelemetryLogger.</value>
+  </data>
   <data name="ZeroEnumValueReservedForEmptyTitle" xml:space="preserve">
     <value>Reserve Enum value zero (0) for empty value</value>
   </data>

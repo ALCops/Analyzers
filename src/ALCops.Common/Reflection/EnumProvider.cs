@@ -216,15 +216,26 @@ public static class EnumProvider
     /// </summary>
     public static class CodeunitSubtypeKind
     {
+        // default(CodeunitSubtypeKind) is Normal (0), the subtype of every ordinary codeunit, so a member missing
+        // from the loaded SDK must not resolve to it: a Subtype == Test guard would then match every codeunit.
+        // An out-of-range value never equals a real subtype.
+        private const NavCodeAnalysis.CodeunitSubtypeKind Unresolved = (NavCodeAnalysis.CodeunitSubtypeKind)int.MaxValue;
+
+        private static NavCodeAnalysis.CodeunitSubtypeKind Parse(string name) =>
+            ParseEnum(name, Unresolved);
+
         private static readonly Lazy<NavCodeAnalysis.CodeunitSubtypeKind> _install =
-            new(() => ParseEnum<NavCodeAnalysis.CodeunitSubtypeKind>(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Install)));
+            new(() => Parse(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Install)));
         private static readonly Lazy<NavCodeAnalysis.CodeunitSubtypeKind> _test =
-            new(() => ParseEnum<NavCodeAnalysis.CodeunitSubtypeKind>(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Test)));
+            new(() => Parse(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Test)));
+        private static readonly Lazy<NavCodeAnalysis.CodeunitSubtypeKind> _testRunner =
+            new(() => Parse(nameof(NavCodeAnalysis.CodeunitSubtypeKind.TestRunner)));
         private static readonly Lazy<NavCodeAnalysis.CodeunitSubtypeKind> _upgrade =
-            new(() => ParseEnum<NavCodeAnalysis.CodeunitSubtypeKind>(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Upgrade)));
+            new(() => Parse(nameof(NavCodeAnalysis.CodeunitSubtypeKind.Upgrade)));
 
         public static NavCodeAnalysis.CodeunitSubtypeKind Install => _install.Value;
         public static NavCodeAnalysis.CodeunitSubtypeKind Test => _test.Value;
+        public static NavCodeAnalysis.CodeunitSubtypeKind TestRunner => _testRunner.Value;
         public static NavCodeAnalysis.CodeunitSubtypeKind Upgrade => _upgrade.Value;
     }
     /// <summary>
