@@ -115,7 +115,7 @@ Key details:
 - **Delegate signature.** `FixAllProvider.Create(...)` requires `Task<Document?>` (nullable). Returning `Task<Document>` compiles but binds to a different overload path and can misbehave.
 - **`Optional<ImmutableArray<TextSpan>>` quirk.** In the AL SDK, `fixAllSpans.HasValue` can be `true` while `fixAllSpans.Value.IsDefaultOrEmpty` is also `true` (observed with RoslynTestKit's default document-scope FixAll). Always guard with `!IsDefaultOrEmpty` and fall back to `fixAllContext.GetDocumentDiagnosticsAsync(document)` so FixAll works both in VS Code and in tests.
 - **One-pass rewrite for `SeparatedSyntaxList`.** Use `root.RemoveNodes(collection, SyntaxRemoveOptions.KeepNoTrivia)` (plural). It handles separator removal correctly across siblings in the same list, whereas per-diagnostic `ReplaceNode` calls conflict.
-- **Trivia handling.** For node removals, prefer `SyntaxRemoveOptions.KeepNoTrivia` so multi-line signatures do not leave dangling comments or blank continuation lines. This also removes directives attached to the node; if a directive can be paired outside the removed node, explicitly preserve, transfer, or remove its matching directive before the node rewrite. See `ParameterNotReferencedCodeFixProvider` for a parameter-list implementation.
+- **Trivia handling.** For node removals, prefer `SyntaxRemoveOptions.KeepNoTrivia` so multi-line signatures do not leave dangling comments or blank continuation lines. This also removes directives attached to the node; if a directive can be paired outside the removed node, explicitly preserve, transfer, or remove its matching directive before the node rewrite. See `ParameterNotReferencedCodeFixProvider` for a parameter-list implementation and "Compiler directives and disabled text" below for the policy.
 - **Scope filter via `CodeActionEquivalenceKey`.** Register multiple `CodeAction`s with distinct `EquivalenceKey`s if a rule needs "Fix all of kind X" variants. Read `fixAllContext.CodeActionEquivalenceKey` inside `FixAllAsync` to know which action the user invoked.
 - **Single-fix path stays consistent.** Use `root.RemoveNode(node, SyntaxRemoveOptions.KeepNoTrivia)` (singular) for the individual quick-fix so single and Fix-All behave identically.
 
@@ -133,8 +133,28 @@ Copy the nearest existing provider rather than inventing a transformation:
 | Add `Locked = true` to a label | `EmptyCaptionLocked`, `LabelWithTokSuffixMustBeLocked` |
 | Remove siblings from a `SeparatedSyntaxList` with FixAll | `ParameterNotReferencedCodeFixProvider` |
 | Insert a statement before another, using the semantic model | `UsePartialRecordsOnRead` |
+| Move or remove nodes that may carry `#if` / `#pragma` / `#region` trivia | `PermissionDeclarationOrderCodeFixProvider`, `ParameterNotReferencedCodeFixProvider` |
 
 Always build the replacement from the existing nodes and tokens (`WithTriviaFrom`, keep the receiver expression) and guard every navigation step: a missing optional node returns the unchanged document instead of throwing.
+
+## Compiler directives and disabled text
+
+**Policy: preserve, else bail out.** A fix keeps every directive (`#if`/`#elif`/`#else`/`#endif`, `#pragma`, `#region`/`#endregion`, `#define`/`#undef`) and any disabled text inside the span it rewrites, removes or moves. When it cannot, it does not register: check in `RegisterCodeFixesAsync` so no lightbulb appears (LC0095's `HasConditionalDirective`), or return the unchanged document. Deleting a directive is a correctness bug. `#if` decides what compiles, `#pragma warning` decides which warnings are suppressed, and AppSource apps use both to guard obsoleted objects (`#if not CLEAN25` plus `#pragma warning disable AL0432`). Record a per-fix deviation in the rule doc's CodeFix table.
+
+**Where directives live.** A directive takes its own line and is *leading trivia of the next token*. So a directive after the last element of a list sits on the closing token (`;`, `)`, `}`) or on the next sibling, outside the node being edited, and one before the first element belongs to that element. An inactive `#if` branch is a single `DisabledTextTrivia`: the "nodes" in it do not exist in the tree, so counts, `SeparatedSyntaxList` indexes and "is this the last entry" checks see fewer elements than the source shows. Tests define no preprocessor symbols, which is why `#if CLEAN25` yields disabled text and `#if not CLEAN25` yields real nodes.
+
+**What silently drops them:**
+
+- `WithoutTrivia()`, `WithLeadingTrivia(SyntaxFactory.TriviaList())`, or `WithTriviaFrom(other)` on a node that carried directives.
+- Rebuilding a list or node from `SyntaxFactory` (FC0004's `BuildMultiLinePermissionValue` strips every entry's trivia; it is safe there only because the analyzer never reports lists with directives).
+- `RemoveNode(s)` with `KeepNoTrivia`, which drops every directive in the removed node's trivia. `KeepUnbalancedDirectives` keeps `#define`/`#undef` and those `#if`/`#region` directives whose partners (`GetRelatedDirectives`) are not all inside the removed span, and still drops `#pragma`. `KeepDirectives` keeps all of them. Source: `SyntaxNodeRemover.AddDirectives` in `Microsoft.Dynamics.Nav.CodeAnalysis.Syntax/SyntaxNodeRemover.cs` (same logic at 12.0 and 18.x).
+- A `SourceText.WithChanges` edit, or `SyntaxFactory.Parse*` output, over a span that contains directive lines.
+
+**Detection.** `node.ContainsDirectives` / `token.ContainsDirectives` is the cheap gate. `trivia.IsDirective`, `trivia.GetStructure() is ConditionalDirectiveTriviaSyntax` (`#if`/`#elif`) or `is PragmaWarningDirectiveTriviaSyntax`, `node.GetDirectives(filter)` / `GetFirstDirective` and `DirectiveTriviaSyntax.IsActive` identify them. All of these, and `SyntaxRemoveOptions.KeepDirectives` / `KeepUnbalancedDirectives`, are `yes` at every column of the nav-sdk-docs reference tables, including `ns2.0 12.0`, so they need no guard. The `SyntaxKind` values (`DisabledTextTrivia`, `IfDirectiveTrivia`, ...) exist at every version but their ordinals move, so compare them through `EnumProvider.SyntaxKind`. `EnumProvider` exposes `PragmaWarningDirectiveTrivia`, `RegionDirectiveTrivia` and `EndRegionDirectiveTrivia`; add any other kind you need there.
+
+**Preserving.** Move trivia explicitly and keep the directives in order. FC0004 lifts `#region` runs into a group tree and re-emits them where each group now starts and ends. LC0095 pairs `#pragma warning disable`/`restore`, deletes a balanced pair that only wrapped removed parameters, and transfers the others to the next remaining parameter or to the `)`. The nav-sdk-docs page `docs/60-code-fixes/syntax-editor-and-editing.md` covers `SyntaxRemoveOptions` and the `KeepDirectives` pitfall.
+
+**Fixtures.** A fix that removes, moves or rebuilds nodes ships the directive fixture set in `testing.md` (Testing Code Fixes).
 
 ## Passing data from analyzer to CodeFix via diagnostic properties
 

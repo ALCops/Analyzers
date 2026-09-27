@@ -32,7 +32,7 @@ Registers `RegisterCompilationAction`, one diagnostic per object on the `Propert
 
 ## Deliberate non-reports
 
-- Lists containing any non-region directive (`#if`, `#pragma`, ...) or unbalanced regions: AZ refuses to sort them, so no diagnostic and no fix.
+- Lists containing any non-region directive (`#if`, `#pragma`, ...) or unbalanced regions: AZ refuses to sort them, so no diagnostic and no fix. This covers both `#if` branches. In an active branch (`#if not X`) the entries are real nodes and the `#if`/`#pragma` lines are leading trivia of the next entry or of the `;`. In an inactive branch the entries are one disabled-text trivia, so the list has fewer entries than the source shows. The region tree refuses both, so the directive deletion the pre-AZ fix did when it rebuilt the whole list ([#454](https://github.com/ALCops/Analyzers/issues/454)) cannot come back.
 - An `#endregion` on the line after the `;` (a common hand-written layout) is outside the property, so the list counts as unbalanced and is never checked; AZ behaves the same because it does not pass the closing token for separated lists.
 - Entries with equal sort keys in any relative order: the sort is stable, so they are never reported.
 
@@ -57,3 +57,4 @@ Registers `RegisterCompilationAction`, one diagnostic per object on the `Propert
 | Empty `#region ... #endregion` pairs stay with the entry that carried them | An empty group has nothing to sort; as a tree node it would be flattened after the entries and drift to the end of the list. |
 | Single-line lists (no newline separators, no directives) are rewritten as multi-line via `BuildMultiLinePermissionValue` | Unchanged behaviour from the original rule. |
 | The fix bails out defensively on non-region directives or unbalanced regions | Mirrors the analyzer, which never reports such lists. |
+| Directives outside the list (on the line before `Permissions`, or after the `;`) are left alone | They are trivia of the property's own tokens or of the next sibling, and `PropertySyntax.WithValue` keeps both on the reorder path and on the single-line rebuild path. The `HasFix` directive fixtures pin this. |
