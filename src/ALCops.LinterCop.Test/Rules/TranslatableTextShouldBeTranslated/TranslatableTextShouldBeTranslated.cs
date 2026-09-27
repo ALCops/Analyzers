@@ -320,6 +320,12 @@ namespace ALCops.LinterCop.Test
         [TestCase("PageControlToolTip")]
         [TestCase("PageAnalysisViewCaption")]
         [TestCase("ReportLabel")]
+        [TestCase("ObsoletePendingTableCaption")]
+        [TestCase("ObsoletePendingTableFieldCaption")]
+        [TestCase("ObsoletePendingPageControlToolTip")]
+        [TestCase("GlobalLabelInObsoleteRemovedTable")]
+        [TestCase("LocalLabelInObsoletePendingCodeunit")]
+        [TestCase("ReportLabelInObsoletePendingReport")]
         public async Task HasDiagnostic(string testCase)
         {
             RequireMinimumVersion("16.0",
@@ -344,6 +350,10 @@ namespace ALCops.LinterCop.Test
         [TestCase("LockedLabel")]
         [TestCase("LockedReportLabel")]
         [TestCase("PageAnalysisViewLockedCaption")]
+        [TestCase("ObsoleteRemovedTableCaption")]
+        [TestCase("ObsoleteRemovedTableFieldCaption")]
+        [TestCase("LockedLabelInObsoleteRemovedTable")]
+        [TestCase("TableExtensionFieldOnObsoleteRemovedTable")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireMinimumVersion("16.0",
