@@ -51,6 +51,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferSequentialSetTablesFirstGroupPartialUnused")]
         [TestCase("DataTransferLoopCarriedSetTablesUnrelatedUnused")]
         [TestCase("ReportAccessByPermissionNotAUse")]
+        [TestCase("ReportAccessByPermissionDuplicateUnused")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
