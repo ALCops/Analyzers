@@ -40,7 +40,7 @@ Registers `CompilationStartAction` (XLIFF files parsed once into a `TranslationI
 
 - Locked labels: intentionally untranslated.
 - Captions and tooltips of Removed tables and fields, including fields inside a Removed table and table-extension fields whose target table is Removed: the compiler drops their trans-units.
-- Everything inside a Moved object: the compiler does not visit it.
+- Everything inside a Moved object, and a Moved field in a live table: the compiler does not visit them (`FieldSymbol` and `TableTypeSymbol` are the only symbols that can be Moved).
 - Compilations whose manifest disables translation file generation (`ShouldGenerateTranslationFile()` false), or with no XLIFF files / no target languages after the `LanguagesToTranslate` filter.
 
 ## Known issues

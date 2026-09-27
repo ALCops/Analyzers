@@ -243,8 +243,10 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         ReportMissingTranslation(ctx, property, translationId, translationIndex);
     }
 
-    // Mirrors the compiler's LabelWriterVisitor.IsObsolete: a field is locked when it or its
-    // containing table is Removed; every other symbol only when it is Removed itself. Pending never locks.
+    // Mirrors the two ways the compiler's LabelWriterVisitor drops a symbol's trans-units: IsObsolete
+    // locks a field when it or its containing table is Removed and any other symbol only when it is
+    // Removed itself, and ShouldSymbolBeVisited skips a Moved symbol (a table or a field) outright.
+    // IsRemoved() covers both states. Pending never locks.
     private static bool IsLockedByCompiler(ISymbol? symbol)
     {
         if (symbol is null)
