@@ -33,12 +33,14 @@ Registers `CompilationStartAction` (XLIFF files parsed once into a `TranslationI
 | Locked detection is syntactic (`CommaSeparatedIdentifierEqualsLiteralList`) | Label sub-properties are not exposed as semantic symbols. |
 | Empty target or `state="needs-translation"` counts as missing | Neither is a usable translation. |
 | Analysis views read via reflection (`FlattenedAnalysisViews` / `AddedAnalysisViewsFlattened`) | The properties exist only in the net10.0+ SDK; reflection avoids a compile-time dependency. |
+| Obsolete gate mirrors the compiler's `LabelWriterVisitor.IsObsolete` instead of the house `IsObsolete()` check: skip only a Moved containing object, and properties whose symbol is Removed (or a field whose table is Removed) | The compiler still emits trans-units for Pending symbols and for labels inside obsolete objects; skipping them hides units the XLIFF tooling will flag as untranslated. Labels are only ever locked by their own `Locked = true`. |
 | net8.0-only: netstandard2.1 compiles an empty stub | `ExtensionObjectFoldingUtilities` and `GetLabelTextConstLanguageSymbolId` are absent there and `GetLanguageSymbolId` is internal with a different signature; there is nothing to reflect into. |
 
 ## Deliberate non-reports
 
 - Locked labels: intentionally untranslated.
-- Obsolete symbols (standard ALCops convention).
+- Captions and tooltips of Removed tables and fields, including fields inside a Removed table and table-extension fields whose target table is Removed: the compiler drops their trans-units.
+- Everything inside a Moved object: the compiler does not visit it.
 - Compilations whose manifest disables translation file generation (`ShouldGenerateTranslationFile()` false), or with no XLIFF files / no target languages after the `LanguagesToTranslate` filter.
 
 ## Known issues
@@ -57,12 +59,17 @@ Registers `CompilationStartAction` (XLIFF files parsed once into a `TranslationI
 - `ExtensionObjectFoldingUtilities.GetTranslationRootSymbol`: non-extension objects and customizations return themselves; an extension in the same module as its target folds into the target; multiple extensions on one target fold into the one with the lowest ID.
 - `ManifestHelper.GetManifest(compilation)` loads `Microsoft.Dynamics.Nav.Analyzers.Common` via reflection.
 - `manifest.CompilerFeatures.ShouldGenerateTranslationFile()` is false unless `app.json` lists `"TranslationFile"` in `features` (mapped by `CompilerFeaturesExtensions.GetCompilerFeature`).
+- XLIFF generation (`Translation/LabelWriterVisitor.cs`): `IsObsolete` locks a `Field` when it or its `ContainingSymbol` is `IsObsoleteRemoved`, and any other symbol only when it is `IsObsoleteRemoved` itself; it never walks further up and never reads `IsObsoletePending`. `ShouldSymbolBeVisited` returns false for `IsObsoleteMoved`, so a Moved object's whole subtree is never emitted; `PendingMove` is neither skipped nor locked. `VisitVariable` and `VisitReportLabel` pass no lock flag, so a label is locked only by its own `Locked = true`. `XliffOutputter.WriteLabel` drops locked units (or writes them with `translate="no"` under `GenerateLockedTranslations`).
+- `Symbol.IsObsoleteRemoved` is virtual `false`, overridden only by `FieldSymbol`, `KeySymbol`, `TableTypeSymbol`, `TableExtensionTypeSymbol` (forwards to `Target`), `RecordTypeSymbol` and `SynthesizedKeySymbol`; pages, controls, actions, enums, reports and the other object kinds can never be Removed. `FieldSymbol` inherits Removed/Pending from the target table in a table extension.
+- No public SDK API exposes "locked by the compiler": `LabelWriterVisitor` is internal and `IsObsolete` private, hence the mirror in `IsLockedByCompiler`.
+- `GetContainingObjectTypeSymbol()` returns the symbol itself for an object type and null when the containment chain ends without one.
 - The netstandard2.1 SDK has no `ExtensionObjectFoldingUtilities`, no `GetLabelTextConstLanguageSymbolId`, and only an internal `GetLanguageSymbolId(Symbol, Boolean, Boolean)`.
 
 ## Test notes
 
 - Every test starts with `RequireMinimumVersion("16.0")` (net8.0-only APIs); analysis-view cases are additionally gated to the net10.0 SDK, and namespace cases enable `TranslationsWithNamespaces` reflectively so the project compiles on SDKs lacking the enum member.
 - Fixtures use a `MemoryFileSystem`: an empty `Translations/TestApp.da-DK.xlf` makes every translatable element missing; a no-file variant covers the no-XLIFF exit; `alcops.json` is injected the same way for `LanguagesToTranslate` cases, so no `TearDown`/`ClearCache` is needed.
+- Obsolete-state fixtures share the empty-XLIFF fixture. A field with `ObsoleteState` must not be in the primary key (AL0693 fails the fixture), so field-level fixtures declare a separate first field. A tableextension of a Removed table compiles, so the `TableExtensionFieldOnObsoleteRemovedTable` fixture guards the inherited-Removed path.
 - Legacy-runtime fixtures inject `app.json` with `"runtime": "5.1"` and `"features": ["TranslationFile"]`; without the feature the analyzer short-circuits and hides the regression. They also need `Microsoft.Dynamics.Nav.Analyzers.Common.dll` in the test bin (`<Reference Private="True">` in the test csproj) for `ManifestHelper`.
 
 ## Settings
