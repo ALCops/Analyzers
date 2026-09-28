@@ -325,6 +325,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.TableDataAccessUnusedPermissionsDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TableDataAccessUnusedPermissions));
 
+    public static readonly DiagnosticDescriptor RestClientInitializeWithHttpClientHandler = new(
+        id: DiagnosticIds.RestClientInitializeWithHttpClientHandler,
+        title: ApplicationCopAnalyzers.RestClientInitializeWithHttpClientHandlerTitle,
+        messageFormat: ApplicationCopAnalyzers.RestClientInitializeWithHttpClientHandlerMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.RestClientInitializeWithHttpClientHandlerDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.RestClientInitializeWithHttpClientHandler));
+
     public static readonly DiagnosticDescriptor RestClientRequiresHttpClientHandler = new(
         id: DiagnosticIds.RestClientRequiresHttpClientHandler,
         title: ApplicationCopAnalyzers.RestClientRequiresHttpClientHandlerTitle,

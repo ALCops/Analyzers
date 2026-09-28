@@ -459,6 +459,15 @@
   <data name="TelemetryRequiresTelemetryLoggerDescription" xml:space="preserve">
     <value>The "Telemetry" and "Feature Telemetry" codeunits route each message to the "Telemetry Logger" registered for the calling app's publisher. When no logger is registered, the message is not forwarded anywhere: "Telemetry Loggers Impl." logs warning 0000G7K and discards it. Implement the "Telemetry Logger" interface and register it in a subscriber to "Telemetry Loggers".OnRegisterTelemetryLogger.</value>
   </data>
+  <data name="RestClientInitializeWithHttpClientHandlerTitle" xml:space="preserve">
+    <value>Rest Client variable is not initialized with a custom Http Client Handler</value>
+  </data>
+  <data name="RestClientInitializeWithHttpClientHandlerMessageFormat" xml:space="preserve">
+    <value>Rest Client variable '{0}' is not initialized with a custom Http Client Handler</value>
+  </data>
+  <data name="RestClientInitializeWithHttpClientHandlerDescription" xml:space="preserve">
+    <value>A "Rest Client" that is initialized without a handler, or with the System Application's default "Http Client Handler" codeunit, sends its requests through the System Application, so the external-call permission, outgoing web service telemetry and test mocking attribute the call to the System Application instead of the calling app. Pass a codeunit that implements "Http Client Handler" to Initialize or Create.</value>
+  </data>
   <data name="ZeroEnumValueReservedForEmptyTitle" xml:space="preserve">
     <value>Reserve Enum value zero (0) for empty value</value>
   </data>
