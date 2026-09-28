@@ -437,6 +437,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.version }}
+          # Artifacts are per run attempt. Replacing the same-named artifact on a re-run keeps
+          # the merge job from picking up the stale attempt-1 result for this version.
+          overwrite: true
           path: |
             **/TestResults_${{ matrix.version }}.trx
 
@@ -461,6 +464,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: test-results
+          # The Test Report workflow downloads every artifact with this name; without
+          # overwrite a re-run would leave two and report every trx twice.
+          overwrite: true
           path: TestResults/**/*.trx
           if-no-files-found: ignore
 
