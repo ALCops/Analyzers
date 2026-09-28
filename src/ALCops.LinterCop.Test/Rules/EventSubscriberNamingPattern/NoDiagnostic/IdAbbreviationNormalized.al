@@ -10,7 +10,7 @@ table 50100 MyTable
 codeunit 50100 MySubscriber
 {
     [EventSubscriber(ObjectType::Table, Database::MyTable, OnAfterValidateEvent, "Item ID", false, false)]
-    local procedure [|OnMyTable_OnAfterValidateEvent_ItemId|](var rec: Record MyTable; var xRec: Record MyTable)
+    local procedure [|Ontable_myTable_onAfterValidateEvent_itemId|](var rec: Record MyTable; var xRec: Record MyTable)
     begin
     end;
 }
