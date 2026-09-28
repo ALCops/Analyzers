@@ -91,8 +91,7 @@ public class ALCopsSettingsRemoteRecoveryTests
         await server.FirstRequest.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
 
         cancellation.Cancel();
-        Task completed = await Task.WhenAny(server.FirstDisconnected, Task.Delay(TimeSpan.FromSeconds(2))).ConfigureAwait(false);
-        bool closedPromptly = completed == server.FirstDisconnected;
+        bool closedPromptly = server.WaitForFirstDisconnect(TimeSpan.FromSeconds(2));
         try { await analysis.ConfigureAwait(false); }
         catch (OperationCanceledException) { }
         await server.FirstDisconnected.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
@@ -231,10 +230,12 @@ public class ALCopsSettingsRemoteRecoveryTests
 
     private sealed class SettingsServer : IAsyncDisposable
     {
+        private static readonly TimeSpan ShutdownBudget = TimeSpan.FromSeconds(20);
         private readonly TcpListener _listener = new(IPAddress.Loopback, 0);
-        private readonly CancellationTokenSource _shutdown = new(TimeSpan.FromSeconds(20));
+        private readonly CancellationTokenSource _shutdown = new(ShutdownBudget);
         private readonly TaskCompletionSource _firstRequest = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource _firstDisconnected = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly ManualResetEventSlim _firstDisconnectedSignal = new();
         private readonly Task _serve;
         private int _requestCount;
 
@@ -249,6 +250,9 @@ public class ALCopsSettingsRemoteRecoveryTests
         public int RequestCount => Volatile.Read(ref _requestCount);
         public Task FirstRequest => _firstRequest.Task;
         public Task FirstDisconnected => _firstDisconnected.Task;
+
+        /// <summary>Blocks the caller; the signal is set on the observing thread without a thread-pool hop.</summary>
+        public bool WaitForFirstDisconnect(TimeSpan timeout) => _firstDisconnectedSignal.Wait(timeout);
 
         private async Task ServeAsync(bool failFirst, bool stallFirst)
         {
@@ -271,8 +275,27 @@ public class ALCopsSettingsRemoteRecoveryTests
                     _firstRequest.TrySetResult();
                     if (stallFirst && request == 1)
                     {
-                        await stream.ReadAsync(new byte[1], _shutdown.Token).ConfigureAwait(false);
-                        _firstDisconnected.TrySetResult();
+                        // The client closes its socket synchronously inside Cancel(), but observing
+                        // that with ReadAsync needs more thread-pool hops than the timer the test
+                        // races it against. A blocking read on a dedicated thread and a synchronous
+                        // signal keep the promptness measurement independent of pool saturation.
+                        // The shutdown token cannot interrupt a blocking read, so bound it by time.
+                        await Task.Factory.StartNew(() =>
+                        {
+                            stream.ReadTimeout = (int)ShutdownBudget.TotalMilliseconds;
+                            try
+                            {
+                                if (stream.Read(new byte[1], 0, 1) == 0)
+                                    _firstDisconnectedSignal.Set();
+                            }
+                            catch (IOException ex) when (ex.InnerException is not SocketException { SocketErrorCode: SocketError.TimedOut })
+                            {
+                                // A reset from the closing peer is a disconnect too.
+                                _firstDisconnectedSignal.Set();
+                            }
+                        }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default).ConfigureAwait(false);
+                        if (_firstDisconnectedSignal.IsSet)
+                            _firstDisconnected.TrySetResult();
                     }
                     else
                     {
@@ -291,6 +314,7 @@ public class ALCopsSettingsRemoteRecoveryTests
             await _serve.ConfigureAwait(false);
             _listener.Stop();
             _shutdown.Dispose();
+            _firstDisconnectedSignal.Dispose();
         }
     }
 }
