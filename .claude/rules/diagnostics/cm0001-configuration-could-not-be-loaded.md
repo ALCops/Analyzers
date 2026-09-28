@@ -58,3 +58,4 @@ Registers `RegisterCompilationAction` (no node or symbol kinds; reports at `Loca
 - Tests use a manual `Compilation.Create` + `CompilationWithAnalyzers` harness in `ALCops.Common.Test/Analyzers/` because RoslynTestKit's marker-based assertions cannot match `Location.None`.
 - `ThrowingFileSystem` (Helpers) simulates exists-but-unreadable deterministically; real file locks are advisory-only on Linux.
 - `{1}` may contain OS-localized exception text, so tests assert only substrings the code controls.
+- The cancellation test measures the disconnect of the stalled HTTP request off the thread pool (dedicated blocking read plus a synchronous signal); `testing.md` (Concurrent synchronous HTTP tests) explains why a task-based race against `Task.Delay` reports a false "not prompt" on a saturated runner.
