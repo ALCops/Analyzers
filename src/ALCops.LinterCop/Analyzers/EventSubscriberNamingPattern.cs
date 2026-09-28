@@ -466,7 +466,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
                 {
                     if (token.SelfReferenceText is not null && isSelfReference)
                     {
-	                    var selfReferenceValue = NamingTokenValue(token, eventSourceType, eventSource, eventName, elementName, isSelfReference);
+                        var selfReferenceValue = NamingTokenValue(token, eventSourceType, eventSource, eventName, elementName, isSelfReference);
 
                         foreach (var sb in accumulators)
                         {
@@ -476,7 +476,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
                         continue;
                     }
 
-					var referenceValue = NamingTokenValue(token.Kind, eventSourceType, eventSource, eventName, elementName);
+                    var referenceValue = NamingTokenValue(token.Kind, eventSourceType, eventSource, eventName, elementName);
                     var alts = IdentifierNameRenderer.RenderAccepted(referenceValue, token.Style, acronyms);
 
                     if (alts.Count == 1)
