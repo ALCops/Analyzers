@@ -3,7 +3,7 @@
 codeunit 50100 MySubscriber
 {
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"My Cool Publisher", OnSomething, '', false, false)]
-    local procedure [|"My Cool Publisher_OnSomething"|]()
+    local procedure [|"OnCodeunit_My Cool Publisher_OnSomething"|]()
     begin
     end;
 }
