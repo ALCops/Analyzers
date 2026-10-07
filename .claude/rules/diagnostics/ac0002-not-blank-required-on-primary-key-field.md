@@ -11,7 +11,7 @@ paths:
 
 ## Purpose
 
-AC0002 asks a table whose primary key is a single Code or Text field to set `NotBlank` explicitly. A record with a blank key is easy to create by accident, and renaming or deleting it cascades through every `TableRelation` that points at the table. AC0003 is the inverse for tables that draw their key from a number series: there `NotBlank = true` breaks inserts, because the key is assigned after the record is inserted.
+AC0002 asks a table whose primary key is a single Code or Text field to set `NotBlank` explicitly. A record with a blank key is easy to create by accident, and renaming or deleting it cascades through every `TableRelation` that points at the table. AC0003 is the inverse for tables where any Code field has a `TableRelation` to `No. Series`: there the key can be assigned after the record is inserted, so `NotBlank = true` can make the insert fail.
 
 Registers `RegisterSymbolAction` on `Table`; main type `NotBlankOnPrimaryKeyField`, which reports both IDs.
 
@@ -28,7 +28,7 @@ Registers `RegisterSymbolAction` on `Table`; main type `NotBlankOnPrimaryKeyFiel
 ## Deliberate non-reports
 
 - Obsolete tables, primary keys with more than one field, and single-field keys whose type has no length (Integer, Guid and so on).
-- AC0002 on setup tables, as recognised by `TableHelper.IsSetupTable()`: a single `Code` primary-key field named `Primary Key`/`PrimaryKey`, or a parameterless, return-less `GetRecordOnce` method on the table. A setup table holds one record whose key is always blank, and nothing relates to a singleton, so there is no cascade to protect against.
+- AC0002 on setup tables, as recognised by `TableHelper.IsSetupTable()`: a single `Code` primary-key field named `Primary Key`/`PrimaryKey`, or a parameterless, return-less `GetRecordOnce` method on the table. Setup tables are assumed to be singletons whose always-blank key no other table relates to, so there is no cascade to guard; the helper recognises them by convention and does not check inbound relations.
 - AC0003 on a primary-key field named `Name`.
 
 ## Known issues

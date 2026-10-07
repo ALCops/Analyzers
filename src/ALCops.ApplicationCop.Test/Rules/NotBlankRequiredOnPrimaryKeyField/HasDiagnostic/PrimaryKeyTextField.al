@@ -1,4 +1,5 @@
-table 50100 MySetup
+// Pins the Code-only scope of the setup-table heuristic: a Text "Primary Key" still reports.
+table 50100 MyTable
 {
     fields
     {

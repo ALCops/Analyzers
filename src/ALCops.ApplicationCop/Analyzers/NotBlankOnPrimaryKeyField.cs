@@ -43,8 +43,8 @@ public sealed class NotBlankOnPrimaryKeyField : DiagnosticAnalyzer
         }
         else
         {
-            // A setup table holds a single record whose primary key is always blank, and no
-            // TableRelation points at it, so a rename or delete of that record cannot cascade.
+            // Setup tables are singletons whose always-blank key no other table relates to, so there is
+            // no cascade to guard. IsSetupTable recognises them by convention, not by checking inbound relations.
             if (TableHelper.IsSetupTable(table))
                 return;
 
