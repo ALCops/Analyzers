@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
+using ALCops.Common.Helpers;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -42,6 +43,11 @@ public sealed class NotBlankOnPrimaryKeyField : DiagnosticAnalyzer
         }
         else
         {
+            // A setup table holds a single record whose primary key is always blank, and no
+            // TableRelation points at it, so a rename or delete of that record cannot cascade.
+            if (TableHelper.IsSetupTable(table))
+                return;
+
             if (field.GetProperty(EnumProvider.PropertyKind.NotBlank) is null)
             {
                 ctx.ReportDiagnostic(Diagnostic.Create(
