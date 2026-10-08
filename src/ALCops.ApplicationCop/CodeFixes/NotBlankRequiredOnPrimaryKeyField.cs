@@ -70,7 +70,7 @@ public sealed class NotBlankRequiredOnPrimaryKeyFieldCodeFixProvider : CodeFixPr
         var notBlankProperty = originalFieldNode.GetProperty(EnumProvider.PropertyKind.NotBlank.ToString());
         if (notBlankProperty is null)
         {
-            newFieldNode = originalFieldNode.AddPropertyListProperties(GetNotBlankFalseProperty());
+            newFieldNode = originalFieldNode.AddPropertyListProperties(GetNotBlankTrueProperty());
         }
         else
         {
@@ -86,20 +86,20 @@ public sealed class NotBlankRequiredOnPrimaryKeyFieldCodeFixProvider : CodeFixPr
         return document.WithSyntaxRoot(newRoot);
     }
 
-    private static PropertySyntax GetNotBlankFalseProperty() =>
-        SyntaxFactory.Property(EnumProvider.PropertyKind.NotBlank, GetBooleanFalsePropertyValue());
+    private static PropertySyntax GetNotBlankTrueProperty() =>
+        SyntaxFactory.Property(EnumProvider.PropertyKind.NotBlank, GetBooleanTruePropertyValue());
 
     private static PropertyListSyntax UpdateNotBlankPropertyList(FieldSyntax fieldNode, PropertySyntax notBlankProperty)
     {
-        var updatednotBlankProperty = notBlankProperty.WithValue(GetBooleanFalsePropertyValue());
+        var updatedNotBlankProperty = notBlankProperty.WithValue(GetBooleanTruePropertyValue());
 
         var propertyList = fieldNode.PropertyList;
         var newProperties = propertyList.Properties.Select(prop =>
-            prop == notBlankProperty ? updatednotBlankProperty : prop).ToList();
+            prop == notBlankProperty ? updatedNotBlankProperty : prop).ToList();
 
         return propertyList.WithProperties(SyntaxFactory.List(newProperties));
     }
 
-    private static BooleanPropertyValueSyntax GetBooleanFalsePropertyValue() =>
+    private static BooleanPropertyValueSyntax GetBooleanTruePropertyValue() =>
         SyntaxFactory.BooleanPropertyValue(SyntaxFactory.BooleanLiteralValue(SyntaxFactory.Token(EnumProvider.SyntaxKind.TrueKeyword)));
 }

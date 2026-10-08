@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
+using ALCops.Common.Helpers;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -42,6 +43,11 @@ public sealed class NotBlankOnPrimaryKeyField : DiagnosticAnalyzer
         }
         else
         {
+            // Setup tables are singletons whose always-blank key no other table relates to, so there is
+            // no cascade to guard. IsSetupTable recognises them by convention, not by checking inbound relations.
+            if (TableHelper.IsSetupTable(table))
+                return;
+
             if (field.GetProperty(EnumProvider.PropertyKind.NotBlank) is null)
             {
                 ctx.ReportDiagnostic(Diagnostic.Create(
