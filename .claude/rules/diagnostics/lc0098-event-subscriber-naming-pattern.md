@@ -8,7 +8,7 @@ paths:
 
 ## Purpose
 
-Validates that event subscriber procedure names follow a configurable template derived from the subscribed event's source object name, event name, and optional element name. The template controls both structure and casing in a single configuration line.
+Validates that event subscriber procedure names follow a configurable template derived from the subscribed event's source object name, source object type, event name, and optional element name. The template controls both structure and casing in a single configuration line.
 
 Registers `CompilationStartAction` (template parsed once via `TemplateParser`) then `SymbolAction` on `SymbolKind.Method`; main type `EventSubscriberNamingPattern` with `NameBuilder`, sharing `IdentifierNameRenderer` and `AcronymRegistry` from `ALCops.Common`.
 
@@ -16,7 +16,8 @@ Registers `CompilationStartAction` (template parsed once via `TemplateParser`) t
 
 | Decision | Rationale |
 |---|---|
-| One `SubscriberNamingPattern` string with casing encoded in the placeholder spelling (`{EventSource}`, `{eventSource}`, `{event_source}`, `{event-source}`, raw `{Event Source}`) | Avoids separate CaseStyle properties; the placeholder's own format defines the output style. |
+| One `SubscriberNamingPattern` string with casing encoded in the placeholder spelling (`{EventSource}`, `{eventSource}`, `{event_source}`, `{event-source}`, raw `{Event Source}`; the same forms apply to `EventSourceType`, `EventName`, and `ElementName`) | Avoids separate CaseStyle properties; the placeholder's own format defines the output style. |
+| Parameterized `EventSourceType` placeholders (`{EventSourceType|Text}` and casing variants) | Emit the non-empty text after `|` verbatim only when the subscribed object is the application object containing the subscriber or the target of its extension. The comparison uses application symbol identity, so equal names do not count as a self-reference. The placeholder style does not transform `Text`. |
 | Default template `{Event Source}_{Event Name}[_{Element Name}]`, with raw tokens emitted verbatim | Exactly the identifier the AL Language extension's "Find Event" generates, so tooling-created subscribers pass without configuration. `EventName` stays PascalCase because AL forbids spaces in event identifiers. |
 | Severity Info | Team conventions vary; Info recommends without turning existing subscribers into build warnings. |
 | `[...]` optional groups emitted only when every inner token is non-empty | One general mechanism covers any combination of conditional segments (typically the absent element name). |
@@ -26,7 +27,7 @@ Registers `CompilationStartAction` (template parsed once via `TemplateParser`) t
 | Two-letter uppercase words kept as-is (`IO`, `DX`), `ID` always `Id`, camelCase first word fully lowercased | C# capitalization guidelines. |
 | `%` in a token value is dropped rather than rendered (`"Line Discount %"` -> `LineDiscount`) | Produces a clean identifier instead of `LineDiscountPct` or an invalid `%`. |
 | Word splitter, per-word renderer and acronym registry live in `ALCops.Common` (`IdentifierNameRenderer`, `AcronymRegistry`), not in the analyzer | Reusable by any future rule that turns natural-language input into an identifier; the analyzer keeps only template semantics. |
-| `TemplateParser.KnownPlaceholders` maps placeholder strings to `(TokenKind, IdentifierCaseStyle)`; unknown `{...}` sequences are emitted verbatim | Adding `{ObjectType}`/`{ObjectId}` later is a dictionary row, not a grammar change, and existing templates keep parsing. |
+| `TemplateParser.KnownPlaceholders` maps placeholder strings to `(TokenKind, IdentifierCaseStyle)`; parameterized `EventSourceType` tokens are parsed from the same lookup; unknown `{...}` sequences are emitted verbatim | Adding a future placeholder is a dictionary row, not a grammar change, and existing templates keep parsing. |
 | Message always shows the canonical preferred rendering | Predictable, identical to what the CodeFix applies. |
 | Independent of LC0092: a subscriber violating both rules receives two diagnostics | Structural template vs character-class pattern with decoupled settings; see `lc0092-naming-pattern.md` for the pattern-side adjustment when the default template yields a quoted identifier. |
 
