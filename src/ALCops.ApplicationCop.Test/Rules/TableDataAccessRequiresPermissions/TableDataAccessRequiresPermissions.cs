@@ -33,6 +33,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DottedTableName")]
         [TestCase("NextWithoutPermissions")]
         [TestCase("CalcSumsWithoutPermissions")]
+        [TestCase("CalcSumsWithoutReadPermission")]
+        [TestCase("CalcSumsBareSelf")]
         [TestCase("DataTransferCopyFieldsMissingModify")]
         [TestCase("DataTransferCopyRowsMissingInsert")]
         [TestCase("DataTransferMissingReadOnSource")]
