@@ -1,6 +1,6 @@
 table 50000 MyTable
 {
-    Permissions = [||]tabledata MyTable = r;
+    Permissions = [|tabledata MyTable = r|];
     Caption = '', Locked = true;
 
     fields
