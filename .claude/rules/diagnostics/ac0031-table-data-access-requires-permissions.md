@@ -20,6 +20,7 @@ Registers `RegisterOperationAction` on `InvocationExpression` and `RegisterSymbo
 | Namespace-aware table matching is primary, object ID matching secondary | Namespaces are the modern AL convention; IDs keep pre-namespace code working. |
 | The `[InherentPermissions]` attribute is parsed by splitting its syntax text | The attribute's syntax is well-defined; semantic analysis would add complexity for no gain. |
 | `Next` counts as a Read ([#466](https://github.com/ALCops/Analyzers/issues/466)) | `Next()` fetches the next row in the object that calls it, and permissions do not flow through the call stack, so `repeat ... until Rec.Next() = 0` needs `r` even when another object positioned the set with `FindSet`. No repeat/until shape analysis: a stand-alone `Next()` / `Next(-1)` counts the same. |
+| `CalcSums` counts as a Read on the receiver ([#578](https://github.com/ALCops/Analyzers/issues/578)) | `CalcSums` is a SQL aggregate over the receiver table, run in the calling object, so it needs `r` there; it is a plain `MethodOperationMap` entry. It stays out of `RecordMethodClassification.ReadMethods` for the same reason as `Next`. |
 | `DataTransfer` executors require permissions: `CopyFields` needs `r` on the source and `m` on the destination, `CopyRows` needs `r` and `i` ([#465](https://github.com/ALCops/Analyzers/issues/465)) | The tables come from the `SetTables(Database::X, Database::Y)` call that reaches the executor in flow order within the same method or trigger body (a later `SetTables` replaces an earlier one; branches merge as a union; loop bodies are visited twice so a back-edge `SetTables` is seen). The flow walk is `DataTransferTableResolver`, shared with AC0032 through `RequiredPermissionDetector.TryGetFromDataTransfer` so the two rules stay symmetric; the AC0032 doc holds the pairing details. |
 | `DataTransfer` detection lives in a separate `DataTransferOperations` set, not `MethodOperationMap` | `MethodOperationMap` is keyed on record receivers; see the AC0032 doc. |
 | Diagnostics anchor on the executor, not on `SetTables` | The executor performs the database work and is where a developer looks; it also keeps every permission one transfer needs on a single location, which the CodeFix merges into one `Permissions` entry. |
@@ -36,7 +37,7 @@ Registers `RegisterOperationAction` on `InvocationExpression` and `RegisterSymbo
 
 ## Known issues
 
-- `CalcFields`/`CalcSums` are not covered (out of scope for the initial implementation).
+- `CalcFields` (FlowField reads) is not traced. The read lands on the CalcFormula *source* table, not the receiver (Microsoft Learn, Security considerations: a user needs read permission on both tables), so adding it to `MethodOperationMap` would charge the wrong table; it needs FlowField source resolution.
 - The unresolvable-`DataTransfer` silence means a genuinely missing permission there goes unreported.
 - The flow walk lets state flow past `exit`, so an executor can be attributed a table from before an early exit. That is conservative for AC0032 but can make AC0031 ask for a permission the code never needs.
 - CodeFix: when the object has no properties at all, the new `Permissions` property is not separated from the first member by a blank line.

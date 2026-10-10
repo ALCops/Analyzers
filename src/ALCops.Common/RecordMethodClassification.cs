@@ -14,7 +14,8 @@ public static class RecordMethodClassification
     /// <summary>
     /// Methods that read record data from the database.
     /// Includes Find, FindFirst, FindLast, FindSet, Get, GetBySystemId, IsEmpty, Count.
-    /// Intentionally excludes Next, which <see cref="MethodOperationMap"/> maps to <see cref="DatabaseOperation.Read"/> for permissions.
+    /// Intentionally excludes Next and CalcSums, which <see cref="MethodOperationMap"/> maps to <see cref="DatabaseOperation.Read"/> for permissions
+    /// but which do not load a record buffer (Next advances a cursor, CalcSums aggregates in SQL).
     /// </summary>
     public static ImmutableHashSet<string> ReadMethods { get; } =
         ImmutableHashSet.Create(
