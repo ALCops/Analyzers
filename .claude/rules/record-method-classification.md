@@ -38,6 +38,7 @@ All properties are `ImmutableHashSet<string>` with `StringComparer.OrdinalIgnore
 | SingleRecordReadMethods excludes FindSet | Yes | FindSet is used with repeat..until Next loops; different return value semantics |
 | ReadMethods includes IsEmpty and Count | Yes | These perform SQL reads even though they don't load record buffers |
 | ReadMethods excludes Next, although `MethodOperationMap` maps it to Read | Yes, intentional divergence | The two classifications answer different questions. For permissions, `Next` reads the database and needs `r`. The consumers of `ReadMethods` reason about the record buffer a call *fills*: AC0030 inspects the read's return value, and the partial-record analysis matches a read against the fields loaded by it. Neither applies to `Next`, which continues a set positioned by an earlier read, so adding it here would produce false positives. Do not "synchronize" the two sets. |
+| ReadMethods excludes CalcSums, although `MethodOperationMap` maps it to Read | Yes, intentional divergence | Same reasoning as `Next`: for permissions, `CalcSums` is a SQL aggregate over the receiver table and needs `r`, but it does not fill a record buffer, so the buffer-based consumers of `ReadMethods` (AC0030, partial-record analysis) must not see it. |
 | Case sensitivity | OrdinalIgnoreCase | AL method names are case-insensitive |
 
 ## Adding new methods

@@ -25,6 +25,7 @@ Registers `RegisterSyntaxNodeAction` on the nine application object syntax kinds
 | Two descriptors share the one ID: `...EntireEntry` (no operation on the table) and `...PartialChars` (some declared RIMD chars unused) | Same rule, two messages that tell the developer exactly what to remove. |
 | `PermissionMatchesTable` is duplicated from `PermissionResolver` | It matches syntax nodes, not resolved symbols; sharing would couple the two. |
 | `Next` counts as a Read ([#466](https://github.com/ALCops/Analyzers/issues/466)) | An object that only iterates a set positioned elsewhere still reads the database, so its `r` is used; without this the pattern was a false positive. Adding `Next` to `MethodOperationMap` also covers `RecordRef.Next()` through the bailout. |
+| `CalcSums` counts as a Read on the receiver ([#578](https://github.com/ALCops/Analyzers/issues/578)) | An object whose only access is `SetRange` + `CalcSums` still reads the table, so its `r` is used; without this the pattern was a false positive. A `rm` entry with only `CalcSums` still reports the unused `m`. |
 | Temporary-only accesses do not count as uses, so a permission held only for temporary records is reported | Temporary tables never touch the database; all temporary forms are excluded through the `IsTemporary()` extensions at every map and fallback. |
 | Whole-object bailout on any `MethodOperationMap` call on a `RecordRef` receiver ([#420](https://github.com/ALCops/Analyzers/issues/420)) | A `RecordRef` can target any table at runtime, so no declared permission can be proven unused; without it FixAll removed permissions needed at runtime. Suppressing only the matching char was considered and rejected for simplicity. |
 | `CopyFields` and `CopyRows` on a `DataTransfer` count as table operations (`r`+`m`, `r`+`i`) ([#465](https://github.com/ALCops/Analyzers/issues/465)) | The tables are `SetTables` arguments rather than receivers, so receiver-keyed resolution never saw them and every `DataTransfer`-only permission was reported. The other seven `DataTransfer` methods only build the definition. |
@@ -47,7 +48,7 @@ Registers `RegisterSyntaxNodeAction` on the nine application object syntax kinds
 ## Known issues
 
 - Extension objects cannot see the base object's code and may flag permissions the base needs as unused.
-- `CalcFields`/`CalcSums` (FlowField reads) are not traced.
+- `CalcFields` (FlowField reads) is not traced. The read lands on the CalcFormula *source* table, not the receiver (Microsoft Learn, Security considerations: a user needs read permission on both tables), so adding it to `MethodOperationMap` would charge the wrong table; it needs FlowField source resolution.
 - A table-level `InherentPermissions` can make an object-level entry redundant; the rule does not flag that (a different concern from unused).
 - Cross-object calls: if codeunit A calls B and B accesses the table, A's permission is correctly reported as unused (permissions do not flow through the call stack). The reverse is fine: A iterating with `Next()` a set that B positioned counts as A's own read.
 - Both whole-object bailouts hide genuinely unused entries in that object; accepted trade-off.
