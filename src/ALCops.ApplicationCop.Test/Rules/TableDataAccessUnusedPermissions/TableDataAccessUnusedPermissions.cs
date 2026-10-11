@@ -40,6 +40,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("NextPartialUnused")]
         [TestCase("CalcSumsPartialUnused")]
         [TestCase("CalcSumsTemporaryRecordOnly")]
+        [TestCase("DeleteAllReadStillImplied")]
+        [TestCase("ModifyAllReadStillImplied")]
         [TestCase("DataTransferPartialUnused")]
         [TestCase("DataTransferCopyRowsDestinationPartialUnused")]
         [TestCase("DataTransferOnlyBuilderCalls")]
@@ -117,6 +119,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("RecordRefNext")]
         [TestCase("CalcSumsOnly")]
         [TestCase("CalcSumsBareSelf")]
+        [TestCase("DeleteAllImpliesRead")]
+        [TestCase("ModifyAllImpliesRead")]
+        [TestCase("DeleteAllImpliesReadBareSelf")]
+        [TestCase("DeleteAllImpliesReadBareSelfWithoutParentheses")]
         [TestCase("DataTransferCopyFieldsSameTable")]
         [TestCase("DataTransferCopyFieldsTwoTables")]
         [TestCase("DataTransferCopyRowsTwoTables")]
@@ -188,6 +194,8 @@ namespace ALCops.ApplicationCop.Test
         [Test]
         [TestCase("ReduceChars")]
         [TestCase("ReplaceChars")]
+        [TestCase("DeleteAllKeepsRead")]
+        [TestCase("ModifyAllKeepsRead")]
         public async Task HasFixPartialChars(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(
