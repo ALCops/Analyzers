@@ -272,6 +272,9 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     // Binding resolves it to the invocation and its receiver, including the
                     // implicit self and implicit record forms.
                     requiredPermissions.Add(bareCall);
+
+                    if (RequiredPermissionDetector.TryGetImpliedRead(bareCall, bareInvocation.TargetMethod.Name) is { } impliedRead)
+                        requiredPermissions.Add(impliedRead);
                 }
             }
         }
