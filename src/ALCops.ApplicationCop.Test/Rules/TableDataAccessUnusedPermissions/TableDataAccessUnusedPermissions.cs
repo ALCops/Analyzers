@@ -54,6 +54,9 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferLoopCarriedSetTablesUnrelatedUnused")]
         [TestCase("ReportAccessByPermissionNotAUse")]
         [TestCase("ReportAccessByPermissionDuplicateUnused")]
+        [TestCase("ReportDataItemBarePartialUnused")]
+        [TestCase("ReportDataItemUseTemporaryBareModify")]
+        [TestCase("ModifyReportNestedDataItemBareSelfOuterUnused")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -124,6 +127,14 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferLoopCarriedUnresolvableSetTables")]
         [TestCase("RecSelfAccess")]
         [TestCase("ReportAccessByPermissionAndPermissions")]
+        [TestCase("ModifyReportDataItemBareSelf")]
+        [TestCase("ModifyReportDataItemBareSelfWithoutParentheses")]
+        [TestCase("ModifyReportNestedDataItemBareSelf")]
+        [TestCase("ModifyOnRunRec")]
+        [TestCase("ModifyOnRunBareSelf")]
+        [TestCase("ModifyPageRec")]
+        [TestCase("ModifyPageBareSelf")]
+        [TestCase("ModifyNamespaced")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
