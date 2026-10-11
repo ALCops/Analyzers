@@ -41,6 +41,13 @@ public static class MethodOperationMap
         Map.TryGetValue(methodName, out var op) ? op : DatabaseOperation.None;
 
     /// <summary>
+    /// <c>DeleteAll</c> and <c>ModifyAll</c> select the affected rows before changing them, so at runtime
+    /// they need Read in addition to the operation <see cref="GetOperation"/> returns.
+    /// </summary>
+    public static bool ImpliesRead(string methodName) =>
+        SemanticFacts.IsSameName(methodName, "DeleteAll") || SemanticFacts.IsSameName(methodName, "ModifyAll");
+
+    /// <summary>
     /// The canonical ordering of permission characters: read, insert, modify, delete.
     /// </summary>
     public const string CanonicalOrder = "rimd";

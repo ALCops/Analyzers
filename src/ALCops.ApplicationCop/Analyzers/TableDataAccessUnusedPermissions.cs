@@ -254,7 +254,13 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                         return true;
 
                     if (permission is not null)
+                    {
                         requiredPermissions.Add(permission.Value);
+
+                        if (callName is not null
+                            && RequiredPermissionDetector.TryGetImpliedRead(permission.Value, callName) is { } impliedRead)
+                            requiredPermissions.Add(impliedRead);
+                    }
                 }
                 else if (descendant is IdentifierNameSyntax { Parent: not (InvocationExpressionSyntax or MemberAccessExpressionSyntax) } bareName
                     && IsPossibleDbMethodName(bareName.Identifier.ValueText)
