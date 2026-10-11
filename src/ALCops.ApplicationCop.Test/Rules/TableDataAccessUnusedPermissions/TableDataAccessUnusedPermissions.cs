@@ -61,6 +61,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("TableTypeTemporaryBareSelfWithoutParentheses")]
         [TestCase("ReportDataItemBarePartialUnusedWithoutParentheses")]
         [TestCase("UserProcedureNamedLikeDbMethodBareCall")]
+        [TestCase("VariableNamedLikeDbMethodWithoutParentheses")]
         [TestCase("ModifyReportNestedDataItemBareSelfOuterUnused")]
         public async Task HasDiagnostic(string testCase)
         {
