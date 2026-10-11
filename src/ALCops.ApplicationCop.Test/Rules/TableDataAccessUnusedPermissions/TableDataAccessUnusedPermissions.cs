@@ -56,6 +56,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("ReportAccessByPermissionDuplicateUnused")]
         [TestCase("ReportDataItemBarePartialUnused")]
         [TestCase("ReportDataItemUseTemporaryBareModify")]
+        [TestCase("ReportDataItemTableTypeTemporaryBareModify")]
         [TestCase("ModifyReportNestedDataItemBareSelfOuterUnused")]
         public async Task HasDiagnostic(string testCase)
         {
@@ -129,6 +130,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("ReportAccessByPermissionAndPermissions")]
         [TestCase("ModifyReportDataItemBareSelf")]
         [TestCase("ModifyReportDataItemBareSelfWithoutParentheses")]
+        [TestCase("ModifyBareSelfWithoutParenthesesInTable")]
         [TestCase("ModifyReportNestedDataItemBareSelf")]
         [TestCase("ModifyOnRunRec")]
         [TestCase("ModifyOnRunBareSelf")]

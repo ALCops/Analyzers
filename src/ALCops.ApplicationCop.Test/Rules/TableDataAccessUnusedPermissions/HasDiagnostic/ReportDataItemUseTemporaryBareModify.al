@@ -1,6 +1,6 @@
 report 50000 MyReport
 {
-    Permissions = [|tabledata MyTable = rm|];
+    Permissions = [|tabledata MyTable = m|];
 
     dataset
     {

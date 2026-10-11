@@ -246,7 +246,7 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     }
 
                     var permission = TryGetPermissionFromDbAccess(
-                        descendant, containingObject, localRecordVarMap, objectScopeRecordMap,
+                        descendant, containingObject, methodSymbol, localRecordVarMap, objectScopeRecordMap,
                         localRecordRefNames, objectScopeRecordRefNames, ctx,
                         out var isRecordRefAccess);
 
@@ -255,6 +255,17 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
                     if (permission is not null)
                         requiredPermissions.Add(permission.Value);
+                }
+                else if (descendant is IdentifierNameSyntax { Parent: not (InvocationExpressionSyntax or MemberAccessExpressionSyntax) } bareName
+                    && IsPossibleDbMethodName(bareName.Identifier.ValueText)
+                    && ctx.SemanticModel.GetOperation(bareName, ctx.CancellationToken) is IInvocationExpression bareInvocation
+                    && RequiredPermissionDetector.TryGetFromInvocation(bareInvocation, methodSymbol, includeSystemTables: true) is { } bareCall)
+                {
+                    // A bare call without parentheses (`Modify;`, `FindFirst;`) is a lone
+                    // identifier, not an invocation node, so the syntax walk above never sees it.
+                    // Binding resolves it to the invocation and its receiver, including the
+                    // implicit self and implicit record forms.
+                    requiredPermissions.Add(bareCall);
                 }
             }
         }
@@ -273,6 +284,7 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
     private static RequiredPermission? TryGetPermissionFromDbAccess(
         SyntaxNode node,
         IApplicationObjectTypeSymbol containingObject,
+        IMethodSymbol methodSymbol,
         Dictionary<string, IRecordTypeSymbol>? localRecordVarMap,
         Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap,
         HashSet<string>? localRecordRefNames,
@@ -290,11 +302,24 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         if (operation == DatabaseOperation.None)
             return null;
 
-        // Implicit self: bare `Method()` inside a table. The accessed table is the
-        // containing object itself (an ITableTypeSymbol). The operation model reports a
+        // Implicit self: bare `Method()`. Inside a table the accessed table is the
+        // containing object itself (an ITableTypeSymbol); the operation model reports a
         // null instance for bare self calls, so resolve directly from the object symbol.
+        // Elsewhere (report data item, xmlport table element, request page or `TableNo`
+        // `OnRun` record) the binder rewrites the call onto an implicit record receiver
+        // that no syntax-level map can name, so bind this one node and let the shared
+        // detector read the receiver. Only bare calls to DB-named methods outside tables
+        // reach this, which keeps the extra binding rare.
         if (hasImplicitSelf)
-            return TryGetPermissionForType(containingObject as ITypeSymbol, operation, node);
+        {
+            var self = TryGetPermissionForType(containingObject as ITypeSymbol, operation, node);
+            if (self is not null)
+                return self;
+
+            return ctx.SemanticModel.GetOperation(node, ctx.CancellationToken) is IInvocationExpression invocation
+                ? RequiredPermissionDetector.TryGetFromInvocation(invocation, methodSymbol, includeSystemTables: true)
+                : null;
+        }
 
         // Fast path: resolve receiver via variable map lookup, honoring AL scoping:
         // locals/parameters shadow object-scope variables, so the full local scope is
@@ -531,6 +556,9 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         foreach (var node in body.DescendantNodes())
         {
             if (node.TryGetMethodCall(out var methodName, out _, out _) && IsPossibleDbMethodName(methodName))
+                return true;
+
+            if (node is IdentifierNameSyntax bareName && IsPossibleDbMethodName(bareName.Identifier.ValueText))
                 return true;
         }
 
