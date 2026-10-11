@@ -122,6 +122,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DeleteAllImpliesRead")]
         [TestCase("ModifyAllImpliesRead")]
         [TestCase("DeleteAllImpliesReadBareSelf")]
+        [TestCase("DeleteAllImpliesReadBareSelfWithoutParentheses")]
         [TestCase("DataTransferCopyFieldsSameTable")]
         [TestCase("DataTransferCopyFieldsTwoTables")]
         [TestCase("DataTransferCopyRowsTwoTables")]
