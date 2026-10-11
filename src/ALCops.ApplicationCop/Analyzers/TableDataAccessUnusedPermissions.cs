@@ -308,8 +308,9 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         // Elsewhere (report data item, xmlport table element, request page or `TableNo`
         // `OnRun` record) the binder rewrites the call onto an implicit record receiver
         // that no syntax-level map can name, so bind this one node and let the shared
-        // detector read the receiver. Only bare calls to DB-named methods outside tables
-        // reach this, which keeps the extra binding rare.
+        // detector read the receiver (it also rejects temporary records). Only bare calls to
+        // DB-named methods that miss the table fast path reach this, which keeps the extra
+        // binding rare.
         if (hasImplicitSelf)
         {
             var self = TryGetPermissionForType(containingObject as ITypeSymbol, operation, node);
