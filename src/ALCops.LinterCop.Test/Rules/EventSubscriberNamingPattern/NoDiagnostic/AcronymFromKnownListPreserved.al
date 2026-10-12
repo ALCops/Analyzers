@@ -10,7 +10,7 @@ table 50100 MyTable
 codeunit 50100 MySubscriber
 {
     [EventSubscriber(ObjectType::Table, Database::MyTable, OnAfterValidateEvent, "LCY Amount", false, false)]
-    local procedure [|OnMyTable_OnAfterValidateEvent_LCYAmount|](var rec: Record MyTable; var xRec: Record MyTable)
+    local procedure [|OnTable_MyTable_OnAfterValidateEvent_LCYAmount|](var rec: Record MyTable; var xRec: Record MyTable)
     begin
     end;
 }
