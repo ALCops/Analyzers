@@ -9,7 +9,9 @@ paths:
 
 ## Purpose
 
-One analyzer reports two diagnostics: AC0033 `RestClientRequiresHttpClientHandler` (an object declares a `Codeunit "Rest Client"` variable but no codeunit in the app implements `"Http Client Handler"`, so the System Application's default handler sends the request and the permission scope, outgoing web-service telemetry and test mocking belong to the System Application) and AC0034 `TelemetryRequiresTelemetryLogger` (an object declares a `Codeunit Telemetry` or `"Feature Telemetry"` variable but no codeunit in the app implements `"Telemetry Logger"`, so `Telemetry Loggers Impl.` finds no logger for the publisher, logs `0000G7K` and drops the message).
+One analyzer reports two diagnostics: AC0033 `RestClientRequiresHttpClientHandler` (an object declares a `Codeunit "Rest Client"` variable but no codeunit in the app implements `"Http Client Handler"`, so the System Application's default handler, or a handler in a dependency app, sends the request) and AC0034 `TelemetryRequiresTelemetryLogger` (an object declares a `Codeunit Telemetry` or `"Feature Telemetry"` variable but no codeunit in the app implements `"Telemetry Logger"`, so `Telemetry Loggers Impl.` finds no logger for the publisher, logs `0000G7K` and drops the message).
+
+AC0033 is opt-in. Its intent is that every app sends its HTTP calls from its own extension, regardless of its dependencies. In a non-production environment the runtime blocks an extension's HTTP requests unless **Allow HttpClient Requests** is turned on for that extension on the **Extension Settings** page, and a production-to-sandbox copy starts with outbound calls blocked until the setting is turned on per extension. Only when the app's own handler sends the request does that app's setting govern the call. Outgoing web-service telemetry and test mocking follow the same extension and are secondary benefits.
 
 Registers `RegisterCompilationStartAction` with an inner `RegisterSymbolAction` on Codeunit, Table, TableExtension, Page, PageExtension, Report, ReportExtension, Query and XmlPort; main type `RequiredInterfaceImplementation` with a static pair table.
 
@@ -21,14 +23,16 @@ Registers `RegisterCompilationStartAction` with an inner `RegisterSymbolAction` 
 |---|---|
 | One analyzer with a hard-coded pair table (trigger codeunits → required interface → descriptor) | Both rules are the same "uses X, implements no Y" check; a future pair is one row plus one ID. Two separate analyzers would duplicate the walk and the index. |
 | Existence check only: some codeunit implements the interface | Tracking whether each variable is passed to `Initialize`/`Create` (or the logger registered via `OnRegisterTelemetryLogger`) needs a per-procedure flow walk; that is a separate follow-up rule, not this one. |
-| Coverage counts codeunits declared in the compiling module only (`GetDeclaredApplicationObjectSymbols`), obsolete and test codeunits included | Dependency implementations would need a cross-module scan and make the result depend on what happens to be referenced; a shared-library architecture suppresses via ruleset or pragma. |
+| Coverage counts codeunits declared in the compiling module only (`GetDeclaredApplicationObjectSymbols`), obsolete and test codeunits included | Dependency implementations would need a cross-module scan and make the result depend on what happens to be referenced; a shared-library architecture, where a base app sends the calls for its dependents, simply leaves AC0033 off. |
 | Trigger codeunit matched on object id AND name, per id/name pair (2350 "Rest Client"; 8711 Telemetry; 8703 "Feature Telemetry") | Id alone matches unrelated same-id objects outside the System Application; name alone matches any same-named codeunit. Namespace or module checks were rejected so stubbed or namespaced System Application builds still match. |
 | Interface matched by name only (`SemanticFacts.IsSameName`) | The implementing codeunit's `ImplementedInterfaces` points at the dependency interface; comparing module or namespace adds nothing a real app would get wrong. |
 | Codeunits with `Subtype = Test` or `TestRunner` are never reported | Test code uses the Rest Client or Telemetry against mocks and is not shipped as the publisher's runtime code. |
 | One diagnostic per rule per object, at the object name | The fix is app-wide (add one implementation), so per-variable diagnostics would repeat the same message; an object using both trigger kinds without either implementation gets two diagnostics. |
 | The symbol walk runs before the index is consulted | Most objects use neither codeunit; the lazily built index is only forced when an object actually uses one. |
-| Warning, enabled by default, `Category.Design` | The app works but attributes its calls or loses its telemetry silently; every ApplicationCop rule uses Design. |
-| No settings | Nothing to tune: the pairs are fixed platform facts and the suppression cases are covered by ruleset/pragma. |
+| AC0033: Info, disabled by default | A shared base layer that sends HTTP calls for its dependent apps is a valid design, and the rule does not see handlers in dependencies. Teams that want per-extension control through Allow HttpClient Requests enable it in their ruleset. |
+| AC0034: Warning, enabled by default | Without a registered logger the app's telemetry is dropped silently; that is wrong whatever the architecture. |
+| `Category.Design` for both | Every ApplicationCop rule uses Design. |
+| No settings | Nothing to tune: the pairs are fixed platform facts; AC0033 is switched on through the ruleset and AC0034 cases are suppressed through ruleset or pragma. |
 | No CodeFix | A generated handler or logger codeunit has no deterministic file, name, id or namespace. |
 | No version gate | Every SDK member used is available at ns2.0 / AL 12.0 (`reference/` tables in nav-sdk-docs). |
 
@@ -54,6 +58,7 @@ Registers `RegisterCompilationStartAction` with an inner `RegisterSymbolAction` 
 
 ## Test notes
 
+- AC0033 is disabled by default, so its tests enable it through `RestClientRequiresHttpClientHandler.ruleset.json` (`RuleSetPath`). The AC0034 tests use no ruleset; `BothRulesOneObject` there asserts AC0034 only. `BothRulesOneObjectReportsBoth` and `DisabledWithoutRuleSet` in the AC0033 class cover the two-rule object and the opt-in default.
 - `TableExtensionTriggerLocal` and `PageExtensionActionTriggerLocal` are gated on 13.0: AL 12 rejects extensions whose target is declared in the same module (AL0334).
 - Fixtures declare their own stubs with the real System Application ids (2350, 8711, 8703); the harness sets no id ranges, so ids outside 50000-99999 compile.
 - Report dataitems and page source tables use an inline `table 50100`; system tables are not available in the harness.
