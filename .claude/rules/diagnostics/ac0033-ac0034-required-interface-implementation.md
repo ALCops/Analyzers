@@ -13,7 +13,7 @@ One analyzer reports two diagnostics: AC0033 `RestClientRequiresHttpClientHandle
 
 AC0033 is opt-in. Its intent is that every app sends its HTTP calls from its own extension, regardless of its dependencies. In a non-production environment the runtime blocks an extension's HTTP requests unless **Allow HttpClient Requests** is turned on for that extension on the **Extension Settings** page, and a production-to-sandbox copy starts with outbound calls blocked until the setting is turned on per extension. Only when the app's own handler sends the request does that app's setting govern the call. Outgoing web-service telemetry and test mocking follow the same extension and are secondary benefits.
 
-AC0034 is opt-in as well. Its intent is that every app carries its own Telemetry Logger, regardless of which other apps are installed. That is safe on BC 25.0 and later, where a second registration for the same publisher is silently ignored (first wins), so a logger in every app drops nothing; before 25.0 each duplicate registration logs warning `0000G7J`. It is not the default because Microsoft documents a per-publisher model: one logger per publisher, which may live in any installed app of that publisher, and the analyzer sees only the compiling app, so it cannot tell a missing logger from a logger supplied by a sibling app. See Platform facts.
+AC0034 is opt-in as well. Its intent is that every app ships its own Telemetry Logger, so its telemetry does not depend on which other apps from the publisher are installed; it does not give per-app routing, because the lookup stays per publisher and the first registration wins. That is safe on BC 25.0 and later, where a second registration for the same publisher is silently ignored (first wins), so a logger in every app drops nothing; before 25.0 each duplicate registration logs warning `0000G7J`. It is not the default because Microsoft documents a per-publisher model: one logger per publisher, which may live in any installed app of that publisher, and the analyzer sees only the compiling app, so it cannot tell a missing logger from a logger supplied by a sibling app. See Platform facts.
 
 Registers `RegisterCompilationStartAction` with an inner `RegisterSymbolAction` on Codeunit, Table, TableExtension, Page, PageExtension, Report, ReportExtension, Query and XmlPort; main type `RequiredInterfaceImplementation` with a static pair table.
 
@@ -53,7 +53,7 @@ Registers `RegisterCompilationStartAction` with an inner `RegisterSymbolAction` 
 
 ## Platform facts
 
-Telemetry runtime behaviour, from the System Application `Telemetry/src/Logging/` sources (identical across localizations):
+Telemetry runtime behaviour, from the System Application `Telemetry/src/Logging/` sources (identical across localizations; verified against the `be-28.5.54151.54763` snapshot of the BC code history, and the 25.0 change is the diff of `TelemetryLoggersImpl.Codeunit.al` between the `be-23.5.16502.16887` and `be-25.0.23364.24925` snapshots):
 
 - `Telemetry.LogMessage` and `Feature Telemetry` pass the calling app's publisher (`NavApp.GetCallerModuleInfo`). `Telemetry Impl.LogMessageInternal` sets the call-stack publishers, raises `"Telemetry Loggers".OnRegisterTelemetryLogger`, then looks the logger up by publisher string.
 - `Register` keys the logger by the registering app's publisher, accepts it only when that publisher is on the call stack, and keeps the first registration per publisher.

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!--
     Microsoft ResX Schema
@@ -457,7 +457,7 @@
     <value>{0} '{1}' uses the "Telemetry" or "Feature Telemetry" codeunit, but this app does not implement the "Telemetry Logger" interface, so its telemetry is discarded unless another app from the same publisher registers a logger.</value>
   </data>
   <data name="TelemetryRequiresTelemetryLoggerDescription" xml:space="preserve">
-    <value>Enable this rule when every app must carry its own Telemetry Logger, regardless of which other apps are installed. The "Telemetry" and "Feature Telemetry" codeunits look up the logger registered for the calling app's publisher on every call: any installed app from the same publisher can register it, the first registration wins (before BC 25.0 each duplicate registration also logs warning 0000G7J), and the logger's own Session.LogMessage decides which Application Insights resource receives the message. When no app from the publisher registers a logger, the message is discarded and warning 0000G7K is logged. Implement the "Telemetry Logger" interface in this app and register it in a subscriber to "Telemetry Loggers".OnRegisterTelemetryLogger.</value>
+    <value>Enable this rule when every app must ship its own Telemetry Logger, so that its telemetry does not depend on which other apps from the publisher are installed. The "Telemetry" and "Feature Telemetry" codeunits look up the logger registered for the calling app's publisher on every call: any installed app from the same publisher can register it, the first registration wins (before BC 25.0 each duplicate registration also logs warning 0000G7J), and the logger's own Session.LogMessage decides which Application Insights resource receives the message. When no app from the publisher registers a logger, the message is discarded and warning 0000G7K is logged. Implement the "Telemetry Logger" interface in this app and register it in a subscriber to "Telemetry Loggers".OnRegisterTelemetryLogger.</value>
   </data>
   <data name="ZeroEnumValueReservedForEmptyTitle" xml:space="preserve">
     <value>Reserve Enum value zero (0) for empty value</value>
