@@ -58,5 +58,16 @@ namespace ALCops.ApplicationCop.Test
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TelemetryRequiresTelemetryLogger);
         }
+
+        [Test]
+        public async Task DisabledWithoutRuleSet()
+        {
+            var fixture = RoslynFixtureFactory.Create<Analyzers.RequiredInterfaceImplementation>();
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), "GlobalVariableTelemetry.al"))
+                .ConfigureAwait(false);
+
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TelemetryRequiresTelemetryLogger);
+        }
     }
 }
