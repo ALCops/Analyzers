@@ -10,12 +10,16 @@ namespace ALCops.ApplicationCop.Test
         [SetUp]
         public void Setup()
         {
-            _fixture = RoslynFixtureFactory.Create<Analyzers.RequiredInterfaceImplementation>();
-
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
                     Path.Combine("Rules", nameof(TelemetryRequiresTelemetryLogger)));
+
+            _fixture = RoslynFixtureFactory.Create<Analyzers.RequiredInterfaceImplementation>(
+                new AnalyzerTestFixtureConfig
+                {
+                    RuleSetPath = Path.Combine(_testCasePath, $"{nameof(TelemetryRequiresTelemetryLogger)}.ruleset.json")
+                });
         }
 
         [Test]
@@ -53,6 +57,17 @@ namespace ALCops.ApplicationCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TelemetryRequiresTelemetryLogger);
+        }
+
+        [Test]
+        public async Task DisabledWithoutRuleSet()
+        {
+            var fixture = RoslynFixtureFactory.Create<Analyzers.RequiredInterfaceImplementation>();
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), "GlobalVariableTelemetry.al"))
+                .ConfigureAwait(false);
+
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TelemetryRequiresTelemetryLogger);
         }
     }
 }

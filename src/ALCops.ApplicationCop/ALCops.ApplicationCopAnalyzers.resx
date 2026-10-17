@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!--
     Microsoft ResX Schema
@@ -451,13 +451,13 @@
     <value>Enable this rule when every app must send its HTTP calls from its own extension, regardless of its dependencies. In a non-production environment, the runtime blocks HTTP requests from an extension unless 'Allow HttpClient Requests' is turned on for that extension on the Extension Settings page. When a production environment is copied to a sandbox, outbound HTTP calls are blocked until the setting is turned on for each extension. Without an "Http Client Handler" implementation in this app, the System Application's default handler or a handler in a dependency app sends the request, so this app's setting does not govern the call. Implement the "Http Client Handler" interface in this app and pass it to Initialize or Create.</value>
   </data>
   <data name="TelemetryRequiresTelemetryLoggerTitle" xml:space="preserve">
-    <value>Telemetry requires a Telemetry Logger implementation</value>
+    <value>Register a Telemetry Logger in this app</value>
   </data>
   <data name="TelemetryRequiresTelemetryLoggerMessageFormat" xml:space="preserve">
-    <value>{0} '{1}' uses the "Telemetry" or "Feature Telemetry" codeunit, but no codeunit in this app implements the "Telemetry Logger" interface; its telemetry messages are discarded and only warning 0000G7K is logged.</value>
+    <value>{0} '{1}' uses the "Telemetry" or "Feature Telemetry" codeunit, but this app does not implement the "Telemetry Logger" interface, so its telemetry is discarded unless another app from the same publisher registers a logger.</value>
   </data>
   <data name="TelemetryRequiresTelemetryLoggerDescription" xml:space="preserve">
-    <value>The "Telemetry" and "Feature Telemetry" codeunits route each message to the "Telemetry Logger" registered for the calling app's publisher. When no logger is registered, the message is not forwarded anywhere: "Telemetry Loggers Impl." logs warning 0000G7K and discards it. Implement the "Telemetry Logger" interface and register it in a subscriber to "Telemetry Loggers".OnRegisterTelemetryLogger.</value>
+    <value>Enable this rule when every app must ship its own Telemetry Logger, so that its telemetry does not depend on which other apps from the publisher are installed. The "Telemetry" and "Feature Telemetry" codeunits look up the logger registered for the calling app's publisher on every call: any installed app from the same publisher can register it, the first registration wins (before BC 25.0 each duplicate registration also logs warning 0000G7J), and the logger's own Session.LogMessage decides which Application Insights resource receives the message. When no app from the publisher registers a logger, the message is discarded and warning 0000G7K is logged. Implement the "Telemetry Logger" interface in this app and register it in a subscriber to "Telemetry Loggers".OnRegisterTelemetryLogger.</value>
   </data>
   <data name="ZeroEnumValueReservedForEmptyTitle" xml:space="preserve">
     <value>Reserve Enum value zero (0) for empty value</value>

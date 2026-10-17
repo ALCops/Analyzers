@@ -1,0 +1,10 @@
+{
+    "name": "Enable AC0034",
+    "description": "Enables the default-disabled TelemetryRequiresTelemetryLogger rule so it can be tested.",
+    "rules": [
+        {
+            "id": "AC0034",
+            "action": "Info"
+        }
+    ]
+}

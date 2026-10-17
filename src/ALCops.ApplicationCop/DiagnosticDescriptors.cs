@@ -340,8 +340,8 @@ public static class DiagnosticDescriptors
         title: ApplicationCopAnalyzers.TelemetryRequiresTelemetryLoggerTitle,
         messageFormat: ApplicationCopAnalyzers.TelemetryRequiresTelemetryLoggerMessageFormat,
         category: Category.Design,
-        defaultSeverity: DiagnosticSeverity.Warning,
-        isEnabledByDefault: true,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
         description: ApplicationCopAnalyzers.TelemetryRequiresTelemetryLoggerDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TelemetryRequiresTelemetryLogger));
 
