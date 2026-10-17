@@ -10,12 +10,16 @@ namespace ALCops.ApplicationCop.Test
         [SetUp]
         public void Setup()
         {
-            _fixture = RoslynFixtureFactory.Create<Analyzers.RequiredInterfaceImplementation>();
-
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
                     Path.Combine("Rules", nameof(TelemetryRequiresTelemetryLogger)));
+
+            _fixture = RoslynFixtureFactory.Create<Analyzers.RequiredInterfaceImplementation>(
+                new AnalyzerTestFixtureConfig
+                {
+                    RuleSetPath = Path.Combine(_testCasePath, $"{nameof(TelemetryRequiresTelemetryLogger)}.ruleset.json")
+                });
         }
 
         [Test]
