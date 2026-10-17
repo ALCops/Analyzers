@@ -330,8 +330,8 @@ public static class DiagnosticDescriptors
         title: ApplicationCopAnalyzers.RestClientRequiresHttpClientHandlerTitle,
         messageFormat: ApplicationCopAnalyzers.RestClientRequiresHttpClientHandlerMessageFormat,
         category: Category.Design,
-        defaultSeverity: DiagnosticSeverity.Warning,
-        isEnabledByDefault: true,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
         description: ApplicationCopAnalyzers.RestClientRequiresHttpClientHandlerDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.RestClientRequiresHttpClientHandler));
 

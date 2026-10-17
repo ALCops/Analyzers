@@ -1,0 +1,10 @@
+{
+    "name": "Enable AC0033",
+    "description": "Enables the default-disabled RestClientRequiresHttpClientHandler rule so it can be tested.",
+    "rules": [
+        {
+            "id": "AC0033",
+            "action": "Info"
+        }
+    ]
+}

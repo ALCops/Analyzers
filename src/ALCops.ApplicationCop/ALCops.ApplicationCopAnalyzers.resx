@@ -442,13 +442,13 @@
     <value>ALCops: Remove unused permission for table '{0}'</value>
   </data>
   <data name="RestClientRequiresHttpClientHandlerTitle" xml:space="preserve">
-    <value>Rest Client requires an Http Client Handler implementation</value>
+    <value>Send Rest Client requests through an Http Client Handler in this app</value>
   </data>
   <data name="RestClientRequiresHttpClientHandlerMessageFormat" xml:space="preserve">
-    <value>{0} '{1}' uses the "Rest Client" codeunit, but no codeunit in this app implements the "Http Client Handler" interface; requests are sent by the System Application's default handler.</value>
+    <value>{0} '{1}' uses the "Rest Client" codeunit, but this app does not implement the "Http Client Handler" interface, so its HTTP requests are not sent from this extension.</value>
   </data>
   <data name="RestClientRequiresHttpClientHandlerDescription" xml:space="preserve">
-    <value>The "Rest Client" codeunit delegates the HTTP call to an "Http Client Handler" implementation. Without one in the app, the System Application's default handler sends the request, so the external-call permission, outgoing web service telemetry and test mocking attribute the call to the System Application instead of the calling app. Implement the "Http Client Handler" interface and pass it to Initialize or Create.</value>
+    <value>Enable this rule when every app must send its HTTP calls from its own extension, regardless of its dependencies. In a non-production environment, the runtime blocks HTTP requests from an extension unless 'Allow HttpClient Requests' is turned on for that extension on the Extension Settings page. When a production environment is copied to a sandbox, outbound HTTP calls are blocked until the setting is turned on for each extension. Without an "Http Client Handler" implementation in this app, the System Application's default handler or a handler in a dependency app sends the request, so this app's setting does not govern the call. Implement the "Http Client Handler" interface in this app and pass it to Initialize or Create.</value>
   </data>
   <data name="TelemetryRequiresTelemetryLoggerTitle" xml:space="preserve">
     <value>Telemetry requires a Telemetry Logger implementation</value>
