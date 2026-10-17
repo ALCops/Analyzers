@@ -58,7 +58,7 @@ Registers `RegisterCompilationStartAction` with an inner `RegisterSymbolAction` 
 
 ## Test notes
 
-- AC0033 is disabled by default, so its tests enable it through `RestClientRequiresHttpClientHandler.ruleset.json` (`RuleSetPath`). The AC0034 tests use no ruleset; `BothRulesOneObject` there asserts AC0034 only.
+- AC0033 is disabled by default, so its tests enable it through `RestClientRequiresHttpClientHandler.ruleset.json` (`RuleSetPath`). The AC0034 tests use no ruleset; `BothRulesOneObject` there asserts AC0034 only. `BothRulesOneObjectReportsBoth` and `DisabledWithoutRuleSet` in the AC0033 class cover the two-rule object and the opt-in default.
 - `TableExtensionTriggerLocal` and `PageExtensionActionTriggerLocal` are gated on 13.0: AL 12 rejects extensions whose target is declared in the same module (AL0334).
 - Fixtures declare their own stubs with the real System Application ids (2350, 8711, 8703); the harness sets no id ranges, so ids outside 50000-99999 compile.
 - Report dataitems and page source tables use an inline `table 50100`; system tables are not available in the harness.

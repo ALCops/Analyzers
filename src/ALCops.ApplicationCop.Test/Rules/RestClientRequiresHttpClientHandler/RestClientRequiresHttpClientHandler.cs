@@ -72,5 +72,26 @@ namespace ALCops.ApplicationCop.Test
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.RestClientRequiresHttpClientHandler);
         }
+
+        [Test]
+        public async Task BothRulesOneObjectReportsBoth()
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), "BothRulesOneObject.al"))
+                .ConfigureAwait(false);
+
+            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.RestClientRequiresHttpClientHandler);
+            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.TelemetryRequiresTelemetryLogger);
+        }
+
+        [Test]
+        public async Task DisabledWithoutRuleSet()
+        {
+            var fixture = RoslynFixtureFactory.Create<Analyzers.RequiredInterfaceImplementation>();
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), "GlobalVariable.al"))
+                .ConfigureAwait(false);
+
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.RestClientRequiresHttpClientHandler);
+        }
     }
 }
