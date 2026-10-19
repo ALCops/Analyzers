@@ -399,6 +399,24 @@
   <data name="TranslatableTextShouldBeTranslatedDescription" xml:space="preserve">
     <value>All translatable texts (captions, tooltips, labels, option captions) should have translations in the project's XLIFF files for every target language. Missing translations cause the application to display the source language text to users in other locales, degrading the user experience.</value>
   </data>
+  <data name="TryFunctionDatabaseModificationDisallowedTitle" xml:space="preserve">
+    <value>TryFunctions must not directly modify the database</value>
+  </data>
+  <data name="TryFunctionDatabaseModificationDisallowedMessageFormat" xml:space="preserve">
+    <value>Built-in method '{0}' directly modifies the database and must not be called from a TryFunction.</value>
+  </data>
+  <data name="TryFunctionDatabaseModificationDisallowedDescription" xml:space="preserve">
+    <value>Database changes made inside a TryFunction are not rolled back when an error is caught. Direct database-writing built-in methods are therefore disallowed in TryFunctions.</value>
+  </data>
+  <data name="TryFunctionPotentialDatabaseModificationTitle" xml:space="preserve">
+    <value>Call may modify the database inside a TryFunction</value>
+  </data>
+  <data name="TryFunctionPotentialDatabaseModificationMessageFormat" xml:space="preserve">
+    <value>Method '{0}' may modify the database and should be reviewed before it is called from a TryFunction.</value>
+  </data>
+  <data name="TryFunctionPotentialDatabaseModificationDescription" xml:space="preserve">
+    <value>Some built-in methods can execute code or trigger validation that may write to the database. Custom methods are also flagged because their implementations are not analyzed transitively. Review these calls because TryFunction errors do not roll back database changes.</value>
+  </data>
   <data name="ParameterNotReferencedTitle" xml:space="preserve">
     <value>Parameter is not referenced</value>
   </data>
