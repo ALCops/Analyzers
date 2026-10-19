@@ -10,4 +10,5 @@ public static class DiagnosticIds
     public static readonly string UseParenthesisForMethodAssignment = "FC0005";
     public static readonly string PermissionValuesShouldBeLowercase = "FC0006";
     public static readonly string StatementBlocksSeparatedByBlankLine = "FC0007";
+    public static readonly string KeywordShouldEndLine = "FC0008";
 }
