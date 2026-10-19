@@ -105,6 +105,16 @@ public static class DiagnosticDescriptors
         description: DocumentationCopAnalyzers.InternalEventRequiresDocumentationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.InternalEventRequiresDocumentation));
 
+    public static readonly DiagnosticDescriptor PragmaDisableRequiresComment = new(
+        id: DiagnosticIds.PragmaDisableRequiresComment,
+        title: DocumentationCopAnalyzers.PragmaDisableRequiresCommentTitle,
+        messageFormat: DocumentationCopAnalyzers.PragmaDisableRequiresCommentMessageFormat,
+        category: Category.Style,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: DocumentationCopAnalyzers.PragmaDisableRequiresCommentDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.PragmaDisableRequiresComment));
+
     public static readonly DiagnosticDescriptor AnalyzerException = new(
         id: DiagnosticIds.AnalyzerException,
         title: DocumentationCopAnalyzers.AnalyzerExceptionTitle,

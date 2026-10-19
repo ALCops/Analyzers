@@ -13,4 +13,5 @@ public static class DiagnosticIds
     public static readonly string InternalObjectRequiresDocumentation = "DC0008";
     public static readonly string EventRequiresDocumentation = "DC0009";
     public static readonly string InternalEventRequiresDocumentation = "DC0010";
+    public static readonly string PragmaDisableRequiresComment = "DC0011";
 }
