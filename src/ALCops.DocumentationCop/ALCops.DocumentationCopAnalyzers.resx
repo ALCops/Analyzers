@@ -207,6 +207,15 @@
   <data name="InternalEventRequiresDocumentationDescription" xml:space="preserve">
     <value>Internal events can be part of the exposed API (internalsVisibleTo) and should be explicitly documented to justify their availability. XML documentation comments communicate intent, usage, and guarantees to consumers of the extension.</value>
   </data>
+  <data name="PragmaDisableRequiresCommentTitle" xml:space="preserve">
+    <value>Pragma that disables warnings should have a comment explaining why</value>
+  </data>
+  <data name="PragmaDisableRequiresCommentMessageFormat" xml:space="preserve">
+    <value>Add a comment explaining why this warning is disabled.</value>
+  </data>
+  <data name="PragmaDisableRequiresCommentDescription" xml:space="preserve">
+    <value>A '#pragma warning disable' directive should be accompanied by a comment that explains why the warning is disabled. The comment can be a trailing comment on the pragma line or a comment on the line directly above it.</value>
+  </data>
   <data name="AnalyzerExceptionTitle" xml:space="preserve">
     <value>Analyzer threw an unhandled exception</value>
   </data>
