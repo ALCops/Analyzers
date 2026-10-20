@@ -52,15 +52,7 @@ public sealed class PragmaDisableRequiresComment : DiagnosticAnalyzer
     private static bool HasCommentOnLineAbove(PragmaWarningDirectiveTriviaSyntax pragma)
     {
         var leadingTrivia = pragma.ParentTrivia.Token.LeadingTrivia;
-        var index = -1;
-        for (var i = 0; i < leadingTrivia.Count; i++)
-        {
-            if (leadingTrivia[i].FullSpan == pragma.ParentTrivia.FullSpan)
-            {
-                index = i;
-                break;
-            }
-        }
+        var index = leadingTrivia.IndexOf(pragma.ParentTrivia);
 
         if (index < 0)
             return false;
@@ -90,14 +82,14 @@ public sealed class PragmaDisableRequiresComment : DiagnosticAnalyzer
 
     private static bool IsNonEmptyComment(SyntaxTrivia trivia)
     {
-        string delimiters;
+        string text;
         if (trivia.IsKind(EnumProvider.SyntaxKind.LineCommentTrivia))
-            delimiters = "/";
+            text = trivia.ToString().Trim('/');
         else if (trivia.IsKind(EnumProvider.SyntaxKind.CommentTrivia))
-            delimiters = "/*";
+            text = trivia.ToString().Trim('/', '*');
         else
             return false;
 
-        return !string.IsNullOrWhiteSpace(trivia.ToString().Trim(delimiters.ToCharArray()));
+        return !string.IsNullOrWhiteSpace(text);
     }
 }
