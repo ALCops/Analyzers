@@ -135,10 +135,31 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
             return null;
         }
 
-        var eventSourceName = referencedObject.Name;
+        var eventSource = referencedObject.Name;
+        var eventSourceType = referencedObject.Kind.ToString();
         var elementName = attribute.Arguments[3].ValueText ?? string.Empty;
+        var isSelfReference = IsSelfReference(
+            referencedObject,
+            method.GetContainingApplicationObjectTypeSymbol());
 
-        return NameBuilder.BuildAccepted(segments, eventSourceName, eventName, elementName, acronyms);
+        return NameBuilder.BuildAccepted(segments, eventSourceType, eventSource, eventName, elementName, isSelfReference, acronyms);
+    }
+
+    private static bool IsSelfReference(
+        IApplicationObjectTypeSymbol source,
+        IApplicationObjectTypeSymbol? containingObject)
+    {
+        if (source.IsSameApplicationObject(containingObject))
+        {
+            return true;
+        }
+
+        if (containingObject is IApplicationObjectExtensionTypeSymbol extension)
+        {
+            return source.IsSameApplicationObject(extension.Target);
+        }
+
+        return false;
     }
 
     private static bool WouldCollideInContainingType(
@@ -197,7 +218,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
         return false;
     }
 
-    private enum TokenKind { EventSource, EventName, ElementName }
+    private enum TokenKind { EventSourceType, EventSource, EventName, ElementName }
 
     private abstract class TemplateSegment { }
 
@@ -211,7 +232,13 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
     {
         public TokenKind Kind { get; }
         public IdentifierCaseStyle Style { get; }
-        public TokenSegment(TokenKind kind, IdentifierCaseStyle style) { Kind = kind; Style = style; }
+        public string? SelfReferenceText { get; }
+        public TokenSegment(TokenKind kind, IdentifierCaseStyle style, string? selfReferenceText = null)
+        {
+            Kind = kind;
+            Style = style;
+            SelfReferenceText = selfReferenceText;
+        }
     }
 
     private sealed class ConditionalGroupSegment : TemplateSegment
@@ -226,21 +253,26 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
             new Dictionary<string, (TokenKind, IdentifierCaseStyle)>(StringComparer.Ordinal)
             {
 #pragma warning disable IDE0055 // Aligned lookup table; the formatter has no aligned-assignment option
-                ["{EventSource}"]  = (TokenKind.EventSource,  IdentifierCaseStyle.Pascal),
-                ["{eventSource}"]  = (TokenKind.EventSource,  IdentifierCaseStyle.Camel),
-                ["{event_source}"] = (TokenKind.EventSource,  IdentifierCaseStyle.Snake),
-                ["{event-source}"] = (TokenKind.EventSource,  IdentifierCaseStyle.Kebab),
-                ["{Event Source}"] = (TokenKind.EventSource,  IdentifierCaseStyle.Raw),
-                ["{EventName}"]    = (TokenKind.EventName,    IdentifierCaseStyle.Pascal),
-                ["{eventName}"]    = (TokenKind.EventName,    IdentifierCaseStyle.Camel),
-                ["{event_name}"]   = (TokenKind.EventName,    IdentifierCaseStyle.Snake),
-                ["{event-name}"]   = (TokenKind.EventName,    IdentifierCaseStyle.Kebab),
-                ["{Event Name}"]   = (TokenKind.EventName,    IdentifierCaseStyle.Raw),
-                ["{ElementName}"]  = (TokenKind.ElementName,  IdentifierCaseStyle.Pascal),
-                ["{elementName}"]  = (TokenKind.ElementName,  IdentifierCaseStyle.Camel),
-                ["{element_name}"] = (TokenKind.ElementName,  IdentifierCaseStyle.Snake),
-                ["{element-name}"] = (TokenKind.ElementName,  IdentifierCaseStyle.Kebab),
-                ["{Element Name}"] = (TokenKind.ElementName,  IdentifierCaseStyle.Raw),
+                ["{EventSource}"]       = (TokenKind.EventSource,  IdentifierCaseStyle.Pascal),
+                ["{eventSource}"]       = (TokenKind.EventSource,  IdentifierCaseStyle.Camel),
+                ["{event_source}"]      = (TokenKind.EventSource,  IdentifierCaseStyle.Snake),
+                ["{event-source}"]      = (TokenKind.EventSource,  IdentifierCaseStyle.Kebab),
+                ["{Event Source}"]      = (TokenKind.EventSource,  IdentifierCaseStyle.Raw),
+                ["{EventSourceType}"]   = (TokenKind.EventSourceType, IdentifierCaseStyle.Pascal),
+                ["{eventSourceType}"]   = (TokenKind.EventSourceType, IdentifierCaseStyle.Camel),
+                ["{event_source_type}"] = (TokenKind.EventSourceType, IdentifierCaseStyle.Snake),
+                ["{event-source-type}"] = (TokenKind.EventSourceType, IdentifierCaseStyle.Kebab),
+                ["{Event Source Type}"] = (TokenKind.EventSourceType, IdentifierCaseStyle.Raw),
+                ["{EventName}"]         = (TokenKind.EventName,    IdentifierCaseStyle.Pascal),
+                ["{eventName}"]         = (TokenKind.EventName,    IdentifierCaseStyle.Camel),
+                ["{event_name}"]        = (TokenKind.EventName,    IdentifierCaseStyle.Snake),
+                ["{event-name}"]        = (TokenKind.EventName,    IdentifierCaseStyle.Kebab),
+                ["{Event Name}"]        = (TokenKind.EventName,    IdentifierCaseStyle.Raw),
+                ["{ElementName}"]       = (TokenKind.ElementName,  IdentifierCaseStyle.Pascal),
+                ["{elementName}"]       = (TokenKind.ElementName,  IdentifierCaseStyle.Camel),
+                ["{element_name}"]      = (TokenKind.ElementName,  IdentifierCaseStyle.Snake),
+                ["{element-name}"]      = (TokenKind.ElementName,  IdentifierCaseStyle.Kebab),
+                ["{Element Name}"]      = (TokenKind.ElementName,  IdentifierCaseStyle.Raw),
 #pragma warning restore IDE0055
             };
 
@@ -311,9 +343,9 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
 
                     var placeholder = template.Substring(pos, braceEnd - pos + 1);
 
-                    if (KnownPlaceholders.TryGetValue(placeholder, out var tokenInfo))
+                    if (TryGetTokenInfo(placeholder, out var tokenInfo, out var selfReferenceText))
                     {
-                        segments.Add(new TokenSegment(tokenInfo.Kind, tokenInfo.Style));
+                        segments.Add(new TokenSegment(tokenInfo.Kind, tokenInfo.Style, selfReferenceText));
                     }
                     else
                     {
@@ -334,6 +366,38 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
                 segments.Add(new LiteralSegment(literal.ToString()));
             }
         }
+
+        private static bool TryGetTokenInfo(
+            string placeholder,
+            out (TokenKind Kind, IdentifierCaseStyle Style) tokenInfo,
+            out string? selfReferenceText)
+        {
+            if (KnownPlaceholders.TryGetValue(placeholder, out tokenInfo))
+            {
+                selfReferenceText = null;
+                return true;
+            }
+
+            var separatorIndex = placeholder.IndexOf('|');
+
+            if (separatorIndex <= 1 || separatorIndex == placeholder.Length - 2)
+            {
+                selfReferenceText = null;
+                return false;
+            }
+
+            var tokenName = placeholder.Remove(separatorIndex, placeholder.Length - separatorIndex - 1);
+
+            if (!KnownPlaceholders.TryGetValue(tokenName, out tokenInfo)
+                || tokenInfo.Kind != TokenKind.EventSourceType)
+            {
+                selfReferenceText = null;
+                return false;
+            }
+
+            selfReferenceText = placeholder.Substring(separatorIndex + 1, placeholder.Length - separatorIndex - 2);
+            return true;
+        }
     }
 
     private static class NameBuilder
@@ -348,9 +412,11 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
         /// </summary>
         public static List<string> BuildAccepted(
             IReadOnlyList<TemplateSegment> segments,
+            string eventSourceType,
             string eventSource,
             string eventName,
             string elementName,
+            bool isSelfReference,
             AcronymRegistry acronyms)
         {
             // Start with a single empty accumulator; extend once per segment. When a segment
@@ -358,9 +424,9 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
             // place with no outer-list allocation.
             var accumulators = new List<StringBuilder>(1) { new StringBuilder() };
 
-            ExtendAccepted(segments, ref accumulators, eventSource, eventName, elementName, acronyms);
+            ExtendAccepted(segments, ref accumulators, eventSourceType, eventSource, eventName, elementName, isSelfReference, acronyms);
 
-            // Materialise and dedup preserving first-seen order so element [0] is preferred.
+            // Materialize and dedupe preserving first-seen order so element [0] is preferred.
             var seen = new HashSet<string>(StringComparer.Ordinal);
             var result = new List<string>(accumulators.Count);
 
@@ -380,9 +446,11 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
         private static void ExtendAccepted(
             IReadOnlyList<TemplateSegment> segments,
             ref List<StringBuilder> accumulators,
+            string eventSourceType,
             string eventSource,
             string eventName,
             string elementName,
+            bool isSelfReference,
             AcronymRegistry acronyms)
         {
             foreach (var segment in segments)
@@ -396,8 +464,20 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
                 }
                 else if (segment is TokenSegment token)
                 {
-                    var value = TokenValue(token.Kind, eventSource, eventName, elementName);
-                    var alts = IdentifierNameRenderer.RenderAccepted(value, token.Style, acronyms);
+                    if (token.SelfReferenceText is not null && isSelfReference)
+                    {
+                        var selfReferenceValue = NamingTokenValue(token, eventSourceType, eventSource, eventName, elementName, isSelfReference);
+
+                        foreach (var sb in accumulators)
+                        {
+                            sb.Append(selfReferenceValue);
+                        }
+
+                        continue;
+                    }
+
+                    var referenceValue = NamingTokenValue(token.Kind, eventSourceType, eventSource, eventName, elementName);
+                    var alts = IdentifierNameRenderer.RenderAccepted(referenceValue, token.Style, acronyms);
 
                     if (alts.Count == 1)
                     {
@@ -430,17 +510,34 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
                 }
                 else if (segment is ConditionalGroupSegment group)
                 {
-                    if (AllTokensNonEmpty(group.Children, eventSource, eventName, elementName))
+                    if (AllTokensNonEmpty(group.Children, eventSourceType, eventSource, eventName, elementName, isSelfReference))
                     {
-                        ExtendAccepted(group.Children, ref accumulators, eventSource, eventName, elementName, acronyms);
+                        ExtendAccepted(group.Children, ref accumulators, eventSourceType, eventSource, eventName, elementName, isSelfReference, acronyms);
                     }
                 }
             }
         }
 
-        private static string TokenValue(TokenKind kind, string eventSource, string eventName, string elementName) =>
+        private static string NamingTokenValue(
+            TokenSegment token,
+            string eventSourceType,
+            string eventSource,
+            string eventName,
+            string elementName,
+            bool isSelfReference)
+        {
+            if (token.SelfReferenceText is not null && isSelfReference)
+            {
+                return token.SelfReferenceText;
+            }
+
+            return NamingTokenValue(token.Kind, eventSourceType, eventSource, eventName, elementName);
+        }
+
+        private static string NamingTokenValue(TokenKind kind, string eventSourceType, string eventSource, string eventName, string elementName) =>
             kind switch
             {
+                TokenKind.EventSourceType => eventSourceType,
                 TokenKind.EventSource => eventSource,
                 TokenKind.EventName => eventName,
                 TokenKind.ElementName => elementName,
@@ -449,15 +546,17 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
 
         private static bool AllTokensNonEmpty(
             IReadOnlyList<TemplateSegment> segments,
+            string eventSourceType,
             string eventSource,
             string eventName,
-            string elementName)
+            string elementName,
+            bool isSelfReference)
         {
             foreach (var segment in segments)
             {
                 if (segment is TokenSegment token)
                 {
-                    var value = TokenValue(token.Kind, eventSource, eventName, elementName);
+                    var value = NamingTokenValue(token, eventSourceType, eventSource, eventName, elementName, isSelfReference);
 
                     if (string.IsNullOrEmpty(value))
                     {
@@ -466,7 +565,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
                 }
                 else if (segment is ConditionalGroupSegment nested)
                 {
-                    if (!AllTokensNonEmpty(nested.Children, eventSource, eventName, elementName))
+                    if (!AllTokensNonEmpty(nested.Children, eventSourceType, eventSource, eventName, elementName, isSelfReference))
                     {
                         return false;
                     }
