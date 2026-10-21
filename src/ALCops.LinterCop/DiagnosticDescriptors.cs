@@ -264,6 +264,16 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.TranslatableTextShouldBeTranslatedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TranslatableTextShouldBeTranslated));
 
+    public static readonly DiagnosticDescriptor TranslationFilesMustBeWellFormed = new(
+        id: DiagnosticIds.TranslationFilesMustBeWellFormed,
+        title: LinterCopAnalyzers.TranslationFilesMustBeWellFormedTitle,
+        messageFormat: LinterCopAnalyzers.TranslationFilesMustBeWellFormedMessageFormat,
+        category: Category.Style,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.TranslationFilesMustBeWellFormedDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TranslationFilesMustBeWellFormed));
+
     public static readonly DiagnosticDescriptor UseIsEmptyMethodInsteadOfCount = new(
         id: DiagnosticIds.UseIsEmptyMethodInsteadOfCount,
         title: LinterCopAnalyzers.UseIsEmptyMethodInsteadOfCountTitle,

@@ -399,6 +399,15 @@
   <data name="TranslatableTextShouldBeTranslatedDescription" xml:space="preserve">
     <value>All translatable texts (captions, tooltips, labels, option captions) should have translations in the project's XLIFF files for every target language. Missing translations cause the application to display the source language text to users in other locales, degrading the user experience.</value>
   </data>
+  <data name="TranslationFilesMustBeWellFormedTitle" xml:space="preserve">
+    <value>Translation files must be well-formed</value>
+  </data>
+  <data name="TranslationFilesMustBeWellFormedMessageFormat" xml:space="preserve">
+    <value>Translation file '{0}' could not be processed: {1}</value>
+  </data>
+  <data name="TranslationFilesMustBeWellFormedDescription" xml:space="preserve">
+    <value>Translation files must contain well-formed XML so the compiler can load translations for the extension. Malformed or unreadable XLIFF files are reported with their path and error details; XML errors include their line and column.</value>
+  </data>
   <data name="ParameterNotReferencedTitle" xml:space="preserve">
     <value>Parameter is not referenced</value>
   </data>
