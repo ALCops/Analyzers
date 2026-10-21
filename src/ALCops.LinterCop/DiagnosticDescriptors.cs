@@ -264,6 +264,26 @@ public static class DiagnosticDescriptors
         description: LinterCopAnalyzers.TranslatableTextShouldBeTranslatedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TranslatableTextShouldBeTranslated));
 
+    public static readonly DiagnosticDescriptor TryFunctionDatabaseModificationDisallowed = new(
+        id: DiagnosticIds.TryFunctionDatabaseModificationDisallowed,
+        title: LinterCopAnalyzers.TryFunctionDatabaseModificationDisallowedTitle,
+        messageFormat: LinterCopAnalyzers.TryFunctionDatabaseModificationDisallowedMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.TryFunctionDatabaseModificationDisallowedDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TryFunctionDatabaseModificationDisallowed));
+
+    public static readonly DiagnosticDescriptor TryFunctionPotentialDatabaseModification = new(
+        id: DiagnosticIds.TryFunctionPotentialDatabaseModification,
+        title: LinterCopAnalyzers.TryFunctionPotentialDatabaseModificationTitle,
+        messageFormat: LinterCopAnalyzers.TryFunctionPotentialDatabaseModificationMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: LinterCopAnalyzers.TryFunctionPotentialDatabaseModificationDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TryFunctionPotentialDatabaseModification));
+
     public static readonly DiagnosticDescriptor UseIsEmptyMethodInsteadOfCount = new(
         id: DiagnosticIds.UseIsEmptyMethodInsteadOfCount,
         title: LinterCopAnalyzers.UseIsEmptyMethodInsteadOfCountTitle,
