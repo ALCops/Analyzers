@@ -213,7 +213,7 @@ namespace ALCops.PlatformCop.Test
                     : _inner.GetFiles(directory, searchPattern);
 
             public IEnumerable<string> GetFilesRecursively(string directory) =>
-                _inner.GetFilesRecursively(directory);
+                throw new NotSupportedException();
 
             public void CreateDirectoryForFile(string path) => _inner.CreateDirectoryForFile(path);
 
@@ -232,11 +232,11 @@ namespace ALCops.PlatformCop.Test
 
             public void DeleteFile(string path) => _inner.DeleteFile(path);
 
-            public long GetFileSize(string path) => _inner.GetFileSize(path);
+            public long GetFileSize(string path) => throw new NotSupportedException();
 
-            public string GetAbsolutePath(string relativePath) => _inner.GetAbsolutePath(relativePath);
+            public string GetAbsolutePath(string relativePath) => throw new NotSupportedException();
 
-            public bool DirectoryExists(string directory) => _inner.DirectoryExists(directory);
+            public bool DirectoryExists(string directory) => throw new NotSupportedException();
         }
     }
 }
