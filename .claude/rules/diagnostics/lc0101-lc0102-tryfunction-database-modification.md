@@ -23,7 +23,7 @@ Registers `RegisterCodeBlockAction`; checks invocation expressions in TryFunctio
 
 | Decision | Rationale |
 |---|---|
-| Two diagnostics from one analyzer: LC0101 Error for known direct database writes, LC0102 Warning for potential writes | Direct writes are unambiguously disallowed by the rule; indirect/custom calls require review and can be suppressed with a pragma. |
+| Two diagnostics from one analyzer: LC0101 Warning for known direct database writes, LC0102 Hidden for potential writes | Direct writes are unambiguously disallowed by the rule; indirect/custom calls require review and can be suppressed with a pragma. |
 | Category Usage, enabled by default; no CodeFix and no setting | Agreed with the rule owner. A safe rewrite requires understanding caller intent. |
 | Detect TryFunctions from the method declaration's `[TryFunction]` attribute using `MethodDeclarationSyntax.IsTryFunction()` | `IMethodSymbol.IsTryFunction` is missing from the netstandard2.1 SDK, while the shared syntax extension works across all supported TFMs. |
 | Direct-write built-ins: Insert, Modify, ModifyAll, Delete, DeleteAll, Rename, Truncate, AddLink, CopyLinks, DeleteLink and DeleteLinks | These methods write table records or the Record Link system table. The shared `RecordMethodClassification` sets are reused for Insert, Modify, ModifyAll, Delete, DeleteAll and Rename. |
