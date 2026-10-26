@@ -7,11 +7,19 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Packaging;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Translation;
 
-namespace ALCops.LinterCop.Analyzers;
+namespace ALCops.PlatformCop.Analyzers;
 
 [DiagnosticAnalyzer]
 public sealed class TranslationFilesMustBeWellFormed : DiagnosticAnalyzer
 {
+    private static readonly XmlReaderSettings WellFormedOnly = new()
+    {
+        DtdProcessing = DtdProcessing.Prohibit,
+        XmlResolver = null,
+        IgnoreComments = true,
+        IgnoreWhitespace = true,
+    };
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.TranslationFilesMustBeWellFormed);
 
@@ -31,21 +39,30 @@ public sealed class TranslationFilesMustBeWellFormed : DiagnosticAnalyzer
         }
         catch (FileNotFoundException)
         {
-            return;
+            manifest = null;
         }
 
-        if (manifest is null || !manifest.CompilerFeatures.ShouldGenerateTranslationFile())
+        if (manifest is not null && !manifest.CompilerFeatures.ShouldGenerateTranslationFile())
             return;
 
+        string appName = manifest?.AppName ?? string.Empty;
         List<string> translationFiles;
         try
         {
             translationFiles = LanguageFileUtilities
-                .GetXliffLanguageFiles(fileSystem, manifest.AppName)
+                .GetXliffLanguageFiles(fileSystem, appName)
                 .ToList();
         }
         catch (DirectoryNotFoundException)
         {
+            return;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            ReportFileError(
+                ctx,
+                "Translations",
+                $"Unable to enumerate translation files: {exception.Message}");
             return;
         }
 
@@ -56,8 +73,10 @@ public sealed class TranslationFilesMustBeWellFormed : DiagnosticAnalyzer
             try
             {
                 using Stream stream = fileSystem.OpenRead(translationFile);
-                var document = new XmlDocument();
-                document.Load(stream);
+                using var reader = XmlReader.Create(stream, WellFormedOnly);
+                while (reader.Read())
+                {
+                }
             }
             catch (XmlException exception)
             {

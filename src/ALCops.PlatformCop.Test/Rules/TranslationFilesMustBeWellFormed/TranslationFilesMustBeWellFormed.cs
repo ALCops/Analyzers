@@ -5,7 +5,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Text;
 using RoslynTestKit;
 
-namespace ALCops.LinterCop.Test
+namespace ALCops.PlatformCop.Test
 {
     public class TranslationFilesMustBeWellFormed : NavCodeAnalysisBase
     {
@@ -103,6 +103,37 @@ namespace ALCops.LinterCop.Test
             Assert.That(diagnostics[0].GetMessage(), Does.Contain("Unable to read file"));
         }
 
+        [Test]
+        public async Task HasDiagnosticWhenTranslationFolderCannotBeEnumeratedWithoutManifest()
+        {
+            string code = await ReadFixture("HasDiagnostic", "UnreadableFile").ConfigureAwait(false);
+            var fileSystem = new FaultingFileSystem(
+                new Dictionary<string, byte[]>(),
+                failDiscovery: true,
+                includeManifest: false);
+            var diagnostics = await Analyze(code, fileSystem).ConfigureAwait(false);
+
+            Assert.That(diagnostics, Has.Length.EqualTo(1));
+            Assert.That(diagnostics[0].Id, Is.EqualTo(DiagnosticIds.TranslationFilesMustBeWellFormed));
+            Assert.That(diagnostics[0].GetMessage(), Does.Contain("Translations"));
+            Assert.That(diagnostics[0].GetMessage(), Does.Contain("Unable to enumerate translation files"));
+        }
+
+        [Test]
+        public async Task HasDiagnosticWhenDtdIsPresent()
+        {
+            string code = await ReadFixture("HasDiagnostic", "UnreadableFile").ConfigureAwait(false);
+            var diagnostics = await Analyze(code, new Dictionary<string, byte[]>
+            {
+                ["Translations/TestApp.da-DK.xlf"] = System.Text.Encoding.UTF8.GetBytes(
+                    "<!DOCTYPE xliff [<!ENTITY text \"value\">]><xliff>&text;</xliff>")
+            }).ConfigureAwait(false);
+
+            Assert.That(diagnostics, Has.Length.EqualTo(1));
+            Assert.That(diagnostics[0].Id, Is.EqualTo(DiagnosticIds.TranslationFilesMustBeWellFormed));
+            Assert.That(diagnostics[0].GetMessage(), Does.Contain("TestApp.da-DK.xlf"));
+        }
+
         private async Task<string> ReadFixture(string folder, string name)
         {
             string path = Path.Combine(_testCasePath, folder, $"{name}.al");
@@ -137,10 +168,17 @@ namespace ALCops.LinterCop.Test
         private sealed class FaultingFileSystem : IFileSystem
         {
             private readonly MemoryFileSystem _inner;
+            private readonly bool _failDiscovery;
 
-            public FaultingFileSystem(Dictionary<string, byte[]> files)
+            public FaultingFileSystem(
+                Dictionary<string, byte[]> files,
+                bool failDiscovery = false,
+                bool includeManifest = true)
             {
-                files["app.json"] = AppJsonContent;
+                if (includeManifest)
+                    files["app.json"] = AppJsonContent;
+
+                _failDiscovery = failDiscovery;
                 _inner = new MemoryFileSystem(files);
             }
 
@@ -164,10 +202,15 @@ namespace ALCops.LinterCop.Test
 
             public bool DirectoryExistsForFile(string path) => _inner.DirectoryExistsForFile(path);
 
-            public IEnumerable<string> GetFiles(string searchPattern) => _inner.GetFiles(searchPattern);
+            public IEnumerable<string> GetFiles(string searchPattern) =>
+                _failDiscovery
+                    ? throw new UnauthorizedAccessException("Simulated directory enumeration failure.")
+                    : _inner.GetFiles(searchPattern);
 
             public IEnumerable<string> GetFiles(string directory, string searchPattern) =>
-                _inner.GetFiles(directory, searchPattern);
+                _failDiscovery
+                    ? throw new UnauthorizedAccessException("Simulated directory enumeration failure.")
+                    : _inner.GetFiles(directory, searchPattern);
 
             public IEnumerable<string> GetFilesRecursively(string directory) =>
                 _inner.GetFilesRecursively(directory);
