@@ -269,7 +269,7 @@ public static class DiagnosticDescriptors
         title: LinterCopAnalyzers.TryFunctionDatabaseModificationDisallowedTitle,
         messageFormat: LinterCopAnalyzers.TryFunctionDatabaseModificationDisallowedMessageFormat,
         category: Category.Usage,
-        defaultSeverity: DiagnosticSeverity.Error,
+        defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: LinterCopAnalyzers.TryFunctionDatabaseModificationDisallowedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TryFunctionDatabaseModificationDisallowed));
@@ -279,7 +279,7 @@ public static class DiagnosticDescriptors
         title: LinterCopAnalyzers.TryFunctionPotentialDatabaseModificationTitle,
         messageFormat: LinterCopAnalyzers.TryFunctionPotentialDatabaseModificationMessageFormat,
         category: Category.Usage,
-        defaultSeverity: DiagnosticSeverity.Warning,
+        defaultSeverity: DiagnosticSeverity.Hidden,
         isEnabledByDefault: true,
         description: LinterCopAnalyzers.TryFunctionPotentialDatabaseModificationDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TryFunctionPotentialDatabaseModification));
