@@ -375,6 +375,16 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.NotAllCodePathsReturnValueDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.NotAllCodePathsReturnValue));
 
+    public static readonly DiagnosticDescriptor TranslationFilesMustBeWellFormed = new(
+        id: DiagnosticIds.TranslationFilesMustBeWellFormed,
+        title: PlatformCopAnalyzers.TranslationFilesMustBeWellFormedTitle,
+        messageFormat: PlatformCopAnalyzers.TranslationFilesMustBeWellFormedMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.TranslationFilesMustBeWellFormedDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TranslationFilesMustBeWellFormed));
+
     public static readonly DiagnosticDescriptor AnalyzerException = new(
         id: DiagnosticIds.AnalyzerException,
         title: PlatformCopAnalyzers.AnalyzerExceptionTitle,

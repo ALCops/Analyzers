@@ -408,6 +408,15 @@
   <data name="UseSequentialGuidDescription" xml:space="preserve">
     <value>CreateGuid() generates random GUIDs that cause SQL index fragmentation when inserted into key fields. CreateSequentialGuid() produces partially-sequential GUIDs that reduce index fragmentation by 20-40%, improving insert, read, and update performance. Use CreateSequentialGuid() when the GUID is assigned to a field that is part of a table key.</value>
   </data>
+  <data name="TranslationFilesMustBeWellFormedTitle" xml:space="preserve">
+    <value>Translation files must be well-formed</value>
+  </data>
+  <data name="TranslationFilesMustBeWellFormedMessageFormat" xml:space="preserve">
+    <value>Translation file '{0}' could not be processed: {1}</value>
+  </data>
+  <data name="TranslationFilesMustBeWellFormedDescription" xml:space="preserve">
+    <value>Translation files must contain well-formed XML so the compiler can load translations for the extension. Malformed or unreadable XLIFF files are reported with their path and error details; XML errors include their line and column.</value>
+  </data>
   <data name="UseSequentialGuidCodeAction" xml:space="preserve">
     <value>ALCops: Replace with CreateSequentialGuid()</value>
   </data>

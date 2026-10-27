@@ -40,4 +40,5 @@ public static class DiagnosticIds
     public static readonly string PageVariableSetRecordTemporaryRecord = "PC0036";
     public static readonly string UseValidateForFieldAssignment = "PC0037";
     public static readonly string NotAllCodePathsReturnValue = "PC0038";
+    public static readonly string TranslationFilesMustBeWellFormed = "PC0039";
 }
