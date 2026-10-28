@@ -36,4 +36,6 @@ public static class DiagnosticIds
     public static readonly string MixedExitAndNamedReturnAssignment = "LC0097";
     public static readonly string EventSubscriberNamingPattern = "LC0098";
     public static readonly string EventSubscriberParameterNotReferenced = "LC0099";
+    public static readonly string TryFunctionDatabaseModificationDisallowed = "LC0101";
+    public static readonly string TryFunctionPotentialDatabaseModification = "LC0102";
 }
