@@ -23,7 +23,7 @@ namespace ALCops.LinterCop.Test
         private static readonly byte[] PascalTemplateSettings = System.Text.Encoding.UTF8.GetBytes(
             $$"""{"SubscriberNamingPattern": "{{PascalTemplate}}"}""");
 
-        // Combined with a PascalCase template so the acronym behaviour is observable
+        // Combined with a PascalCase template so the acronym behavior is observable
         // (the raw-form template emits source names verbatim and never invokes the acronym renderer).
         private static readonly byte[] CustomAcronymSettings = System.Text.Encoding.UTF8.GetBytes(
             $$"""{"SubscriberNamingPattern": "{{PascalTemplate}}", "KnownAcronyms": ["Acme"]}""");
@@ -75,8 +75,6 @@ namespace ALCops.LinterCop.Test
 
         [Test]
         [TestCase("DefaultTemplate")]
-        [TestCase("WithElementName")]
-        [TestCase("RawEventSourceWithSpace")]
         [TestCase("RawElementNameWithSpace")]
         [TestCase("NotASubscriber")]
         [TestCase("DerivedNameExceedsMaxLength")]
@@ -92,11 +90,8 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
-        [TestCase("AcronymFromKnownListPreserved")]
-        [TestCase("IdAbbreviationNormalized")]
         [TestCase("TwoLetterAcronymPreserved")]
         [TestCase("UnknownAcronymPreserved")]
-        [TestCase("ElementNameWithPercent")]
         public async Task NoDiagnosticPascalTemplate(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
@@ -105,6 +100,56 @@ namespace ALCops.LinterCop.Test
             var fixture = CreateFixtureWithSettings(PascalTemplateSettings);
 
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.EventSubscriberNamingPattern);
+        }
+
+        [Test]
+        [TestCase("AcronymFromKnownListPreserved", "On{EventSourceType}_{EventSource}_{EventName}[_{ElementName}]")]
+        [TestCase("IdAbbreviationNormalized", "On{eventSourceType}_{eventSource}_{eventName}[_{elementName}]")]
+        [TestCase("ElementNameWithPercent", "On{event_source_type}_{event_source}_{event_name}[_{element_name}]")]
+        [TestCase("WithElementName", "On{event-source-type}_{event-source}_{event-name}[_{element-name}]")]
+        [TestCase("RawEventSourceWithSpace", "On{Event Source Type}_{Event Source}_{Event Name}[_{Element Name}]")]
+        public async Task NoDiagnosticEventSourceTypeTemplate(string testCase, string template)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithTemplate(template);
+
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.EventSubscriberNamingPattern);
+        }
+
+        [Test]
+        [TestCase("EventSourceTypeSelfReferencePascal", "{EventSourceType|This}")]
+        [TestCase("EventSourceTypeSelfReferencePascal", "{Event Source Type|This}")]
+        [TestCase("EventSourceTypeSelfReferenceCamel", "{eventSourceType|This}")]
+        [TestCase("EventSourceTypeSelfReferenceCamel", "{event_source_type|This}")]
+        [TestCase("EventSourceTypeSelfReferenceCamel", "{event-source-type|This}")]
+        [TestCase("EventSourceTypeWithoutSelfReferencePascal", "{EventSourceType}")]
+        [TestCase("EventSourceTypeWithoutSelfReferencePascal", "{Event Source Type}")]
+        [TestCase("EventSourceTypeWithoutSelfReferenceCamel", "{eventSourceType}")]
+        [TestCase("EventSourceTypeWithoutSelfReferenceCamel", "{event_source_type}")]
+        [TestCase("EventSourceTypeWithoutSelfReferenceCamel", "{event-source-type}")]
+        public async Task NoDiagnosticEventSourceTypeSelfReferenceTemplate(string testCase, string selfReferenceToken)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithTemplate($"[({selfReferenceToken})]");
+
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.EventSubscriberNamingPattern);
+        }
+
+        [Test]
+        [TestCase("SelfPublisher", "[({EventSourceType|This})]")]
+        [TestCase("SelfPublisherWithEventSource", "({EventSourceType|This} {EventSource}) {EventName}")]
+        public async Task HasDiagnosticEventSourceTypeSelfReferenceTemplate(string testCase, string template)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithTemplate(template);
+
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.EventSubscriberNamingPattern);
         }
 
         private static AnalyzerTestFixture CreateFixtureWithSettings(byte[] settings)
@@ -121,6 +166,10 @@ namespace ALCops.LinterCop.Test
                     FileSystem = fileSystem
                 });
         }
+
+        private static AnalyzerTestFixture CreateFixtureWithTemplate(string template) =>
+            CreateFixtureWithSettings(System.Text.Encoding.UTF8.GetBytes(
+                $$"""{"SubscriberNamingPattern": "{{template}}"}"""));
 
         [Test]
         [TestCase("CustomTemplate")]
@@ -343,6 +392,31 @@ namespace ALCops.LinterCop.Test
             };
             var fileSystem = new MemoryFileSystem(files);
 
+            var fixture = RoslynFixtureFactory.Create<EventSubscriberNamingPatternCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer],
+                    FileSystem = fileSystem
+                });
+
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.EventSubscriberNamingPattern);
+        }
+
+        [Test]
+        [TestCase("RenameSelfPublisherWithEventSource")]
+        public async Task HasFixSelfReferenceTemplate(string testCase)
+        {
+            var currentCode = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
+                .ConfigureAwait(false);
+
+            var expectedCode = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasFix), testCase, "expected.al"))
+                .ConfigureAwait(false);
+
+            var settings = System.Text.Encoding.UTF8.GetBytes(
+                """{"SubscriberNamingPattern": "({EventSourceType|This} {EventSource}) {EventName}"}""");
+            var fileSystem = new MemoryFileSystem(new Dictionary<string, byte[]> { { "alcops.json", settings } });
             var fixture = RoslynFixtureFactory.Create<EventSubscriberNamingPatternCodeFixProvider>(
                 new CodeFixTestFixtureConfig
                 {

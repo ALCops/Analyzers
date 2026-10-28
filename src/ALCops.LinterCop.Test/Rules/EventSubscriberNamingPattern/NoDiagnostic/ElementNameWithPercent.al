@@ -1,5 +1,4 @@
-// Field "Line Discount %" -> "%" is treated as a word delimiter and dropped, producing
-// LineDiscount as the accepted element-name rendering.
+// Snake-case field "Line Discount %" drops "%" and renders line_discount.
 table 50100 MyTable
 {
     fields
@@ -11,7 +10,7 @@ table 50100 MyTable
 codeunit 50100 MySubscriber
 {
     [EventSubscriber(ObjectType::Table, Database::MyTable, OnAfterValidateEvent, "Line Discount %", false, false)]
-    local procedure [|OnMyTable_OnAfterValidateEvent_LineDiscount|](var rec: Record MyTable; var xRec: Record MyTable)
+    local procedure [|Ontable_my_table_on_after_validate_event_line_discount|](var rec: Record MyTable; var xRec: Record MyTable)
     begin
     end;
 }
