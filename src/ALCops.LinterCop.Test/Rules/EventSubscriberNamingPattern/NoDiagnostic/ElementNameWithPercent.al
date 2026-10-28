@@ -1,5 +1,4 @@
-// Field "Line Discount %" -> "%" is treated as a word delimiter and dropped, producing
-// LineDiscount as the accepted element-name rendering.
+// Snake-case field "Line Discount %" drops "%" and renders line_discount.
 table 50100 MyTable
 {
     fields

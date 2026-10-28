@@ -1,4 +1,4 @@
-// Field "Item ID": "ID" is a C# abbreviation and always normalizes to "Id".
+// Camel-case field "Item ID" -> itemId; "ID" normalizes to "Id".
 table 50100 MyTable
 {
     fields

@@ -139,6 +139,19 @@ namespace ALCops.LinterCop.Test
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.EventSubscriberNamingPattern);
         }
 
+        [Test]
+        [TestCase("SelfPublisher", "[({EventSourceType|This})]")]
+        [TestCase("SelfPublisherWithEventSource", "({EventSourceType|This} {EventSource}) {EventName}")]
+        public async Task HasDiagnosticEventSourceTypeSelfReferenceTemplate(string testCase, string template)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithTemplate(template);
+
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.EventSubscriberNamingPattern);
+        }
+
         private static AnalyzerTestFixture CreateFixtureWithSettings(byte[] settings)
         {
             var files = new Dictionary<string, byte[]>
@@ -379,6 +392,31 @@ namespace ALCops.LinterCop.Test
             };
             var fileSystem = new MemoryFileSystem(files);
 
+            var fixture = RoslynFixtureFactory.Create<EventSubscriberNamingPatternCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer],
+                    FileSystem = fileSystem
+                });
+
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.EventSubscriberNamingPattern);
+        }
+
+        [Test]
+        [TestCase("RenameSelfPublisherWithEventSource")]
+        public async Task HasFixSelfReferenceTemplate(string testCase)
+        {
+            var currentCode = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
+                .ConfigureAwait(false);
+
+            var expectedCode = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasFix), testCase, "expected.al"))
+                .ConfigureAwait(false);
+
+            var settings = System.Text.Encoding.UTF8.GetBytes(
+                """{"SubscriberNamingPattern": "({EventSourceType|This} {EventSource}) {EventName}"}""");
+            var fileSystem = new MemoryFileSystem(new Dictionary<string, byte[]> { { "alcops.json", settings } });
             var fixture = RoslynFixtureFactory.Create<EventSubscriberNamingPatternCodeFixProvider>(
                 new CodeFixTestFixtureConfig
                 {

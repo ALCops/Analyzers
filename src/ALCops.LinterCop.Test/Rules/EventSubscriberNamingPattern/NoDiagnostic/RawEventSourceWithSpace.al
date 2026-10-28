@@ -1,5 +1,4 @@
-// Default template with an event source whose object name contains a space:
-// "My Cool Publisher" + _ + OnSomething -> quoted identifier "My Cool Publisher_OnSomething".
+// Raw source name preserves its spaces; the source type is included before it.
 codeunit 50100 MySubscriber
 {
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"My Cool Publisher", OnSomething, '', false, false)]

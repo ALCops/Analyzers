@@ -1,5 +1,4 @@
-// Default template {Event Source}_{Event Name}[_{Element Name}] with single-word source and element:
-// MyTable + _ + OnAfterValidateEvent + _ + MyField = MyTable_OnAfterValidateEvent_MyField (no quoting).
+// Kebab-case template includes the source type and element name.
 table 50100 MyTable
 {
     fields

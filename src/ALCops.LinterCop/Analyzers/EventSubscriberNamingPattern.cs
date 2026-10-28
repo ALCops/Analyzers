@@ -466,11 +466,9 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
                 {
                     if (token.SelfReferenceText is not null && isSelfReference)
                     {
-                        var selfReferenceValue = NamingTokenValue(token, eventSourceType, eventSource, eventName, elementName, isSelfReference);
-
                         foreach (var sb in accumulators)
                         {
-                            sb.Append(selfReferenceValue);
+                            sb.Append(token.SelfReferenceText);
                         }
 
                         continue;
@@ -510,28 +508,12 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
                 }
                 else if (segment is ConditionalGroupSegment group)
                 {
-                    if (AllTokensNonEmpty(group.Children, eventSourceType, eventSource, eventName, elementName, isSelfReference))
+                    if (AllTokensNonEmpty(group.Children, eventSourceType, eventSource, eventName, elementName))
                     {
                         ExtendAccepted(group.Children, ref accumulators, eventSourceType, eventSource, eventName, elementName, isSelfReference, acronyms);
                     }
                 }
             }
-        }
-
-        private static string NamingTokenValue(
-            TokenSegment token,
-            string eventSourceType,
-            string eventSource,
-            string eventName,
-            string elementName,
-            bool isSelfReference)
-        {
-            if (token.SelfReferenceText is not null && isSelfReference)
-            {
-                return token.SelfReferenceText;
-            }
-
-            return NamingTokenValue(token.Kind, eventSourceType, eventSource, eventName, elementName);
         }
 
         private static string NamingTokenValue(TokenKind kind, string eventSourceType, string eventSource, string eventName, string elementName) =>
@@ -549,14 +531,13 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
             string eventSourceType,
             string eventSource,
             string eventName,
-            string elementName,
-            bool isSelfReference)
+            string elementName)
         {
             foreach (var segment in segments)
             {
                 if (segment is TokenSegment token)
                 {
-                    var value = NamingTokenValue(token, eventSourceType, eventSource, eventName, elementName, isSelfReference);
+                    var value = NamingTokenValue(token.Kind, eventSourceType, eventSource, eventName, elementName);
 
                     if (string.IsNullOrEmpty(value))
                     {
@@ -565,7 +546,7 @@ public sealed class EventSubscriberNamingPattern : DiagnosticAnalyzer
                 }
                 else if (segment is ConditionalGroupSegment nested)
                 {
-                    if (!AllTokensNonEmpty(nested.Children, eventSourceType, eventSource, eventName, elementName, isSelfReference))
+                    if (!AllTokensNonEmpty(nested.Children, eventSourceType, eventSource, eventName, elementName))
                     {
                         return false;
                     }

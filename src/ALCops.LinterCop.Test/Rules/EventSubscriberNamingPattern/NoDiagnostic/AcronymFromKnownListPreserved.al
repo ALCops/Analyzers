@@ -1,4 +1,4 @@
-// Field "LCY Amount" -> LCYAmount (preserved canonical acronym casing).
+// Pascal-case field "LCY Amount" -> LCYAmount (preserved canonical acronym casing).
 table 50100 MyTable
 {
     fields
