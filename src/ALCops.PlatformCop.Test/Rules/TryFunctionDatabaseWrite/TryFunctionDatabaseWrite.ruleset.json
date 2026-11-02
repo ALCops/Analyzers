@@ -1,0 +1,5 @@
+{
+  "name": "Enable PC0041",
+  "description": "Enables PC0041 for tests.",
+  "rules": [ { "id": "PC0041", "action": "Info" } ]
+}

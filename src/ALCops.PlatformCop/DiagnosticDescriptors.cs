@@ -385,6 +385,26 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.TranslationFilesMustBeWellFormedDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TranslationFilesMustBeWellFormed));
 
+    public static readonly DiagnosticDescriptor TryFunctionDatabaseWrite = new(
+        id: DiagnosticIds.TryFunctionDatabaseWrite,
+        title: PlatformCopAnalyzers.TryFunctionDatabaseWriteTitle,
+        messageFormat: PlatformCopAnalyzers.TryFunctionDatabaseWriteMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: PlatformCopAnalyzers.TryFunctionDatabaseWriteDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TryFunctionDatabaseWrite));
+
+    public static readonly DiagnosticDescriptor TryFunctionPotentialDatabaseWrite = new(
+        id: DiagnosticIds.TryFunctionPotentialDatabaseWrite,
+        title: PlatformCopAnalyzers.TryFunctionPotentialDatabaseWriteTitle,
+        messageFormat: PlatformCopAnalyzers.TryFunctionPotentialDatabaseWriteMessageFormat,
+        category: Category.Usage,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: PlatformCopAnalyzers.TryFunctionPotentialDatabaseWriteDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.TryFunctionPotentialDatabaseWrite));
+
     public static readonly DiagnosticDescriptor AnalyzerException = new(
         id: DiagnosticIds.AnalyzerException,
         title: PlatformCopAnalyzers.AnalyzerExceptionTitle,
