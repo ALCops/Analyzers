@@ -119,7 +119,7 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
                     return AnalyzeStatements(statementList.Statements, states, hasNamedReturn, returnVariableName, out hasPathWithoutValue);
 
                 case IAssignmentStatement assignment:
-                    if (hasNamedReturn && assignment.Target.IsNamedReturnTarget(returnVariableName))
+                    if (hasNamedReturn && AssignmentInitializesNamedReturn(assignment.Target, returnVariableName))
                     {
                         return ImmutableHashSet.Create(true);
                     }
@@ -585,9 +585,11 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
         // (e.g. `Customer.Get(No)` where `Customer` is the return variable, populating the record)
         // or is passed as a by-reference (`var`) argument (e.g. `ComputeInto(Result)`).
         // This is intentionally conservative to avoid false positives on common AL idioms.
+        // The binder wraps arguments in a conversion when the declared parameter type differs
+        // (a temporary record passed to a non-temporary `var Record`), so conversions are peeled first.
         private static bool InvocationAssignsNamedReturn(IInvocationExpression invocation, string returnVariableName)
         {
-            if (invocation.Instance.IsNamedReturnTarget(returnVariableName))
+            if (invocation.Instance?.UnwrapConversions().IsNamedReturnTarget(returnVariableName) == true)
             {
                 return true;
             }
@@ -596,13 +598,29 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
             {
                 if (argument.Parameter is IParameterSymbol parameter
                     && parameter.IsVar
-                    && argument.Value.IsNamedReturnTarget(returnVariableName))
+                    && argument.Value.UnwrapConversions().IsNamedReturnTarget(returnVariableName))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        // A field or property of a named record return (`Result."No." := No;`,
+        // `Result.ReadIsolation := ...`) is part of the returned instance, so assigning it initializes
+        // the return value just like assigning the variable itself.
+        private static bool AssignmentInitializesNamedReturn(IOperation target, string returnVariableName)
+        {
+            target = target.UnwrapConversions();
+
+            if (target.IsNamedReturnTarget(returnVariableName))
+            {
+                return true;
+            }
+
+            return target is IFieldAccess { Instance: IOperation instance }
+                && instance.UnwrapConversions().IsNamedReturnTarget(returnVariableName);
         }
 
         private ImmutableHashSet<bool> AnalyzeStatements(

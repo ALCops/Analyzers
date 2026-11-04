@@ -28,6 +28,9 @@ Registers `RegisterSyntaxNodeAction` on `SyntaxKind.MethodDeclaration`; main typ
 | Only `Dialog.Error`, `Table.FieldError` and `FieldRef.FieldError` terminate a path, matched on the exact built-in class and method through the shared `FlowTerminatingBuiltIns` classifier; the former `ThrowError` special case is gone | Guard clauses like `if Cond then exit(x) else Error('...')` are pervasive; matching `MethodKind.BuiltInMethod` plus a name would also accept a future unrelated built-in or a crossed pair, and `ThrowError` is not an AL built-in |
 | Incomplete (invalid) calls terminate only when the binder's synthesized receiver is the matching `Dialog`, `Record` or `FieldRef` type | Stops the diagnostic from flickering while an argument is being typed, without treating user-defined `Error`/`FieldError` procedures as terminators |
 | Passing the named return to a `var` parameter or using it as an invocation receiver (`Rec.Get(No)`) counts as assignment | These calls can write the value; the rule stops at the call boundary rather than proving the write interprocedurally, trading a possible false negative for bounded analysis and no noise |
+| Assigning a field or property of the named return (`Result."No." := No;`, `Result.ReadIsolation := ...`) counts as assignment | Fields and record state belong to the returned instance. For record returns the named form is the one Microsoft recommends and the only one that hands filters and keys to a caller using the result directly (see Runtime facts) |
+| Conversions around the receiver or a `var` argument are peeled before matching the named return | The binder inserts a conversion when the parameter type differs, e.g. a temporary record passed to a non-temporary `var Record` |
+| `Clear(Result)` and `Result.Init()` count as assignment, even as the only statement | Both are explicit initialization. At runtime both apply the `InitValue` defaults, which a fresh record variable already holds, so neither changes an untouched return value; the rule still accepts them because the developer visibly chose the default value. They differ only when something was set before: `Init` keeps primary key, filters and key, `Clear` resets them |
 | `if` conditions, `case` selectors, `while` and `repeat until` conditions, `for` bounds and `foreach` collection expressions contribute the `var` side effects of the invocations they contain | Those expressions execute at least once regardless of the body, so `if not JsonObject.Get(Key, Result) then Error(...)` initializes `Result` |
 | Under `and`/`or` only the left operand is guaranteed; right-operand states are unioned with the short-circuit path, and conditional expressions union both branches. `xor` is not treated as branching | AL short-circuits `and`/`or` and evaluates only one branch of a conditional expression, while `xor` always evaluates both operands |
 | A `case` over an enum or option without `else` is exhaustive when every value visible in the current compilation is covered | Matches how the compiler sees the enum, including enum-extension values; a missing `else` on an exhaustive `case` is not a missing return |
@@ -41,6 +44,8 @@ Registers `RegisterSyntaxNodeAction` on `SyntaxKind.MethodDeclaration`; main typ
 - TryFunction methods.
 - Paths ending in a clean `Dialog.Error`, `Table.FieldError` or `FieldRef.FieldError` call, or in an incomplete call whose receiver binds to one of those types.
 - Named returns passed by `var` or used as a receiver: assumed assigned, even when the callee never writes.
+- Named record returns initialized only through field or property assignments, or only through view-state calls (`SetRange`, `SetFilter`, `SetCurrentKey`, `SetLoadFields`).
+- Named record returns whose only initialization is `Init()` or `Clear()`, although neither changes an untouched record.
 - `case` statements without `else` that cover every enum or option value visible in the compilation.
 
 ## Known issues
@@ -56,6 +61,14 @@ Registers `RegisterSyntaxNodeAction` on `SyntaxKind.MethodDeclaration`; main typ
 - The operation interfaces for conditional expressions differ per target framework, so the analyzer switches on `OperationKind` and reads the operands reflectively instead of naming the interface.
 - Parenthesized expressions wrap their operand in a separate operation and must be unwrapped before the short-circuit rules apply.
 - Bad-call and built-in identity facts (single-candidate bad calls keep the real symbol, built-in classes `Table`/`FieldRef` have `NavTypeKind.None`, bare `Error` is a static built-in on `Dialog`) are in `.claude/rules/symbol-resolution.md`.
+- `Clear(Result)` binds its argument through a conversion to the built-in's `var` parameter, as does a temporary record passed to a non-temporary `var Record`; unwrapping the argument is what makes both count as assignment.
+
+## Runtime facts (verified on BC 29)
+
+- A record return keeps filters and the current key only when the caller uses the call result directly (`GetLines(No).GetFilters()`) and the procedure sets them on the named return. `exit(LocalRec)` and a caller-side `Rec := GetLines(No)` are record assignments and keep only field values.
+- `Rec.CopyFilters(GetLines(No))` and `Rec.Copy(GetLines(No))` fail with AL0130 because the argument is `var`.
+- The same assignment applies to `temporary` record returns: the caller receives the current row, not the temporary table's rows. Passing filters or temporary data to the caller needs a `var` parameter, or `GetView`/`SetView` for filters.
+- None of this changes PC0038's verdict, but it is why the rule must accept the named-return form without `exit` and must never push record returns towards `exit(LocalRec)`.
 
 ## Test notes
 
