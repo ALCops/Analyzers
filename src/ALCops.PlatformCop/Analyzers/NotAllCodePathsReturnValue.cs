@@ -585,8 +585,9 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
         // (e.g. `Customer.Get(No)` where `Customer` is the return variable, populating the record)
         // or is passed as a by-reference (`var`) argument (e.g. `ComputeInto(Result)`).
         // This is intentionally conservative to avoid false positives on common AL idioms.
-        // The binder wraps arguments in a conversion when the declared parameter type differs
-        // (a temporary record passed to a non-temporary `var Record`), so conversions are peeled first.
+        // The binder wraps a `var` argument in a conversion when the parameter type differs
+        // (a temporary record passed to a non-temporary `var Record`, or `Clear(Result)`), so
+        // conversions are peeled first; the receiver is unwrapped the same way for symmetry.
         private static bool InvocationAssignsNamedReturn(IInvocationExpression invocation, string returnVariableName)
         {
             if (invocation.Instance?.UnwrapConversions().IsNamedReturnTarget(returnVariableName) == true)
@@ -607,9 +608,8 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
             return false;
         }
 
-        // A field or property of a named record return (`Result."No." := No;`,
-        // `Result.ReadIsolation := ...`) is part of the returned instance, so assigning it initializes
-        // the return value just like assigning the variable itself.
+        // A field of a named record return (`Result."No." := No;`) is part of the returned instance,
+        // so assigning it initializes the return value just like assigning the variable itself.
         private static bool AssignmentInitializesNamedReturn(IOperation target, string returnVariableName)
         {
             target = target.UnwrapConversions();
