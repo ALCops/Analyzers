@@ -37,4 +37,5 @@ public static class DiagnosticIds
     public static readonly string TableDataAccessUnusedPermissions = "AC0032";
     public static readonly string RestClientRequiresHttpClientHandler = "AC0033";
     public static readonly string TelemetryRequiresTelemetryLogger = "AC0034";
+    public static readonly string RestClientInitializeWithHttpClientHandler = "AC0035";
 }

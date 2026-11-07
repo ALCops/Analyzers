@@ -459,6 +459,15 @@
   <data name="TelemetryRequiresTelemetryLoggerDescription" xml:space="preserve">
     <value>Enable this rule when every app must ship its own Telemetry Logger, so that its telemetry does not depend on which other apps from the publisher are installed. The "Telemetry" and "Feature Telemetry" codeunits look up the logger registered for the calling app's publisher on every call: any installed app from the same publisher can register it, the first registration wins (before BC 25.0 each duplicate registration also logs warning 0000G7J), and the logger's own Session.LogMessage decides which Application Insights resource receives the message. When no app from the publisher registers a logger, the message is discarded and warning 0000G7K is logged. Implement the "Telemetry Logger" interface in this app and register it in a subscriber to "Telemetry Loggers".OnRegisterTelemetryLogger.</value>
   </data>
+  <data name="RestClientInitializeWithHttpClientHandlerTitle" xml:space="preserve">
+    <value>Rest Client variable is not initialized with a custom Http Client Handler</value>
+  </data>
+  <data name="RestClientInitializeWithHttpClientHandlerMessageFormat" xml:space="preserve">
+    <value>Rest Client variable '{0}' is not initialized with a custom Http Client Handler</value>
+  </data>
+  <data name="RestClientInitializeWithHttpClientHandlerDescription" xml:space="preserve">
+    <value>A "Rest Client" that is initialized without a handler, or with the System Application's default "Http Client Handler" codeunit, sends its requests through the System Application, so the external-call permission, outgoing web service telemetry and test mocking attribute the call to the System Application instead of the calling app. Pass a codeunit that implements "Http Client Handler" to Initialize or Create.</value>
+  </data>
   <data name="ZeroEnumValueReservedForEmptyTitle" xml:space="preserve">
     <value>Reserve Enum value zero (0) for empty value</value>
   </data>

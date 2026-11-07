@@ -24,7 +24,7 @@ Registers `RegisterCompilationStartAction` with an inner `RegisterSymbolAction` 
 | Decision | Rationale |
 |---|---|
 | One analyzer with a hard-coded pair table (trigger codeunits → required interface → descriptor) | Both rules are the same "uses X, implements no Y" check; a future pair is one row plus one ID. Two separate analyzers would duplicate the walk and the index. |
-| Existence check only: some codeunit implements the interface | Tracking whether each variable is passed to `Initialize`/`Create` (or the logger registered via `OnRegisterTelemetryLogger`) needs a per-procedure flow walk; that is a separate follow-up rule, not this one. |
+| Existence check only: some codeunit implements the interface | Tracking whether each variable is passed to `Initialize`/`Create` (or the logger registered via `OnRegisterTelemetryLogger`) needs a per-procedure flow walk; AC0035 does that for the Rest Client (`ac0035-rest-client-initialize-with-http-client-handler.md`). |
 | Coverage counts codeunits declared in the compiling module only (`GetDeclaredApplicationObjectSymbols`), obsolete and test codeunits included | Dependency implementations would need a cross-module scan and make the result depend on what happens to be referenced; a shared-library architecture, where a base app sends the calls for its dependents, simply leaves AC0033 off. |
 | Trigger codeunit matched on object id AND name, per id/name pair (2350 "Rest Client"; 8711 Telemetry; 8703 "Feature Telemetry") | Id alone matches unrelated same-id objects outside the System Application; name alone matches any same-named codeunit. Namespace or module checks were rejected so stubbed or namespaced System Application builds still match. |
 | Interface matched by name only (`SemanticFacts.IsSameName`) | The implementing codeunit's `ImplementedInterfaces` points at the dependency interface; comparing module or namespace adds nothing a real app would get wrong. |
@@ -43,13 +43,13 @@ Registers `RegisterCompilationStartAction` with an inner `RegisterSymbolAction` 
 - `Codeunit::"Rest Client"` object references without a variable (`Codeunit.Run(...)`): no instance is used.
 - `array[n] of Codeunit X`, `List of [Codeunit X]` and interface-typed variables: the variable type is not the codeunit symbol.
 - Implementations in a dependency app (current-compilation-only coverage).
-- Whether a handler is actually passed to `Initialize`/`Create`, or a logger actually registered in `OnRegisterTelemetryLogger`: existence only.
+- Whether a handler is actually passed to `Initialize`/`Create`, or a logger actually registered in `OnRegisterTelemetryLogger`: existence only (AC0035 checks this per Rest Client variable).
 - Obsolete objects (`IsObsolete()`) and test / test-runner codeunits.
 
 ## Known issues
 
 - A same-named interface from a different module counts as coverage (name-only interface match); accepted.
-- One implementation anywhere in the app satisfies every object, even if only some `Rest Client` instances receive it.
+- One implementation anywhere in the app satisfies every object, even if only some `Rest Client` instances receive it (AC0035 covers the per-variable case for the Rest Client).
 
 ## Platform facts
 
