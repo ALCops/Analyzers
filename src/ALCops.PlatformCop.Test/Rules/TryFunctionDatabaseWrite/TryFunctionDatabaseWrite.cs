@@ -75,7 +75,7 @@ namespace ALCops.PlatformCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TryFunctionDatabaseWrite);
-            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TryFunctionPotentialDatabaseWrite);
+            _potentialFixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TryFunctionPotentialDatabaseWrite);
         }
     }
 }
