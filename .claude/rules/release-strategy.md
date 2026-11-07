@@ -106,6 +106,14 @@ What it does:
 - **NuGet.org**: Unlists packages. Unlisted packages are hidden from search but remain downloadable by exact version pin. This is safe for users who have pinned a specific version.
 - **GitHub Packages**: Permanently deletes old versions. Accepted trade-off for pre-releases.
 
+## NuGet.org authentication (Trusted Publishing)
+
+No long-lived NuGet.org API key is stored. Both workflows call `NuGet/login`, which exchanges the job's GitHub OIDC token (`id-token: write`) for a temporary API key valid for one hour, so the login step sits right before the step that uses it. The only secret is `NUGET_USER`: the nuget.org profile name (not the email) of a member of the `ALCops` organization, which owns the package and the policies.
+
+- A nuget.org Trusted Publishing policy matches one workflow **file**, so `build-and-release.yml` (push scope) and `scheduled-cleanup.yml` (unlist scope) each need their own policy. A missing or inactive policy fails the release job at login, but only skips the NuGet.org part of the cleanup (`continue-on-error`), so GitHub Packages cleanup still runs.
+- The release job declares job-level `permissions`, which replace the workflow-level set rather than adding to it; keep `contents`, `packages` and `pull-requests` restated there.
+- A policy stays tied to the member who created it: if that account leaves the `ALCops` organization, the policy goes inactive until someone else re-creates it.
+
 ## SemVer ordering
 
 The `.N` suffix pattern (`alpha.1`, `alpha.2`, `beta.1`) was chosen over a patch-increment scheme (`v1.0.0-alpha`, `v1.0.1-alpha`, `v1.0.2-alpha`) for SemVer correctness.

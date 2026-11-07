@@ -17,6 +17,7 @@ on:
 
 permissions:
   packages: write
+  id-token: write # NuGet/login exchanges a GitHub OIDC token for a NuGet.org API key
 
 env:
   PACKAGE_NAME: ALCops.Analyzers
@@ -33,14 +34,25 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # Trusted Publishing: needs a nuget.org policy with the unlist scope that
+      # names this workflow file. The temporary API key is valid for one hour.
+      # A failed login skips the NuGet.org cleanup instead of failing the run,
+      # so the GitHub Packages cleanup below still happens.
+      - name: NuGet.org login
+        id: nuget-login
+        continue-on-error: true
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Cleanup NuGet.org
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         run: |
           set -euo pipefail
 
           if [ -z "${NUGET_API_KEY:-}" ]; then
-            echo "::warning::NUGET_API_KEY not configured, skipping NuGet.org cleanup"
+            echo "::warning::NuGet.org login failed, skipping NuGet.org cleanup"
             exit 0
           fi
 
