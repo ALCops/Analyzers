@@ -32,6 +32,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("GlobalBareInitializeInOneProcedureUsedInAnother")]
         [TestCase("LocalPassedToSameObjectProcedureNeverInitialized")]
         [TestCase("LocalPassedToSameObjectProcedureBareInitialize")]
+        [TestCase("DiamondCallGraphNeverInitialized")]
         [TestCase("ThisReceiverProcedureCall")]
         [TestCase("PageActionTriggerLocal")]
         [TestCase("TableTriggerLocal")]

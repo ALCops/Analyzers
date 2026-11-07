@@ -127,7 +127,7 @@ public sealed class RestClientInitializeWithHttpClientHandler : DiagnosticAnalyz
     private static void Walk(ISymbol root, BlockSyntax body, RootState state, SemanticModel model, ObjectSyntax objectSyntax, CancellationToken ct)
     {
         if (model.GetOperation(body, ct) is { } operation)
-            new TrackedWalker(root, true, state, model, objectSyntax, new HashSet<IMethodSymbol>(), ct).Visit(operation);
+            new TrackedWalker(root, true, state, model, objectSyntax, new HashSet<(IMethodSymbol, int)>(), ct).Visit(operation);
     }
 
     private static void Report(SymbolAnalysisContext ctx, IVariableSymbol root, RootState state)
@@ -187,7 +187,7 @@ public sealed class RestClientInitializeWithHttpClientHandler : DiagnosticAnalyz
         RootState state,
         SemanticModel model,
         ObjectSyntax objectSyntax,
-        HashSet<IMethodSymbol> visited,
+        HashSet<(IMethodSymbol Method, int ParameterIndex)> visited,
         CancellationToken ct) : OperationWalker
     {
         public override void VisitInvocationExpression(IInvocationExpression operation)
@@ -297,21 +297,16 @@ public sealed class RestClientInitializeWithHttpClientHandler : DiagnosticAnalyz
                 !objectSyntax.Span.Contains(callee.Span))
                 return false;
 
-            if (!visited.Add(target))
+            // Each callee parameter is walked once per root: the state only ever grows, so a second walk
+            // along another call path adds nothing, and the entry also stops recursion through a cycle.
+            if (!visited.Add((target, argumentIndex)))
                 return true;
 
-            try
-            {
-                if (model.GetOperation(body, ct) is not { } operation)
-                    return false;
+            if (model.GetOperation(body, ct) is not { } operation)
+                return false;
 
-                new TrackedWalker(target.Parameters[argumentIndex], false, state, model, objectSyntax, visited, ct).Visit(operation);
-                return true;
-            }
-            finally
-            {
-                visited.Remove(target);
-            }
+            new TrackedWalker(target.Parameters[argumentIndex], false, state, model, objectSyntax, visited, ct).Visit(operation);
+            return true;
         }
 
         // The SDK has no SymbolEqualityComparer; ISymbol.Equals compares the declared symbols.
