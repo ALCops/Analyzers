@@ -30,6 +30,12 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ImplicitRec")]
         public async Task HasDatabaseWrite(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["DirectDatabaseModifications"],
+                testCase,
+                "16.0",
+                "Record.Truncate is not available before AL version 16.");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, "HasDiagnostic", $"{testCase}.al"))
                 .ConfigureAwait(false);
 
