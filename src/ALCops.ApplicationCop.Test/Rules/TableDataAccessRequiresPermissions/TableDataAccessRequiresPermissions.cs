@@ -32,6 +32,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("Reports")]
         [TestCase("DottedTableName")]
         [TestCase("NextWithoutPermissions")]
+        [TestCase("DeleteAllWithoutRead")]
+        [TestCase("ModifyAllWithoutRead")]
         [TestCase("DataTransferCopyFieldsMissingModify")]
         [TestCase("DataTransferCopyRowsMissingInsert")]
         [TestCase("DataTransferMissingReadOnSource")]
@@ -93,6 +95,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("NextWithPermissions")]
         [TestCase("PageSourceTableNext")]
         [TestCase("TemporaryRecordNext")]
+        [TestCase("DeleteAllAndModifyAllWithRead")]
+        [TestCase("SingleRecordMethodsWithoutRead")]
         [TestCase("DataTransferCopyFieldsWithPermissions")]
         [TestCase("DataTransferCopyRowsWithPermissions")]
         [TestCase("DataTransferUnresolvable")]
@@ -129,6 +133,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("AddEntryAppend")]
         [TestCase("AddNewPermissionsPropertyDottedName")]
         [TestCase("MergePermissionCharDottedName")]
+        [TestCase("DeleteAllAddsRead")]
+        [TestCase("ModifyAllAddsRead")]
         public async Task HasFix(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(

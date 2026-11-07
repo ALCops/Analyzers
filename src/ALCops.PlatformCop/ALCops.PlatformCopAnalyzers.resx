@@ -408,6 +408,33 @@
   <data name="UseSequentialGuidDescription" xml:space="preserve">
     <value>CreateGuid() generates random GUIDs that cause SQL index fragmentation when inserted into key fields. CreateSequentialGuid() produces partially-sequential GUIDs that reduce index fragmentation by 20-40%, improving insert, read, and update performance. Use CreateSequentialGuid() when the GUID is assigned to a field that is part of a table key.</value>
   </data>
+  <data name="TranslationFilesMustBeWellFormedTitle" xml:space="preserve">
+    <value>Translation files must be well-formed</value>
+  </data>
+  <data name="TranslationFilesMustBeWellFormedMessageFormat" xml:space="preserve">
+    <value>Translation file '{0}' could not be processed: {1}</value>
+  </data>
+  <data name="TranslationFilesMustBeWellFormedDescription" xml:space="preserve">
+    <value>Translation files must contain well-formed XML so the compiler can load translations for the extension. Malformed or unreadable XLIFF files are reported with their path and error details; XML errors include their line and column.</value>
+  </data>
+  <data name="TryFunctionDatabaseWriteTitle" xml:space="preserve">
+    <value>TryFunction database write is not rolled back</value>
+  </data>
+  <data name="TryFunctionDatabaseWriteMessageFormat" xml:space="preserve">
+    <value>Built-in method '{0}' writes to the database inside a TryFunction; the change is not rolled back when an error is caught.</value>
+  </data>
+  <data name="TryFunctionDatabaseWriteDescription" xml:space="preserve">
+    <value>Database changes made inside a TryFunction are not rolled back when an error is caught. On-premises, the write can also cause a runtime error when DisableWriteInsideTryFunctions is enabled.</value>
+  </data>
+  <data name="TryFunctionPotentialDatabaseWriteTitle" xml:space="preserve">
+    <value>Call may write to the database inside a TryFunction</value>
+  </data>
+  <data name="TryFunctionPotentialDatabaseWriteMessageFormat" xml:space="preserve">
+    <value>Method '{0}' may write to the database inside a TryFunction. Review it because changes are not rolled back when an error is caught.</value>
+  </data>
+  <data name="TryFunctionPotentialDatabaseWriteDescription" xml:space="preserve">
+    <value>Potential writes from built-in methods and custom procedures are reported for review because method bodies are not analyzed transitively. This diagnostic is disabled by default and can be enabled in a ruleset.</value>
+  </data>
   <data name="UseSequentialGuidCodeAction" xml:space="preserve">
     <value>ALCops: Replace with CreateSequentialGuid()</value>
   </data>

@@ -34,6 +34,8 @@ The compiler treats a null receiver and the synthesized self global as the same 
 | report and query dataitem triggers | none; the dataitem is the record variable | `Instance` is an `IReportDataItemAccess` or query dataitem access (`BinderFactory`, `IsolatedScopeBinder`) | no | the object |
 | xmlport table elements, query, enum, interface, codeunit without `TableNo`, reportextension | none | fields are reached through the element or dataitem name | no | the object |
 
+A bare call inside a report data item trigger binds to the **innermost** enclosing data item, and a bare call in an xmlport table element trigger does not compile (AL0118), so only the named form reaches an xmlport element. A bare call without parentheses (`Modify;`) is a lone `IdentifierNameSyntax`, which `TryGetMethodCall` does not recognise; walk it separately and bind it.
+
 `TableNo` is a codeunit-only property (`ObjectParser.GetCodeunitProperties`); pages and request pages use `SourceTable`, report dataitems use `DataItemTable`. A rule that classifies `Rec` by `SymbolKind.GlobalVariable` alone misses the `OnRun` local; a rule that gates on a non-null `Instance` misses tables and tableextensions.
 
 ## Symbol shapes

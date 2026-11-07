@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     Fetches three pinned versions of Microsoft.Dynamics.BusinessCentral.Development.Tools
-    from VS Marketplace (VSIX) and NuGet, then extracts the Analyzers DLLs to:
+    from VS Marketplace (VSIX) or NuGet, then extracts the Analyzers DLLs to:
     <RepoRoot>/Microsoft.Dynamics.BusinessCentral.Development.Tools/<TFM>/
 
 .NOTES
@@ -37,11 +37,11 @@ $sources = @(
         PathInArchive   = 'extension/bin/Analyzers'
     }
     @{
-        AssemblyVersion = '18.0.41.39415'
-        PackageVersion  = '18.0.41.39415'
+        AssemblyVersion = '16.10.44.19458'
+        PackageVersion  = '16.10.2902954'
         TFM             = 'net10.0'
-        Type            = 'NuGet'
-        PathInArchive   = 'tools/net10.0/any'
+        Type            = 'VSIX'
+        PathInArchive   = 'extension/bin/Analyzers'
     }
 )
 

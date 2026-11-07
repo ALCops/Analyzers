@@ -106,6 +106,14 @@ What it does:
 - **NuGet.org**: Unlists packages. Unlisted packages are hidden from search but remain downloadable by exact version pin. This is safe for users who have pinned a specific version.
 - **GitHub Packages**: Permanently deletes old versions. Accepted trade-off for pre-releases.
 
+## NuGet.org authentication (Trusted Publishing)
+
+No long-lived NuGet.org API key is stored. Both workflows call `NuGet/login`, which exchanges the job's GitHub OIDC token (`id-token: write`) for a temporary API key valid for one hour, so the login step sits right before the step that uses it. The only secret is `NUGET_USER`: the nuget.org profile name (not the email) of a member of the `ALCops` organization, which owns the package and the policies.
+
+- A nuget.org Trusted Publishing policy matches one workflow **file**, so `build-and-release.yml` (push scope) and `scheduled-cleanup.yml` (unlist scope) each need their own policy. A missing or inactive policy fails the release job at login, but only skips the NuGet.org part of the cleanup (`continue-on-error`), so GitHub Packages cleanup still runs.
+- The release job declares job-level `permissions`, which replace the workflow-level set rather than adding to it; keep `contents`, `packages` and `pull-requests` restated there.
+- A policy stays tied to the member who created it: if that account leaves the `ALCops` organization, the policy goes inactive until someone else re-creates it.
+
 ## SemVer ordering
 
 The `.N` suffix pattern (`alpha.1`, `alpha.2`, `beta.1`) was chosen over a patch-increment scheme (`v1.0.0-alpha`, `v1.0.1-alpha`, `v1.0.2-alpha`) for SemVer correctness.
@@ -123,7 +131,7 @@ Beta tags are created inside the workflow using `GITHUB_TOKEN`, which doesn't tr
 
 ## Test report gate
 
-Every release channel is gated on the unified dorny test report. `build-test.yml` merges the per-AL-version `.trx` artifacts into one `test-results` artifact; for push/scheduled runs (`publish-report: true`) a `report` job publishes the "Test results" check inline, and because the release job `needs` the workflow call, a failed test on any AL version blocks alpha, beta, and stable alike — before anything is published. Individual `dotnet test` steps stay `continue-on-error` so all cops × all AL versions always run and report together; the dorny check is the failure signal, not the test job. Pull requests get the same check via the `workflow_run` Test Report workflow (`test-report.yml`, 'Pull Request' only) — the fork-safe path, since fork PR tokens lack `checks: write`. That workflow uses dorny's `artifact:` input instead of checking out the PR head (`actions/checkout` refuses fork-PR SHAs in a `workflow_run` context). Artifacts are stored per run attempt, so re-running one test leg would otherwise leave two `test-results-<version>` artifacts and two `test-results` artifacts: the merge job would pick up the stale attempt-1 result and dorny would list every trx twice. Both uploads therefore set `overwrite: true`, which deletes the same-named artifact before uploading.
+Every release channel is gated on the unified dorny test report. `build-test.yml` merges the per-AL-version `.trx` artifacts into one `test-results` artifact; for push/scheduled runs (`publish-report: true`) a `report` job publishes the "Test results" check inline, and because the release job `needs` the workflow call, a failed test on any AL version blocks alpha, beta, and stable alike — before anything is published. Each test project is built in its own step that fails the job on compile errors; only the `dotnet test --no-build` steps stay `continue-on-error` so all cops × all AL versions always run and report together, and the dorny check is the failure signal for test failures. Pull requests get the same check via the `workflow_run` Test Report workflow (`test-report.yml`, 'Pull Request' only) — the fork-safe path, since fork PR tokens lack `checks: write`. That workflow uses dorny's `artifact:` input instead of checking out the PR head (`actions/checkout` refuses fork-PR SHAs in a `workflow_run` context). Artifacts are stored per run attempt, so re-running one test leg would otherwise leave two `test-results-<version>` artifacts and two `test-results` artifacts: the merge job would pick up the stale attempt-1 result and dorny would list every trx twice. Both uploads therefore set `overwrite: true`, which deletes the same-named artifact before uploading.
 
 ## What external contributors should expect
 

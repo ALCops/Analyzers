@@ -48,6 +48,15 @@ public static class RequiredPermissionDetector
     }
 
     /// <summary>
+    /// The Read permission a call implies on top of <paramref name="required"/> (see
+    /// <see cref="MethodOperationMap.ImpliesRead"/>), or null when the method implies none.
+    /// </summary>
+    public static RequiredPermission? TryGetImpliedRead(RequiredPermission required, string methodName) =>
+        MethodOperationMap.ImpliesRead(methodName)
+            ? new RequiredPermission(required.Table, required.VariableType, DatabaseOperation.Read, required.Location)
+            : null;
+
+    /// <summary>
     /// Collects into <paramref name="results"/> the permissions a <c>DataTransfer</c> executor
     /// (<c>CopyFields</c> / <c>CopyRows</c>) requires. The tables are not on the receiver: they
     /// come from the <c>SetTables</c> calls that reach the executor in flow order, resolved by

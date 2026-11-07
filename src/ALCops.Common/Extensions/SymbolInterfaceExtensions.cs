@@ -41,6 +41,29 @@ public static class SymbolInterfaceExtensions
             _ => null
         };
 
+    public static bool IsSameApplicationObject(this ISymbol? source, ISymbol? target)
+    {
+        if (source is null || target is null)
+        {
+            return false;
+        }
+
+        source = source.OriginalDefinition;
+        target = target.OriginalDefinition;
+
+        if (ReferenceEquals(source, target))
+        {
+            return true;
+        }
+
+        if (source is ISymbolWithId sourceWithId && target is ISymbolWithId targetWithId)
+        {
+            return sourceWithId.Id == targetWithId.Id && source.Kind == target.Kind;
+        }
+
+        return source.Equals(target);
+    }
+
     public static string GetFullyQualifiedObjectName(this ISymbol symbol, bool quoteIdentifierIfNeeded = false)
     {
         var symbolName = quoteIdentifierIfNeeded

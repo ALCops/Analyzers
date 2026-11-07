@@ -112,7 +112,7 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
             if (ReferenceEquals(ext, currentExtension))
                 continue;
 
-            if (!SameApplicationObject(ext.Target?.OriginalDefinition, targetPage))
+            if (!ext.Target.IsSameApplicationObject(targetPage))
                 continue;
 
             foreach (var control in ext.AddedControlsFlattened)
@@ -129,23 +129,6 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
         }
 
         return entries;
-    }
-
-    private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
-    {
-        if (source is null || target is null)
-            return false;
-
-        source = source.OriginalDefinition;
-        target = target.OriginalDefinition;
-
-        if (ReferenceEquals(source, target))
-            return true;
-
-        if (source is ISymbolWithId lId && target is ISymbolWithId rId)
-            return lId.Id == rId.Id && source.Kind == target.Kind;
-
-        return source.Equals(target);
     }
 
     private static void AnalyzePage(SymbolAnalysisContext ctx, IPageBaseTypeSymbol page)
@@ -238,7 +221,7 @@ public sealed class DuplicateODataEntityName : DiagnosticAnalyzer
             if (ReferenceEquals(ext, currentExtension))
                 continue;
 
-            if (!SameApplicationObject(ext.Target?.OriginalDefinition, targetPage))
+            if (!ext.Target.IsSameApplicationObject(targetPage))
                 continue;
 
             CollectReferencedFieldsInto(set, ext.AddedControlsFlattened);

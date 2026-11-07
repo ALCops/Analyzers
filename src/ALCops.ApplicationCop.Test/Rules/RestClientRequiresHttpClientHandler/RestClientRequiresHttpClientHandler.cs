@@ -10,12 +10,16 @@ namespace ALCops.ApplicationCop.Test
         [SetUp]
         public void Setup()
         {
-            _fixture = RoslynFixtureFactory.Create<Analyzers.RequiredInterfaceImplementation>();
-
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
                     Path.Combine("Rules", nameof(RestClientRequiresHttpClientHandler)));
+
+            _fixture = RoslynFixtureFactory.Create<Analyzers.RequiredInterfaceImplementation>(
+                new AnalyzerTestFixtureConfig
+                {
+                    RuleSetPath = Path.Combine(_testCasePath, $"{nameof(RestClientRequiresHttpClientHandler)}.ruleset.json")
+                });
         }
 
         [Test]
@@ -67,6 +71,27 @@ namespace ALCops.ApplicationCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.RestClientRequiresHttpClientHandler);
+        }
+
+        [Test]
+        public async Task BothRulesOneObjectReportsBoth()
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), "BothRulesOneObject.al"))
+                .ConfigureAwait(false);
+
+            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.RestClientRequiresHttpClientHandler);
+            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.TelemetryRequiresTelemetryLogger);
+        }
+
+        [Test]
+        public async Task DisabledWithoutRuleSet()
+        {
+            var fixture = RoslynFixtureFactory.Create<Analyzers.RequiredInterfaceImplementation>();
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), "GlobalVariable.al"))
+                .ConfigureAwait(false);
+
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.RestClientRequiresHttpClientHandler);
         }
     }
 }

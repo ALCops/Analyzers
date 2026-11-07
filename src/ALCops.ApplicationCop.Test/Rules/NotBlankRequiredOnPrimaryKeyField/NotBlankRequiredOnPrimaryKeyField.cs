@@ -23,6 +23,7 @@ namespace ALCops.ApplicationCop.Test
         [Test]
         [TestCase("PrimaryKeyCodeField")]
         [TestCase("PrimaryKeyCodeFieldWithoutExplicitKeysSet")]
+        [TestCase("PrimaryKeyTextField")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -36,6 +37,9 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("PrimaryKeyCodeFieldNotBlankTrue")]
         [TestCase("PrimaryKeyIntegerField")]
         [TestCase("PrimaryKeyMultipleFields")]
+        [TestCase("SetupTableGetRecordOnce")]
+        [TestCase("SetupTablePrimaryKey")]
+        [TestCase("SetupTablePrimaryKeyNoSpace")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

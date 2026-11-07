@@ -369,7 +369,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
 
         var extensionFields =
             allTableExtensions
-                .Where(ext => SameApplicationObject(ext.Target, table))
+                .Where(ext => ext.Target.IsSameApplicationObject(table))
                 .SelectMany(ext => ext.AddedFields);
 
         IEnumerable<IFieldSymbol> baseFields = table.Fields;
@@ -441,9 +441,7 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         if (sourceType is IApplicationObjectTypeSymbol &&
             targetType is IApplicationObjectTypeSymbol)
         {
-            return SameApplicationObject(
-                sourceType.OriginalDefinition,
-                targetType.OriginalDefinition);
+            return sourceType.OriginalDefinition.IsSameApplicationObject(targetType.OriginalDefinition);
         }
 
         if (IsNumeric(sourceKind) && IsNumeric(targetKind))
@@ -670,20 +668,4 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
         return GetCachedCompilationPaths(compilation).Contains(path);
     }
 
-    private static bool SameApplicationObject(ISymbol? source, ISymbol? target)
-    {
-        if (source is null || target is null)
-            return false;
-
-        source = source.OriginalDefinition;
-        target = target.OriginalDefinition;
-
-        if (ReferenceEquals(source, target))
-            return true;
-
-        if (source is ISymbolWithId lId && target is ISymbolWithId rId)
-            return lId.Id == rId.Id && source.Kind == target.Kind;
-
-        return source.Equals(target);
-    }
 }

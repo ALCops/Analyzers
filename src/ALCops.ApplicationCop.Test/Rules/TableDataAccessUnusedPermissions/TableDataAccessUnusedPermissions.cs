@@ -38,6 +38,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("RecordRefFieldRefValueOnly")]
         [TestCase("RecordRefNameShadowedByLocalRecord")]
         [TestCase("NextPartialUnused")]
+        [TestCase("DeleteAllReadStillImplied")]
+        [TestCase("ModifyAllReadStillImplied")]
         [TestCase("DataTransferPartialUnused")]
         [TestCase("DataTransferCopyRowsDestinationPartialUnused")]
         [TestCase("DataTransferOnlyBuilderCalls")]
@@ -52,6 +54,15 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferLoopCarriedSetTablesUnrelatedUnused")]
         [TestCase("ReportAccessByPermissionNotAUse")]
         [TestCase("ReportAccessByPermissionDuplicateUnused")]
+        [TestCase("ReportDataItemBarePartialUnused")]
+        [TestCase("ReportDataItemUseTemporaryBareModify")]
+        [TestCase("ReportDataItemTableTypeTemporaryBareModify")]
+        [TestCase("TableTypeTemporaryBareSelf")]
+        [TestCase("TableTypeTemporaryBareSelfWithoutParentheses")]
+        [TestCase("ReportDataItemBarePartialUnusedWithoutParentheses")]
+        [TestCase("UserProcedureNamedLikeDbMethodBareCall")]
+        [TestCase("VariableNamedLikeDbMethodWithoutParentheses")]
+        [TestCase("ModifyReportNestedDataItemBareSelfOuterUnused")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -104,6 +115,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("NextWithoutParentheses")]
         [TestCase("NextStandAlone")]
         [TestCase("RecordRefNext")]
+        [TestCase("DeleteAllImpliesRead")]
+        [TestCase("ModifyAllImpliesRead")]
+        [TestCase("DeleteAllImpliesReadBareSelf")]
+        [TestCase("DeleteAllImpliesReadBareSelfWithoutParentheses")]
         [TestCase("DataTransferCopyFieldsSameTable")]
         [TestCase("DataTransferCopyFieldsTwoTables")]
         [TestCase("DataTransferCopyRowsTwoTables")]
@@ -120,6 +135,15 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("DataTransferLoopCarriedUnresolvableSetTables")]
         [TestCase("RecSelfAccess")]
         [TestCase("ReportAccessByPermissionAndPermissions")]
+        [TestCase("ModifyReportDataItemBareSelf")]
+        [TestCase("ModifyReportDataItemBareSelfWithoutParentheses")]
+        [TestCase("ModifyBareSelfWithoutParenthesesInTable")]
+        [TestCase("ModifyReportNestedDataItemBareSelf")]
+        [TestCase("ModifyOnRunRec")]
+        [TestCase("ModifyOnRunBareSelf")]
+        [TestCase("ModifyPageRec")]
+        [TestCase("ModifyPageBareSelf")]
+        [TestCase("ModifyNamespaced")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -166,6 +190,8 @@ namespace ALCops.ApplicationCop.Test
         [Test]
         [TestCase("ReduceChars")]
         [TestCase("ReplaceChars")]
+        [TestCase("DeleteAllKeepsRead")]
+        [TestCase("ModifyAllKeepsRead")]
         public async Task HasFixPartialChars(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(

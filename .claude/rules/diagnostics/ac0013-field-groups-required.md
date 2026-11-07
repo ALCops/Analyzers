@@ -23,7 +23,7 @@ Registers `RegisterCompilationStartAction` (read-only index of page-referenced t
 ## Deliberate non-reports
 
 - Obsolete tables.
-- Setup tables, via the shared `TableHelper.IsSetupTable()` heuristic: a single `Code` primary-key field named `Primary Key`/`PrimaryKey`, or a parameterless, return-less `GetRecordOnce` method declared on the table itself (any accessibility). Field groups are not useful on a single-record table ([#287](https://github.com/ALCops/Analyzers/issues/287)).
+- Setup tables, via the shared `TableHelper.IsSetupTable()` heuristic: a single `Code` primary-key field named `Primary Key`/`PrimaryKey`, or a parameterless, return-less `GetRecordOnce` method declared on the table itself (any accessibility). Field groups are not useful on a single-record table ([#287](https://github.com/ALCops/Analyzers/issues/287)). AC0002 uses the same heuristic to skip setup tables, so changing it affects both rules.
 - Temporary tables that no page references; a temporary table with a page is still checked.
 - Tables that no page references at all.
 

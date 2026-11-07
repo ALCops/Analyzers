@@ -53,6 +53,10 @@ public sealed class TableDataAccessRequiresPermissions : DiagnosticAnalyzer
         }
 
         ReportIfNotCovered(ctx, containingObject, required.Value);
+
+        var impliedRead = RequiredPermissionDetector.TryGetImpliedRead(required.Value, invocation.TargetMethod.Name);
+        if (impliedRead is not null)
+            ReportIfNotCovered(ctx, containingObject, impliedRead.Value);
     }
 
     /// <summary>

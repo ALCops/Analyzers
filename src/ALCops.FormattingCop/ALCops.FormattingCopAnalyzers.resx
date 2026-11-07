@@ -201,6 +201,15 @@
   <data name="AnalyzerExceptionMessageFormat" xml:space="preserve">
     <value>Analyzer '{0}' threw an exception of type '{1}': {2}</value>
   </data>
+  <data name="KeywordShouldEndLineTitle" xml:space="preserve">
+    <value>The 'then' and 'begin' keywords should end the line</value>
+  </data>
+  <data name="KeywordShouldEndLineMessageFormat" xml:space="preserve">
+    <value>The '{0}' keyword should be the last token on the line.</value>
+  </data>
+  <data name="KeywordShouldEndLineDescription" xml:space="preserve">
+    <value>The 'begin' keyword and the 'then' keyword of an if statement should be the last token on their line, so that every statement starts on its own line. A trailing comment is allowed, and 'then begin' may share a line.</value>
+  </data>
   <data name="AnalyzerExceptionDescription" xml:space="preserve">
     <value>An ALCops analyzer threw an unhandled exception while analyzing this object. This is a defect in the analyzer, not in the analyzed code. The diagnostic is reported at the object or line being analyzed (instead of the generic AD0001 on app.json) so the culprit can be located. Please report it to the ALCops maintainers with the object name and exception details.</value>
   </data>

@@ -136,6 +136,11 @@ internal static class TransferFieldsRelations
                 new Version(22, 5)),
             new TableRelation(
                 new ObjectName("", "Bank Rec. Line"),
+                new ObjectName("", "Bank Rec. Sub-line"),
+                new Version(16, 0),
+                new Version(22, 5)),
+            new TableRelation(
+                new ObjectName("", "Bank Rec. Line"),
                 new ObjectName("", "Posted Bank Rec. Line"),
                 new Version(16, 0),
                 new Version(22, 5)),
@@ -204,6 +209,16 @@ internal static class TransferFieldsRelations
                 new ObjectName("", "Email Outbox For User"),
                 new Version(17, 0),
                 new Version(17, 0)),
+            new TableRelation(
+                new ObjectName("", "Employee"),
+                new ObjectName("", "Company Officials"),
+                new Version(16, 0),
+                new Version(19, 5)),
+            new TableRelation(
+                new ObjectName("", "Extra Settings"),
+                new ObjectName("", "Application User Settings"),
+                new Version(20, 0),
+                new Version(22, 5)),
             new TableRelation(
                 new ObjectName("", "Graph Integration Record"),
                 new ObjectName("", "Graph Integration Rec. Archive"),
@@ -580,11 +595,6 @@ internal static class TransferFieldsRelations
                 new Version(16, 0),
                 null),
             new TableRelation(
-                new ObjectName("Microsoft.Bank.Reconciliation", "Bank Rec. Line"),
-                new ObjectName("Microsoft.Bank.Reconciliation", "Bank Rec. Sub-line"),
-                new Version(16, 0),
-                new Version(25, 5)),
-            new TableRelation(
                 new ObjectName("Microsoft.Bank.Reconciliation", "Payment Application Proposal"),
                 new ObjectName("Microsoft.Bank.Reconciliation", "Applied Payment Entry"),
                 new Version(16, 0),
@@ -665,6 +675,16 @@ internal static class TransferFieldsRelations
                 new Version(16, 0),
                 null),
             new TableRelation(
+                new ObjectName("Microsoft.ExciseTaxes", "Excise Tax Item/FA Rate"),
+                new ObjectName("Microsoft.ExciseTaxes", "Excise Tax Rate"),
+                new Version(29, 0),
+                null),
+            new TableRelation(
+                new ObjectName("Microsoft.ExpenseAgent", "Expense Policy Evaluation"),
+                new ObjectName("Microsoft.ExpenseAgent", "Posted Exp. Policy Evaluation"),
+                new Version(29, 0),
+                null),
+            new TableRelation(
                 new ObjectName("Microsoft.ExpenseAgent", "Expense Report Header"),
                 new ObjectName("Microsoft.ExpenseAgent", "Posted Expense Report Header"),
                 new Version(28, 1),
@@ -688,6 +708,11 @@ internal static class TransferFieldsRelations
                 new ObjectName("Microsoft.ExpenseAgent", "Expense Report Line Per Diem"),
                 new ObjectName("Microsoft.ExpenseAgent", "Posted Exp. Rep. Line Per Diem"),
                 new Version(28, 1),
+                null),
+            new TableRelation(
+                new ObjectName("Microsoft.ExpenseAgent", "Expense Report Line VAT Spec."),
+                new ObjectName("Microsoft.ExpenseAgent", "Posted Exp. Rep. Line VAT Spec"),
+                new Version(29, 0),
                 null),
             new TableRelation(
                 new ObjectName("Microsoft.Finance.Analysis", "Analysis by Dim. Parameters"),
@@ -823,7 +848,7 @@ internal static class TransferFieldsRelations
                 new ObjectName("Microsoft.Finance.GST.Base", "E-Commerce Merchant"),
                 new ObjectName("Microsoft.Finance.GST.Base", "E-Comm. Merchant"),
                 new Version(19, 2),
-                null),
+                new Version(25, 5)),
             new TableRelation(
                 new ObjectName("Microsoft.Finance.GST.Distribution", "GST Distribution Header"),
                 new ObjectName("Microsoft.Finance.GST.Distribution", "Posted GST Distribution Header"),
@@ -965,11 +990,6 @@ internal static class TransferFieldsRelations
                 new Version(16, 0),
                 null),
             new TableRelation(
-                new ObjectName("Microsoft.HumanResources.Employee", "Employee"),
-                new ObjectName("", "Company Officials"),
-                new Version(16, 0),
-                new Version(25, 5)),
-            new TableRelation(
                 new ObjectName("Microsoft.HumanResources.Payables", "Detailed Employee Ledger Entry"),
                 new ObjectName("Microsoft.Finance.ReceivablesPayables", "Detailed CV Ledg. Entry Buffer"),
                 new Version(16, 0),
@@ -1003,7 +1023,7 @@ internal static class TransferFieldsRelations
                 new ObjectName("Microsoft.Integration.FieldService", "FS Connection Setup"),
                 new ObjectName("Microsoft.Integration.DynamicsFieldService", "FS Connection Setup"),
                 new Version(24, 3),
-                null),
+                new Version(27, 5)),
             new TableRelation(
                 new ObjectName("Microsoft.Integration.Graph", "Attachment Entity Buffer"),
                 new ObjectName("Microsoft.Integration.Graph", "Unlinked Attachment"),
@@ -1455,6 +1475,11 @@ internal static class TransferFieldsRelations
                 new Version(24, 0),
                 null),
             new TableRelation(
+                new ObjectName("Microsoft.Projects.Project.Archive", "Job Assigned Resource Archive"),
+                new ObjectName("Microsoft.Projects.Project.Job", "Job Assigned Resource"),
+                new Version(29, 0),
+                null),
+            new TableRelation(
                 new ObjectName("Microsoft.Projects.Project.Archive", "Job Planning Line Archive"),
                 new ObjectName("Microsoft.Projects.Project.Planning", "Job Planning Line"),
                 new Version(24, 0),
@@ -1468,6 +1493,11 @@ internal static class TransferFieldsRelations
                 new ObjectName("Microsoft.Projects.Project.Job", "Job"),
                 new ObjectName("Microsoft.Projects.Project.Archive", "Job Archive"),
                 new Version(24, 0),
+                null),
+            new TableRelation(
+                new ObjectName("Microsoft.Projects.Project.Job", "Job Assigned Resource"),
+                new ObjectName("Microsoft.Projects.Project.Archive", "Job Assigned Resource Archive"),
+                new Version(29, 0),
                 null),
             new TableRelation(
                 new ObjectName("Microsoft.Projects.Project.Job", "Job Task"),
@@ -2485,11 +2515,6 @@ internal static class TransferFieldsRelations
                 new Version(18, 2),
                 null),
             new TableRelation(
-                new ObjectName("System.Environment.Configuration", "Extra Settings"),
-                new ObjectName("System.Environment.Configuration", "Application User Settings"),
-                new Version(20, 0),
-                new Version(25, 5)),
-            new TableRelation(
                 new ObjectName("System.Environment.Configuration", "Notification Entry"),
                 new ObjectName("System.Environment.Configuration", "Sent Notification Entry"),
                 new Version(16, 0),
@@ -2549,11 +2574,6 @@ internal static class TransferFieldsRelations
                 new ObjectName("System.Integration.Word", "Word Templates Related Buffer"),
                 new Version(22, 0),
                 null),
-            new TableRelation(
-                new ObjectName("System.IO", "Config. Field Mapping"),
-                new ObjectName("System.IO", "Config. Field Map"),
-                new Version(19, 0),
-                new Version(25, 5)),
             new TableRelation(
                 new ObjectName("System.IO", "Config. Setup"),
                 new ObjectName("Microsoft.Foundation.Company", "Company Information"),

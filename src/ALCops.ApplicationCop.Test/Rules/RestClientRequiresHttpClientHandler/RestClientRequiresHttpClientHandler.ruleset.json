@@ -1,0 +1,14 @@
+{
+    "name": "Enable AC0033 and AC0034",
+    "description": "Enables the default-disabled RestClientRequiresHttpClientHandler and TelemetryRequiresTelemetryLogger rules so they can be tested.",
+    "rules": [
+        {
+            "id": "AC0033",
+            "action": "Info"
+        },
+        {
+            "id": "AC0034",
+            "action": "Info"
+        }
+    ]
+}

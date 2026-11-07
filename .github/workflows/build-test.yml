@@ -265,12 +265,21 @@ jobs:
         continue-on-error: true
         run: dotnet restore ./src/ALCops.Common.Test/ALCops.Common.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
+      # Compile errors must fail the job, test failures must not, so every cop x AL version still reports.
+      # --no-build with the same NavTargetFramework/Configuration makes dotnet test use the exact output of the build step.
+      - name: Build ALCops.Common.Test
+        run: >
+          dotnet build ./src/ALCops.Common.Test/ALCops.Common.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+
       - name: Run ALCops.Common.Test
         continue-on-error: true
         run: >
           dotnet test ./src/ALCops.Common.Test/ALCops.Common.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
-          --no-restore
+          --no-build
           --configuration Release
           --results-directory ./TestResults
           --logger "console;verbosity=normal"
@@ -288,12 +297,19 @@ jobs:
         continue-on-error: true
         run: dotnet restore ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
+      - name: Build ALCops.ApplicationCop.Test
+        run: >
+          dotnet build ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+
       - name: Run ALCops.ApplicationCop.Test
         continue-on-error: true
         run: >
           dotnet test ./src/ALCops.ApplicationCop.Test/ALCops.ApplicationCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
-          --no-restore
+          --no-build
           --configuration Release
           --results-directory ./TestResults
           --logger "console;verbosity=normal"
@@ -311,12 +327,19 @@ jobs:
         continue-on-error: true
         run: dotnet restore ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
+      - name: Build ALCops.DocumentationCop.Test
+        run: >
+          dotnet build ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+
       - name: Run ALCops.DocumentationCop.Test
         continue-on-error: true
         run: >
           dotnet test ./src/ALCops.DocumentationCop.Test/ALCops.DocumentationCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
-          --no-restore
+          --no-build
           --configuration Release
           --results-directory ./TestResults
           --logger "console;verbosity=normal"
@@ -334,12 +357,19 @@ jobs:
         continue-on-error: true
         run: dotnet restore ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
+      - name: Build ALCops.FormattingCop.Test
+        run: >
+          dotnet build ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+
       - name: Run ALCops.FormattingCop.Test
         continue-on-error: true
         run: >
           dotnet test ./src/ALCops.FormattingCop.Test/ALCops.FormattingCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
-          --no-restore
+          --no-build
           --configuration Release
           --results-directory ./TestResults
           --logger "console;verbosity=normal"
@@ -357,12 +387,19 @@ jobs:
         continue-on-error: true
         run: dotnet restore ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
+      - name: Build ALCops.LinterCop.Test
+        run: >
+          dotnet build ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+
       - name: Run ALCops.LinterCop.Test
         continue-on-error: true
         run: >
           dotnet test ./src/ALCops.LinterCop.Test/ALCops.LinterCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
-          --no-restore
+          --no-build
           --configuration Release
           --results-directory ./TestResults
           --logger "console;verbosity=normal"
@@ -380,12 +417,19 @@ jobs:
         continue-on-error: true
         run: dotnet restore ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
+      - name: Build ALCops.PlatformCop.Test
+        run: >
+          dotnet build ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+
       - name: Run ALCops.PlatformCop.Test
         continue-on-error: true
         run: >
           dotnet test ./src/ALCops.PlatformCop.Test/ALCops.PlatformCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
-          --no-restore
+          --no-build
           --configuration Release
           --results-directory ./TestResults
           --logger "console;verbosity=normal"
@@ -403,12 +447,19 @@ jobs:
         continue-on-error: true
         run: dotnet restore ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj /p:NavTargetFramework=${{ matrix.tfm }}
 
+      - name: Build ALCops.TestAutomationCop.Test
+        run: >
+          dotnet build ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj
+          -p:NavTargetFramework=${{ matrix.tfm }}
+          --no-restore
+          --configuration Release
+
       - name: Run ALCops.TestAutomationCop.Test
         continue-on-error: true
         run: >
           dotnet test ./src/ALCops.TestAutomationCop.Test/ALCops.TestAutomationCop.Test.csproj
           -p:NavTargetFramework=${{ matrix.tfm }}
-          --no-restore
+          --no-build
           --configuration Release
           --results-directory ./TestResults
           --logger "console;verbosity=normal"
@@ -423,11 +474,12 @@ jobs:
         if: always()
         shell: bash
         run: |
-          # Every 'Run *.Test' step is continue-on-error, so this is the step that fails the job
-          # when tests never ran (e.g. BC DevTools download failed). Fail with a clear message
+          # A compile error fails the job at its own 'Build *.Test' step. The 'Run *.Test' steps are
+          # continue-on-error, so this is the step that fails the job when no test run produced a trx
+          # (e.g. BC DevTools download failed). Fail with a clear message
           # instead of letting trx-merge crash on a missing directory.
           if ! compgen -G "./TestResults/*.trx" > /dev/null; then
-            echo "::error::No .trx files found in ./TestResults - tests did not run. Check the 'Setup BC DevTools' and 'Run *.Test' steps above."
+            echo "::error::No .trx files found in ./TestResults - tests did not run. Check the 'Setup BC DevTools', 'Build *.Test' and 'Run *.Test' steps above."
             exit 1
           fi
           trx-merge --dir ./TestResults/ --output ./TestResults_${{ matrix.version }}.trx

@@ -66,6 +66,16 @@ public static class DiagnosticDescriptors
         description: FormattingCopAnalyzers.PermissionValuesShouldBeLowercaseDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.PermissionValuesShouldBeLowercase));
 
+    public static readonly DiagnosticDescriptor KeywordShouldEndLine = new(
+        id: DiagnosticIds.KeywordShouldEndLine,
+        title: FormattingCopAnalyzers.KeywordShouldEndLineTitle,
+        messageFormat: FormattingCopAnalyzers.KeywordShouldEndLineMessageFormat,
+        category: Category.Style,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: FormattingCopAnalyzers.KeywordShouldEndLineDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.KeywordShouldEndLine));
+
     public static readonly DiagnosticDescriptor StatementBlocksSeparatedByBlankLine = new(
         id: DiagnosticIds.StatementBlocksSeparatedByBlankLine,
         title: FormattingCopAnalyzers.StatementBlocksSeparatedByBlankLineTitle,

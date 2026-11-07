@@ -1216,6 +1216,10 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageArea)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _parameter =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Parameter)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _whiteSpaceTrivia =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.WhiteSpaceTrivia)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _disableKeyword =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.DisableKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pragmaWarningDirectiveTrivia =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PragmaWarningDirectiveTrivia)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _regionDirectiveTrivia =
@@ -1428,6 +1432,8 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind PermissionSet => _permissionSet.Value;
         public static NavCodeAnalysis.SyntaxKind PermissionSetExtension => _permissionSetExtension.Value;
         public static NavCodeAnalysis.SyntaxKind PermissionValue => _permissionValue.Value;
+        public static NavCodeAnalysis.SyntaxKind WhiteSpaceTrivia => _whiteSpaceTrivia.Value;
+        public static NavCodeAnalysis.SyntaxKind DisableKeyword => _disableKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind PragmaWarningDirectiveTrivia => _pragmaWarningDirectiveTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind RegionDirectiveTrivia => _regionDirectiveTrivia.Value;
         public static NavCodeAnalysis.SyntaxKind EndRegionDirectiveTrivia => _endRegionDirectiveTrivia.Value;
