@@ -43,6 +43,12 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
     [TestCase("UnnamedCaseTrueWithoutElse")]
     [TestCase("UnnamedUserDefinedFieldErrorNotTerminating")]
     [TestCase("NamedRecordEmptyBody")]
+    [TestCase("NamedRecordFieldAssignedOnlyInIf")]
+    [TestCase("NamedRecordOtherFieldAssigned")]
+    [TestCase("NamedRecordFieldReadOnly")]
+    [TestCase("NamedRecordFieldInvocationOnlyInIf")]
+    [TestCase("NamedRecordOtherFieldInvocations")]
+    [TestCase("NamedRecordFieldPassedByValue")]
     public async Task HasDiagnostic(string testCase)
     {
         SkipTestIfVersionIsTooLow(
@@ -105,14 +111,10 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
     [TestCase("NamedRecordInitOnly")]
     [TestCase("NamedRecordViewConfiguredOnly")]
     [TestCase("NamedRecordReadIsolationAssignment")]
+    [TestCase("NamedRecordFieldInitializedByVarArgument")]
+    [TestCase("NamedRecordFieldInitializedByReceiver")]
     public async Task NoDiagnostic(string testCase)
     {
-        SkipTestIfVersionIsTooLow(
-            ["NamedRecordReadIsolationAssignment"],
-            testCase,
-            "11.0",
-            "The ReadIsolation record property requires runtime version 11.0.");
-
         SkipTestIfVersionIsTooLow(
             ["NamedInitializedByIsolatedStorage"],
             testCase,
@@ -125,10 +127,17 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
             "14.0",
             "The ternary conditional expression requires runtime version 14.0.");
 
+        SkipTestIfVersionIsTooLow(
+            ["NamedRecordReadIsolationAssignment"],
+            testCase,
+            "11.0",
+            "The ReadIsolation record property requires runtime version 11.0.");
+
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
             .ConfigureAwait(false);
 
         _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.NotAllCodePathsReturnValue);
+        _fixture.NoException(code.Replace("[|", "").Replace("|]", ""));
     }
 
     [Test]
