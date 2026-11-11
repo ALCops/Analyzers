@@ -9,7 +9,7 @@ on:
         type: boolean
         default: true
       publish-report:
-        description: "Publish the unified dorny test report as a check in this run (caller needs checks: write; keep false for PRs, fork tokens are read-only)"
+        description: "Publish the unified dorny test report to this run's job summary and fail the run on test failures (keep false for PRs; they report via the Test Report workflow)"
         required: false
         type: boolean
         default: false
@@ -523,18 +523,18 @@ jobs:
           if-no-files-found: ignore
 
   report:
-    # Inline report for push/scheduled runs (trusted context, checks: write available).
-    # PR runs keep publish-report false; their report comes from the workflow_run
-    # Test Report workflow, the fork-safe path. !cancelled() keeps the report coming
-    # when a matrix leg hard-failed; the failed test job still fails the calling job,
-    # so a release stays blocked either way.
+    # Inline report for push/scheduled/dispatch runs. PR runs keep publish-report false;
+    # their report comes from the workflow_run Test Report workflow, the fork-safe path.
+    # !cancelled() keeps the report coming when a matrix leg hard-failed; the failed
+    # test job still fails the calling job, so a release stays blocked either way.
     if: ${{ !cancelled() && inputs.publish-report }}
     needs: merge-test-results
     runs-on: ubuntu-latest
     name: Report
-    # No permissions block: a called workflow may only downgrade the caller's token,
-    # and declaring checks: write here startup-fails callers that don't grant it
-    # (Pull Request). Callers that set publish-report grant checks: write themselves.
+    # The report goes to the job summary, not a check run: the Checks API attaches a
+    # new check run to the first check suite of the commit, so a run testing a commit
+    # that an earlier run already reported (a release branch dispatched at main's HEAD)
+    # gets 404 when updating it. fail-on-error still fails the job on test failures.
     steps:
       - name: Publish unified test report
         uses: dorny/test-reporter@v3
@@ -544,7 +544,7 @@ jobs:
           report-title: 'ALCops Test Results'
           path: '**/*.trx'
           reporter: dotnet-trx
-          use-actions-summary: 'false'
+          use-actions-summary: 'true'
           list-suites: 'failed'
           list-tests: 'failed'
           collapsed: 'never'
