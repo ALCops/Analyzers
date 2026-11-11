@@ -119,7 +119,7 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
                     return AnalyzeStatements(statementList.Statements, states, hasNamedReturn, returnVariableName, out hasPathWithoutValue);
 
                 case IAssignmentStatement assignment:
-                    if (hasNamedReturn && assignment.Target.IsNamedReturnTarget(returnVariableName))
+                    if (hasNamedReturn && IsNamedReturnOrField(assignment.Target.UnwrapConversions(), returnVariableName))
                     {
                         return ImmutableHashSet.Create(true);
                     }
@@ -581,13 +581,11 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
                 node.IsKind(EnumProvider.SyntaxKind.LogicalOrExpression) ||
                 node.IsKind(EnumProvider.SyntaxKind.ConditionalExpression));
 
-        // Named return is considered "assigned" when it is either the receiver of an invocation
-        // (e.g. `Customer.Get(No)` where `Customer` is the return variable, populating the record)
-        // or is passed as a by-reference (`var`) argument (e.g. `ComputeInto(Result)`).
-        // This is intentionally conservative to avoid false positives on common AL idioms.
+        // Calls can initialize the named return or one of its fields through the receiver
+        // or a `var` argument. Unwrap argument conversions inserted for differing parameter types.
         private static bool InvocationAssignsNamedReturn(IInvocationExpression invocation, string returnVariableName)
         {
-            if (invocation.Instance.IsNamedReturnTarget(returnVariableName))
+            if (IsNamedReturnOrField(invocation.Instance, returnVariableName))
             {
                 return true;
             }
@@ -596,13 +594,24 @@ public sealed class NotAllCodePathsReturnValue : DiagnosticAnalyzer
             {
                 if (argument.Parameter is IParameterSymbol parameter
                     && parameter.IsVar
-                    && argument.Value.IsNamedReturnTarget(returnVariableName))
+                    && IsNamedReturnOrField(argument.Value.UnwrapConversions(), returnVariableName))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private static bool IsNamedReturnOrField(IOperation? target, string returnVariableName)
+        {
+            if (target.IsNamedReturnTarget(returnVariableName))
+            {
+                return true;
+            }
+
+            return target is IFieldAccess { Instance: IOperation instance }
+                && instance.UnwrapConversions().IsNamedReturnTarget(returnVariableName);
         }
 
         private ImmutableHashSet<bool> AnalyzeStatements(
