@@ -123,6 +123,10 @@ HasFix files use current/expected pairs:
 
 `HasFix` / `HasFixAll` test methods and their `current.al` / `expected.al` layout: `.claude/skills/new-codefix/references/hasfix-tests.md` (used by `/new-codefix`). Key rule: `TestCodeFix` takes the `DiagnosticDescriptor` object, `TestFixAll` takes the ID string.
 
+### Multi-document fixtures
+
+A fixture can hold several documents of one project, separated by a line containing exactly `/*EOD*/`. The first segment is the document under test; the others are extra project files, for example an object declared in another namespace that a fix resolves from the compilation. `expected.al` carries the same segments, because the harness appends the other documents after the fixed one when comparing. Each segment is trimmed, so put no blank lines around the separator and end the file without a trailing newline.
+
 ### Directive fixtures (mandatory for fixes that remove, move or rebuild nodes)
 
 Such a fix ships a fixture for each of these around the edited node (or, where the node cannot carry one, around its closest sibling):
