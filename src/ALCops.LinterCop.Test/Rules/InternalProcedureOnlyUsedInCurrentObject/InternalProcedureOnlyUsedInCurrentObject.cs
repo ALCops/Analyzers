@@ -22,6 +22,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("OnlyUsedInCurrentObject")]
         [TestCase("OnlyUsedInCurrentObjectInternalToInternal")]
         [TestCase("OnlyUsedInCurrentObjectMultipleCalls")]
+        [TestCase("OnlyUsedInCurrentObjectPropertySyntax")]
         [TestCase("OnlyUsedInCurrentObjectSelfVariable")]
         [TestCase("OnlyUsedInCurrentObjectTrigger")]
         public async Task HasDiagnostic(string testCase)

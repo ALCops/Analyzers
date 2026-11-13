@@ -76,6 +76,9 @@ namespace ALCops.LinterCop.Test
         [TestCase("MessageHandlerAttribute")]
         [TestCase("NotificationParameter")]
         [TestCase("Obsolete")]
+        [TestCase("PropertySyntaxGetter")]
+        [TestCase("PropertySyntaxSetter")]
+        [TestCase("PropertySyntaxSetterThis")]
         [TestCase("PublicInPublicObject")]
         [TestCase("TestAttribute")]
         public async Task NoDiagnostic(string testCase)
@@ -85,6 +88,12 @@ namespace ALCops.LinterCop.Test
                 testCase,
                 "30.0",
                 "From SDK 30 the default runtime is Spring2027, where an internal procedure implementing a public interface method is compile error AL0921 instead of a warning.");
+
+            SkipTestIfVersionIsTooLow(
+                ["PropertySyntaxSetterThis"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
