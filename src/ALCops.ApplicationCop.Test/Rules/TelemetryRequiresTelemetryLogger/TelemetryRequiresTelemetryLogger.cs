@@ -13,7 +13,7 @@ namespace ALCops.ApplicationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(TelemetryRequiresTelemetryLogger)));
+                    "Rules", nameof(TelemetryRequiresTelemetryLogger));
 
             _fixture = RoslynFixtureFactory.Create<Analyzers.RequiredInterfaceImplementation>(
                 new AnalyzerTestFixtureConfig

@@ -15,7 +15,7 @@ public class PlaceholderArgumentCountMismatch : NavCodeAnalysisBase
         _testCasePath = Path.Combine(
             Directory.GetParent(
                 Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                Path.Combine("Rules", nameof(PlaceholderArgumentCountMismatch)));
+                "Rules", nameof(PlaceholderArgumentCountMismatch));
     }
 
     [Test]

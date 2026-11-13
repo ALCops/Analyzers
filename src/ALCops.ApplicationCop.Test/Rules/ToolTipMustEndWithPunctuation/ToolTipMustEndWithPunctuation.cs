@@ -83,7 +83,7 @@ namespace ALCops.ApplicationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(ToolTipMustEndWithPunctuation)));
+                    "Rules", nameof(ToolTipMustEndWithPunctuation));
         }
 
         [Test]

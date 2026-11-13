@@ -13,7 +13,7 @@ namespace ALCops.ApplicationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                        Path.Combine("Rules", nameof(TableDataPerCompanyDeclaration)));
+                        "Rules", nameof(TableDataPerCompanyDeclaration));
 
             _fixture = RoslynFixtureFactory.Create<Analyzers.TableDataPerCompanyDeclaration>(
                 new AnalyzerTestFixtureConfig

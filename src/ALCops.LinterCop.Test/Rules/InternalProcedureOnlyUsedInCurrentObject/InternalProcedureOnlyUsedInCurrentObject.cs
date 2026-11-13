@@ -15,7 +15,7 @@ namespace ALCops.LinterCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(InternalProcedureOnlyUsedInCurrentObject)));
+                    "Rules", nameof(InternalProcedureOnlyUsedInCurrentObject));
         }
 
         //TODO: The ManifestHelper.GetManifest doesn't support NUnit at the moment is seems, so these tests are disabled for now.

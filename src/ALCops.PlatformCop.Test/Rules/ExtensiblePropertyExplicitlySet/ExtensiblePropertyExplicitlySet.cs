@@ -15,7 +15,7 @@ namespace ALCops.PlatformCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(ExtensiblePropertyExplicitlySet)));
+                    "Rules", nameof(ExtensiblePropertyExplicitlySet));
 
             _fixture = RoslynFixtureFactory.Create<Analyzers.ExtensiblePropertyExplicitlySet>(
                 new AnalyzerTestFixtureConfig

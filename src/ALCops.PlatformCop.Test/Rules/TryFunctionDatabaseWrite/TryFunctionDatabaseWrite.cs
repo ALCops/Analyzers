@@ -14,7 +14,7 @@ namespace ALCops.PlatformCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                Path.Combine("Rules", nameof(TryFunctionDatabaseWrite)));
+                "Rules", nameof(TryFunctionDatabaseWrite));
 
             _fixture = RoslynFixtureFactory.Create<Analyzers.TryFunctionDatabaseWrite>();
             _potentialFixture = RoslynFixtureFactory.Create<Analyzers.TryFunctionDatabaseWrite>(

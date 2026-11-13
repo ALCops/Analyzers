@@ -15,7 +15,7 @@ namespace ALCops.PlatformCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(DuplicateODataEntityName)));
+                    "Rules", nameof(DuplicateODataEntityName));
         }
 
         [Test]

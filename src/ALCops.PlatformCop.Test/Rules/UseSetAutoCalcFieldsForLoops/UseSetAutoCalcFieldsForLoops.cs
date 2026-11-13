@@ -17,7 +17,7 @@ public class UseSetAutoCalcFieldsForLoops : NavCodeAnalysisBase
         _testCasePath = Path.Combine(
             Directory.GetParent(
                 Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                Path.Combine("Rules", nameof(UseSetAutoCalcFieldsForLoops)));
+                "Rules", nameof(UseSetAutoCalcFieldsForLoops));
     }
 
     [Test]

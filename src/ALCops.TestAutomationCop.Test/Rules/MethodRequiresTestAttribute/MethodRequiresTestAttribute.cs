@@ -16,7 +16,7 @@ namespace ALCops.TestAutomationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(MethodRequiresTestAttribute)));
+                    "Rules", nameof(MethodRequiresTestAttribute));
         }
 
         [Test]

@@ -16,7 +16,7 @@ namespace ALCops.FormattingCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(CasingMismatchBuiltInMethod)));
+                    "Rules", nameof(CasingMismatchBuiltInMethod));
         }
 
         [Test]

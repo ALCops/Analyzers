@@ -15,7 +15,7 @@ namespace ALCops.FormattingCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(SemicolonAfterMethodOrTriggerDeclaration)));
+                    "Rules", nameof(SemicolonAfterMethodOrTriggerDeclaration));
         }
 
         [Test]
