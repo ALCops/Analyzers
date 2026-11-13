@@ -14,9 +14,6 @@ public static class CompilationExtensions
     public static ImmutableArray<IApplicationObjectTypeSymbol> GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection(this Compilation compilation, SymbolKind kind)
         => CompilationHelper.GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection(compilation, kind);
 
-    public static ImmutableArray<IApplicationObjectTypeSymbol> GetApplicationObjectTypeSymbolsByNameAcrossModulesWithReflection(this Compilation compilation, SymbolKind kind, string name)
-        => CompilationHelper.GetApplicationObjectTypeSymbolsByNameAcrossModulesWithReflection(compilation, kind, name);
-
     /// <summary>
     /// The namespace of the first object of <paramref name="kind"/> named <paramref name="name"/>, searching the
     /// compiling module first and then each referenced module. Null when no object matches or it is declared
@@ -24,7 +21,7 @@ public static class CompilationExtensions
     /// </summary>
     public static string? GetApplicationObjectNamespaceWithReflection(this Compilation compilation, SymbolKind kind, string name)
     {
-        foreach (var symbol in compilation.GetApplicationObjectTypeSymbolsByNameAcrossModulesWithReflection(kind, name))
+        foreach (var symbol in CompilationHelper.GetApplicationObjectTypeSymbolsByNameAcrossModulesWithReflection(compilation, kind, name))
         {
             if (!symbol.Name.IsSameName(name))
                 continue;

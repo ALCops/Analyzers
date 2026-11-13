@@ -75,6 +75,10 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("GlobalLanguageWithNamespaceSameAsCodeunit")]
         [TestCase("GlobalLanguageWithNamespaceUsingAndDirective")]
         [TestCase("GlobalLanguageWithNamespaceCodeunitNotResolvable")]
+        [TestCase("GlobalLanguageWithNamespaceUsingInsideDirective")]
+        [TestCase("GlobalLanguageWithNamespaceExistingVariable")]
+        [TestCase("GlobalLanguageAssignmentWithNamespace")]
+        [TestCase("GlobalLanguageWithNamespaceCodeunitInGlobalNamespace")]
         public async Task HasFixWithNamespace(string testCase)
         {
             RequireMinimumVersion(

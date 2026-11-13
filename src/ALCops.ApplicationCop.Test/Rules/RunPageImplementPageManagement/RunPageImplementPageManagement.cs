@@ -74,6 +74,8 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("PageRunWithNamespaceUsingAlreadyPresentDifferentCase")]
         [TestCase("PageRunWithNamespaceSameAsCodeunit")]
         [TestCase("PageRunWithNamespaceCodeunitNotResolvable")]
+        [TestCase("PageRunWithNamespaceUsingInsideDirective")]
+        [TestCase("PageRunWithNamespaceExistingVariable")]
         public async Task HasFixWithNamespace(string testCase)
         {
             RequireMinimumVersion(
