@@ -156,11 +156,15 @@ public sealed class GlobalLanguageImplementTranslationHelperCodeFixProvider : Co
                     CodeunitVariableFactory.CreateDeclaration(variableName, TranslationHelperCodeunitName)));
         }
 
-        // In a namespaced file the codeunit only resolves through a using of its own namespace
-        var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
-        var targetNamespace = semanticModel?.Compilation.GetApplicationObjectNamespaceWithReflection(EnumProvider.SymbolKind.Codeunit, TranslationHelperCodeunitName);
-        if (targetNamespace is not null && newRoot is CompilationUnitSyntax compilationUnit)
-            newRoot = compilationUnit.AddUsingDirectiveIfNeeded(targetNamespace);
+        // Only a newly declared variable in a namespaced file needs a using: a reused variable already resolves,
+        // and a file without a namespace declaration resolves every object globally
+        if (existingVariableName is null && newRoot is CompilationUnitSyntax { NamespaceDeclaration: not null } compilationUnit)
+        {
+            var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
+            var targetNamespace = semanticModel?.Compilation.GetApplicationObjectNamespaceWithReflection(EnumProvider.SymbolKind.Codeunit, TranslationHelperCodeunitName);
+            if (targetNamespace is not null)
+                newRoot = compilationUnit.AddUsingDirectiveIfNeeded(targetNamespace);
+        }
 
         return document.WithSyntaxRoot(newRoot);
     }

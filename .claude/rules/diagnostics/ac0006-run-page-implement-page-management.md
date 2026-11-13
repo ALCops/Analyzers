@@ -27,7 +27,7 @@ Registers `RegisterOperationAction` on `InvocationExpression`; main type `RunPag
 
 ## Known issues
 
-- The namespace of `"Page Management"` is looked up by name across modules (compiling module first, then one hit per referenced module). Two codeunits with that name in different namespaces of one module are not told apart; harmless for the Base Application codeunit.
+- The namespace of `"Page Management"` is looked up by name across modules (compiling module first, then one hit per referenced module). Two codeunits with that name in different namespaces of one module are not told apart, and a same-named codeunit declared by the compiling app wins over the Base Application one, so the using would import the app's namespace. Accepted: such a clash already makes the unqualified `Codeunit` reference ambiguous for the developer.
 
 ## Test notes
 

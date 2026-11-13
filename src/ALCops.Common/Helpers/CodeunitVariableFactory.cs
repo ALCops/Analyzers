@@ -19,7 +19,7 @@ public static class CodeunitVariableFactory
             SyntaxFactory.Token(EnumProvider.SyntaxKind.SemicolonToken));
     }
 
-    public static SimpleTypeReferenceSyntax CreateTypeReference(string codeunitName)
+    private static SimpleTypeReferenceSyntax CreateTypeReference(string codeunitName)
     {
         var codeunitObjectNameOrId =
             SyntaxFactory.ObjectNameOrId(
