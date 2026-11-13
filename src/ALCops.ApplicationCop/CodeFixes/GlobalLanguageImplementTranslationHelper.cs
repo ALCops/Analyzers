@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
+using ALCops.Common.Helpers;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
@@ -79,15 +80,11 @@ public sealed class GlobalLanguageImplementTranslationHelperCodeFixProvider : Co
         // For assignment we want to replace the whole statement; for invocation we replace the invocation expression.
         SyntaxNode anchorNode = (SyntaxNode?)originalAssignment ?? originalInvocation!;
 
-        var containingMethodOrTrigger = GetContainingMethodOrTrigger(anchorNode);
+        var containingMethodOrTrigger = anchorNode.FirstAncestorOrSelf<MethodOrTriggerDeclarationSyntax>();
         if (containingMethodOrTrigger is null)
             return document;
 
-        var containingObject = GetContainingApplicationObject(containingMethodOrTrigger);
-        if (containingObject is null)
-            return document;
-
-        var existingVariableName = FindExistingTranslationHelperVariable(containingMethodOrTrigger, containingObject);
+        var existingVariableName = containingMethodOrTrigger.FindCodeunitVariableName(TranslationHelperCodeunitName);
         var variableName = existingVariableName ?? DefaultVariableName;
 
         // Track nodes across edits so we always operate on nodes from the current tree
@@ -155,141 +152,18 @@ public sealed class GlobalLanguageImplementTranslationHelperCodeFixProvider : Co
         {
             var updatedMethodOrTrigger = newRoot.GetCurrentNode(containingMethodOrTrigger);
             if (updatedMethodOrTrigger is not null)
-                newRoot = AddLocalVariable(newRoot, updatedMethodOrTrigger, variableName);
+                newRoot = newRoot.ReplaceNode(updatedMethodOrTrigger, updatedMethodOrTrigger.AddLocalVariable(
+                    CodeunitVariableFactory.CreateDeclaration(variableName, TranslationHelperCodeunitName)));
         }
+
+        // In a namespaced file the codeunit only resolves through a using of its own namespace
+        var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
+        var targetNamespace = semanticModel?.Compilation.GetApplicationObjectNamespaceWithReflection(EnumProvider.SymbolKind.Codeunit, TranslationHelperCodeunitName);
+        if (targetNamespace is not null && newRoot is CompilationUnitSyntax compilationUnit)
+            newRoot = compilationUnit.AddUsingDirectiveIfNeeded(targetNamespace);
 
         return document.WithSyntaxRoot(newRoot);
     }
-
-    #region Object Helpers
-
-    private static MethodOrTriggerDeclarationSyntax? GetContainingMethodOrTrigger(SyntaxNode node)
-    {
-        var current = node.Parent;
-        while (current is not null)
-        {
-            if (current is MethodOrTriggerDeclarationSyntax methodOrTrigger)
-                return methodOrTrigger;
-            current = current.Parent;
-        }
-        return null;
-    }
-
-    private static ApplicationObjectSyntax? GetContainingApplicationObject(SyntaxNode node)
-    {
-        var current = node.Parent;
-        while (current is not null)
-        {
-            if (current is ApplicationObjectSyntax applicationObject)
-                return applicationObject;
-            current = current.Parent;
-        }
-        return null;
-    }
-
-    #endregion
-
-    #region Variable Helpers
-
-    private static string? FindExistingTranslationHelperVariable(MethodOrTriggerDeclarationSyntax methodOrTrigger, ApplicationObjectSyntax containingObject)
-    {
-        var localVarName = FindTranslationHelperVariableInVarSection(methodOrTrigger.Variables);
-        if (localVarName is not null)
-            return localVarName;
-
-        var globalVarName = FindTranslationHelperVariableInMembers(containingObject.Members);
-        return globalVarName;
-    }
-
-    private static string? FindTranslationHelperVariableInVarSection(VarSectionBaseSyntax? varSection)
-    {
-        if (varSection is null)
-            return null;
-
-        foreach (var variable in varSection.Variables)
-        {
-            if (IsTranslationHelperCodeunitVariable(variable))
-            {
-                return variable.GetIdentifierNameSyntax().Identifier.ValueText?.UnquoteIdentifier();
-            }
-        }
-        return null;
-    }
-
-    private static string? FindTranslationHelperVariableInMembers(SyntaxList<MemberSyntax> members)
-    {
-        foreach (var member in members)
-        {
-            if (member is GlobalVarSectionSyntax globalVarSection)
-            {
-                foreach (var variable in globalVarSection.Variables)
-                {
-                    if (IsTranslationHelperCodeunitVariable(variable))
-                    {
-                        return variable.GetIdentifierNameSyntax().Identifier.ValueText?.UnquoteIdentifier();
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    private static bool IsTranslationHelperCodeunitVariable(VariableDeclarationBaseSyntax variable)
-    {
-        if (variable.Type is not TypeReferenceBaseSyntax typeReference)
-            return false;
-
-        if (typeReference.DataType.TypeName.Kind != EnumProvider.SyntaxKind.CodeunitKeyword)
-            return false;
-
-        // Check if matches "Translation Helper"
-        return GetSubtypeName(typeReference.DataType).IsSameName(TranslationHelperCodeunitName);
-    }
-
-    private static string? GetSubtypeName(DataTypeSyntax dataType)
-    {
-        if (dataType is not SubtypedDataTypeSyntax dataTypeWithSubtype)
-            return null;
-
-        if (dataTypeWithSubtype.Subtype is ObjectNameOrIdSyntax objectNameOrId)
-        {
-            if (objectNameOrId.Identifier is IdentifierNameSyntax IdentifierName)
-            {
-                return IdentifierName.Identifier.ValueText?.UnquoteIdentifier();
-            }
-        }
-
-        return dataTypeWithSubtype.Subtype.Identifier?.ToString().UnquoteIdentifier();
-    }
-
-    private static SyntaxNode AddLocalVariable(SyntaxNode root, MethodOrTriggerDeclarationSyntax methodOrTrigger, string variableName)
-    {
-        var variableDeclaration = CreateTranslationHelperVariableDeclaration(variableName);
-
-        if (methodOrTrigger.Variables is VarSectionSyntax existingVarSection)
-        {
-            var newVariables = existingVarSection.Variables.Add(variableDeclaration);
-            var newVarSection2 = existingVarSection.WithVariables(newVariables);
-            return root.ReplaceNode(existingVarSection, newVarSection2);
-        }
-
-        var newVarSection = SyntaxFactory.VarSection(
-            SyntaxFactory.Token(EnumProvider.SyntaxKind.VarKeyword),
-            new SyntaxList<VariableDeclarationBaseSyntax>().Add(variableDeclaration));
-
-        // The generic MethodOrTriggerDeclarationSyntax class doesn't have WithVariables method, so we need the concrete types
-        var newMethodOrTrigger =
-            methodOrTrigger switch
-            {
-                MethodDeclarationSyntax method => method.WithVariables(newVarSection),
-                TriggerDeclarationSyntax trigger => trigger.WithVariables(newVarSection),
-                _ => methodOrTrigger
-            };
-
-        return root.ReplaceNode(methodOrTrigger, newMethodOrTrigger);
-    }
-
-    #endregion
 
     #region Invocation Helpers
 
@@ -334,31 +208,6 @@ public sealed class GlobalLanguageImplementTranslationHelperCodeFixProvider : Co
             SyntaxFactory.IdentifierName(SetGlobalLanguageByIdMethodName));
 
         return SyntaxFactory.InvocationExpression(memberAccess, originalArguments);
-    }
-
-    private static VariableDeclarationSyntax CreateTranslationHelperVariableDeclaration(string variableName)
-    {
-        return SyntaxFactory.VariableDeclaration(
-            default, // empty SyntaxList<MemberAttributeSyntax>
-            SyntaxFactory.IdentifierName(SyntaxFactory.Identifier(variableName)),
-            SyntaxFactory.Token(EnumProvider.SyntaxKind.ColonToken),
-            CreateCodeunitTypeReference(TranslationHelperCodeunitName),
-            SyntaxFactory.Token(EnumProvider.SyntaxKind.SemicolonToken));
-    }
-
-    private static SimpleTypeReferenceSyntax CreateCodeunitTypeReference(string codeunitName)
-    {
-        var codeunitObjectNameOrId =
-            SyntaxFactory.ObjectNameOrId(
-                SyntaxFactory.IdentifierName(
-                    SyntaxFactory.Identifier(codeunitName)));
-
-        var codeunitDataType =
-            SyntaxFactory.SubtypedDataType(
-                SyntaxFactory.ParseKeyword("Codeunit"),
-                codeunitObjectNameOrId);
-
-        return SyntaxFactory.SimpleTypeReference(codeunitDataType);
     }
 
     #endregion
