@@ -23,7 +23,7 @@ namespace ALCops.LinterCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(InterfaceObjectNameGuide)));
+                    "Rules", nameof(InterfaceObjectNameGuide));
 
             // LC0054 is isEnabledByDefault: false; the ruleset enables it for tests
             _fixture = RoslynFixtureFactory.Create<Analyzers.InterfaceObjectNameGuide>(

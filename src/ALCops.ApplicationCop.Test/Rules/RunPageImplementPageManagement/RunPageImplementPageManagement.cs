@@ -17,7 +17,7 @@ namespace ALCops.ApplicationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(RunPageImplementPageManagement)));
+                    "Rules", nameof(RunPageImplementPageManagement));
         }
 
         [Test]

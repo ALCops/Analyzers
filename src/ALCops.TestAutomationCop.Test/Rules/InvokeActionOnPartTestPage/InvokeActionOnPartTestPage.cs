@@ -15,7 +15,7 @@ public class InvokeActionOnPartTestPage : NavCodeAnalysisBase
         _testCasePath = Path.Combine(
             Directory.GetParent(
                 Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                Path.Combine("Rules", nameof(InvokeActionOnPartTestPage)));
+                "Rules", nameof(InvokeActionOnPartTestPage));
     }
 
     [Test]

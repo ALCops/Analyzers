@@ -15,7 +15,7 @@ namespace ALCops.PlatformCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(PageRecordArgumentMismatch)));
+                    "Rules", nameof(PageRecordArgumentMismatch));
         }
 
         [Test]

@@ -13,7 +13,7 @@ namespace ALCops.PlatformCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(AccessPropertyExplicitlySet)));
+                    "Rules", nameof(AccessPropertyExplicitlySet));
 
             _fixture = RoslynFixtureFactory.Create<Analyzers.AccessPropertyExplicitlySet>(
                 new AnalyzerTestFixtureConfig

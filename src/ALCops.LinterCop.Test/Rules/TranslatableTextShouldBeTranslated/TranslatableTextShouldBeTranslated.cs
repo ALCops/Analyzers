@@ -161,7 +161,7 @@ namespace ALCops.LinterCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(TranslatableTextShouldBeTranslated)));
+                    "Rules", nameof(TranslatableTextShouldBeTranslated));
         }
 
         private static readonly byte[] AnalysisViewDefinitionContent = System.Text.Encoding.UTF8.GetBytes(

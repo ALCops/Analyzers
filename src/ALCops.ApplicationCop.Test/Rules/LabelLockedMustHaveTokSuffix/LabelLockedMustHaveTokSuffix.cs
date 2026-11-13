@@ -13,7 +13,7 @@ namespace ALCops.ApplicationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(LabelLockedMustHaveTokSuffix)));
+                    "Rules", nameof(LabelLockedMustHaveTokSuffix));
 
             _fixture = RoslynFixtureFactory.Create<Analyzers.LabelTokLockedConvention>(
                 new AnalyzerTestFixtureConfig
