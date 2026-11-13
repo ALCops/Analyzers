@@ -17,3 +17,7 @@ table 36 "Sales Header"
 {
     fields { field(1; MyField; Integer) { } }
 }
+/*EOD*/
+namespace Microsoft.Utilities;
+
+codeunit 700 "Page Management" { }
