@@ -80,6 +80,12 @@ namespace ALCops.LinterCop.Test
         [TestCase("TestAttribute")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooHigh(
+                ["ImplementsInterfaceMethod"],
+                testCase,
+                "30.0",
+                "From SDK 30 the default runtime is Spring2027, where an internal procedure implementing a public interface method is compile error AL0921 instead of a warning.");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
