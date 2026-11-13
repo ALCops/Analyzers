@@ -63,7 +63,41 @@ namespace ALCops.ApplicationCop.Test
                     AdditionalAnalyzers = [_analyzer]
                 });
 
-            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.NotBlankRequiredOnPrimaryKeyField);
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.GlobalLanguageImplementTranslationHelper);
+        }
+
+        [Test]
+        [TestCase("GlobalLanguageWithNamespace")]
+        [TestCase("GlobalLanguageWithNamespaceUsingSortsMiddle")]
+        [TestCase("GlobalLanguageWithNamespaceUsingSortsFirst")]
+        [TestCase("GlobalLanguageWithNamespaceUsingSortsLast")]
+        [TestCase("GlobalLanguageWithNamespaceUsingAlreadyPresent")]
+        [TestCase("GlobalLanguageWithNamespaceSameAsCodeunit")]
+        [TestCase("GlobalLanguageWithNamespaceUsingAndDirective")]
+        [TestCase("GlobalLanguageWithNamespaceCodeunitNotResolvable")]
+        [TestCase("GlobalLanguageWithNamespaceUsingInsideDirective")]
+        [TestCase("GlobalLanguageWithNamespaceExistingVariable")]
+        [TestCase("GlobalLanguageAssignmentWithNamespace")]
+        [TestCase("GlobalLanguageWithNamespaceCodeunitInGlobalNamespace")]
+        public async Task HasFixWithNamespace(string testCase)
+        {
+            RequireMinimumVersion(
+                "12.0",
+                "Namespaces are not supported before AL version 12");
+
+            var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
+                .ConfigureAwait(false);
+
+            var expectedCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "expected.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<GlobalLanguageImplementTranslationHelperCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.GlobalLanguageImplementTranslationHelper);
         }
     }
 }

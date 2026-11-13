@@ -64,17 +64,23 @@ namespace ALCops.ApplicationCop.Test
                     AdditionalAnalyzers = [_analyzer]
                 });
 
-            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.NotBlankRequiredOnPrimaryKeyField);
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.RunPageImplementPageManagement);
         }
 
         [Test]
         [TestCase("PageRunZeroIdentifierAndRecordWithNamespace")]
         [TestCase("PageRunPageIdentifierAndRecordWithNamespaceAndUsing")]
+        [TestCase("PageRunWithNamespaceUsingSortsMiddle")]
+        [TestCase("PageRunWithNamespaceUsingAlreadyPresentDifferentCase")]
+        [TestCase("PageRunWithNamespaceSameAsCodeunit")]
+        [TestCase("PageRunWithNamespaceCodeunitNotResolvable")]
+        [TestCase("PageRunWithNamespaceUsingInsideDirective")]
+        [TestCase("PageRunWithNamespaceExistingVariable")]
         public async Task HasFixWithNamespace(string testCase)
         {
             RequireMinimumVersion(
-                "16.0",
-                "Namespaces are not supported before AL version 16");
+                "12.0",
+                "Namespaces are not supported before AL version 12");
 
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
                 .ConfigureAwait(false);
@@ -88,7 +94,7 @@ namespace ALCops.ApplicationCop.Test
                     AdditionalAnalyzers = [_analyzer]
                 });
 
-            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.NotBlankRequiredOnPrimaryKeyField);
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.RunPageImplementPageManagement);
         }
     }
 }

@@ -133,6 +133,7 @@ Copy the nearest existing provider rather than inventing a transformation:
 | Add `Locked = true` to a label | `EmptyCaptionLocked`, `LabelWithTokSuffixMustBeLocked` |
 | Remove siblings from a `SeparatedSyntaxList` with FixAll | `ParameterNotReferencedCodeFixProvider` |
 | Insert a statement before another, using the semantic model | `UsePartialRecordsOnRead` |
+| Declare a codeunit variable and add its namespace `using` | `GlobalLanguageImplementTranslationHelper`, `RunPageImplementPageManagement` (Common: `FindCodeunitVariableName`, `AddLocalVariable`, `CodeunitVariableFactory`, `GetApplicationObjectNamespaceWithReflection`, `AddUsingDirectiveIfNeeded`) |
 | Move or remove nodes that may carry `#if` / `#pragma` / `#region` trivia | `PermissionDeclarationOrderCodeFixProvider`, `ParameterNotReferencedCodeFixProvider` |
 
 Always build the replacement from the existing nodes and tokens (`WithTriviaFrom`, keep the receiver expression) and guard every navigation step: a missing optional node returns the unchanged document instead of throwing.

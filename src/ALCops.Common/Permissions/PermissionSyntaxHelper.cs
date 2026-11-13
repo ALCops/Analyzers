@@ -1,3 +1,4 @@
+using ALCops.Common.Helpers;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
@@ -220,25 +221,12 @@ public static class PermissionSyntaxHelper
         if (qualifyingNamespace is not null)
         {
             var qualifiedName = SyntaxFactory.QualifiedName(
-                ParseNamespaceName(qualifyingNamespace),
+                SyntaxFactoryHelper.NamespaceName(qualifyingNamespace),
                 SyntaxFactory.IdentifierName(tableName));
             return SyntaxFactory.ObjectNameOrId(qualifiedName);
         }
 
         return SyntaxFactory.ObjectNameOrId(SyntaxFactory.IdentifierName(tableName));
-    }
-
-    /// <summary>
-    /// Builds a <see cref="NameSyntax"/> from a namespace string that may contain dots
-    /// (e.g., "MyPTE.Sales" becomes <c>QualifiedName(IdentifierName("MyPTE"), IdentifierName("Sales"))</c>).
-    /// </summary>
-    private static NameSyntax ParseNamespaceName(string namespaceName)
-    {
-        var segments = namespaceName.Split('.');
-        NameSyntax result = SyntaxFactory.IdentifierName(segments[0]);
-        for (int i = 1; i < segments.Length; i++)
-            result = SyntaxFactory.QualifiedName(result, SyntaxFactory.IdentifierName(segments[i]));
-        return result;
     }
 
     /// <summary>

@@ -315,8 +315,8 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         if (compilationUnit is null || string.IsNullOrEmpty(tableNamespace))
             return new ResolvedTableName(tableName.QuoteIdentifierIfNeededWithReflection(), null);
 
-        var fileNamespace = PermissionTableNameResolver.GetFileNamespace(compilationUnit);
-        var importedNamespaces = PermissionTableNameResolver.GetImportedNamespaces(compilationUnit);
+        var fileNamespace = compilationUnit.GetFileNamespace();
+        var importedNamespaces = compilationUnit.GetImportedNamespaces();
 
         return PermissionTableNameResolver.ResolveTableNameParts(
             tableName, tableNamespace, fileNamespace, importedNamespaces);

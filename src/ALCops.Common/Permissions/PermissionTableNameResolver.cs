@@ -1,6 +1,5 @@
 using ALCops.Common.Extensions;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
-using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
 namespace ALCops.Common.Permissions;
 
@@ -64,27 +63,5 @@ public static class PermissionTableNameResolver
             return new ResolvedTableName(quotedName, null);
 
         return new ResolvedTableName(quotedName, tableNamespace);
-    }
-
-    /// <summary>
-    /// Extracts the namespace from a CompilationUnitSyntax.
-    /// </summary>
-    public static string? GetFileNamespace(CompilationUnitSyntax compilationUnit)
-    {
-        return compilationUnit.NamespaceDeclaration?.Name?.ToString();
-    }
-
-    /// <summary>
-    /// Extracts the imported namespaces from a CompilationUnitSyntax's using directives.
-    /// </summary>
-    public static IEnumerable<string> GetImportedNamespaces(CompilationUnitSyntax compilationUnit)
-    {
-        var usings = compilationUnit.Usings;
-        for (int i = 0; i < usings.Count; i++)
-        {
-            var name = usings[i].Name?.ToString();
-            if (!string.IsNullOrEmpty(name))
-                yield return name;
-        }
     }
 }

@@ -25,15 +25,19 @@ Registers `RegisterOperationAction` on `InvocationExpression`; main type `RunPag
 - `Page.EnqueueBackgroundTask`, although it is a `Page` built-in with two or more arguments.
 - Calls whose page or record argument falls outside the two decisions above.
 
+## Known issues
+
+- The namespace of `"Page Management"` is looked up by name across modules (compiling module first, then one hit per referenced module). Two codeunits with that name in different namespaces of one module are not told apart, and a same-named codeunit declared by the compiling app wins over the Base Application one, so the using would import the app's namespace. Accepted: such a clash already makes the unqualified `Codeunit` reference ambiguous for the developer.
+
 ## Test notes
 
-- The `HasFixWithNamespace` cases require AL 16.0 (namespaces).
+- The `HasFixWithNamespace` fixtures carry a second `/*EOD*/` document that declares `codeunit 700 "Page Management"` in `namespace Microsoft.Utilities`, so the fix can resolve the namespace from the compilation; the `CodeunitNotResolvable` case deliberately omits it. They are gated at AL 12.0, the first SDK with namespaces.
 
 ## CodeFix: RunPageImplementPageManagementCodeFixProvider
 
 | Decision | Rationale |
 |---|---|
-| Reuses an existing local or global `Codeunit "Page Management"` variable; otherwise declares a local `PageManagement` | Avoids a duplicate declaration when the object already has one. |
-| Adds `using Microsoft.Utilities;` only when the file declares a `namespace` | Files without a namespace resolve globally; the `using` would be unnecessary. |
-| Skips the `using` when one already exists, compared case-insensitively | Prevents duplicates during FixAll or when the user already imported it; AL treats `Microsoft.Utilities` and `microsoft.utilities` as the same name. |
-| Inserts the `using` in alphabetical order through the public `CompilationUnitSyntax.WithUsings` instead of reflecting on the SDK's sorter | `NamespaceActionUtilities` is `internal`; replicating the sorted insertion with public API is enough and keeps existing directives ordered. |
+| Reuses an existing local, then global, `Codeunit "Page Management"` variable; otherwise declares a local `PageManagement` | Avoids a duplicate declaration when the object already has one. |
+| The `using` namespace is resolved from the compilation (`GetApplicationObjectNamespaceWithReflection`), not hardcoded | An unresolved codeunit or one in the global namespace gets the variable without a `using`. |
+| The `using` is added only when the file declares a `namespace`, and skipped when the file's own namespace is the target or the namespace is already imported (case-insensitive) | Files without a namespace resolve globally; AL treats `Microsoft.Utilities` and `microsoft.utilities` as the same name. |
+| Placement, sorting, the directive fallback (append after the last using, or before the first using when a directive such as `#endif` follows the last one) and netstandard2.1 support come from the shared `CompilationUnitSyntaxExtensions.AddUsingDirectiveIfNeeded` | Same helper and rationale as AC0005; see `ac0005-global-language-implement-translation-helper.md` (CodeFix). |
