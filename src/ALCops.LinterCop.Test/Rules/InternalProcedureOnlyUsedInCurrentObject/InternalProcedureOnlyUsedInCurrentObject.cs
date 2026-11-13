@@ -22,6 +22,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("OnlyUsedInCurrentObject")]
         [TestCase("OnlyUsedInCurrentObjectInternalToInternal")]
         [TestCase("OnlyUsedInCurrentObjectMultipleCalls")]
+        [TestCase("OnlyUsedInCurrentObjectPropertySyntax")]
         [TestCase("OnlyUsedInCurrentObjectSelfVariable")]
         [TestCase("OnlyUsedInCurrentObjectTrigger")]
         public async Task HasDiagnostic(string testCase)
@@ -37,6 +38,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("TestAttribute")]
         [TestCase("UsedInBoth")]
         [TestCase("UsedInOtherObjectOnly")]
+        [TestCase("UsedInOtherObjectOnlyPropertySyntax")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
