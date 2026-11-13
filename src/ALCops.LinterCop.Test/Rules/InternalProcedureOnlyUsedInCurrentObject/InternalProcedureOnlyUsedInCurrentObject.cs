@@ -38,6 +38,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("TestAttribute")]
         [TestCase("UsedInBoth")]
         [TestCase("UsedInOtherObjectOnly")]
+        [TestCase("UsedInOtherObjectOnlyPropertySyntax")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))

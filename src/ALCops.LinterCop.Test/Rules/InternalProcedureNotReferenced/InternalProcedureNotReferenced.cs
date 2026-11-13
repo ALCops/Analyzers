@@ -59,6 +59,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("Codeunit_UnusedInternalOverloads")]
         [TestCase("InternalCodeunit_UnusedInternal")]
         [TestCase("InternalCodeunit_UnusedPublic")]
+        [TestCase("PropertySyntaxShadowedByVariable")]
         [TestCase("PublicTestCodeunit_UnusedInternal")]
         public async Task HasDiagnostic(string testCase)
         {
@@ -78,6 +79,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("Obsolete")]
         [TestCase("PropertySyntaxGetter")]
         [TestCase("PropertySyntaxSetter")]
+        [TestCase("PropertySyntaxSetterBare")]
         [TestCase("PropertySyntaxSetterThis")]
         [TestCase("PublicInPublicObject")]
         [TestCase("TestAttribute")]
