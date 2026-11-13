@@ -13,7 +13,7 @@ namespace ALCops.DocumentationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(ObjectRequiresDocumentation)));
+                    "Rules", nameof(ObjectRequiresDocumentation));
 
             _fixture = RoslynFixtureFactory.Create<Analyzers.ObjectRequiresDocumentation>(
                 // Inject a ruleset to enable testing for rules, that are not enabled by default (isEnabledByDefault: false).

@@ -22,7 +22,7 @@ namespace ALCops.LinterCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(ParameterNotReferenced)));
+                    "Rules", nameof(ParameterNotReferenced));
         }
 
         [Test]

@@ -20,7 +20,7 @@ namespace ALCops.ApplicationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(ToolTipDoNotUseLineBreaks)));
+                    "Rules", nameof(ToolTipDoNotUseLineBreaks));
         }
 
         [Test]

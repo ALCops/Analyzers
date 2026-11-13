@@ -16,7 +16,7 @@ namespace ALCops.LinterCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(ApiPageCanonicalFieldNameGuide)));
+                    "Rules", nameof(ApiPageCanonicalFieldNameGuide));
         }
 
         [Test]

@@ -13,7 +13,7 @@ public class MixedExitAndNamedReturnAssignment : NavCodeAnalysisBase
         _testCasePath = Path.Combine(
             Directory.GetParent(
                 Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-            Path.Combine("Rules", nameof(MixedExitAndNamedReturnAssignment)));
+            "Rules", nameof(MixedExitAndNamedReturnAssignment));
 
         _fixture = RoslynFixtureFactory.Create<Analyzers.MixedExitAndNamedReturnAssignment>(
             new AnalyzerTestFixtureConfig

@@ -22,7 +22,7 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
         _testCasePath = Path.Combine(
             Directory.GetParent(
                 Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-            Path.Combine("Rules", nameof(NotAllCodePathsReturnValue)));
+            "Rules", nameof(NotAllCodePathsReturnValue));
     }
 
     [Test]

@@ -15,7 +15,7 @@ namespace ALCops.ApplicationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    Path.Combine("Rules", nameof(LineSeparatorShouldUseTypeHelper)));
+                    "Rules", nameof(LineSeparatorShouldUseTypeHelper));
         }
 
         [Test]

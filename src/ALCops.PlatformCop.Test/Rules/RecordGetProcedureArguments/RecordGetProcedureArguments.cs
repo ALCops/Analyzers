@@ -16,7 +16,7 @@ public class RecordGetProcedureArguments : NavCodeAnalysisBase
         _testCasePath = Path.Combine(
             Directory.GetParent(
                 Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                Path.Combine("Rules", nameof(RecordGetProcedureArguments)));
+                "Rules", nameof(RecordGetProcedureArguments));
     }
 
     [Test]
