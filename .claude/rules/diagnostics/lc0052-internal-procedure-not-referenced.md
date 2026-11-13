@@ -24,7 +24,7 @@ Registers one `CompilationAction`; main type `MethodSymbolAnalyzer`, which colle
 | Interface implementations, test-codeunit UI handlers (`IsHandler`), `[Test]` procedures, and `ObsoleteState = Pending` procedures are skipped | The platform or the test runner invokes them, or the procedure is already scheduled for removal. |
 | Public procedures count only inside an `Access = Internal` object | Such a procedure is no more reachable from other apps than an internal one; public procedures of a public object are API. |
 | LC0053 classifies only procedures declared `internal`; a public procedure of an internal object never gets LC0053 | Making it `local` changes the declared accessibility the author chose for the object's surface; LC0052 still covers it when it is unreferenced. |
-| `FileNotFoundException` from `ManifestHelper.GetManifest` is caught and treated as no manifest | The assembly it loads by reflection is missing in some hosts, and an unhandled exception would silently drop the whole compilation's diagnostics. |
+| `FileNotFoundException` from `ManifestHelper.GetManifest` is caught and treated as no manifest | The assembly it loads by reflection is missing in some hosts, and an unhandled exception would silently drop the whole compilation's diagnostics. Trade-off: in such a host the `internalsVisibleTo` short-circuit cannot run, so an app with a friend app gets reports instead of none. |
 
 ## Deliberate non-reports
 
