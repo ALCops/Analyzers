@@ -21,7 +21,16 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
         private readonly PooledDictionary<IMethodSymbol, string> internalMethodsUsedInOtherObjects = PooledDictionary<IMethodSymbol, string>.GetInstance();
         public MethodSymbolAnalyzer(CompilationAnalysisContext compilationAnalysisContext)
         {
-            NavAppManifest? manifest = ManifestHelper.GetManifest(compilationAnalysisContext.Compilation);
+            NavAppManifest? manifest;
+            try
+            {
+                manifest = ManifestHelper.GetManifest(compilationAnalysisContext.Compilation);
+            }
+            catch (FileNotFoundException)
+            {
+                manifest = null;
+            }
+
             if (manifest is not null && manifest.InternalsVisibleTo is not null && manifest.InternalsVisibleTo.Any())
             {
                 return;

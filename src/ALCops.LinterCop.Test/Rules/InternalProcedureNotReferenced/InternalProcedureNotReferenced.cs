@@ -1,3 +1,4 @@
+using Microsoft.Dynamics.Nav.CodeAnalysis;
 using RoslynTestKit;
 
 namespace ALCops.LinterCop.Test
@@ -6,6 +7,24 @@ namespace ALCops.LinterCop.Test
     {
         private AnalyzerTestFixture _fixture;
         private string _testCasePath;
+
+        private static readonly byte[] AppJsonWithInternalsVisibleTo = System.Text.Encoding.UTF8.GetBytes(
+            """
+            {
+                "id": "00000000-0000-0000-0000-000000000042",
+                "name": "TestApp",
+                "publisher": "TestPublisher",
+                "version": "1.0.0.0",
+                "idRanges": [ { "from": 50000, "to": 99999 } ],
+                "internalsVisibleTo": [
+                    {
+                        "id": "00000000-0000-0000-0000-000000000043",
+                        "name": "TestApp.Test",
+                        "publisher": "TestPublisher"
+                    }
+                ]
+            }
+            """);
 
         [SetUp]
         public void Setup()
@@ -17,40 +36,64 @@ namespace ALCops.LinterCop.Test
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
                     "Rules", nameof(InternalProcedureNotReferenced));
         }
-        //TODO: The ManifestHelper.GetManifest doesn't support NUnit at the moment is seems, so these tests are disabled for now.
-        // [Test]
-        // [TestCase("Codeunit_FieldNameCollision")]
-        // [TestCase("Codeunit_NameCollisionVariable")]
-        // [TestCase("Codeunit_SameNameDifferentObjects")]
-        // [TestCase("Codeunit_UnusedInternal")]
-        // [TestCase("Codeunit_UnusedInternalOverloads")]
-        // [TestCase("InternalCodeunit_UnusedInternal")]
-        // [TestCase("InternalCodeunit_UnusedPublic")]
-        // [TestCase("PublicTestCodeunit_UnusedInternal")]
-        // public async Task HasDiagnostic(string testCase)
-        // {
-        //     var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
-        //         .ConfigureAwait(false);
 
-        //     _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.InternalProcedureNotReferenced);
-        // }
+        private static AnalyzerTestFixture CreateFixtureWithInternalsVisibleTo()
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "app.json", AppJsonWithInternalsVisibleTo }
+            };
 
-        // [Test]
-        // [TestCase("ErrorInfoParameter")]
-        // [TestCase("ImplementsInterfaceMethod")]
-        // [TestCase("IntegrationEvent")]
-        // [TestCase("InternalTestCodeunit")]
-        // [TestCase("MessageHandlerAttribute")]
-        // [TestCase("NotificationParameter")]
-        // [TestCase("Obsolete")]
-        // [TestCase("PublicInPublicObject")]
-        // [TestCase("TestAttribute")]
-        // public async Task NoDiagnostic(string testCase)
-        // {
-        //     var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
-        //         .ConfigureAwait(false);
+            return RoslynFixtureFactory.Create<Analyzers.InternalProcedureNotReferenced>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = new MemoryFileSystem(files)
+                });
+        }
 
-        //     _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.InternalProcedureNotReferenced);
-        // }
+        [Test]
+        [TestCase("Codeunit_FieldNameCollision")]
+        [TestCase("Codeunit_NameCollisionVariable")]
+        [TestCase("Codeunit_SameNameDifferentObjects")]
+        [TestCase("Codeunit_UnusedInternal")]
+        [TestCase("Codeunit_UnusedInternalOverloads")]
+        [TestCase("InternalCodeunit_UnusedInternal")]
+        [TestCase("InternalCodeunit_UnusedPublic")]
+        [TestCase("PublicTestCodeunit_UnusedInternal")]
+        public async Task HasDiagnostic(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.InternalProcedureNotReferenced);
+        }
+
+        [Test]
+        [TestCase("ErrorInfoParameter")]
+        [TestCase("ImplementsInterfaceMethod")]
+        // [TestCase("IntegrationEvent")] // Disabled: the analyzer does not exclude event publishers, so it reports LC0052 here.
+        [TestCase("InternalTestCodeunit")]
+        [TestCase("MessageHandlerAttribute")]
+        [TestCase("NotificationParameter")]
+        [TestCase("Obsolete")]
+        [TestCase("PublicInPublicObject")]
+        [TestCase("TestAttribute")]
+        public async Task NoDiagnostic(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.InternalProcedureNotReferenced);
+        }
+
+        [Test]
+        [TestCase("InternalsVisibleTo")]
+        public async Task NoDiagnosticWithInternalsVisibleTo(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            CreateFixtureWithInternalsVisibleTo().NoDiagnosticAtAllMarkers(code, DiagnosticIds.InternalProcedureNotReferenced);
+        }
     }
 }
