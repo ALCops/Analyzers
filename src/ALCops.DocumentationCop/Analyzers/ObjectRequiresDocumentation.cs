@@ -21,13 +21,20 @@ public sealed class ObjectRequiresDocumentation : DiagnosticAnalyzer
             EnumProvider.SymbolKind.Codeunit,
             EnumProvider.SymbolKind.ControlAddIn,
             EnumProvider.SymbolKind.Enum,
+            EnumProvider.SymbolKind.EnumExtension,
             EnumProvider.SymbolKind.Interface,
             EnumProvider.SymbolKind.Page,
+            EnumProvider.SymbolKind.PageCustomization,
+            EnumProvider.SymbolKind.PageExtension,
             EnumProvider.SymbolKind.PermissionSet,
+            EnumProvider.SymbolKind.PermissionSetExtension,
             EnumProvider.SymbolKind.Profile,
+            EnumProvider.SymbolKind.ProfileExtension,
             EnumProvider.SymbolKind.Query,
             EnumProvider.SymbolKind.Report,
+            EnumProvider.SymbolKind.ReportExtension,
             EnumProvider.SymbolKind.Table,
+            EnumProvider.SymbolKind.TableExtension,
             EnumProvider.SymbolKind.XmlPort);
 
     private void CheckObjectDocumentation(SymbolAnalysisContext ctx)
