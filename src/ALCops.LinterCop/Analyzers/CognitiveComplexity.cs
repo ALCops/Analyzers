@@ -326,8 +326,10 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
 
             // A property-style setter call (`Proc := Value`) leaves the target unresolved; the binder
             // makes the whole assignment statement the invocation.
-            var invokedMethod = context.SemanticModel.GetSymbolInfo(target, context.CancellationToken).Symbol as IMethodSymbol
-                ?? context.SemanticModel.GetMethodInvokedByAssignmentSyntax(target, context.CancellationToken);
+            var symbol = context.SemanticModel.GetSymbolInfo(target, context.CancellationToken).Symbol;
+            var invokedMethod = symbol is null
+                ? context.SemanticModel.GetMethodInvokedByAssignmentSyntax(target, context.CancellationToken)
+                : symbol as IMethodSymbol;
             if (invokedMethod is null)
                 continue;
 

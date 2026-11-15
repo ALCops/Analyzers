@@ -59,6 +59,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("IfStatementGuardClause")]
         [TestCase("IfStatementGuardClauseContinue")]
         [TestCase("BuiltInFieldErrorGuardClauses")]
+        [TestCase("NonRecursivePropertySyntax")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

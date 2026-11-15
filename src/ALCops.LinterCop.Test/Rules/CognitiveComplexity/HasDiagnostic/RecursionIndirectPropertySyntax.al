@@ -1,6 +1,6 @@
 codeunit 50100 MyCodeunit
 {
-    procedure [|CountDown|](Value: Integer)    // Cognitive Complexity: 15 (threshold >=15)
+    procedure [|CountDown|](Value: Integer)    // Cognitive Complexity: 15 (threshold >=15), 5 of it from setter-call recursion
     var
         OtherCodeunit: Codeunit OtherCodeunit;
         Condition: Boolean;

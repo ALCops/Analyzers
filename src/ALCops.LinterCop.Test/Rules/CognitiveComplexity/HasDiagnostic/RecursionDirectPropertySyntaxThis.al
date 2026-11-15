@@ -1,10 +1,9 @@
 codeunit 50100 MyCodeunit
 {
-    procedure [|CountDown|](Value: Integer)  // Cognitive Complexity: 15 (threshold >=15)
+    procedure [|CountDown|](Value: Integer)  // Cognitive Complexity: 15 (threshold >=15), 5 of it from setter-call recursion
     var
         Condition: Boolean;
     begin
-        this.CountDown := Value - 1;         // +1 (nesting = 0)
         if true then                         // +1 (nesting = 0)
             if true then                     // +2 (nesting = 1)
                 this.CountDown := Value - 1; // +1 (no nesting penalty on recursion)

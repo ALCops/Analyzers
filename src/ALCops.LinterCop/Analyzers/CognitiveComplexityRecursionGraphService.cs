@@ -73,8 +73,10 @@ internal sealed class CognitiveComplexityRecursionGraphService
 
             // A property-style setter call (`Proc := Value`) leaves the target unresolved; the binder
             // makes the whole assignment statement the invocation.
-            var invokedSymbol = semanticModel.GetSymbolInfo(target).Symbol as IMethodSymbol
-                ?? semanticModel.GetMethodInvokedByAssignmentSyntax(target);
+            var symbol = semanticModel.GetSymbolInfo(target).Symbol;
+            var invokedSymbol = symbol is null
+                ? semanticModel.GetMethodInvokedByAssignmentSyntax(target)
+                : symbol as IMethodSymbol;
             if (invokedSymbol is not null)
             {
                 builder.Add(invokedSymbol.Id);
