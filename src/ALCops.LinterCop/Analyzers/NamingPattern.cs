@@ -56,7 +56,14 @@ public sealed class NamingPattern : DiagnosticAnalyzer
             EnumProvider.SymbolKind.XmlPort,
             EnumProvider.SymbolKind.Enum,
             EnumProvider.SymbolKind.Interface,
-            EnumProvider.SymbolKind.PermissionSet);
+            EnumProvider.SymbolKind.PermissionSet,
+            EnumProvider.SymbolKind.TableExtension,
+            EnumProvider.SymbolKind.PageExtension,
+            EnumProvider.SymbolKind.ReportExtension,
+            EnumProvider.SymbolKind.EnumExtension,
+            EnumProvider.SymbolKind.PermissionSetExtension,
+            EnumProvider.SymbolKind.ProfileExtension,
+            EnumProvider.SymbolKind.PageCustomization);
 
         ctx.RegisterSymbolAction(
             symbolCtx => AnalyzeField(symbolCtx, config),
