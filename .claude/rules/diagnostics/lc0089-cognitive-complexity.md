@@ -23,6 +23,7 @@ Registers `CompilationStartAction` (captures threshold, LC0089i enablement and t
 | LC0089 and LC0089i are `Info` and `isEnabledByDefault: false`; LC0089i is gated behind `IsDiagnosticEnabled` | A metric is not a violation and per-increment detail is noise unless a specific method is being investigated; the gate makes the walk-and-report cost zero when disabled. |
 | Guard-clause discount | Standard Cognitive Complexity: an early exit `if <condition> then exit/error/break/continue/skip/quit` simplifies flow and does not increment. |
 | Built-in error guards are recognized through the shared `FlowTerminatingBuiltIns` classifier (`Dialog.Error`, `Table.FieldError`, `FieldRef.FieldError`); user-defined procedures named `Error` or `FieldError` stay ordinary calls | One semantic definition of "terminates the procedure" shared with PC0038 and FC0007; a name match alone would discount a user procedure that merely happens to be called `Error`. |
+| Recursion detection (the per-method increment and the call-graph edges) falls back to `SemanticModel.GetMethodInvokedByAssignmentSyntax` when `GetSymbolInfo` on the call target is not a method | A property-style setter call (`Proc := Value`, `Obj.Proc := Value`, `this.Proc := Value`) leaves the target unresolved, so recursion through it was missed, both direct and through the call graph (`.claude/rules/symbol-resolution.md`, Property-style setter calls). The fallback binds the enclosing statement only for unresolved assignment targets, which keeps the graph service's cost unchanged in practice. |
 | `CurrReport`/`CurrXMLport` `Break`, `Skip` and `Quit` keep their own syntax check instead of joining `FlowTerminatingBuiltIns` | They are valid guard exits for complexity but not general procedure terminators, so they must not leak into PC0038's flow analysis. |
 
 ## Deliberate non-reports
@@ -37,7 +38,7 @@ Registers `CompilationStartAction` (captures threshold, LC0089i enablement and t
 
 ## Test notes
 
-- Fixtures are version-gated with `SkipTestIfVersionIsTooLow`: nested conditional expressions and `this` need `14.0`, `continue` needs `15.0`.
+- Fixtures are version-gated with `SkipTestIfVersionIsTooLow`: nested conditional expressions and `this` need `14.0`, `continue` needs `15.0`. The `*PropertySyntax` recursion fixtures avoid `this` so they run on every SDK; only `RecursionDirectPropertySyntaxThis` is gated.
 - The shared-instance race has no regression fixture: it requires overlapping compilation passes against different `alcops.json` files, which unit tests cannot reproduce.
 
 ## Settings

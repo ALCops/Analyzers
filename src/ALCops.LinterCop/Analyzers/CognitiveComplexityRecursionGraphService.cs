@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using ALCops.Common.Extensions;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
@@ -70,8 +71,11 @@ internal sealed class CognitiveComplexityRecursionGraphService
             if (target is null)
                 continue;
 
-            var symbolInfo = semanticModel.GetSymbolInfo(target);
-            if (symbolInfo.Symbol is IMethodSymbol invokedSymbol)
+            // A property-style setter call (`Proc := Value`) leaves the target unresolved; the binder
+            // makes the whole assignment statement the invocation.
+            var invokedSymbol = semanticModel.GetSymbolInfo(target).Symbol as IMethodSymbol
+                ?? semanticModel.GetMethodInvokedByAssignmentSyntax(target);
+            if (invokedSymbol is not null)
             {
                 builder.Add(invokedSymbol.Id);
             }

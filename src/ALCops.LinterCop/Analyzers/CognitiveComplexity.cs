@@ -324,8 +324,11 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             if (target is null)
                 continue;
 
-            var symbolInfo = context.SemanticModel.GetSymbolInfo(target, context.CancellationToken);
-            if (symbolInfo.Symbol is not IMethodSymbol invokedMethod)
+            // A property-style setter call (`Proc := Value`) leaves the target unresolved; the binder
+            // makes the whole assignment statement the invocation.
+            var invokedMethod = context.SemanticModel.GetSymbolInfo(target, context.CancellationToken).Symbol as IMethodSymbol
+                ?? context.SemanticModel.GetMethodInvokedByAssignmentSyntax(target, context.CancellationToken);
+            if (invokedMethod is null)
                 continue;
 
             visited.Clear();
