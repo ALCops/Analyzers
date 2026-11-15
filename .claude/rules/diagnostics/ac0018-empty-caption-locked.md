@@ -41,6 +41,7 @@ Registers `RegisterSyntaxNodeAction` on every syntax kind that can declare `Capt
 ## Test notes
 
 - Profile-extension fixtures declare the RoleCenter page and the profile in the same file, so they are gated on 13.0 (same-module target) and on 14.0 (profile extensions need runtime Fall2024).
+- The table and page extension fixtures declare their targets in the same file and are gated on 13.0.
 - The `HasFix` cases apply the fix at the fixture marker; they do not depend on the analyzer reporting there.
 
 ## CodeFix: EmptyCaptionLockedCodeFixProvider

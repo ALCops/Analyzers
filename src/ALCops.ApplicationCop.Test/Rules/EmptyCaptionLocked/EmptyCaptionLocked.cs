@@ -7,11 +7,12 @@ namespace ALCops.ApplicationCop.Test
     {
         private AnalyzerTestFixture _fixture;
         private AnalyzerTestFixture _analysisViewFixture;
-        private static readonly Analyzers.PermissionSetCaptionLength _analyzer = new();
+        private static readonly Analyzers.EmptyCaptionLocked _analyzer = new();
         private string _testCasePath;
 
         private static readonly string[] AnalysisViewTestCases = ["PageAnalysisView"];
         private static readonly string[] ProfileExtensionTestCases = ["ProfileExtension"];
+        private static readonly string[] ObjectExtensionTestCases = ["ObjectExtension", "ProfileExtension"];
 
         [SetUp]
         public void Setup()
@@ -29,6 +30,7 @@ namespace ALCops.ApplicationCop.Test
         [Test]
         [TestCase("Enum")]
         [TestCase("LockedIsFalse")]
+        [TestCase("ObjectExtension")]
         [TestCase("Page")]
         [TestCase("PageAnalysisView")]
         [TestCase("PermissionSet")]
@@ -46,7 +48,7 @@ namespace ALCops.ApplicationCop.Test
             );
 
             SkipTestIfVersionIsTooLow(
-                ProfileExtensionTestCases,
+                ObjectExtensionTestCases,
                 testCase,
                 "13.0",
                 "No support for extension objects when the target itself is already declared in the same module");
@@ -66,6 +68,7 @@ namespace ALCops.ApplicationCop.Test
 
         [Test]
         [TestCase("Enum")]
+        [TestCase("ObjectExtension")]
         [TestCase("PageAnalysisView")]
         [TestCase("ProfileExtension")]
         public async Task NoDiagnostic(string testCase)
@@ -78,7 +81,7 @@ namespace ALCops.ApplicationCop.Test
             );
 
             SkipTestIfVersionIsTooLow(
-                ProfileExtensionTestCases,
+                ObjectExtensionTestCases,
                 testCase,
                 "13.0",
                 "No support for extension objects when the target itself is already declared in the same module");
@@ -102,7 +105,7 @@ namespace ALCops.ApplicationCop.Test
         public async Task HasFix(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ProfileExtensionTestCases,
+                ObjectExtensionTestCases,
                 testCase,
                 "13.0",
                 "No support for extension objects when the target itself is already declared in the same module");
