@@ -24,7 +24,7 @@ public sealed class {RuleName} : DiagnosticAnalyzer
             AnalyzeSymbol,
             EnumProvider.SymbolKind.Codeunit,
             EnumProvider.SymbolKind.Table,
-            EnumProvider.SymbolKind.Page);
+            EnumProvider.SymbolKind.Page); // list the extension kinds here or record in the rule doc why they are excluded
 
     private static void AnalyzeSymbol(SymbolAnalysisContext ctx)
     {
@@ -100,7 +100,7 @@ private static void CompilationStart(CompilationStartAnalysisContext ctx)
     ctx.RegisterSymbolAction(
         symbolCtx => AnalyzeSymbol(symbolCtx, index, settings),   // closure, never an instance field
         EnumProvider.SymbolKind.Table,
-        EnumProvider.SymbolKind.Page);
+        EnumProvider.SymbolKind.Page); // list the extension kinds here or record in the rule doc why they are excluded
 }
 ```
 

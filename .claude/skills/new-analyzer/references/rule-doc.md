@@ -23,6 +23,7 @@ Registers `{Register*Action}` on `{kinds}`; main type `{Class or Walker}`. {One 
 |---|---|
 | {What was chosen, e.g. "Severity Info", "Local variables only", "Custom FixAllProvider"} | {Why, including the alternative that was rejected} |
 | {Version gate or netstandard2.1 stub, if any} | {Which SDK API is missing and how the rule degrades} |
+| {Extension objects: kinds covered, or why excluded} | {The extension cannot carry the construct (no such property in its SDK property table), cannot change the checked aspect of its target, or folds into the target} |
 
 ## Deliberate non-reports
 

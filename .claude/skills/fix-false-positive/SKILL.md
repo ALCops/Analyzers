@@ -30,5 +30,6 @@ Input: `$ARGUMENTS`. For an issue number/URL, `gh issue view <n> --comments` and
 | Only the one temporary-table form from the report is handled | Cover all three forms (`TableType = Temporary`, `Record X temporary`, temporary page source). |
 | Only the reported receiver form or object context is fixed | Cover every form and context in `receiver-forms.md` (named, `Rec`, bare, `this`, tableextension, `TableNo` `OnRun`, page family) and pin each with a fixture; a report about one form is usually a gap in several. |
 | Markdown-only issue link in the PR body | `Fixes #n` so GitHub links and auto-closes. |
+| A missed object reported, only that object kind added to the gate | Ask the same question for every extension counterpart of the gated base kinds (regression catalog, "Base kind registered, extension counterpart not", #315); record each exclusion in the rule doc. |
 | Sibling rules sharing the helper left unchecked | Grep for the helper; fix or file an issue (#449 is the precedent). |
 | Rule doc not updated | Step 5 is part of "done". |
