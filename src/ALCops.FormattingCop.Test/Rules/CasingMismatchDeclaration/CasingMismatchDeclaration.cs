@@ -44,6 +44,9 @@ namespace ALCops.FormattingCop.Test
         [TestCase("GenericDataType")]
         [TestCase("SubtypedObjectReference")]
         [TestCase("NamespacedObjectReference")]
+        [TestCase("SetterCallPropertySyntax")]
+        [TestCase("SetterCallPropertySyntaxNamedReceiver")]
+        [TestCase("SetterCallPropertySyntaxThis")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -63,6 +66,12 @@ namespace ALCops.FormattingCop.Test
                 testCase,
                 "14.0"
             );
+
+            SkipTestIfVersionIsTooLow(
+                ["SetterCallPropertySyntaxThis"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
 
             SkipTestIfVersionIsTooLow(
                 ["GenericDataType", "SubtypedObjectReference"],
@@ -105,6 +114,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("GenericDataType")]
         [TestCase("SubtypedObjectReference")]
         [TestCase("NamespacedObjectReference")]
+        [TestCase("SetterCallPropertySyntax")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -141,6 +151,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("GenericTypeArgument")]
         [TestCase("QuotedObjectReference")]
         [TestCase("QualifiedObjectReference")]
+        [TestCase("SetterCallPropertySyntax")]
         public async Task HasFix(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
