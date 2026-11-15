@@ -184,7 +184,7 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
                 // A single-parameter procedure can be called with assignment syntax (`Obj.Proc := Value`).
                 // The binder turns the whole statement into the invocation, so the identifier itself
                 // stays unresolved and the invoked method is only reachable from the statement's operation.
-                methodSymbol = GetMethodInvokedByAssignmentSyntax(semanticModel, identifierName);
+                methodSymbol = semanticModel.GetMethodInvokedByAssignmentSyntax(identifierName);
                 return methodSymbol is not null;
             }
             if (symbol.Kind != symbolKind)
@@ -197,22 +197,6 @@ public sealed class InternalProcedureNotReferenced : DiagnosticAnalyzer
                 return false;
             }
             return true;
-        }
-
-        private static IMethodSymbol? GetMethodInvokedByAssignmentSyntax(SemanticModel semanticModel, IdentifierNameSyntax identifierName)
-        {
-            SyntaxNode target = identifierName.Parent is MemberAccessExpressionSyntax memberAccess && memberAccess.Name == identifierName
-                ? memberAccess
-                : identifierName;
-
-            if (target.Parent is not AssignmentStatementSyntax assignment || assignment.Target != target)
-            {
-                return null;
-            }
-
-            return semanticModel.GetOperation(assignment) is IInvocationExpression invocation
-                ? invocation.TargetMethod
-                : null;
         }
 
         public void ReportUnchangedReferencePassedParameters(Action<Diagnostic> action)
