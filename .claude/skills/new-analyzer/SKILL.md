@@ -28,6 +28,7 @@ Knowledge you need loads automatically when you open files under `Analyzers/` an
 | Configurable via `alcops.json`? (name + default) | **Ask** |
 | Minimum BC/SDK version (version gate) or net8.0-only SDK API | **Propose** after step 1 below; confirm. |
 | Does the rule read a record receiver, a field, a user procedure call or a table key? | **Propose** — if yes, the fixture set of `testing.md` rule 6 (four forms, tableextension, `TableNo` `OnRun`, page where applicable, implicit primary key) and a namespaced fixture are part of step 4; confirm which contexts the rule deliberately excludes. |
+| Which object kinds does the rule gate on, and does each extension counterpart (tableextension, pageextension, reportextension, enumextension, permissionsetextension, profileextension, pagecustomization) carry the construct the rule reads? | **Propose** from the SDK property tables (`ObjectParser.Get*Properties`, extension and customization modifiability) and `IApplicationObjectExtensionTypeSymbol.Target`; confirm which extension kinds are covered and which are excluded, with the reason. |
 
 ## Steps
 
@@ -60,3 +61,4 @@ Knowledge you need loads automatically when you open files under `Analyzers/` an
 | Skipping the rule doc or the docs-site reminder | Steps 6 and 7 are part of "done". |
 | Gating on `invocation.Instance` non-null silently skips bare self calls (#348); treating `Rec` as always a global variable skips the `TableNo` `OnRun` local (#544) | Resolve via `GetReceiverTableType`; fixtures for all four forms, the tableextension variant, `TableNo` `OnRun` and the page family (`receiver-forms.md`). |
 | Deciding key membership from `ITableTypeSymbol.Keys` (#544) | Read `PrimaryKey` too; a table without a `keys` section has a synthesized primary key that `Keys` never lists. |
+| Registering base object kinds and forgetting the extension counterparts (#315) | Decide per extension kind at the gate; the decision becomes a Design-decision row or a Deliberate non-reports bullet, and each covered extension kind gets a fixture. |

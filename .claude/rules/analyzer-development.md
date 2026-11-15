@@ -26,6 +26,7 @@ The repo is version-controlled per AL release: `git -C ../nav-sdk-source tag` li
 - **`SemanticFacts` for AL identifier comparison** (`IsSameName`, `NameEqualityComparer`, `NameEqualityComparison`, `NameComparer`); raw `OrdinalIgnoreCase` only for non-AL text. Table in `symbol-resolution.md`.
 - **No mutable instance fields.** Analyzer instances are shared across passes and projects; per-compilation state lives in `CompilationStart` closures or parameters (`sdk-analysis-scope.md`).
 - **Analyze and report inside one callback.** No accumulate-here, report-there patterns (`sdk-analysis-scope.md`).
+- **Extension coverage is an explicit decision.** An object-kind gate either lists the extension kinds it includes or the rule doc says why they are excluded; the SDK property tables in `ObjectParser` (extension and customization modifiability) and `IApplicationObjectExtensionTypeSymbol.Target` decide what an extension can carry.
 - **Report at the most specific location**: the offending property, node, or symbol, not the whole object.
 - **One analyzer class per rule or tightly coupled group** (`AnalyzeCountMethod` serves LC0081 and LC0082 because the analysis is shared). `SupportedDiagnostics` lists every descriptor the class can report.
 - **`ctx.CancellationToken.ThrowIfCancellationRequested()`** inside loops over large collections.

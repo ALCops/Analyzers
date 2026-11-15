@@ -28,6 +28,7 @@ Registers `RegisterSymbolAction` on `Page`, `Query`, `Table`, `Field`, `Action`,
 - Area, Grid, Repeater, UserControl and SystemPart controls have no user-facing caption requirement.
 - System tables and fields (Id >= 2000000000) are Microsoft-owned.
 - Predefined action category groups (`Category_Process` and friends) get their captions from the platform. The test is Common's `IActionSymbol.IsPredefinedPromotedCategoryGroup()`, shared with LC0092 so both cops skip the same groups.
+- Extension objects and page customizations are not checked at object level: the target's caption applies. Fields, controls, actions and enum values they add are still checked through the member kinds.
 - Empty enum values conventionally have no caption.
 - Non-assignable permission sets are never shown in the assignment UI.
 

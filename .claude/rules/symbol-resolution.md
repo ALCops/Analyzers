@@ -96,7 +96,7 @@ Facts about method symbols that look discriminating but are not:
 | `IRecordTypeSymbol` | `BaseTable`, `Temporary`, `OriginalDefinition` (the `ITableTypeSymbol`); see `receiver-forms.md` |
 | `ITableTypeSymbol` | `Id`, `Name`, `TableType` |
 | `IApplicationObjectTypeSymbol` | `Kind`, `Id`, `Name`, `GetMembers()`, `GetProperty()` |
-| `IApplicationObjectExtensionTypeSymbol` | `Target` (the extended object) |
+| `IApplicationObjectExtensionTypeSymbol` | `Target` (the extended object). Implemented by table, page, report, enum, permissionset and profile extensions and by page customizations (`IPageCustomizationTypeSymbol : IPageExtensionBaseTypeSymbol`, like `IPageExtensionTypeSymbol`); the profile extension interface is internal, so identify profile extensions by `SymbolKind.ProfileExtension`, and the permissionset extension symbol also implements `IPermissionSetSymbol`, so an `is IPermissionSetSymbol` test matches both. |
 
 Interfaces and control add-ins implement `IObjectTypeSymbol` but not `IApplicationObjectTypeSymbol`, so `GetContainingApplicationObjectTypeSymbol()` returns null for them; resolve the application object first, then fall back to the object type. Request pages are `IObjectTypeSymbol` with `Local` accessibility.
 

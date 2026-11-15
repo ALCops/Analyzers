@@ -8,7 +8,7 @@ paths:
 
 ## Purpose
 
-Checks that tables used by pages define both `Brick` and `DropDown` field groups. These field groups control how records are displayed in list views and lookup dropdowns in Business Central.
+Checks that tables define both `Brick` and `DropDown` field groups; a temporary table is checked only when a page uses it as its source table. These field groups control how records are displayed in list views and lookup dropdowns in Business Central.
 
 Registers `RegisterCompilationStartAction` (read-only index of page-referenced tables) with an inner `RegisterSymbolAction` on `Table`; main type `FieldGroupsRequired`.
 
@@ -25,7 +25,7 @@ Registers `RegisterCompilationStartAction` (read-only index of page-referenced t
 - Obsolete tables.
 - Setup tables, via the shared `TableHelper.IsSetupTable()` heuristic: a single `Code` primary-key field named `Primary Key`/`PrimaryKey`, or a parameterless, return-less `GetRecordOnce` method declared on the table itself (any accessibility). Field groups are not useful on a single-record table ([#287](https://github.com/ALCops/Analyzers/issues/287)). AC0002 uses the same heuristic to skip setup tables, so changing it affects both rules.
 - Temporary tables that no page references; a temporary table with a page is still checked.
-- Tables that no page references at all.
+- Page extensions and page customizations are not added to the page index: neither can change its target's `SourceTable`, so the target page already accounts for the table.
 
 ## Test notes
 
