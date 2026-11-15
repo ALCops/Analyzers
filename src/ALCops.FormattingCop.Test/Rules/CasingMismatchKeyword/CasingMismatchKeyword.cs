@@ -23,6 +23,7 @@ namespace ALCops.FormattingCop.Test
         [Test]
         [TestCase("Codeunit")]
         [TestCase("Enum")]
+        [TestCase("PageCustomization")]
         [TestCase("Table")]
         [TestCase("XmlPort")]
         public async Task HasDiagnostic(string testCase)
@@ -33,6 +34,12 @@ namespace ALCops.FormattingCop.Test
                 "13.0"
             );
 
+            SkipTestIfVersionIsTooLow(
+                ["PageCustomization"],
+                testCase,
+                "13.0",
+                "No support for pagecustomizations when target itself is already declared in the same module");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -42,6 +49,7 @@ namespace ALCops.FormattingCop.Test
         [Test]
         [TestCase("Codeunit")]
         [TestCase("Enum")]
+        [TestCase("PageCustomization")]
         [TestCase("Table")]
         [TestCase("VariableNamedAfterKeyword")]
         [TestCase("XmlPort")]
@@ -52,6 +60,12 @@ namespace ALCops.FormattingCop.Test
                 testCase,
                 "13.0"
             );
+
+            SkipTestIfVersionIsTooLow(
+                ["PageCustomization"],
+                testCase,
+                "13.0",
+                "No support for pagecustomizations when target itself is already declared in the same module");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);

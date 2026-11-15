@@ -12,13 +12,14 @@ paths:
 
 Reports when the casing of a keyword or identifier reference differs from its canonical form: the declaration for user symbols, the SDK's canonical name for built-in keywords, types, and members. AL is case-insensitive; FC0002 enforces the compiler's own spelling.
 
-Registers `RegisterSymbolAction` on the application object symbol kinds; main types `CasingMismatchKeyword` (keyword tokens) and `CasingMismatchIdentifier` (identifiers, data types, properties, option/object access), sharing one descriptor.
+Registers `RegisterSymbolAction` on the application object symbol kinds, including every extension kind and page customizations (control add-ins are not registered); main types `CasingMismatchKeyword` (keyword tokens) and `CasingMismatchIdentifier` (identifiers, data types, properties, option/object access), sharing one descriptor.
 
 ## Design decisions
 
 | Decision | Rationale |
 |---|---|
 | XmlPort casing is context-dependent, mirroring the SDK exactly (see SDK facts) | The AL compiler itself is inconsistent; FC0002 follows the compiler/IntelliSense rather than one invented spelling. Confirmed by-design in [#432](https://github.com/ALCops/Analyzers/issues/432) and upstream [LinterCop #729](https://github.com/StefanMaron/BusinessCentral.LinterCop/issues/729). |
+| Registered on every extension kind including page customizations; control add-ins stay out until their own issue is decided | A customization body is walked exactly like a page extension body: `IPageCustomizationTypeSymbol` is an `IPageExtensionBaseTypeSymbol`, so its `modify`/`move*` targets and properties resolve through the same paths, and `PageCustomizationObject` is already in the identifier skip list for the object name. A control add-in declares events and procedures without bodies, a different member shape that needs its own fixtures and decision ([#623](https://github.com/ALCops/Analyzers/issues/623)). |
 | Identifiers grouped by (text, method scope) before `GetSymbolInfo` | One semantic call per distinct spelling per scope instead of one per occurrence. |
 | A group whose representative has no symbol falls back to `GetMethodInvokedByAssignmentSyntax`, so property-style setter calls (`Proc := Value`, `Obj.Proc := Value`, `this.Proc := Value`) are checked like parenthesised calls | The binder gives the setter's target name no symbol; mechanism and cost in `symbol-resolution.md` (Property-style setter calls). The walker already collects the name in all three forms, so no collection change is needed. |
 | Generic type arguments (`List of [...]`, `Dictionary of [...]`) walked by pushing the `GenericNamedDataTypeSyntax` node onto the existing node stack rather than a dedicated pass | `ChildNodes()` yields only the type-argument nodes, so the outer type name is not double-reported and nested generics recurse for free ([#255](https://github.com/ALCops/Analyzers/issues/255)). |
@@ -41,6 +42,10 @@ Registers `RegisterSymbolAction` on the application object symbol kinds; main ty
 - XmlPort canonical spelling differs by context: `xmlport` as object keyword (`SyntaxFacts`), `XmlPort` as data type (`NavTypeKindExtensions`) and as `ObjectType::XmlPort` member (`SymbolKind` enum), `Xmlport` as static class and `::` left side (bound to `XmlportClassTypeSymbol`, literally named `"Xmlport"`).
 - `GetSemanticInfoSymbolInNonMemberContext` derives the `SymbolKind` from the enclosing `SubtypedDataTypeSyntax.TypeName`, so `GetSymbolInfo` on the inner identifier of a subtyped data type resolves the referenced object.
 - `GetSymbolInfo` on a `QualifiedNameSyntax` subtype routes through `GetSymbolFromObjectReference`, which has an explicit `QualifiedName` case (`LookupObjectTypeSymbol`).
+
+## Test notes
+
+- The `PageCustomization` fixtures (keyword and identifier suites) declare the customized page in the same file, which the compiler only accepts from 13.0; both suites skip them below that version.
 
 ## CodeFix: CasingMismatchCodeFix
 

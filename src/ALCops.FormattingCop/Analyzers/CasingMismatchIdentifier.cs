@@ -26,6 +26,7 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 EnumProvider.SymbolKind.EnumExtension,
                 EnumProvider.SymbolKind.Interface,
                 EnumProvider.SymbolKind.Page,
+                EnumProvider.SymbolKind.PageCustomization,
                 EnumProvider.SymbolKind.PageExtension,
                 EnumProvider.SymbolKind.PermissionSet,
                 EnumProvider.SymbolKind.PermissionSetExtension,
