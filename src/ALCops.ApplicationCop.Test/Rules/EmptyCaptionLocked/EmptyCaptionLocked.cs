@@ -11,6 +11,7 @@ namespace ALCops.ApplicationCop.Test
         private string _testCasePath;
 
         private static readonly string[] AnalysisViewTestCases = ["PageAnalysisView"];
+        private static readonly string[] ProfileExtensionTestCases = ["ProfileExtension"];
 
         [SetUp]
         public void Setup()
@@ -31,6 +32,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("Page")]
         [TestCase("PageAnalysisView")]
         [TestCase("PermissionSet")]
+        [TestCase("ProfileExtension")]
         [TestCase("Query")]
         [TestCase("Report")]
         [TestCase("Table")]
@@ -43,6 +45,18 @@ namespace ALCops.ApplicationCop.Test
                 "PageAnalysisView requires net10.0 SDK."
             );
 
+            SkipTestIfVersionIsTooLow(
+                ProfileExtensionTestCases,
+                testCase,
+                "13.0",
+                "No support for extension objects when the target itself is already declared in the same module");
+
+            SkipTestIfVersionIsTooLow(
+                ProfileExtensionTestCases,
+                testCase,
+                "14.0",
+                "Profile extensions are not supported before AL 14.0");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -53,6 +67,7 @@ namespace ALCops.ApplicationCop.Test
         [Test]
         [TestCase("Enum")]
         [TestCase("PageAnalysisView")]
+        [TestCase("ProfileExtension")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -61,6 +76,18 @@ namespace ALCops.ApplicationCop.Test
                 "18.0.36",
                 "PageAnalysisView requires net10.0 SDK."
             );
+
+            SkipTestIfVersionIsTooLow(
+                ProfileExtensionTestCases,
+                testCase,
+                "13.0",
+                "No support for extension objects when the target itself is already declared in the same module");
+
+            SkipTestIfVersionIsTooLow(
+                ProfileExtensionTestCases,
+                testCase,
+                "14.0",
+                "Profile extensions are not supported before AL 14.0");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
@@ -71,8 +98,21 @@ namespace ALCops.ApplicationCop.Test
 
         [Test]
         [TestCase("Enum")]
+        [TestCase("ProfileExtension")]
         public async Task HasFix(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ProfileExtensionTestCases,
+                testCase,
+                "13.0",
+                "No support for extension objects when the target itself is already declared in the same module");
+
+            SkipTestIfVersionIsTooLow(
+                ProfileExtensionTestCases,
+                testCase,
+                "14.0",
+                "Profile extensions are not supported before AL 14.0");
+
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
                 .ConfigureAwait(false);
 

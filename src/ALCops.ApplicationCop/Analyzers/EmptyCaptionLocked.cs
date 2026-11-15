@@ -49,7 +49,8 @@ public sealed class EmptyCaptionLocked : DiagnosticAnalyzer
             EnumProvider.SyntaxKind.EnumType,
             EnumProvider.SyntaxKind.PermissionSet,
             EnumProvider.SyntaxKind.TableExtensionObject,
-            EnumProvider.SyntaxKind.PageExtensionObject
+            EnumProvider.SyntaxKind.PageExtensionObject,
+            EnumProvider.SyntaxKind.ProfileExtensionObject
     });
 
     private static void AnalyzeCaptionProperty(SyntaxNodeAnalysisContext ctx)
