@@ -27,8 +27,23 @@ namespace ALCops.DocumentationCop.Test
         [TestCase("PublicCodeunit")]
         [TestCase("ProfileWithoutXmlDocumentation")]
         [TestCase("PublicInterfaceAndControlAddIn")]
+        [TestCase("UndocumentedExtensions")]
+        [TestCase("UndocumentedProfileExtension")]
+        [TestCase("UndocumentedPageCustomization")]
         public async Task PublicHasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["UndocumentedExtensions", "UndocumentedProfileExtension", "UndocumentedPageCustomization"],
+                testCase,
+                "13.0",
+                "No support for extension objects when the target itself is already declared in the same module");
+
+            SkipTestIfVersionIsTooLow(
+                ["UndocumentedProfileExtension"],
+                testCase,
+                "14.0",
+                "Profile extensions are not supported before AL 14.0");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(PublicHasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -39,8 +54,23 @@ namespace ALCops.DocumentationCop.Test
         [TestCase("PublicCodeunit")]
         [TestCase("NamespacedQuotedProfileWithXmlDocumentation")]
         [TestCase("PublicInterfaceAndControlAddIn")]
+        [TestCase("DocumentedExtensions")]
+        [TestCase("DocumentedProfileExtension")]
+        [TestCase("DocumentedPageCustomization")]
         public async Task PublicNoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["DocumentedExtensions", "DocumentedProfileExtension", "DocumentedPageCustomization"],
+                testCase,
+                "13.0",
+                "No support for extension objects when the target itself is already declared in the same module");
+
+            SkipTestIfVersionIsTooLow(
+                ["DocumentedProfileExtension"],
+                testCase,
+                "14.0",
+                "Profile extensions are not supported before AL 14.0");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(PublicNoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -61,8 +91,15 @@ namespace ALCops.DocumentationCop.Test
         [Test]
         [TestCase("InternalCodeunit")]
         [TestCase("InternalInterface")]
+        [TestCase("UndocumentedExtensions")]
         public async Task InternalNoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["UndocumentedExtensions"],
+                testCase,
+                "13.0",
+                "No support for extension objects when the target itself is already declared in the same module");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(InternalNoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
