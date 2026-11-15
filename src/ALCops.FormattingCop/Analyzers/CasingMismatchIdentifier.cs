@@ -469,7 +469,10 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
                 && KeywordTexts.Value.Contains(identifierText))
                 continue;
 
-            if (semanticModel.GetSymbolInfo(representative, ctx.CancellationToken).Symbol is not ISymbol symbol)
+            // A property-style setter call (Proc := Value) has no symbol on its target name.
+            var symbol = semanticModel.GetSymbolInfo(representative, ctx.CancellationToken).Symbol
+                ?? semanticModel.GetMethodInvokedByAssignmentSyntax(representative, ctx.CancellationToken);
+            if (symbol is null)
                 continue;
 
             foreach (var item in groupNode)
