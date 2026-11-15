@@ -29,6 +29,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("LengthDataType")]
         [TestCase("MemberAccessField")]
         [TestCase("OptionDataType")]
+        [TestCase("PageCustomization")]
         [TestCase("Property")]
         [TestCase("TextConstDataType")]
         [TestCase("TestType")]
@@ -79,6 +80,12 @@ namespace ALCops.FormattingCop.Test
                 "14.0",
                 "No support for Interface as a generic type argument before version 14.0");
 
+            SkipTestIfVersionIsTooLow(
+                ["PageCustomization"],
+                testCase,
+                "13.0",
+                "No support for pagecustomizations when target itself is already declared in the same module");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -96,6 +103,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("LengthDataType")]
         [TestCase("MemberAccessField")]
         [TestCase("OptionDataType")]
+        [TestCase("PageCustomization")]
         [TestCase("Property")]
         [TestCase("TextConstDataType")]
         [TestCase("TestType")]
@@ -140,6 +148,12 @@ namespace ALCops.FormattingCop.Test
                 testCase,
                 "14.0",
                 "No support for Interface as a generic type argument before version 14.0");
+
+            SkipTestIfVersionIsTooLow(
+                ["PageCustomization"],
+                testCase,
+                "13.0",
+                "No support for pagecustomizations when target itself is already declared in the same module");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
