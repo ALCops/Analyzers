@@ -8,7 +8,7 @@ paths:
 
 ## Purpose
 
-Validates names of procedures, variables, parameters, return values, objects, fields, actions, enum values, and controls against configurable regex patterns. Enforces [Microsoft best practices](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/compliance/apptest-bestpracticesforalcode) and [AL Guidelines](https://alguidelines.dev/docs/agentic-coding/vibe-coding-rules/al-naming-conventions/) naming conventions by default.
+Validates names of procedures, variables, parameters, return values, objects (including tableextension, pageextension, reportextension, enumextension, permissionsetextension, profileextension and pagecustomization), fields, actions, enum values, and controls against configurable regex patterns. Enforces [Microsoft best practices](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/compliance/apptest-bestpracticesforalcode) and [AL Guidelines](https://alguidelines.dev/docs/agentic-coding/vibe-coding-rules/al-naming-conventions/) naming conventions by default.
 
 Registers `CompilationStartAction` (settings, AppSourceCop affixes, `NamingPatternConfig`) then `SymbolAction` on method, variable, object, field, action, enum-value and control kinds; main type `NamingPattern` with inner `NamingPatternConfig`, `ResolvedPatterns` and `RegexExplainer`.
 
@@ -27,6 +27,7 @@ Registers `CompilationStartAction` (settings, AppSourceCop affixes, `NamingPatte
 | Two-phase pattern resolution: user overrides along the whole inheritance chain first, then built-in defaults | Overriding `Variable` in `alcops.json` applies to `LocalVariable`, `GlobalVariable` and `Parameter` even though those have their own built-in defaults. |
 | `LocalVariable`/`GlobalVariable` distinct targets under a pure-parent `Variable`; `Parameter` inherits from `LocalVariable`; `VarParameter` inherits from `Parameter` | Teams want different conventions per scope (e.g. `_` prefix only for locals); parameter naming is closer to local than global conventions, and `var` parameters may warrant their own rules. |
 | Object names: strip AppSourceCop affixes and trim whitespace before matching | Avoids false positives on `"PTE MyCodeunit"`-style names where a space separates affix and name. |
+| Extension object names (tableextension, pageextension, reportextension, enumextension, permissionsetextension, profileextension, pagecustomization) use the `Object` target | One convention for everything a developer names as an object; a separate target would widen the settings schema for no known use. |
 | `&` accelerator stripped for Action/Control names only | `&` is the classic Windows keyboard-accelerator prefix inherited from C/SIDE; other targets keep flagging `&` through their disallow pattern. |
 | Single-letter variable/parameter names exempt from the uppercase-start rule | Common idiom (`i`, `j`, `k`, `t`), aligned with pylint `good-names`, ESLint `id-length`, Checkstyle `allowOneCharVarInForLoop`. |
 | `_` prefix followed by PascalCase allowed for variables/parameters | C# convention used in AL to disambiguate a name colliding with a parameter or type; `_Text` passes, `_text` fails. |
@@ -58,10 +59,12 @@ Registers `CompilationStartAction` (settings, AppSourceCop affixes, `NamingPatte
 - Action and control names come from the source text (`syntax.Name.Unquoted()`), not from the canonical enum member, so `area(processing)` really is named `processing` and fails an uppercase-start pattern.
 - `ActionKind.SystemAction` is absent at the 12.0 SDK floor and present by 16.0, so `EnumProvider` resolves it through the string overload with an out-of-range sentinel: `default(ActionKind)` is `Area`, and falling back to it would make every action area read as a system action.
 - The predefined promoted-category test lives in Common as `IActionSymbol.IsPredefinedPromotedCategoryGroup()` and is shared with AC0011, so both cops skip exactly the same groups. It wraps `SyntaxFacts.PromotedCategoriesSynthesizedSymbolNames`, an `ImmutableHashSet<string>` the SDK already builds over `PromotedCategoryKind` with a case-insensitive comparer, so no local copy or lowercasing is needed.
+- The seven extension and customization `SymbolKind` members exist at the 12.0 SDK floor, so `EnumProvider` resolves them by name without a fallback sentinel.
 
 ## Test notes
 
 - Custom patterns are injected as `alcops.json` through a `MemoryFileSystem`; `NamingPatternSettings.cs` unit-tests the inheritance-chain resolution of `NamingPatternConfig` directly.
+- Extension object fixtures declare their target in the same file, which the compiler accepts only from SDK 13.0, so they are gated with `SkipTestIfVersionIsTooLow(..., "13.0", ...)`. The profileextension fixtures are also gated on `"14.0"`: `Feature.ProfileExtensions` requires runtime Fall2024. Profile extensions and page customizations have their own fixtures so those gates stay narrow.
 - The `systemaction` fixture is gated with `SkipTestIfVersionIsTooLow(..., "16.2.31", ...)`. `systemaction` itself is absent at the 12.0 SDK floor and present by 16.0, but the gate is set by the fixture's `ConfigurationDialog` page type: SDKs up to 16.2.28 reject it as a feature under development (AL0574), and 16.2.31 downgrades that to a public-preview warning. The gate therefore follows the first SDK that compiles the page type, not the parser or the action. The page also needs `Extensible = false` (AL0223) and a system-action name the page type supports (`Ok` or `Cancel`).
 
 ## Settings
