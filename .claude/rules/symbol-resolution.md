@@ -2,6 +2,7 @@
 paths:
   - "src/ALCops.*/Analyzers/**"
   - "src/ALCops.*/CodeFixes/**"
+  - "src/ALCops.Common/Extensions/SemanticModelExtensions.cs"
 ---
 
 # Symbol resolution and canonical names
@@ -58,6 +59,21 @@ Inside an operation tree prefer `IOperation.GetSymbolSafe()` (a type check) over
 **Unwrap `IConversionExpression`.** Arguments are often wrapped in an implicit conversion whose own symbol is null; fall back to `conversion.Operand.GetSymbolSafe()` (`TransferFieldsSchemaCompatibility`, `PossibleOverflowAssigning`, `PartialRecordOperations`, `UnnecessaryRecordParameterInMethodCall`).
 
 **Same-module check.** "Defined in the developer's own app" is `ctx.ContainingSymbol.ContainingModule == targetMethod.ContainingModule` (reference equality; the compiler creates one module object per app). Do not compare app ids or names.
+
+## Property-style setter calls
+
+A procedure with exactly one parameter can be called with assignment syntax: bare `Proc := Value`, named receiver `Obj.Proc := Value`, and `this.Proc := Value`. The parameter type is not restricted. Compound assignment has no call form (`Obj.Proc += 1` binds the target as an assignable value, so a method there is a compile error), and the getter form without parentheses (`X := Obj.Proc`) is an ordinary invocation that `GetSymbolInfo` resolves.
+
+`Binder.BindAssignmentStatement` (`Microsoft.Dynamics.Nav.CodeAnalysis/*/Microsoft.Dynamics.Nav.CodeAnalysis/Binder.cs` in `../nav-sdk-source`; the same logic from the SDK 12 floor to SDK 30) binds the target non-invoked; when that yields a call to a method with one parameter it rebinds the statement as an invocation with the source as the argument, wrapped in a `BoundExpressionStatement`. The `BoundCall`'s `Syntax` is the `AssignmentStatementSyntax`, not an `InvocationExpressionSyntax`. What each API returns:
+
+| Query | Result |
+|---|---|
+| `GetSymbolInfo` on the procedure identifier or the member access | `Symbol` is null; the method is the only `CandidateSymbols` entry, with `CandidateReason.OverloadResolutionFailure` |
+| `GetOperation(assignmentStatement)` | the `IInvocationExpression` itself (the lowest bound node for that syntax), with `TargetMethod` set to the procedure |
+| An `OperationKind.AssignmentStatement` registration or `VisitAssignmentStatement` | never sees it: the statement is not an `IAssignmentStatement` |
+| An `OperationKind.InvocationExpression` registration or `VisitInvocationExpression` | sees it like any other call, with `.Syntax` the assignment statement |
+
+So operation-based rules get setter calls for free, and syntax-based rules that resolve user-procedure calls through `GetSymbolInfo` (identifier or member-access walks, `InvocationExpressionSyntax` walks) miss them. When `GetSymbolInfo(...).Symbol` is null, fall back to `semanticModel.GetMethodInvokedByAssignmentSyntax(node, ct)` (`ALCops.Common/Extensions/SemanticModelExtensions.cs`). It accepts the bare identifier, the member access or the member-access name, and binds the statement whenever the node is an assignment target; it does not re-check `GetSymbolInfo`, so gate it on the null `Symbol` at the call site. The bind then happens only for assignment targets whose symbol is null (setter calls, and unresolved targets in invalid code); ungated, every resolved variable or field assignment would pay it too. Do not read `CandidateSymbols` instead: they are overload-resolution-failure candidates, not the binder's chosen method. Fixtures: `testing.md`.
 
 ## Method symbols
 

@@ -26,6 +26,9 @@ namespace ALCops.LinterCop.Test
         [TestCase("RecursionIndirect")]
         [TestCase("RecursionDirectWithoutParentheses")]
         [TestCase("RecursionIndirectWithoutParentheses")]
+        [TestCase("RecursionDirectPropertySyntax")]
+        [TestCase("RecursionDirectPropertySyntaxThis")]
+        [TestCase("RecursionIndirectPropertySyntax")]
         [TestCase("UserDefinedErrorMethodsAreNotGuardClauses")]
         public async Task HasDiagnostic(string testCase)
         {
@@ -36,7 +39,7 @@ namespace ALCops.LinterCop.Test
                 "This test requires .NET 8 or higher due to the use of Conditional Expressions.");
 
             SkipTestIfVersionIsTooLow(
-                ["RecursionDirect", "RecursionIndirect", "RecursionDirectWithoutParentheses", "RecursionIndirectWithoutParentheses"],
+                ["RecursionDirect", "RecursionIndirect", "RecursionDirectWithoutParentheses", "RecursionIndirectWithoutParentheses", "RecursionDirectPropertySyntaxThis"],
                 testCase,
                 "14.0",
                 "The this keyword is not supported in versions prior to 14.0.");
@@ -56,6 +59,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("IfStatementGuardClause")]
         [TestCase("IfStatementGuardClauseContinue")]
         [TestCase("BuiltInFieldErrorGuardClauses")]
+        [TestCase("NonRecursivePropertySyntax")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(

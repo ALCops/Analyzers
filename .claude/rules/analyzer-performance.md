@@ -41,7 +41,7 @@ ctx.RegisterCodeBlockAction(ctx =>
 
 The syntax tree is already parsed and free to walk. Before `GetOperation`, scan the body for the method names or node kinds the rule can react to and skip the body when none occur. The scan is a case-insensitive text check, acceptable **only** as a pre-filter: a false positive costs one unnecessary bind, a false negative is a correctness bug, so the name set must be complete (`RecordMethodClassification`, `MethodOperationMap`).
 
-When walking syntax for calls, handle both `InvocationExpressionSyntax` and a `MemberAccessExpressionSyntax` whose parent is not an invocation: AL allows `MyTable.Count` without parentheses and the parser produces no invocation node for it. Operation-based code does not have this problem, `IInvocationExpression` covers both spellings, but its `.Syntax` may be either node type.
+When walking syntax for calls, handle both `InvocationExpressionSyntax` and a `MemberAccessExpressionSyntax` whose parent is not an invocation: AL allows `MyTable.Count` without parentheses and the parser produces no invocation node for it. A third form has no invocation node either: a one-parameter procedure called with assignment syntax (`Proc := Value`, `Obj.Proc := Value`) is bound as an invocation of the whole `AssignmentStatementSyntax`, and `GetSymbolInfo` on its target returns no symbol (`symbol-resolution.md`, Property-style setter calls). Operation-based code does not have these problems, `IInvocationExpression` covers all three spellings, but its `.Syntax` may be any of the three node types.
 
 ## The variable-map pattern
 
