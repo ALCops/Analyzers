@@ -99,6 +99,7 @@ namespace ALCops.PlatformCop.Test
         // on that syntax, which NoDiagnosticAtAllMarkers would hide behind the filtered AD0001.
         [Test]
         [TestCase("CrossProjectCallee")]
+        [TestCase("CrossProjectCalleeDirectArgument")]
         public async Task NoDiagnosticWithDependencyProject(string testCase)
         {
             RequireMinimumVersion("16.0", "Available with runtime version 16.0.");
