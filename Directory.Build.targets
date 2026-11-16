@@ -1,0 +1,10 @@
+<Project>
+    <Target Name="RemoveDesignTimeResourceCompileItems"
+            BeforeTargets="CoreResGen"
+            Condition="'$(DesignTimeBuild)' == 'true'">
+        <!-- Keep resource sources available during IDE evaluation; GenerateResource adds them again when it runs. -->
+        <ItemGroup>
+            <Compile Remove="@(EmbeddedResource->'%(StronglyTypedFileName)')" />
+        </ItemGroup>
+    </Target>
+</Project>
