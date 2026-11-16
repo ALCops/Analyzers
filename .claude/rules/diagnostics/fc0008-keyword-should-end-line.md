@@ -24,6 +24,7 @@ Registers `RegisterSyntaxNodeAction` on `IfStatement` and `Block`; the reported 
 ## Deliberate non-reports
 
 - `then begin` on one line: the `then` is skipped when its statement is a block. The `begin` is still checked.
+- `if x then;`: the semicolon terminates an empty statement and is not a following statement.
 - `else begin`: the `begin` ends the line, so it is not reported.
 - A trailing line or block comment after the keyword.
 - Missing tokens and a keyword at the end of the file.
