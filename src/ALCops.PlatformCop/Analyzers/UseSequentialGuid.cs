@@ -295,6 +295,11 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
             if (syntax is not MethodOrTriggerDeclarationSyntax methodSyntax || methodSyntax.Body is null)
                 return null;
 
+            // A procedure of a project-referenced app is a source symbol whose syntax tree belongs to
+            // that app's compilation; GetSemanticModel throws for a tree outside this compilation.
+            if (!compilation.ContainsSyntaxTree(syntax.SyntaxTree))
+                return null;
+
             var semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
             var bodyOp = semanticModel.GetOperation(methodSyntax.Body, ct);
             if (bodyOp is null)

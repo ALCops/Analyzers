@@ -94,6 +94,31 @@ namespace ALCops.PlatformCop.Test
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.UseSequentialGuid);
         }
 
+        // The callee lives in a second workspace project that the test project references, so its
+        // declaring syntax belongs to another compilation. NoException catches the analyzer crashing
+        // on that syntax, which NoDiagnosticAtAllMarkers would hide behind the filtered AD0001.
+        [Test]
+        [TestCase("CrossProjectCallee")]
+        [TestCase("CrossProjectCalleeDirectArgument")]
+        public async Task NoDiagnosticWithDependencyProject(string testCase)
+        {
+            RequireMinimumVersion("16.0", "Available with runtime version 16.0.");
+
+            var dependencyCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, "DependencyProject", $"{testCase}.al"))
+                .ConfigureAwait(false);
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<Analyzers.UseSequentialGuid>(
+                new AnalyzerTestFixtureConfig
+                {
+                    DependencyProjects = [new DependencyProject("DependencyApp", dependencyCode)]
+                });
+
+            fixture.NoException(code.Replace("[|", "").Replace("|]", ""));
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.UseSequentialGuid);
+        }
+
         [Test]
         [TestCase("SimpleCreateGuid")]
         [TestCase("QualifiedCreateGuid")]
