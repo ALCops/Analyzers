@@ -53,6 +53,7 @@ Registers `RegisterOperationAction` on `InvocationExpression` and `RegisterSymbo
 - Outside upgrade/install code, in-module references to removed tables are compile errors (`WRN_ERR_ObsoleteStateObsolete` reported as error).
 - `GetMandatoryNameAffixes(Compilation)` bypasses the SDK's module-spec config cache and re-reads AppSourceCop.json each call.
 - Affix semantics come from `RuleIdentifiersMustHaveValidAffixes.VerifyAffixIsUsed`: any configured affix, either end, `StringComparison.OrdinalIgnoreCase`, no word boundary.
+- `ReportDiagnostic` rejects a source location whose tree is not in the analyzed compilation: `DiagnosticAnalysisContextHelpers.VerifyDiagnosticLocationInCompilation` throws `ArgumentException` when `location.IsInSource && !compilation.ContainsSyntaxTree(location.SourceTree)`. The executor turns that into `AD0001`, which is why the membership test must be the same tree-identity check.
 
 ## Test notes
 
