@@ -241,6 +241,10 @@ Key details about `MemoryFileSystem`:
 - `GetDirectoryPath()` always returns `""` (empty string)
 - Accepts `Dictionary<string, byte[]>` in constructor
 
+## Multi-project workspaces
+
+A rule that follows symbols into another app's source (callee bodies, declaring syntax) needs a test where that app is a project in the same workspace, not a symbol package: `AnalyzerTestFixtureConfig.DependencyProjects` (RoslynTestKit 1.6.0+) adds each `DependencyProject(name, code)` as a project that the test project references. Dependency compile errors are not reported, and `ProjectInfoCustomizer` applies to the test project only. Assert `NoException` alongside the diagnostic assertion, because the failure mode is an exception on the foreign syntax tree (`symbol-resolution.md`).
+
 ## Custom Compilation Options
 
 For tests that need non-default compilation settings (e.g., OnPrem target):

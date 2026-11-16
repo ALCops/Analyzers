@@ -25,7 +25,7 @@ Registers code-block actions from CompilationStart on method/trigger bodies, cap
 | Severity Info, category Performance | SQL index fragmentation is a performance suggestion, not a correctness issue |
 | Default scope: key fields only, configurable to all Guid fields | Sequential GUIDs are predictable, so non-key fields may use random GUIDs intentionally; users who want everything flagged opt in via `UseSequentialGuidScope` |
 | All declared keys count (primary, secondary, extension keys) | Every key benefits from sequential GUIDs for SQL index performance |
-| Flow analysis: local and object-scope variable tracking plus cross-procedure tracing with unlimited depth and cycle detection, intra-module only | `v := CreateGuid(); Table.PK := v;` and helpers like `SetPrimaryKey(CreateGuid())` are common; cross-module procedures have no body (`DeclaringSyntaxReference` is null) while cross-module tables still expose key metadata, so key membership is always checked |
+| Flow analysis: local and object-scope variable tracking plus cross-procedure tracing with unlimited depth and cycle detection, within the compilation only | `v := CreateGuid(); Table.PK := v;` and helpers like `SetPrimaryKey(CreateGuid())` are common; a callee is traced only when its declaring syntax tree is in the compilation (`ContainsSyntaxTree`), while cross-module tables still expose key metadata, so key membership is always checked |
 | A global counts as flowing to a key when any method or trigger of the containing object writes it to one; sibling bodies are found with `DescendantNodes()` on the object syntax, skipped when their text never spells the variable name, and otherwise bound on demand from the same semantic model | Execution order across bodies is unknowable and Info severity tolerates the over-report; `DescendantNodes()` also reaches page and report control triggers, which are not object members; the walk only runs when a `CreateGuid()` is assigned to a global |
 | The tracer takes the sibling method as containing symbol when tracing a global | A global's `ContainingSymbol` is the object, whose `ContainingType` is null, so `GetReceiverTableType` could not resolve bare-self field access inside a table |
 | No text pre-filter on the body before walking it | In a code-block action the body is already bound whenever any analyzer in the run registers operation actions, and the member semantic model caches bound nodes, so a `body.ToString()` scan cannot skip the bind; it only trades the walker traversal for a body-sized string allocation on every callback |
@@ -41,7 +41,7 @@ Registers code-block actions from CompilationStart on method/trigger bodies, cap
 - Fields of temporary tables: no SQL backing, so no index fragmentation.
 - `CreateGuid()` passed to event parameters: they flow to unanalyzable external code, and passing `Rec` to events is idiomatic.
 - Obsolete symbols (standard ALCops convention).
-- Flows through cross-module procedures: symbol-only dependencies expose no body.
+- Flows through cross-module procedures: symbol-only dependencies expose no body (`DeclaringSyntaxReference` is null), and a project-referenced app in the same workspace exposes a body in a tree of its own compilation, which cannot be bound here. Both are skipped alike, so the result does not depend on whether the dependency is open as a project.
 - Flows through `var` parameters or return values back to callers, and through `RecordRef.SetTable()`: caller lookup needs a compilation-wide scan that would re-run on every editor pass of the helper file.
 - Intentionally random GUIDs (unpredictable public identifiers): no attribute or comment suppression; `#pragma warning disable PC0029` is the documented way.
 - In the default `KeyFieldsOnly` scope, `CreateGuid()` assigned to non-key Guid fields.
@@ -49,11 +49,13 @@ Registers code-block actions from CompilationStart on method/trigger bodies, cap
 ## SDK facts
 
 - `OperationWalker` does not preserve `IOperation` reference identity across separate walks of the same tree; `==` on logically identical nodes from different walks is false.
+- Procedures of a project-referenced app (workspace project reference) are source symbols with a non-null `DeclaringSyntaxReference` whose tree is not in the analyzed compilation; `Compilation.GetSemanticModel` on it throws `ArgumentException`. `ContainsSyntaxTree` is public at the 12.0 floor.
 - `SymbolEqualityComparer` does not exist in the BC SDK (unlike Roslyn); cycle detection uses a plain `HashSet<IMethodSymbol>`.
 
 ## Test notes
 
-- All three test methods call `RequireMinimumVersion("16.0")` because `CreateSequentialGuid()` must compile in the HasFix expected output and in the `AlreadySequentialGuid` NoDiagnostic fixture.
+- Every test method calls `RequireMinimumVersion("16.0")` because `CreateSequentialGuid()` must compile in the HasFix expected output and in the `AlreadySequentialGuid` NoDiagnostic fixture.
+- `NoDiagnosticWithDependencyProject` declares the callee in a `DependencyProjects` app (fixture under `DependencyProject/`) and asserts `NoException` as well as `NoDiagnosticAtAllMarkers`: the failure mode is an exception on the foreign tree, which surfaces as `AD0001` and is invisible to the marker assertion.
 - The HasDiagnostic set covers every `Rec` origin and receiver form of `receiver-forms.md` (table trigger and procedure, tableextension, page, pageextension, request page, report and xmlport via request page, report dataitem, `TableNo` `OnRun`), plus tables without a `keys` section and a namespaced file with a fully qualified record type; the NoDiagnostic set pins the temporary check through a page `Rec` and a non-key field of a table without a `keys` section.
 
 ## Settings
