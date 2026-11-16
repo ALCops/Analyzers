@@ -121,6 +121,30 @@ namespace ALCops.PlatformCop.Test
             CreateFixtureWithMicrosoftPublisher().HasDiagnosticAtAllMarkers(code, DiagnosticIds.TransferFieldsTypeMismatch);
         }
 
+        // The source table lives in a project-referenced app: its field is a source symbol whose syntax
+        // tree belongs to the dependency's compilation, so only the own field and the call are reported.
+        // The kit names documents "{project}Document{i}" and test documents "TestDocument{i}", so the
+        // dependency "Test" gets the same document name as the test document; a name-based membership
+        // check would admit the foreign tree and reporting on it throws (AD0001), which NoException catches.
+        [Test]
+        [TestCase("CrossProjectTableExtension")]
+        public async Task HasDiagnosticWithDependencyProject(string testCase)
+        {
+            var dependencyCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, "DependencyProject", $"{testCase}.al"))
+                .ConfigureAwait(false);
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<Analyzers.TransferFieldsSchemaCompatibility>(
+                new AnalyzerTestFixtureConfig
+                {
+                    DependencyProjects = [new DependencyProject("Test", dependencyCode)]
+                });
+
+            fixture.NoException(code.Replace("[|", "").Replace("|]", ""));
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.TransferFieldsTypeMismatch);
+        }
+
         [Test]
         [TestCase("CuratedPair_MicrosoftPublisher")]
         public async Task NoDiagnosticWithMicrosoftPublisher(string testCase)
