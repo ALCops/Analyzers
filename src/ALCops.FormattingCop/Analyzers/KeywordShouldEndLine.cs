@@ -25,7 +25,7 @@ public sealed class KeywordShouldEndLine : DiagnosticAnalyzer
             return;
 
         // 'then begin' deliberately shares a line; the block is checked by its own 'begin'.
-        if (ifStatement.Statement is BlockSyntax)
+        if (ifStatement.Statement is BlockSyntax or EmptyStatementSyntax)
             return;
 
         ReportIfFollowedOnSameLine(ctx, ifStatement.ThenKeywordToken, "then");

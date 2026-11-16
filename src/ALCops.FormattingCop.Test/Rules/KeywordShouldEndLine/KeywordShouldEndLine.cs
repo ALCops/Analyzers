@@ -35,6 +35,7 @@ namespace ALCops.FormattingCop.Test
         [TestCase("ThenBegin")]
         [TestCase("ElseBegin")]
         [TestCase("TrailingComment")]
+        [TestCase("EmptyThenStatement")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
