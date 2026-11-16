@@ -9,7 +9,7 @@ Six custom code analyzers for AL (Microsoft Dynamics 365 Business Central), buil
 | `ALCops.FormattingCop` | `FC` | `formattingcop` | yes |
 | `ALCops.LinterCop` | `LC` | `lintercop` | yes |
 | `ALCops.PlatformCop` | `PC` | `platformcop` | yes |
-| `ALCops.TestAutomationCop` | `TA` | `testautomationCop` (sic, matches descriptors) | no |
+| `ALCops.TestAutomationCop` | `TA` | `testautomationcop` | no |
 | `ALCops.Common` | `CM` | `common` | no |
 
 Per cop: `DiagnosticIds.cs`, `DiagnosticDescriptors.cs`, `ALCops.{Cop}Analyzers.resx` (messages; generates a strongly-typed class at build), `Analyzers/{RuleName}.cs`, `CodeFixes/{RuleName}CodeFixProvider.cs`. Tests: `src/ALCops.{Cop}.Test/Rules/{RuleName}/{RuleName}.cs` + `HasDiagnostic/`, `NoDiagnostic/`, `HasFix/` `.al` fixtures.
@@ -38,7 +38,7 @@ dotnet test src/ALCops.LinterCop.Test/ --filter "FullyQualifiedName~{RuleName}.H
 - **Never assume analyzer callback ordering or that every callback runs** (the host's partial-analysis module pass skips all per-declaration callbacks). No two-phase accumulator patterns. See `.claude/rules/sdk-analysis-scope.md`.
 - **Analyzers extend plain `DiagnosticAnalyzer`.** Do not switch them to the `ALCopsDiagnosticAnalyzer` / `{Cop}Analyzer` exception harness: deriving from a Common-based type makes `alc` fail with `AL1003` (issue #389). The harness stays test-only until a loader-safe approach exists. See `.claude/rules/analyzer-exception-harness.md`.
 - **`ALCopsSettings.cs` and `alcops.schema.json` must stay in sync**; a parity test enforces it. See `.claude/rules/settings-schema.md`.
-- Diagnostic IDs are `{Prefix}{4 digits}`, sequential per cop. Help URI: `https://alcops.dev/docs/analyzers/{copslug}/{id}/`. Every new rule needs a page in the sibling docs repo (`../alcops.dev`, `content/docs/analyzers/{copslug}/{ID}.md`).
+- Diagnostic IDs are `{Prefix}{4 digits}`, sequential per cop. Help URI: `https://alcops.dev/docs/analyzers/{copslug}/{id}/`, with lowercase path segments (including the cop slug and diagnostic ID); do not lowercase entire URLs, as query parameters and fragments may be case-sensitive. Every new rule needs a page in the sibling docs repo (`../alcops.dev`, `content/docs/analyzers/{copslug}/{ID}.md`).
 - Resx keys: `{RuleName}Title`, `{RuleName}MessageFormat`, `{RuleName}Description`. Descriptor field, `DiagnosticIds` field, analyzer class, and test folder all share the rule name.
 
 ## Workflow

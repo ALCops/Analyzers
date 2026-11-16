@@ -37,7 +37,7 @@ public static class DiagnosticDescriptors
 
     public static string GetHelpUri(string identifier)
     {
-        return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/testautomationCop/{0}/", identifier.ToLowerInvariant());
+        return string.Format(CultureInfo.InvariantCulture, "https://alcops.dev/docs/analyzers/testautomationcop/{0}/", identifier.ToLowerInvariant());
     }
 
     /// <summary>
