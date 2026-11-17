@@ -40,6 +40,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("PrecedingExitOnAssignment")]
         [TestCase("PrecedingExitDifferentCasing")]
         [TestCase("PrecedingExitQuotedIdentifier")]
+        [TestCase("PrecedingExitDifferentCasingOnInvocation")]
         [TestCase("PrecedingExitOnInvocation")]
         [TestCase("SelfGuardedOrAssignment")]
         public async Task NoDiagnostic(string testCase)
