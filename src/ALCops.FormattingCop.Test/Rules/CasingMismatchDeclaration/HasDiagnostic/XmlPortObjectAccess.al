@@ -8,8 +8,7 @@ page 50100 MyPage
             {
                 trigger OnAction()
                 begin
-                    // The receiver of Run() is intentionally not analyzed (keyword-named identifier filter)
-                    XmlPort.Run([|XmlPort|]::"My Xmlport");
+                    [|XmlPort|].Run([|XmlPort|]::"My Xmlport");
                 end;
             }
         }
