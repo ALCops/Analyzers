@@ -51,10 +51,11 @@ namespace ALCops.PlatformCop.Test
         [TestCase("TempVarSetTableView")]
         [TestCase("PageWithoutSourceTable")]
         [TestCase("CurrPageExtensionSourceTableTemporary")]
+        [TestCase("CurrPageExtensionOnFindRecordPage")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["CurrPageExtensionSourceTableTemporary"],
+                ["CurrPageExtensionSourceTableTemporary", "CurrPageExtensionOnFindRecordPage"],
                 testCase,
                 "13.0",
                 "No support for extensions when the target itself is declared in the same module");
