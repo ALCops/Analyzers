@@ -39,6 +39,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("RecordRefNameShadowedByLocalRecord")]
         [TestCase("TemporaryLocalShadowsGlobalRecord")]
         [TestCase("TemporaryLocalShadowsGlobalRecordRef")]
+        [TestCase("TemporaryNamedReturnShadowsGlobalRecord")]
         [TestCase("NextPartialUnused")]
         [TestCase("DeleteAllReadStillImplied")]
         [TestCase("ModifyAllReadStillImplied")]
