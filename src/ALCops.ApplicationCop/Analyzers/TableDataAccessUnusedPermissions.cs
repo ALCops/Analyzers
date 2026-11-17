@@ -155,6 +155,10 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             HashSet<string>? localRecordRefNames = null;
             HashSet<string>? localDataTransferNames = null;
 
+            // Locals shadow object-scope variables of the same name, so a local that enters
+            // no map (a temporary record, any other type) must stop the receiver lookup.
+            HashSet<string>? localShadowNames = null;
+
             foreach (var local in methodSymbol.LocalVariables)
             {
                 if (local.Type is IRecordTypeSymbol recordType && !recordType.IsTemporary())
@@ -171,6 +175,11 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 {
                     localDataTransferNames ??= new(StringComparer.OrdinalIgnoreCase);
                     localDataTransferNames.Add(local.Name);
+                }
+                else
+                {
+                    localShadowNames ??= new(SemanticFacts.NameEqualityComparer);
+                    localShadowNames.Add(local.Name);
                 }
             }
 
@@ -190,6 +199,11 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 {
                     localDataTransferNames ??= new(StringComparer.OrdinalIgnoreCase);
                     localDataTransferNames.Add(param.Name);
+                }
+                else
+                {
+                    localShadowNames ??= new(SemanticFacts.NameEqualityComparer);
+                    localShadowNames.Add(param.Name);
                 }
             }
 
@@ -212,6 +226,11 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     localDataTransferNames ??= new(StringComparer.OrdinalIgnoreCase);
                     localDataTransferNames.Add(returnValue.Name);
                 }
+                else
+                {
+                    localShadowNames ??= new(SemanticFacts.NameEqualityComparer);
+                    localShadowNames.Add(returnValue.Name);
+                }
             }
 
             // One walk per body, built on the first executor, callback-local (no shared state).
@@ -230,7 +249,7 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                         && DataTransferOperations.IsExecutor(callName)
                         && IsDataTransferReceiver(
                             callReceiver, localDataTransferNames, objectScopeDataTransferNames,
-                            localRecordVarMap, localRecordRefNames, ctx))
+                            localRecordVarMap, localRecordRefNames, localShadowNames, ctx))
                     {
                         dataTransferResolver ??= DataTransferTableResolver.Create(
                             body, ctx.SemanticModel, ctx.CancellationToken);
@@ -247,7 +266,7 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
                     var permission = TryGetPermissionFromDbAccess(
                         descendant, containingObject, methodSymbol, localRecordVarMap, objectScopeRecordMap,
-                        localRecordRefNames, objectScopeRecordRefNames, ctx,
+                        localRecordRefNames, objectScopeRecordRefNames, localShadowNames, ctx,
                         out var isRecordRefAccess);
 
                     if (isRecordRefAccess)
@@ -298,6 +317,7 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         Dictionary<string, IRecordTypeSymbol>? objectScopeRecordMap,
         HashSet<string>? localRecordRefNames,
         HashSet<string>? objectScopeRecordRefNames,
+        HashSet<string>? localShadowNames,
         SyntaxNodeAnalysisContext ctx,
         out bool isRecordRefAccess)
     {
@@ -349,6 +369,9 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
 
                 if (localRecordVarMap is not null)
                     localRecordVarMap.TryGetValue(receiverName, out recordType);
+
+                if (recordType is null && localShadowNames?.Contains(receiverName) == true)
+                    return null;
 
                 if (recordType is null
                     && objectScopeRecordRefNames is not null && objectScopeRecordRefNames.Contains(receiverName))
@@ -409,6 +432,7 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
         HashSet<string>? objectScopeDataTransferNames,
         Dictionary<string, IRecordTypeSymbol>? localRecordVarMap,
         HashSet<string>? localRecordRefNames,
+        HashSet<string>? localShadowNames,
         SyntaxNodeAnalysisContext ctx)
     {
         if (receiverExpression is null)
@@ -424,7 +448,8 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                 return true;
 
             if ((localRecordVarMap is not null && localRecordVarMap.ContainsKey(receiverName))
-                || (localRecordRefNames is not null && localRecordRefNames.Contains(receiverName)))
+                || (localRecordRefNames is not null && localRecordRefNames.Contains(receiverName))
+                || localShadowNames?.Contains(receiverName) == true)
                 return false;
 
             return objectScopeDataTransferNames is not null && objectScopeDataTransferNames.Contains(receiverName);
