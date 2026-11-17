@@ -374,6 +374,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Codeunit)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _controlAddIn =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.ControlAddIn)));
+        private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _currPage =
+            new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.CurrPage)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _decimal =
             new(() => ParseEnum<NavCodeAnalysis.NavTypeKind>(nameof(NavCodeAnalysis.NavTypeKind.Decimal)));
         private static readonly Lazy<NavCodeAnalysis.NavTypeKind> _dialog =
@@ -459,6 +461,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.NavTypeKind Code => _code.Value;
         public static NavCodeAnalysis.NavTypeKind Codeunit => _codeunit.Value;
         public static NavCodeAnalysis.NavTypeKind ControlAddIn => _controlAddIn.Value;
+        public static NavCodeAnalysis.NavTypeKind CurrPage => _currPage.Value;
         public static NavCodeAnalysis.NavTypeKind Decimal => _decimal.Value;
         public static NavCodeAnalysis.NavTypeKind Dialog => _dialog.Value;
         public static NavCodeAnalysis.NavTypeKind DotNet => _dotNet.Value;

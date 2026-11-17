@@ -502,13 +502,13 @@
     <value>ALCops: Use SetAutoCalcFields before loop</value>
   </data>
   <data name="PageVariableSetRecordTemporaryRecordTitle" xml:space="preserve">
-    <value>SetRecord() does not support temporary records</value>
+    <value>SetRecord() does not show the data of a temporary record</value>
   </data>
   <data name="PageVariableSetRecordTemporaryRecordMessageFormat" xml:space="preserve">
-    <value>{0}.SetRecord(): You cannot use a temporary record for the Record parameter.</value>
+    <value>{0}.SetRecord() only positions page '{1}' on the record's key; the page reads its records from the database, so the data of the temporary record is never shown.</value>
   </data>
   <data name="PageVariableSetRecordTemporaryRecordDescription" xml:space="preserve">
-    <value>The SetRecord method on a Page variable does not support temporary records. Passing a temporary record to SetRecord will cause a runtime error because Business Central cannot bind a page to a temporary record instance via this method.</value>
+    <value>Page.SetRecord() sets the current record of a page by its key; it does not hand the record's data to the page. A page whose source is not temporary reads that key from the database, so the data of a temporary record is never shown and the page may open on another record. Open the page with Page.Run() or Page.RunModal() and the temporary record, or use a page with SourceTableTemporary that loads its own data and call SetRecord() to select a record on it.</value>
   </data>
   <data name="UseValidateForFieldAssignmentTitle" xml:space="preserve">
     <value>Use Validate() instead of direct field assignment</value>
