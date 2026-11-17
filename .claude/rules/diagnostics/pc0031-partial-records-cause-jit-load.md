@@ -51,7 +51,7 @@ Registers `RegisterCodeBlockAction` on method/trigger bodies; main type `Partial
 
 ## Test notes
 
-- The `ThisQualified*` fixtures use `this`, which requires runtime 14.0; they are gated with `SkipTestIfVersionIsTooLow`.
+- The `this` fixtures are gated on runtime 14.0 (`SkipTestIfVersionIsTooLow`).
 
 ## CodeFix: PartialRecordsCauseJitLoadCodeFixProvider
 
