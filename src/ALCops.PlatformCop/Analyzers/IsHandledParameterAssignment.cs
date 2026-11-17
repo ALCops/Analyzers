@@ -5,6 +5,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Semantics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 
 namespace ALCops.PlatformCop.Analyzers;
 
@@ -120,35 +121,22 @@ public sealed class IsHandledParameterAssignment : DiagnosticAnalyzer
     private static bool HasPrecedingExitStatement(IOperation operation, IParameterSymbol parameter)
     {
         var parent = operation.Syntax.Parent;
-        while (parent.Kind != EnumProvider.SyntaxKind.Block && parent.Kind != EnumProvider.SyntaxKind.None)
+        while (parent is not null && parent.Kind != EnumProvider.SyntaxKind.Block)
         {
             parent = parent.Parent;
         }
 
-        IEnumerable<SyntaxNode> identifiers = parent.DescendantNodes()
-            .OfType<IdentifierNameSyntax>()
-            .Where(n => n.Identifier.ValueText == parameter.Name && n.SpanStart < operation.Syntax.SpanStart);
+        if (parent is null)
+            return false;
 
-        foreach (var identifier in identifiers)
-        {
-            if (identifier.Parent is IfStatementSyntax ifStatement)
-            {
-                // Check if the condition is the identifier "IsHandled"
-                if (ifStatement.Condition is IdentifierNameSyntax condition &&
-                    condition.Identifier.ValueText == parameter.Name)
-                {
-                    // Check if the body is a single "exit;" statement
-                    if (ifStatement.Statement is ExitStatementSyntax)
-                    {
-                        // Valid "if IsHandled then exit;" detected
-                        return true;
-                    }
-                }
-            }
-        }
-
-        // No valid preceding exit statement was found
-        return false;
+        // Valid "if IsHandled then exit;" before the operation; AL identifiers are case-insensitive and may be quoted
+        return parent.DescendantNodes()
+            .OfType<IfStatementSyntax>()
+            .Any(ifStatement =>
+                ifStatement.SpanStart < operation.Syntax.SpanStart &&
+                ifStatement.Condition is IdentifierNameSyntax condition &&
+                condition.Identifier.ValueText?.UnquoteIdentifier().IsSameName(parameter.Name) == true &&
+                ifStatement.Statement is ExitStatementSyntax);
     }
 
     private static bool IsSelfGuardedOrAssignment(IOperation operation)
