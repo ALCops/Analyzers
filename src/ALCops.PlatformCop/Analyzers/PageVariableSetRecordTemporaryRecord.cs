@@ -44,31 +44,34 @@ public sealed class PageVariableSetRecordTemporaryRecord : DiagnosticAnalyzer
         if (operand?.Type is not IRecordTypeSymbol recordType)
             return;
 
-        if (!recordType.Temporary)
+        if (!recordType.IsTemporary())
             return;
 
-        var pageVariableName = ResolvePageVariableName(invocation);
+        // CurrPage, page variables and CurrPage in a pageextension all resolve to the page
+        // through the instance type's original definition.
+        if (invocation.Instance?.Type?.OriginalDefinition is not IPageTypeSymbol page)
+            return;
+
+        // SetRecord only positions the page on the record's key. A page whose source is
+        // temporary, or that serves its own dataset through OnFindRecord, can show the
+        // record when it loads it itself; only a database-backed page never shows it.
+        if (page.GetBooleanPropertyValue(EnumProvider.PropertyKind.SourceTableTemporary).GetValueOrDefault())
+            return;
+
+        if (page.RelatedTable is null || page.RelatedTable.IsTemporary())
+            return;
+
+        if (page.GetTriggerSymbol("OnFindRecord") is not null)
+            return;
+
+        var receiverName = invocation.Instance.Type.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.CurrPage
+            ? "CurrPage"
+            : invocation.Instance.GetSymbolSafe()?.Name ?? invocation.Instance.Syntax.ToString();
 
         ctx.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.PageVariableSetRecordTemporaryRecord,
             ctx.Operation.Syntax.GetLocation(),
-            pageVariableName));
-    }
-
-    private static string ResolvePageVariableName(IInvocationExpression invocation)
-    {
-        foreach (var op in invocation.DescendantsAndSelf())
-        {
-            if (op.Type is null || op.Type.GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Page)
-                continue;
-
-            var symbol = op.GetSymbol();
-            if (symbol is null)
-                continue;
-
-            return symbol.ToString() ?? string.Empty;
-        }
-
-        return string.Empty;
+            receiverName,
+            page.Name));
     }
 }

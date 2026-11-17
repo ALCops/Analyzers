@@ -20,9 +20,18 @@ namespace ALCops.PlatformCop.Test
 
         [Test]
         [TestCase("TempVarSetRecord")]
-        [TestCase("TempTableTypeSetRecord")]
+        [TestCase("TempVarSetRecordCurrPage")]
+        [TestCase("TempVarSetRecordCurrPageExtension")]
+        [TestCase("TempVarSetRecordVarParameter")]
+        [TestCase("TempVarSetRecordNamespaced")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["TempVarSetRecordCurrPageExtension"],
+                testCase,
+                "13.0",
+                "No support for extensions when the target itself is declared in the same module");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -33,8 +42,24 @@ namespace ALCops.PlatformCop.Test
         [TestCase("NonTempVarSetRecord")]
         [TestCase("TempVarGetRecord")]
         [TestCase("TempTableTypeWithoutKeyword")]
+        [TestCase("TempTableTypeSetRecord")]
+        [TestCase("SourceTableTemporaryPage")]
+        [TestCase("SourceTableTemporaryPageLoadThenSetRecord")]
+        [TestCase("OnFindRecordPage")]
+        [TestCase("CurrPageSourceTableTemporary")]
+        [TestCase("PageRunModalWithTempRecord")]
+        [TestCase("TempVarSetTableView")]
+        [TestCase("PageWithoutSourceTable")]
+        [TestCase("CurrPageExtensionSourceTableTemporary")]
+        [TestCase("CurrPageExtensionOnFindRecordPage")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["CurrPageExtensionSourceTableTemporary", "CurrPageExtensionOnFindRecordPage"],
+                testCase,
+                "13.0",
+                "No support for extensions when the target itself is declared in the same module");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
