@@ -22,7 +22,8 @@ Registers `CodeBlockAction`; main type `ParameterNotReferenced` (descriptor sele
 | Decision | Rationale |
 |---|---|
 | Two IDs with different severities from one analyzer and one CodeFix provider ([#425](https://github.com/ALCops/Analyzers/issues/425)) | Event subscriber signatures are often scaffolded with optional parameters, so LC0099 reports at Info while LC0095 stays Warning; the shared implementation keeps detection and fixes identical. |
-| Identifier matching via `SemanticFacts.NameEqualityComparer` | AL identifiers are case-insensitive. |
+| References are resolved through the operation tree: a parameter is referenced only when an `IParameterReferenceExpression.Parameter` in the bound body equals it; a case-insensitive name scan (`SemanticFacts.NameEqualityComparer`) runs first and skips binding when no identifier matches any parameter | An identifier with the parameter's name may be a field, method or member name (`MyTable.Name`, a `SetRange` field argument), which hid unused parameters; the scan keeps the common no-match case free of binding. |
+| When `GetOperation` returns null or the bound body `IsInvalid`, the name-scan result stands | Binding errors propagate up to the block, and references under invalid nodes (a call on a record of an unresolved table) are missing from the tree; reporting from it would flag parameters that are used. |
 
 ## Deliberate non-reports
 

@@ -3,6 +3,7 @@ using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Semantics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
@@ -44,7 +45,21 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
         if (unusedParameters.Count == 0)
             return;
 
+        var parameters = unusedParameters.Values.ToList();
         MarkReferencedParameters(methodSyntax.Body, unusedParameters);
+
+        // An identifier with the parameter's name may be a field, method or member name
+        // (MyTable.Name), so a name match is only a candidate; confirm it on the bound tree.
+        // A body with binding errors loses references under invalid nodes, so keep the name result.
+        if (unusedParameters.Count < parameters.Count
+            && context.SemanticModel.GetOperation(methodSyntax.Body, context.CancellationToken) is IOperation { IsInvalid: false } body)
+        {
+            var walker = new ParameterReferenceWalker();
+            walker.Visit(body);
+            unusedParameters = parameters
+                .Where(parameter => !walker.ReferencedParameters.Contains(parameter))
+                .ToDictionary(parameter => parameter.Name, SemanticFacts.NameEqualityComparer);
+        }
 
         foreach (IParameterSymbol parameter in unusedParameters.Values)
         {
@@ -77,6 +92,17 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
 
             if (node is IdentifierNameSyntax identifier)
                 unusedParameters.Remove(identifier.Unquoted());
+        }
+    }
+
+    private sealed class ParameterReferenceWalker : OperationWalker
+    {
+        public HashSet<IParameterSymbol> ReferencedParameters { get; } = [];
+
+        public override void VisitParameterReferenceExpression(IParameterReferenceExpression operation)
+        {
+            ReferencedParameters.Add(operation.Parameter);
+            base.VisitParameterReferenceExpression(operation);
         }
     }
 

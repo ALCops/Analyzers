@@ -32,6 +32,8 @@ namespace ALCops.LinterCop.Test
         [TestCase("VarParameterUnused")]
         [TestCase("ErrorInfoInPage")]
         [TestCase("ErrorInfoMultipleParams")]
+        [TestCase("ParameterNamedLikeAccessedField")]
+        [TestCase("ParameterUsedAsSetRangeField")]
         public async Task HasDiagnostic(string testCase)
         {
             RequireSdkV13Support();
@@ -44,6 +46,7 @@ namespace ALCops.LinterCop.Test
 
         [Test]
         [TestCase("EventSubscriber")]
+        [TestCase("EventSubscriberParameterNamedLikeField")]
         public async Task HasDiagnosticEventSubscriber(string testCase)
         {
             RequireSdkV13Support();
@@ -67,6 +70,9 @@ namespace ALCops.LinterCop.Test
         [TestCase("NotificationCallbackInCodeunit")]
         [TestCase("MessageHandlerInCodeunit")]
         [TestCase("ConfirmHandlerInCodeunit")]
+        [TestCase("ParameterUsedWithDifferentCasing")]
+        [TestCase("ParameterPassedAsVarArgument")]
+        [TestCase("ParameterAssignedOnly")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireSdkV13Support();
