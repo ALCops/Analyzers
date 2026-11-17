@@ -73,29 +73,6 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
                 LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
-    // Cache CompilationPaths per Compilation (to avoid repeated expensive queries)
-    private static HashSet<string> GetCachedCompilationPaths(Compilation compilation)
-        => CompilationPathsCache.GetValue(compilation, static c => new CompilationPathsCacheEntry(c)).Paths.Value;
-    private static readonly ConditionalWeakTable<Compilation, CompilationPathsCacheEntry> CompilationPathsCache = new();
-    private sealed class CompilationPathsCacheEntry(Compilation compilation)
-    {
-        public Lazy<HashSet<string>> Paths { get; } = new Lazy<HashSet<string>>(
-                () =>
-                {
-                    var set = new HashSet<string>(SemanticFacts.NameEqualityComparer);
-
-                    foreach (var tree in compilation.SyntaxTrees)
-                    {
-                        var path = tree.FilePath;
-                        if (!string.IsNullOrWhiteSpace(path))
-                            set.Add(path);
-                    }
-
-                    return set;
-                },
-                LazyThreadSafetyMode.ExecutionAndPublication);
-    }
-
     // Cache mandatory affixes per Compilation (the SDK caches the AppSourceCop.json parse,
     // but the merged affix list would otherwise be rebuilt on every TransferFields call)
     private static string[] GetCachedAffixes(Compilation compilation)
@@ -659,13 +636,9 @@ public sealed class TransferFieldsSchemaCompatibility : DiagnosticAnalyzer
 #endif
     }
 
+    // Tree identity, the same test the SDK applies before accepting a reported diagnostic location:
+    // a field of a project-referenced app is a source symbol whose tree belongs to that app's compilation.
     private static bool IsLocationInCompilation(Location location, Compilation compilation)
-    {
-        var path = location.SourceTree?.FilePath;
-        if (string.IsNullOrWhiteSpace(path))
-            return false;
-
-        return GetCachedCompilationPaths(compilation).Contains(path);
-    }
+        => location.SourceTree is { } tree && compilation.ContainsSyntaxTree(tree);
 
 }
