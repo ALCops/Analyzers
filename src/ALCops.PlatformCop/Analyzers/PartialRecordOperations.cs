@@ -327,7 +327,9 @@ public sealed class PartialRecordOperations : DiagnosticAnalyzer
             _cancellationToken.ThrowIfCancellationRequested();
             var instanceSymbol = operation.Instance?.GetSymbolSafe();
 
-            if (instanceSymbol != null &&
+            // The map holds locals only; `this.<Global>` or `this.<DataItem>` binds to
+            // another symbol that may share the name.
+            if (instanceSymbol?.Kind == EnumProvider.SymbolKind.LocalVariable &&
                 _trackedVariables.TryGetValue(instanceSymbol.Name, out var state) &&
                 _flowState.TryGetValue(instanceSymbol.Name, out var flowFlags))
             {
