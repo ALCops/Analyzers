@@ -66,7 +66,7 @@ public sealed class PageVariableSetRecordTemporaryRecord : DiagnosticAnalyzer
 
         var receiverName = invocation.Instance.Type.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.CurrPage
             ? "CurrPage"
-            : invocation.Instance.GetSymbolSafe()?.Name ?? string.Empty;
+            : invocation.Instance.GetSymbolSafe()?.Name ?? invocation.Instance.Syntax.ToString();
 
         ctx.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.PageVariableSetRecordTemporaryRecord,

@@ -43,8 +43,9 @@ Registers `RegisterOperationAction` on `InvocationExpression`; main type `PageVa
 - `IRecordTypeSymbol.Temporary` reflects the `temporary` keyword only (`Binder.BindVariableOrParameterType`), not the table's `TableType`.
 - `ISymbolWithTriggers.GetTriggerSymbol(name)` on a page looks the name up in `GetCodeMembers(name)`, a dictionary keyed with `SemanticFacts.NameEqualityComparer`, so the lookup is case-insensitive (verified against SDK 12.7 and 30.0 in `../nav-sdk-source`).
 - `NavTypeKind.CurrPage` (202), `IPageBaseTypeSymbol.RelatedTable` and `ISymbolWithTriggers.GetTriggerSymbol` exist at the 12.0 floor; `PageReferenceTypeSymbol.OriginalDefinition` is the `IPageTypeSymbol`.
+- A pageextension cannot declare `OnFindRecord` or `OnNextRecord` (`TriggerDefinitions.cs` lists them for `Page` and `RequestPage` only), so looking the trigger up on the target page through `OriginalDefinition` misses nothing an extension could add.
 - The SDK's own help text (`Page_SetRecord_Record`) repeats the Learn sentence about temporary records; the runtime does not enforce it.
 
 ## Test notes
 
-- The pageextension fixture is gated at 13.0 (same-module extension target).
+- The pageextension fixtures are gated at 13.0 (same-module extension target).
