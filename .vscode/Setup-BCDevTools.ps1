@@ -7,13 +7,20 @@
     Fetches three pinned versions of Microsoft.Dynamics.BusinessCentral.Development.Tools
     from VS Marketplace (VSIX) or NuGet, then extracts the Analyzers DLLs to:
     <RepoRoot>/Microsoft.Dynamics.BusinessCentral.Development.Tools/<TFM>/
+    Packages are downloaded and extracted concurrently, up to ThrottleLimit at a time.
+
+.PARAMETER ThrottleLimit
+    Maximum concurrent package downloads. Defaults to 3; use 1 for sequential setup.
 
 .NOTES
     Requires: PowerShell 7+ and System.IO.Compression.FileSystem
 #>
 
 [CmdletBinding()]
-param()
+param(
+    [ValidateRange(1, 3)]
+    [int]$ThrottleLimit = 3
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -45,81 +52,85 @@ $sources = @(
     }
 )
 
-function Get-DownloadUrl {
-    param([hashtable]$Source)
-
-    switch ($Source.Type) {
-        'VSIX' {
-            return "https://ms-dynamics-smb.gallery.vsassets.io/_apis/public/gallery/publisher/ms-dynamics-smb/extension/al/$($Source.PackageVersion)/assetbyname/Microsoft.VisualStudio.Services.VSIXPackage"
-        }
-        'NuGet' {
-            $pkgLower = 'microsoft.dynamics.businesscentral.development.tools'
-            $version = $Source.PackageVersion
-            return "https://api.nuget.org/v3-flatcontainer/$pkgLower/$version/$pkgLower.$version.nupkg"
-        }
-        default { throw "Unknown source type: $($Source.Type)" }
-    }
-}
-
-function Extract-ArchiveSubfolder {
-    param(
-        [string]$ArchivePath,
-        [string]$PathInArchive,
-        [string]$DestinationPath
-    )
-
-    # Clean and recreate destination
-    if (Test-Path $DestinationPath) {
-        Remove-Item -Path $DestinationPath -Recurse -Force
-    }
-    New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null
-
-    # Normalize to ZIP forward-slash form with trailing slash
-    $norm = ($PathInArchive -replace '\\', '/').TrimStart('/')
-    if ($norm.Length -gt 0 -and -not $norm.EndsWith('/')) { $norm += '/' }
-
-    $archive = [System.IO.Compression.ZipFile]::OpenRead($ArchivePath)
-    try {
-        $matchingEntries = $archive.Entries | Where-Object {
-            ($_.FullName -replace '\\', '/').StartsWith($norm, [StringComparison]::OrdinalIgnoreCase)
-        }
-
-        if (-not $matchingEntries) {
-            throw "Path '$PathInArchive' not found in archive '$ArchivePath'."
-        }
-
-        foreach ($entry in $matchingEntries) {
-            if ([string]::IsNullOrEmpty($entry.Name)) { continue }
-
-            $full = ($entry.FullName -replace '\\', '/')
-            $rel = $full.Substring($norm.Length)
-            if ($rel.Contains('..')) { continue }
-
-            $destPath = Join-Path $DestinationPath ($rel -replace '/', [IO.Path]::DirectorySeparatorChar)
-            $destDir = Split-Path $destPath -Parent
-            if (-not (Test-Path $destDir)) {
-                New-Item -ItemType Directory -Path $destDir -Force | Out-Null
-            }
-
-            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destPath, $true)
-        }
-    }
-    finally {
-        $archive.Dispose()
-    }
-}
-
-# Resolve paths
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..') | Select-Object -ExpandProperty Path
 $targetRoot = Join-Path $repoRoot 'Microsoft.Dynamics.BusinessCentral.Development.Tools'
 
 Write-Host "Target root: $targetRoot" -ForegroundColor Cyan
 Write-Host ""
 
-foreach ($source in $sources) {
+$setupJob = $sources | ForEach-Object -Parallel {
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
+    $ProgressPreference = 'SilentlyContinue'
+
+    function Get-DownloadUrl {
+        param([hashtable]$Source)
+
+        switch ($Source.Type) {
+            'VSIX' {
+                return "https://ms-dynamics-smb.gallery.vsassets.io/_apis/public/gallery/publisher/ms-dynamics-smb/extension/al/$($Source.PackageVersion)/assetbyname/Microsoft.VisualStudio.Services.VSIXPackage"
+            }
+            'NuGet' {
+                $pkgLower = 'microsoft.dynamics.businesscentral.development.tools'
+                $version = $Source.PackageVersion
+                return "https://api.nuget.org/v3-flatcontainer/$pkgLower/$version/$pkgLower.$version.nupkg"
+            }
+            default { throw "Unknown source type: $($Source.Type)" }
+        }
+    }
+
+    function Extract-ArchiveSubfolder {
+        param(
+            [string]$ArchivePath,
+            [string]$PathInArchive,
+            [string]$DestinationPath
+        )
+
+        # Clean and recreate destination
+        if (Test-Path $DestinationPath) {
+            Remove-Item -Path $DestinationPath -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null
+
+        # Normalize to ZIP forward-slash form with trailing slash
+        $norm = ($PathInArchive -replace '\\', '/').TrimStart('/')
+        if ($norm.Length -gt 0 -and -not $norm.EndsWith('/')) { $norm += '/' }
+
+        $archive = [System.IO.Compression.ZipFile]::OpenRead($ArchivePath)
+        try {
+            $matchingEntries = $archive.Entries | Where-Object {
+                ($_.FullName -replace '\\', '/').StartsWith($norm, [StringComparison]::OrdinalIgnoreCase)
+            }
+
+            if (-not $matchingEntries) {
+                throw "Path '$PathInArchive' not found in archive '$ArchivePath'."
+            }
+
+            foreach ($entry in $matchingEntries) {
+                if ([string]::IsNullOrEmpty($entry.Name)) { continue }
+
+                $full = ($entry.FullName -replace '\\', '/')
+                $rel = $full.Substring($norm.Length)
+                if ($rel.Contains('..')) { continue }
+
+                $destPath = Join-Path $DestinationPath ($rel -replace '/', [IO.Path]::DirectorySeparatorChar)
+                $destDir = Split-Path $destPath -Parent
+                if (-not (Test-Path $destDir)) {
+                    New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+                }
+
+                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destPath, $true)
+            }
+        }
+        finally {
+            $archive.Dispose()
+        }
+    }
+
+    $source = $_
     $tfm = $source.TFM
     $url = Get-DownloadUrl -Source $source
-    $destPath = Join-Path $targetRoot $tfm
+    $destPath = Join-Path $using:targetRoot $tfm
 
     Write-Host "[$tfm] Downloading $($source.Type) v$($source.AssemblyVersion) (package $($source.PackageVersion))..." -ForegroundColor Yellow
 
@@ -139,6 +150,14 @@ foreach ($source in $sources) {
     }
 
     Write-Host ""
+} -ThrottleLimit $ThrottleLimit -AsJob
+
+try {
+    $setupJob | Wait-Job | Out-Null
+    $setupJob | Receive-Job -ErrorAction Stop
+}
+finally {
+    $setupJob | Remove-Job -Force
 }
 
 Write-Host "All BC DevTools dependencies set up successfully." -ForegroundColor Green

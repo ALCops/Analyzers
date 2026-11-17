@@ -1,6 +1,6 @@
 ---
 paths:
-  - "Directory.Build.props"
+  - "Directory.Build.{props,targets}"
   - "Directory.Packages.props"
   - ".editorconfig"
   - "src/**/*.csproj"
@@ -13,6 +13,7 @@ The repo ships analyzers, so it dogfoods static analysis on itself: .NET analyze
 ## Where things live
 
 - `Directory.Build.props` — every property shared by all projects (`Nullable`, `LangVersion`, `WarningsAsErrors`, analysis switches) and the analyzer `PackageReference`s. A csproj should only contain what is genuinely project-specific (TFMs, NAV SDK `Reference`s, resx wiring, pack layout).
+- `Directory.Build.targets` — removes design-time resource source placeholders before resource generation adds the same sources to `Compile`.
 - `Directory.Packages.props` — Central Package Management. Never put `Version=` on a `PackageReference`; add/bump versions here.
 - `.editorconfig` — code style and all suppressions, with a comment per suppression explaining why.
 - `src/ALCops.Common.Test/Conventions/` — convention tests source-linked into every `*.Test` project (things analyzers cannot express).
@@ -32,6 +33,7 @@ The repo ships analyzers, so it dogfoods static analysis on itself: .NET analyze
 | `CA1062` off | Analyzer callbacks receive contexts from the host; null-guarding every public parameter is noise. |
 | Test code (`[src/*.Test/**.cs]`): `CA1707`, `CA1822`, `CA1861`, `CS8618` off | Test methods are discovered by attribute (naming/static rules do not apply); `Is.EquivalentTo(new[] { … })` literals belong next to their assert; fixture fields are assigned in `[SetUp]` — the build already suppresses `CS8618` via NUnit.Analyzers' suppressor, which `dotnet format` does not run. |
 | Analyzer packages use `PrivateAssets="all"` | They must not become dependencies of the shipped `ALCops.Analyzers` NuGet. |
+| Keep generated resource sources in design-time evaluation, but remove their `Compile` entries before `CoreResGen` | IDE evaluation needs the existing resource classes without running resource generation. Design-time builds that also run `GenerateResource` otherwise include the same source twice; Stryker compiles both entries and fails on duplicate classes. The shared target leaves evaluation-only IDE loads and normal builds unchanged. |
 | `GenerateDocumentationFile=true` + `CS1591` silenced | IDE0005 (unused usings) only reports in a command-line build when XML doc generation is on. The doc files are not packed (`ALCops.Analyzers.csproj` packs explicit DLL paths only). |
 | `csharp_style_namespace_declarations` is `silent` | The codebase is mixed (file-scoped and block-scoped). Enforce only after a dedicated unification PR. |
 | CI `dotnet format --verify-no-changes` runs *after* the cop builds, with `Configuration=Release`, and is blocking | Under `ContinuousIntegrationBuild` the test projects reference the cop DLLs by `HintPath` (`bin/$(Configuration)/<tfm>/`), so the workspace only compiles once those exist; `dotnet format` has no `--configuration` switch and defaults to Debug. Step-level `env:` overrides of `ContinuousIntegrationBuild` or `GITHUB_ACTIONS` do not work (project-level assignment wins / the runner protects `GITHUB_*`). |
