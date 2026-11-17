@@ -22,7 +22,8 @@ Registers `CodeBlockAction`; main type `ParameterNotReferenced` (descriptor sele
 | Decision | Rationale |
 |---|---|
 | Two IDs with different severities from one analyzer and one CodeFix provider ([#425](https://github.com/ALCops/Analyzers/issues/425)) | Event subscriber signatures are often scaffolded with optional parameters, so LC0099 reports at Info while LC0095 stays Warning; the shared implementation keeps detection and fixes identical. |
-| Identifier matching via `SemanticFacts.NameEqualityComparer` | AL identifiers are case-insensitive. |
+| References are resolved through the operation tree: a parameter is referenced only when an `IParameterReferenceExpression.Parameter` in the bound body equals it; a case-insensitive name scan (`SemanticFacts.NameEqualityComparer`) runs first, and binding is skipped only when no parameter name appears in the body. Otherwise the body is bound once (pre-computed for a `CodeBlockAction`, see `analyzer-performance.md`) and walked until every name-matched candidate is confirmed, which ends early in the common case where parameters are used near the top | An identifier with the parameter's name may be a field, method or member name (`MyTable.Name`, a `SetRange` field argument), which hid unused parameters. |
+| When `GetOperation` returns null or the bound body `IsInvalid`, the name-scan result stands | Binding errors propagate up to the block, and references under invalid nodes (a call on a record of an unresolved table) are missing from the tree; reporting from it would flag parameters that are used. |
 
 ## Deliberate non-reports
 
@@ -33,6 +34,10 @@ Registers `CodeBlockAction`; main type `ParameterNotReferenced` (descriptor sele
 - Triggers: platform-defined signatures.
 - Event declarations: the parameters define the subscriber contract.
 - Obsolete methods: no value in modifying deprecated code.
+
+## SDK facts
+
+- `OperationWalker` does not descend into `IIsExpression`, `IAsExpression`, `IConditionalOperatorExpression` (SDK 14+), the test page accesses (`ITestPartAccess`, `ITestFilterAccess`, `ITestFilterFieldAccess`), `IPagePartAccess`, `IQueryElementAccess`, `IQueryDataItemAccess`, `ITableKeyAccess`, `ITableFieldGroupAccess`, the report accesses (`IReportLabelAccess`, `IReportDataItemAccess`, `IReportColumnAccess`, `IReportLayoutAccess`) or `IXmlPortNodeAccess`: they fall to `DefaultVisit`. `IOperation` has no `Children`. The access kinds have visit methods at the 12.0 floor, so the walker overrides them to visit their `Instance`. Is/as/conditional do not exist in the netstandard SDK the analyzer compiles against, so only they (and operand-free leaves) go through a `DefaultVisit` override that confirms candidates by name on the node's syntax.
 
 ## Test notes
 

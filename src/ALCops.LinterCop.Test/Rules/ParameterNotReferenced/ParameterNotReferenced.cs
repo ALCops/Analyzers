@@ -6,6 +6,7 @@ namespace ALCops.LinterCop.Test
     public class ParameterNotReferenced : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
+        private AnalyzerTestFixture _errorTolerantFixture;
         private static readonly Analyzers.ParameterNotReferenced _analyzer = new();
         private string _testCasePath;
 
@@ -18,6 +19,13 @@ namespace ALCops.LinterCop.Test
         public void Setup()
         {
             _fixture = RoslynFixtureFactory.Create<Analyzers.ParameterNotReferenced>();
+
+            // A reference under a binding error needs a fixture that does not compile.
+            _errorTolerantFixture = RoslynFixtureFactory.Create<Analyzers.ParameterNotReferenced>(
+                new AnalyzerTestFixtureConfig
+                {
+                    ThrowsWhenInputDocumentContainsError = false
+                });
 
             _testCasePath = Path.Combine(
                 Directory.GetParent(
@@ -32,6 +40,9 @@ namespace ALCops.LinterCop.Test
         [TestCase("VarParameterUnused")]
         [TestCase("ErrorInfoInPage")]
         [TestCase("ErrorInfoMultipleParams")]
+        [TestCase("ParameterNamedLikeAccessedField")]
+        [TestCase("ParameterUsedAsSetRangeField")]
+        [TestCase("ParameterNamedLikeQueryColumn")]
         public async Task HasDiagnostic(string testCase)
         {
             RequireSdkV13Support();
@@ -44,6 +55,7 @@ namespace ALCops.LinterCop.Test
 
         [Test]
         [TestCase("EventSubscriber")]
+        [TestCase("EventSubscriberParameterNamedLikeField")]
         public async Task HasDiagnosticEventSubscriber(string testCase)
         {
             RequireSdkV13Support();
@@ -67,14 +79,42 @@ namespace ALCops.LinterCop.Test
         [TestCase("NotificationCallbackInCodeunit")]
         [TestCase("MessageHandlerInCodeunit")]
         [TestCase("ConfirmHandlerInCodeunit")]
+        [TestCase("ParameterUsedWithDifferentCasing")]
+        [TestCase("ParameterPassedAsVarArgument")]
+        [TestCase("ParameterAssignedOnly")]
+        [TestCase("ParameterUsedAsRecordReceiver")]
+        [TestCase("ParameterUsedAsFilterValue")]
+        [TestCase("ParameterUsedInReportProcedure")]
+        [TestCase("ParameterUsedInIsExpression")]
+        [TestCase("ParameterUsedInAsExpression")]
+        [TestCase("ParameterUsedInConditionalExpression")]
+        [TestCase("ParameterUsedAsTestPageReceiver")]
+        [TestCase("ParameterUsedAsQueryReceiver")]
         public async Task NoDiagnostic(string testCase)
+        {
+            RequireSdkV13Support();
+            SkipTestIfVersionIsTooLow(
+                ["ParameterUsedInIsExpression", "ParameterUsedInAsExpression", "ParameterUsedInConditionalExpression"],
+                testCase,
+                "14.0",
+                "The 'is'/'as' interface operators and the conditional expression require runtime version 14.0.");
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ParameterNotReferenced);
+        }
+
+        [Test]
+        [TestCase("ParameterUsedUnderInvalidNode")]
+        public async Task NoDiagnosticInDocumentWithErrors(string testCase)
         {
             RequireSdkV13Support();
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
-            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ParameterNotReferenced);
+            _errorTolerantFixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ParameterNotReferenced);
         }
 
         [Test]

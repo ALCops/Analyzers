@@ -3,6 +3,7 @@ using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Semantics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
@@ -44,9 +45,18 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
         if (unusedParameters.Count == 0)
             return;
 
-        MarkReferencedParameters(methodSyntax.Body, unusedParameters);
+        HashSet<IParameterSymbol> candidates = MarkReferencedParameters(methodSyntax.Body, unusedParameters);
 
-        foreach (IParameterSymbol parameter in unusedParameters.Values)
+        // An identifier with the parameter's name may be a field, method or member name
+        // (MyTable.Name), so a name match is only a candidate; confirm it on the bound tree.
+        // A body with binding errors loses references under invalid nodes, so keep the name result.
+        if (candidates.Count > 0
+            && context.SemanticModel.GetOperation(methodSyntax.Body, context.CancellationToken) is IOperation { IsInvalid: false } body)
+            new ParameterReferenceWalker(candidates).Visit(body);
+        else
+            candidates.Clear();
+
+        foreach (IParameterSymbol parameter in unusedParameters.Values.Concat(candidates).OrderBy(parameter => parameter.Ordinal))
         {
             context.ReportDiagnostic(
                 Diagnostic.Create(
@@ -68,15 +78,59 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
         return parameters;
     }
 
-    private static void MarkReferencedParameters(SyntaxNode body, Dictionary<string, IParameterSymbol> unusedParameters)
+    private static HashSet<IParameterSymbol> MarkReferencedParameters(SyntaxNode body, Dictionary<string, IParameterSymbol> unusedParameters)
     {
+        var candidates = new HashSet<IParameterSymbol>();
         foreach (SyntaxNode node in body.DescendantNodes())
         {
             if (unusedParameters.Count == 0)
-                return;
+                break;
 
-            if (node is IdentifierNameSyntax identifier)
-                unusedParameters.Remove(identifier.Unquoted());
+            if (node is IdentifierNameSyntax identifier
+                && unusedParameters.Remove(identifier.Unquoted(), out IParameterSymbol? parameter))
+                candidates.Add(parameter);
+        }
+        return candidates;
+    }
+
+    private sealed class ParameterReferenceWalker(HashSet<IParameterSymbol> unconfirmed) : OperationWalker
+    {
+        public override void Visit(IOperation operation)
+        {
+            if (unconfirmed.Count > 0)
+                base.Visit(operation);
+        }
+
+        public override void VisitParameterReferenceExpression(IParameterReferenceExpression operation) =>
+            unconfirmed.Remove(operation.Parameter);
+
+        // The SDK walker does not descend into these member accesses; visit their receiver.
+        public override void VisitTestPartAccess(ITestPartAccess operation) => Visit(operation.Instance);
+        public override void VisitTestFilterAccess(ITestFilterAccess operation) => Visit(operation.Instance);
+        public override void VisitTestFilterFieldAccess(ITestFilterFieldAccess operation) => Visit(operation.Instance);
+        public override void VisitPagePartAccess(IPagePartAccess operation) => Visit(operation.Instance);
+        public override void VisitQueryColumnAccess(IQueryElementAccess operation) => Visit(operation.Instance);
+        public override void VisitQueryDataItemAccess(IQueryDataItemAccess operation) => Visit(operation.Instance);
+        public override void VisitTableKeyAccess(ITableKeyAccess operation) => Visit(operation.Instance);
+        public override void VisitTableFieldGroupAccess(ITableFieldGroupAccess operation) => Visit(operation.Instance);
+        public override void VisitReportLabelAccess(IReportLabelAccess operation) => Visit(operation.Instance);
+        public override void VisitReportDataItemAccess(IReportDataItemAccess operation) => Visit(operation.Instance);
+        public override void VisitReportColumnAccess(IReportColumnAccess operation) => Visit(operation.Instance);
+        public override void VisitReportLayoutAccess(IReportLayoutAccess operation) => Visit(operation.Instance);
+        public override void VisitXmlPortNodeAccess(IXmlPortNodeAccess operation) => Visit(operation.Instance);
+
+        // Nor into is/as and conditional expressions, which the netstandard SDK cannot name;
+        // inside them (and the leaves) a candidate is confirmed by name, as before binding.
+        public override void DefaultVisit(IOperation operation)
+        {
+            foreach (SyntaxNode node in operation.Syntax?.DescendantNodesAndSelf() ?? [])
+            {
+                if (node is not IdentifierNameSyntax identifier)
+                    continue;
+
+                string name = identifier.Unquoted();
+                unconfirmed.RemoveWhere(parameter => SemanticFacts.NameEqualityComparer.Equals(parameter.Name, name));
+            }
         }
     }
 
