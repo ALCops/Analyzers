@@ -6,6 +6,7 @@ namespace ALCops.LinterCop.Test
     public class ParameterNotReferenced : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
+        private AnalyzerTestFixture _errorTolerantFixture;
         private static readonly Analyzers.ParameterNotReferenced _analyzer = new();
         private string _testCasePath;
 
@@ -18,6 +19,13 @@ namespace ALCops.LinterCop.Test
         public void Setup()
         {
             _fixture = RoslynFixtureFactory.Create<Analyzers.ParameterNotReferenced>();
+
+            // A reference under a binding error needs a fixture that does not compile.
+            _errorTolerantFixture = RoslynFixtureFactory.Create<Analyzers.ParameterNotReferenced>(
+                new AnalyzerTestFixtureConfig
+                {
+                    ThrowsWhenInputDocumentContainsError = false
+                });
 
             _testCasePath = Path.Combine(
                 Directory.GetParent(
@@ -73,6 +81,9 @@ namespace ALCops.LinterCop.Test
         [TestCase("ParameterUsedWithDifferentCasing")]
         [TestCase("ParameterPassedAsVarArgument")]
         [TestCase("ParameterAssignedOnly")]
+        [TestCase("ParameterUsedAsRecordReceiver")]
+        [TestCase("ParameterUsedAsFilterValue")]
+        [TestCase("ParameterUsedInReportProcedure")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireSdkV13Support();
@@ -81,6 +92,18 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false);
 
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ParameterNotReferenced);
+        }
+
+        [Test]
+        [TestCase("ParameterUsedUnderInvalidNode")]
+        public async Task NoDiagnosticInDocumentWithErrors(string testCase)
+        {
+            RequireSdkV13Support();
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            _errorTolerantFixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ParameterNotReferenced);
         }
 
         [Test]

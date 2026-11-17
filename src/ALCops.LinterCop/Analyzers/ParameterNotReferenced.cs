@@ -45,23 +45,18 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
         if (unusedParameters.Count == 0)
             return;
 
-        var parameters = unusedParameters.Values.ToList();
-        MarkReferencedParameters(methodSyntax.Body, unusedParameters);
+        HashSet<IParameterSymbol> candidates = MarkReferencedParameters(methodSyntax.Body, unusedParameters);
 
         // An identifier with the parameter's name may be a field, method or member name
         // (MyTable.Name), so a name match is only a candidate; confirm it on the bound tree.
         // A body with binding errors loses references under invalid nodes, so keep the name result.
-        if (unusedParameters.Count < parameters.Count
+        if (candidates.Count > 0
             && context.SemanticModel.GetOperation(methodSyntax.Body, context.CancellationToken) is IOperation { IsInvalid: false } body)
-        {
-            var walker = new ParameterReferenceWalker();
-            walker.Visit(body);
-            unusedParameters = parameters
-                .Where(parameter => !walker.ReferencedParameters.Contains(parameter))
-                .ToDictionary(parameter => parameter.Name, SemanticFacts.NameEqualityComparer);
-        }
+            new ParameterReferenceWalker(candidates).Visit(body);
+        else
+            candidates.Clear();
 
-        foreach (IParameterSymbol parameter in unusedParameters.Values)
+        foreach (IParameterSymbol parameter in unusedParameters.Values.Concat(candidates))
         {
             context.ReportDiagnostic(
                 Diagnostic.Create(
@@ -83,27 +78,31 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
         return parameters;
     }
 
-    private static void MarkReferencedParameters(SyntaxNode body, Dictionary<string, IParameterSymbol> unusedParameters)
+    private static HashSet<IParameterSymbol> MarkReferencedParameters(SyntaxNode body, Dictionary<string, IParameterSymbol> unusedParameters)
     {
+        var candidates = new HashSet<IParameterSymbol>();
         foreach (SyntaxNode node in body.DescendantNodes())
         {
             if (unusedParameters.Count == 0)
-                return;
+                break;
 
-            if (node is IdentifierNameSyntax identifier)
-                unusedParameters.Remove(identifier.Unquoted());
+            if (node is IdentifierNameSyntax identifier
+                && unusedParameters.Remove(identifier.Unquoted(), out IParameterSymbol? parameter))
+                candidates.Add(parameter);
         }
+        return candidates;
     }
 
-    private sealed class ParameterReferenceWalker : OperationWalker
+    private sealed class ParameterReferenceWalker(HashSet<IParameterSymbol> unconfirmed) : OperationWalker
     {
-        public HashSet<IParameterSymbol> ReferencedParameters { get; } = [];
-
-        public override void VisitParameterReferenceExpression(IParameterReferenceExpression operation)
+        public override void Visit(IOperation operation)
         {
-            ReferencedParameters.Add(operation.Parameter);
-            base.VisitParameterReferenceExpression(operation);
+            if (unconfirmed.Count > 0)
+                base.Visit(operation);
         }
+
+        public override void VisitParameterReferenceExpression(IParameterReferenceExpression operation) =>
+            unconfirmed.Remove(operation.Parameter);
     }
 
     private static DiagnosticDescriptor? GetDiagnosticDescriptor(IMethodSymbol method)
