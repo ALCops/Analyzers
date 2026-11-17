@@ -49,6 +49,10 @@ Registers `RegisterCodeBlockAction` on method/trigger bodies; main type `Partial
 
 - Genuine JIT-load problems inside conditional branches are false negatives by design; straight-line and `repeat-until` cases are still caught.
 
+## Test notes
+
+- The `ThisQualified*` fixtures use `this`, which requires runtime 14.0; they are gated with `SkipTestIfVersionIsTooLow`.
+
 ## CodeFix: PartialRecordsCauseJitLoadCodeFixProvider
 
 | Decision | Rationale |

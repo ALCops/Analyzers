@@ -52,10 +52,12 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ExitFieldAccess")]
         [TestCase("ExitOtherVariable")]
         [TestCase("ThisQualifiedGlobalWriteDoesNotSuppressLocal")]
+        [TestCase("ThisQualifiedGlobalReadBesideLocalRead")]
+        [TestCase("TableNoOnRunRecRead")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["ThisQualifiedGlobalWriteDoesNotSuppressLocal"],
+                ["ThisQualifiedGlobalWriteDoesNotSuppressLocal", "ThisQualifiedGlobalReadBesideLocalRead"],
                 testCase,
                 "14.0",
                 "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
@@ -117,10 +119,11 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ExitRecordInLoop")]
         [TestCase("ThisQualifiedGlobalRead")]
         [TestCase("ThisQualifiedDataItemRead")]
+        [TestCase("ThisSelfNextToLocalNamedLikeTable")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
-                ["ThisQualifiedGlobalRead", "ThisQualifiedDataItemRead"],
+                ["ThisQualifiedGlobalRead", "ThisQualifiedDataItemRead", "ThisSelfNextToLocalNamedLikeTable"],
                 testCase,
                 "14.0",
                 "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
