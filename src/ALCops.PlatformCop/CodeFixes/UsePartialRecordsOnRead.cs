@@ -109,7 +109,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
 
         // Collect accessed field names from the method body
         var fieldNames = CollectAccessedFields(
-            invocation, variableName, recordType, semanticModel, cancellationToken);
+            invocation, variableSymbol, recordType, semanticModel, cancellationToken);
 
         // Build SetLoadFields invocation statement
         var setLoadFieldsStatement = BuildSetLoadFieldsStatement(variableName, fieldNames);
@@ -129,7 +129,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
 
     private static List<string> CollectAccessedFields(
         InvocationExpressionSyntax readInvocation,
-        string variableName,
+        IVariableSymbol variable,
         IRecordTypeSymbol recordType,
         SemanticModel semanticModel,
         CancellationToken cancellationToken)
@@ -143,7 +143,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         if (operation is null)
             return GetPrimaryKeyFieldNames(recordType);
 
-        var collector = new FieldAccessCollector(variableName);
+        var collector = new FieldAccessCollector(variable);
         collector.Visit(operation);
 
         if (collector.AccessedFields.Count == 0)
@@ -233,13 +233,13 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
             "AddLoadFields", "LoadFields", "AreFieldsLoaded"
         };
 
-        private readonly string _variableName;
+        private readonly IVariableSymbol _variable;
 
         public HashSet<string> AccessedFields { get; } = new(SemanticFacts.NameEqualityComparer);
 
-        public FieldAccessCollector(string variableName)
+        public FieldAccessCollector(IVariableSymbol variable)
         {
-            _variableName = variableName;
+            _variable = variable;
         }
 
         public override void VisitInvocationExpression(IInvocationExpression operation)
@@ -268,9 +268,9 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
             if (operation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
                 return false;
 
-            ISymbol? instanceSymbol = operation.Instance?.GetSymbol();
-            return instanceSymbol != null
-                && SemanticFacts.IsSameName(instanceSymbol.Name, _variableName);
+            // Symbol identity: `this.<Global>` can share its name with the diagnosed local.
+            ISymbol? instanceSymbol = operation.Instance?.GetSymbolSafe();
+            return instanceSymbol != null && instanceSymbol.Equals(_variable);
         }
 
         public override void VisitFieldAccess(IFieldAccess operation)
@@ -291,9 +291,8 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
                 return;
 #endif
 
-            ISymbol? instanceSymbol = operation.Instance?.GetSymbol();
-            if (instanceSymbol is null ||
-                !SemanticFacts.IsSameName(instanceSymbol.Name, _variableName))
+            ISymbol? instanceSymbol = operation.Instance?.GetSymbolSafe();
+            if (instanceSymbol is null || !instanceSymbol.Equals(_variable))
                 return;
 
             AccessedFields.Add(fieldSymbol.Name);

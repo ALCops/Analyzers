@@ -51,8 +51,15 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ExitGuardThenRead")]
         [TestCase("ExitFieldAccess")]
         [TestCase("ExitOtherVariable")]
+        [TestCase("ThisQualifiedGlobalWriteDoesNotSuppressLocal")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ThisQualifiedGlobalWriteDoesNotSuppressLocal"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -108,8 +115,16 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ExitRecordInIfBranch")]
         [TestCase("ExitRecordInCaseBranch")]
         [TestCase("ExitRecordInLoop")]
+        [TestCase("ThisQualifiedGlobalRead")]
+        [TestCase("ThisQualifiedDataItemRead")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ThisQualifiedGlobalRead", "ThisQualifiedDataItemRead"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -128,8 +143,15 @@ namespace ALCops.PlatformCop.Test
         [TestCase("TestFieldIncluded")]
         [TestCase("SetCurrentKeyExcluded")]
         [TestCase("MixedFilterAndConsume")]
+        [TestCase("ThisQualifiedGlobalFieldExcluded")]
         public async Task HasFix(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ThisQualifiedGlobalFieldExcluded"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
                 .ConfigureAwait(false);
 

@@ -35,7 +35,7 @@ Registers `RegisterCodeBlockAction` on method/trigger bodies; main type `Partial
 | Report at each `SetLoadFields`/`AddLoadFields`/`SetBaseLoadFields` call, naming the operations | Where the developer makes the change |
 | `SetLoadFields()` without arguments fully resets PC0031 state | No-argument `SetLoadFields` cancels partial records entirely; the next read loads all fields |
 | Mutually exclusive with PC0030 on the same variable | Full-field operations suppress PC0030 and are the trigger for PC0031, so a variable never gets both suggestions |
-| Local variables only | Same scope as PC0030 |
+| Local variables only | Same scope as PC0030; bound receivers must be `SymbolKind.LocalVariable`, so a `this.<Global>` sharing a local's name is not charged to the local (PC0030 design decisions) |
 | Version gate `Spring2021OrGreater` (runtime 6.0, BC17); full netstandard2.1 support | `SetLoadFields` was introduced with runtime 6.0; same gate as PC0030 |
 
 ## Deliberate non-reports
