@@ -8,7 +8,7 @@ page 50100 MyPage
             {
                 trigger OnAction()
                 begin
-                    Xmlport.Run([|Xmlport|]::"My Xmlport");
+                    [|Xmlport|].Run([|Xmlport|]::"My Xmlport");
                 end;
             }
         }
@@ -19,8 +19,8 @@ codeunit 50100 MyCodeunit
 {
     procedure MyProcedure()
     begin
-        Xmlport.Run([|Xmlport|]::"My Xmlport");
-        Xmlport.Run([|Xmlport|]::"My Xmlport", true);
+        [|Xmlport|].Run([|Xmlport|]::"My Xmlport");
+        [|Xmlport|].Run([|Xmlport|]::"My Xmlport", true);
     end;
 }
 

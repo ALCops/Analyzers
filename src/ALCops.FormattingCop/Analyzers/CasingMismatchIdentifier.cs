@@ -284,9 +284,6 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
             parentKind == EnumProvider.SyntaxKind.UnaryNotExpression)
             return false;
 
-        if (idName.Identifier.ValueText.IsSameName("Rec"))
-            return false;
-
         if (idName.Parent?.Parent is PermissionSyntax permissionSyntax &&
             permissionSyntax.ObjectType.Kind == EnumProvider.SyntaxKind.SystemKeyword)
             return false;
@@ -466,22 +463,37 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
             if (representative is null)
                 continue;
 
-            if (representative.Identifier.ValueText is string identifierText
-                && KeywordTexts.Value.Contains(identifierText))
-                continue;
-
             // A property-style setter call (Proc := Value) has no symbol on its target name.
             var symbol = semanticModel.GetSymbolInfo(representative, ctx.CancellationToken).Symbol
                 ?? semanticModel.GetMethodInvokedByAssignmentSyntax(representative, ctx.CancellationToken);
-            if (symbol is null)
+
+            // `continue` is lexed as an identifier, never as a keyword. A bare `continue;` that binds to no
+            // symbol is the loop statement (Binder.MatchesAmbiguousKeyword); its canonical text is the keyword's.
+            // A variable named Continue in scope wins, as in the compiler.
+            var canonical = symbol?.Name ?? GetContinueStatementText(representative);
+            if (canonical is null)
                 continue;
 
             foreach (var item in groupNode)
             {
                 ctx.CancellationToken.ThrowIfCancellationRequested();
-                CompareIdentifier(ctx, item.Node.Identifier, symbol.Name);
+                CompareIdentifier(ctx, item.Node.Identifier, canonical);
             }
         }
+    }
+
+    // Mirrors Binder.MatchesAmbiguousKeyword: an IdentifierName directly under an ExpressionStatement whose
+    // text is the ContinueKeyword text. EnumProvider resolves the kind to None on SDKs without it and
+    // SyntaxFacts.GetText returns string.Empty for None, hence both guards.
+    private static string? GetContinueStatementText(IdentifierNameSyntax identifier)
+    {
+        var continueKeyword = EnumProvider.SyntaxKind.ContinueKeyword;
+        if (continueKeyword == default
+            || identifier.Parent?.Kind != EnumProvider.SyntaxKind.ExpressionStatement)
+            return null;
+
+        var text = SyntaxFacts.GetText(continueKeyword);
+        return !string.IsNullOrEmpty(text) && identifier.Identifier.ValueText.IsSameName(text) ? text : null;
     }
 
     private static void ResolveQualifiedNames(
@@ -719,19 +731,6 @@ public sealed class CasingMismatchIdentifier : DiagnosticAnalyzer
     #endregion
 
     #region Static Data
-
-    // All AL keyword texts for filtering out identifiers named after keywords.
-    // User-defined names matching keywords (e.g., a variable called "Action") are the user's choice.
-    private static readonly Lazy<HashSet<string>> KeywordTexts = new(() =>
-        Enum.GetNames(typeof(SyntaxKind))
-            .Where(name => name.AsSpan().EndsWith("Keyword"))
-            .Select(name => Enum.Parse<SyntaxKind>(name))
-            .Select(SyntaxFactory.Token)
-            .Where(token => token.Kind != SyntaxKind.None)
-            .Select(token => token.ValueText)
-            .Where(text => !string.IsNullOrEmpty(text))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase)!,
-        LazyThreadSafetyMode.PublicationOnly);
 
     private static readonly Lazy<ImmutableDictionary<string, string>> _labelPropertyDictionary = new(() =>
         LabelPropertyHelper.GetAllLabelProperties()

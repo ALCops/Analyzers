@@ -48,6 +48,16 @@ namespace ALCops.FormattingCop.Test
         [TestCase("SetterCallPropertySyntax")]
         [TestCase("SetterCallPropertySyntaxNamedReceiver")]
         [TestCase("SetterCallPropertySyntaxThis")]
+        [TestCase("VariableNamedContinueReference")]
+        [TestCase("VariableNamedContinueDeclaredLowercase")]
+        [TestCase("ContinueStatement")]
+        [TestCase("ContinueVariableAndStatementInDifferentScopes")]
+        [TestCase("KeywordNamedMembers")]
+        [TestCase("BuiltInClassReceiver")]
+        [TestCase("RecOnPage")]
+        [TestCase("RecInTableTrigger")]
+        [TestCase("RecInTableNoCodeunit")]
+        [TestCase("RecParameter")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -86,6 +96,12 @@ namespace ALCops.FormattingCop.Test
                 "13.0",
                 "No support for pagecustomizations when target itself is already declared in the same module");
 
+            SkipTestIfVersionIsTooLow(
+                ["ContinueStatement", "ContinueVariableAndStatementInDifferentScopes"],
+                testCase,
+                "15.0",
+                "The continue statement requires runtime version 15.0 (BC 2025 wave 1).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -123,6 +139,15 @@ namespace ALCops.FormattingCop.Test
         [TestCase("SubtypedObjectReference")]
         [TestCase("NamespacedObjectReference")]
         [TestCase("SetterCallPropertySyntax")]
+        [TestCase("VariableNamedContinueDeclaredLowercase")]
+        [TestCase("ContinueStatement")]
+        [TestCase("ContinueVariableAndStatementInDifferentScopes")]
+        [TestCase("KeywordNamedMembers")]
+        [TestCase("BuiltInClassReceiver")]
+        [TestCase("RecOnPage")]
+        [TestCase("RecInTableTrigger")]
+        [TestCase("RecInTableNoCodeunit")]
+        [TestCase("RecParameter")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -155,6 +180,12 @@ namespace ALCops.FormattingCop.Test
                 "13.0",
                 "No support for pagecustomizations when target itself is already declared in the same module");
 
+            SkipTestIfVersionIsTooLow(
+                ["ContinueStatement", "ContinueVariableAndStatementInDifferentScopes"],
+                testCase,
+                "15.0",
+                "The continue statement requires runtime version 15.0 (BC 2025 wave 1).");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -166,8 +197,18 @@ namespace ALCops.FormattingCop.Test
         [TestCase("QuotedObjectReference")]
         [TestCase("QualifiedObjectReference")]
         [TestCase("SetterCallPropertySyntax")]
+        [TestCase("VariableNamedContinueReference")]
+        [TestCase("RecOnPage")]
+        [TestCase("ContinueStatement")]
+        [TestCase("BuiltInClassReceiver")]
         public async Task HasFix(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ContinueStatement"],
+                testCase,
+                "15.0",
+                "The continue statement requires runtime version 15.0 (BC 2025 wave 1).");
+
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
                 .ConfigureAwait(false);
 
