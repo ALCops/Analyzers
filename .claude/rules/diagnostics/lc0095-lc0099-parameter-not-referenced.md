@@ -37,7 +37,7 @@ Registers `CodeBlockAction`; main type `ParameterNotReferenced` (descriptor sele
 
 ## SDK facts
 
-- `OperationWalker` does not descend into `IIsExpression`, `IAsExpression`, `IConditionalOperatorExpression` (SDK 14+), the test page accesses (`ITestPartAccess`, `ITestFilterAccess`, `ITestFilterFieldAccess`), `IPagePartAccess`, `IQueryElementAccess`, `IQueryDataItemAccess`, `ITableKeyAccess`, `ITableFieldGroupAccess`, the report accesses (`IReportLabelAccess`, `IReportDataItemAccess`, `IReportColumnAccess`, `IReportLayoutAccess`) or `IXmlPortNodeAccess`: they fall to `DefaultVisit`, although all but is/as/conditional expose an `Instance` and those three an operand. `IOperation` has no `Children`, and is/as/conditional do not exist in the netstandard SDK the analyzer compiles against, so the walker overrides `DefaultVisit` and confirms candidates by name inside those nodes.
+- `OperationWalker` does not descend into `IIsExpression`, `IAsExpression`, `IConditionalOperatorExpression` (SDK 14+), the test page accesses (`ITestPartAccess`, `ITestFilterAccess`, `ITestFilterFieldAccess`), `IPagePartAccess`, `IQueryElementAccess`, `IQueryDataItemAccess`, `ITableKeyAccess`, `ITableFieldGroupAccess`, the report accesses (`IReportLabelAccess`, `IReportDataItemAccess`, `IReportColumnAccess`, `IReportLayoutAccess`) or `IXmlPortNodeAccess`: they fall to `DefaultVisit`. `IOperation` has no `Children`. The access kinds have visit methods at the 12.0 floor, so the walker overrides them to visit their `Instance`. Is/as/conditional do not exist in the netstandard SDK the analyzer compiles against, so only they (and operand-free leaves) go through a `DefaultVisit` override that confirms candidates by name on the node's syntax.
 
 ## Test notes
 

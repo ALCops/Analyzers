@@ -42,6 +42,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("ErrorInfoMultipleParams")]
         [TestCase("ParameterNamedLikeAccessedField")]
         [TestCase("ParameterUsedAsSetRangeField")]
+        [TestCase("ParameterNamedLikeQueryColumn")]
         public async Task HasDiagnostic(string testCase)
         {
             RequireSdkV13Support();

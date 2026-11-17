@@ -56,7 +56,7 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
         else
             candidates.Clear();
 
-        foreach (IParameterSymbol parameter in unusedParameters.Values.Concat(candidates))
+        foreach (IParameterSymbol parameter in unusedParameters.Values.Concat(candidates).OrderBy(parameter => parameter.Ordinal))
         {
             context.ReportDiagnostic(
                 Diagnostic.Create(
@@ -104,15 +104,32 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
         public override void VisitParameterReferenceExpression(IParameterReferenceExpression operation) =>
             unconfirmed.Remove(operation.Parameter);
 
-        // The SDK walker does not descend into some kinds (is/as, conditional expressions, test page,
-        // query, report and xmlport member access) and these interfaces vary per SDK version,
-        // so inside them a candidate is confirmed by name, as before binding.
+        // The SDK walker does not descend into these member accesses; visit their receiver.
+        public override void VisitTestPartAccess(ITestPartAccess operation) => Visit(operation.Instance);
+        public override void VisitTestFilterAccess(ITestFilterAccess operation) => Visit(operation.Instance);
+        public override void VisitTestFilterFieldAccess(ITestFilterFieldAccess operation) => Visit(operation.Instance);
+        public override void VisitPagePartAccess(IPagePartAccess operation) => Visit(operation.Instance);
+        public override void VisitQueryColumnAccess(IQueryElementAccess operation) => Visit(operation.Instance);
+        public override void VisitQueryDataItemAccess(IQueryDataItemAccess operation) => Visit(operation.Instance);
+        public override void VisitTableKeyAccess(ITableKeyAccess operation) => Visit(operation.Instance);
+        public override void VisitTableFieldGroupAccess(ITableFieldGroupAccess operation) => Visit(operation.Instance);
+        public override void VisitReportLabelAccess(IReportLabelAccess operation) => Visit(operation.Instance);
+        public override void VisitReportDataItemAccess(IReportDataItemAccess operation) => Visit(operation.Instance);
+        public override void VisitReportColumnAccess(IReportColumnAccess operation) => Visit(operation.Instance);
+        public override void VisitReportLayoutAccess(IReportLayoutAccess operation) => Visit(operation.Instance);
+        public override void VisitXmlPortNodeAccess(IXmlPortNodeAccess operation) => Visit(operation.Instance);
+
+        // Nor into is/as and conditional expressions, which the netstandard SDK cannot name;
+        // inside them (and the leaves) a candidate is confirmed by name, as before binding.
         public override void DefaultVisit(IOperation operation)
         {
             foreach (SyntaxNode node in operation.Syntax?.DescendantNodesAndSelf() ?? [])
             {
-                if (node is IdentifierNameSyntax identifier)
-                    unconfirmed.RemoveWhere(parameter => SemanticFacts.NameEqualityComparer.Equals(parameter.Name, identifier.Unquoted()));
+                if (node is not IdentifierNameSyntax identifier)
+                    continue;
+
+                string name = identifier.Unquoted();
+                unconfirmed.RemoveWhere(parameter => SemanticFacts.NameEqualityComparer.Equals(parameter.Name, name));
             }
         }
     }
