@@ -8,11 +8,11 @@ page 50106 MyPage
         {
             field(MyField; [|Rec|].MyField) { }
         }
-            area(FactBoxes)
-            {
-                systempart(Links; Links) { }
-                systempart(Notes; Notes) { }
-            }
+        area(FactBoxes)
+        {
+            systempart(Links; Links) { }
+            systempart(Notes; Notes) { }
+        }
     }
 
     actions
