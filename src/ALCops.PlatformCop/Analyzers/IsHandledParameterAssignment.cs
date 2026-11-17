@@ -121,10 +121,13 @@ public sealed class IsHandledParameterAssignment : DiagnosticAnalyzer
     private static bool HasPrecedingExitStatement(IOperation operation, IParameterSymbol parameter)
     {
         var parent = operation.Syntax.Parent;
-        while (parent.Kind != EnumProvider.SyntaxKind.Block && parent.Kind != EnumProvider.SyntaxKind.None)
+        while (parent is not null && parent.Kind != EnumProvider.SyntaxKind.Block)
         {
             parent = parent.Parent;
         }
+
+        if (parent is null)
+            return false;
 
         // Valid "if IsHandled then exit;" before the operation; AL identifiers are case-insensitive and may be quoted
         return parent.DescendantNodes()

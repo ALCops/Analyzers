@@ -23,6 +23,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("Invocation")]
         [TestCase("Handled")]
         [TestCase("PrecedingExitOnAssignment")]
+        [TestCase("PrecedingExitOnOtherParameter")]
         [TestCase("PrecedingExitOnInvocation")]
         [TestCase("SelfGuardedOrAssignment")]
         public async Task HasDiagnostic(string testCase)
