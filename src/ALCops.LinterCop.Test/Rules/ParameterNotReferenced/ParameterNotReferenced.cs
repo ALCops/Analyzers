@@ -84,9 +84,19 @@ namespace ALCops.LinterCop.Test
         [TestCase("ParameterUsedAsRecordReceiver")]
         [TestCase("ParameterUsedAsFilterValue")]
         [TestCase("ParameterUsedInReportProcedure")]
+        [TestCase("ParameterUsedInIsExpression")]
+        [TestCase("ParameterUsedInAsExpression")]
+        [TestCase("ParameterUsedInConditionalExpression")]
+        [TestCase("ParameterUsedAsTestPageReceiver")]
+        [TestCase("ParameterUsedAsQueryReceiver")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireSdkV13Support();
+            SkipTestIfVersionIsTooLow(
+                ["ParameterUsedInIsExpression", "ParameterUsedInAsExpression", "ParameterUsedInConditionalExpression"],
+                testCase,
+                "14.0",
+                "The 'is'/'as' interface operators and the conditional expression require runtime version 14.0.");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);

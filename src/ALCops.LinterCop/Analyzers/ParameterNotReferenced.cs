@@ -103,6 +103,18 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
 
         public override void VisitParameterReferenceExpression(IParameterReferenceExpression operation) =>
             unconfirmed.Remove(operation.Parameter);
+
+        // The SDK walker does not descend into some kinds (is/as, conditional expressions, test page,
+        // query, report and xmlport member access) and these interfaces vary per SDK version,
+        // so inside them a candidate is confirmed by name, as before binding.
+        public override void DefaultVisit(IOperation operation)
+        {
+            foreach (SyntaxNode node in operation.Syntax?.DescendantNodesAndSelf() ?? [])
+            {
+                if (node is IdentifierNameSyntax identifier)
+                    unconfirmed.RemoveWhere(parameter => SemanticFacts.NameEqualityComparer.Equals(parameter.Name, identifier.Unquoted()));
+            }
+        }
     }
 
     private static DiagnosticDescriptor? GetDiagnosticDescriptor(IMethodSymbol method)
