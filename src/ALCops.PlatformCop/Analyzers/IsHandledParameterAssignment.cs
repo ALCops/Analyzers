@@ -5,6 +5,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Semantics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Utilities;
 
 namespace ALCops.PlatformCop.Analyzers;
 
@@ -125,9 +126,10 @@ public sealed class IsHandledParameterAssignment : DiagnosticAnalyzer
             parent = parent.Parent;
         }
 
+        // AL identifiers are case-insensitive and may be quoted, so compare the unquoted text by AL rules
         IEnumerable<SyntaxNode> identifiers = parent.DescendantNodes()
             .OfType<IdentifierNameSyntax>()
-            .Where(n => n.Identifier.ValueText == parameter.Name && n.SpanStart < operation.Syntax.SpanStart);
+            .Where(n => n.Identifier.ValueText?.UnquoteIdentifier().IsSameName(parameter.Name) == true && n.SpanStart < operation.Syntax.SpanStart);
 
         foreach (var identifier in identifiers)
         {
@@ -135,7 +137,7 @@ public sealed class IsHandledParameterAssignment : DiagnosticAnalyzer
             {
                 // Check if the condition is the identifier "IsHandled"
                 if (ifStatement.Condition is IdentifierNameSyntax condition &&
-                    condition.Identifier.ValueText == parameter.Name)
+                    condition.Identifier.ValueText?.UnquoteIdentifier().IsSameName(parameter.Name) == true)
                 {
                     // Check if the body is a single "exit;" statement
                     if (ifStatement.Statement is ExitStatementSyntax)

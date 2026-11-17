@@ -38,6 +38,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("Invocation")]
         [TestCase("NoEventSubscriberParameterReference")]
         [TestCase("PrecedingExitOnAssignment")]
+        [TestCase("PrecedingExitDifferentCasing")]
+        [TestCase("PrecedingExitQuotedIdentifier")]
         [TestCase("PrecedingExitOnInvocation")]
         [TestCase("SelfGuardedOrAssignment")]
         public async Task NoDiagnostic(string testCase)
