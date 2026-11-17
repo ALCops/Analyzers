@@ -156,7 +156,8 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
             HashSet<string>? localDataTransferNames = null;
 
             // Locals shadow object-scope variables of the same name, so a local that enters
-            // no map (a temporary record, any other type) must stop the receiver lookup.
+            // no map (a temporary record, any other type) and collides with an object-scope
+            // name must stop the receiver lookup.
             HashSet<string>? localShadowNames = null;
 
             foreach (var local in methodSymbol.LocalVariables)
@@ -176,7 +177,9 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     localDataTransferNames ??= new(StringComparer.OrdinalIgnoreCase);
                     localDataTransferNames.Add(local.Name);
                 }
-                else
+                else if (objectScopeRecordMap?.ContainsKey(local.Name) == true
+                    || objectScopeRecordRefNames?.Contains(local.Name) == true
+                    || objectScopeDataTransferNames?.Contains(local.Name) == true)
                 {
                     localShadowNames ??= new(SemanticFacts.NameEqualityComparer);
                     localShadowNames.Add(local.Name);
@@ -200,7 +203,9 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     localDataTransferNames ??= new(StringComparer.OrdinalIgnoreCase);
                     localDataTransferNames.Add(param.Name);
                 }
-                else
+                else if (objectScopeRecordMap?.ContainsKey(param.Name) == true
+                    || objectScopeRecordRefNames?.Contains(param.Name) == true
+                    || objectScopeDataTransferNames?.Contains(param.Name) == true)
                 {
                     localShadowNames ??= new(SemanticFacts.NameEqualityComparer);
                     localShadowNames.Add(param.Name);
@@ -226,7 +231,9 @@ public sealed class TableDataAccessUnusedPermissions : DiagnosticAnalyzer
                     localDataTransferNames ??= new(StringComparer.OrdinalIgnoreCase);
                     localDataTransferNames.Add(returnValue.Name);
                 }
-                else
+                else if (objectScopeRecordMap?.ContainsKey(returnValue.Name) == true
+                    || objectScopeRecordRefNames?.Contains(returnValue.Name) == true
+                    || objectScopeDataTransferNames?.Contains(returnValue.Name) == true)
                 {
                     localShadowNames ??= new(SemanticFacts.NameEqualityComparer);
                     localShadowNames.Add(returnValue.Name);
