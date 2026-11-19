@@ -159,6 +159,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("RepeatBodyDirect")]
         [TestCase("WhileBodyWithoutBlock")]
         [TestCase("ForBodyWithoutBlock")]
+        [TestCase("ForEachBodyWithoutBlock")]
+        [TestCase("WithBodyWithoutBlock")]
         [TestCase("SameLineElse")]
         [TestCase("AssertErrorStatement")]
         [TestCase("ElseAfterConditionalDirective")]
@@ -189,6 +191,7 @@ namespace ALCops.PlatformCop.Test
         [Test]
         [TestCase("NestedEmbedded")]
         [TestCase("SameVariableTwiceInStatement")]
+        [TestCase("SameVariableInTwoStatements")]
         public async Task HasFixAll(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFixAll), testCase, "current.al"))
@@ -215,6 +218,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("WrapAroundConditionalDirective")]
         [TestCase("WrapAroundInactiveConditionalDirective")]
         [TestCase("WrapAroundPragma")]
+        [TestCase("InsertAfterConditionalDirective")]
         public async Task NoFix(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoFix), $"{testCase}.al"))
