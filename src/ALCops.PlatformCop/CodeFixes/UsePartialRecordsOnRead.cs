@@ -53,7 +53,8 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         if (semanticModel is null)
             return;
 
-        if (TryCreateEdit(syntaxRoot.FindNode(span, getInnermostNodeForTie: true), semanticModel, cancellationToken) is null)
+        // Applicability only; the field list is collected when the action runs.
+        if (TryResolveRead(syntaxRoot.FindNode(span, getInnermostNodeForTie: true), semanticModel, cancellationToken) is null)
             return;
 
         context.RegisterCodeFix(
@@ -109,22 +110,24 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         var editsByTarget = new Dictionary<StatementSyntax, List<SetLoadFieldsEdit>>();
         foreach (TextSpan span in spans.OrderBy(span => span.Start))
         {
-            SetLoadFieldsEdit? edit = TryCreateEdit(root.FindNode(span, getInnermostNodeForTie: true), semanticModel, cancellationToken);
-            if (edit is null)
+            ReadTarget? read = TryResolveRead(root.FindNode(span, getInnermostNodeForTie: true), semanticModel, cancellationToken);
+            if (read is null)
                 continue;
 
-            if (!editsByTarget.TryGetValue(edit.Target, out var edits))
+            if (!editsByTarget.TryGetValue(read.Target, out var edits))
             {
                 edits = new List<SetLoadFieldsEdit>();
-                editsByTarget.Add(edit.Target, edits);
+                editsByTarget.Add(read.Target, edits);
             }
 
-            if (!edits.Any(existing => existing.Variable.Equals(edit.Variable)))
-                edits.Add(edit);
+            if (!edits.Any(existing => existing.Variable.Equals(read.Variable)))
+                edits.Add(new SetLoadFieldsEdit(read.Variable, BuildSetLoadFieldsStatement(read, semanticModel, cancellationToken)));
         }
 
         if (editsByTarget.Count == 0)
             return document;
+
+        SyntaxTrivia documentLineBreak = FindLineBreak(root);
 
         // An insert rebuilds the statement list that owns the target; a wrap replaces the target itself,
         // and its if statement too when an else follows, so that the else can join the new end.
@@ -155,7 +158,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
             if (original is StatementSyntax statement && !IsInStatementList(statement)
                 && editsByTarget.TryGetValue(statement, out var edits))
             {
-                result = WrapInBlock(statement, (StatementSyntax)result, edits);
+                result = WrapInBlock(statement, (StatementSyntax)result, edits, documentLineBreak);
             }
 
             return result;
@@ -164,7 +167,11 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         return document.WithSyntaxRoot(newRoot);
     }
 
-    private static SetLoadFieldsEdit? TryCreateEdit(
+    /// <summary>
+    /// The read at <paramref name="node"/> and the statement that receives its SetLoadFields call,
+    /// or null when no fix applies. Cheap enough for <see cref="RegisterCodeFixesAsync"/>.
+    /// </summary>
+    private static ReadTarget? TryResolveRead(
         SyntaxNode node, SemanticModel semanticModel, CancellationToken cancellationToken)
     {
         if (node is not InvocationExpressionSyntax invocation)
@@ -186,23 +193,29 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
             return null;
 
         // Wrapping rebuilds the statement and moves its trivia, which could unbalance or misplace
-        // a compiler directive; offer no fix rather than risk changing what compiles.
+        // a compiler directive; offer no fix rather than risk changing what compiles. The only trivia
+        // outside the statement that a wrap replaces is the whitespace before a following else, and
+        // only when it is plain whitespace (JoinsElse), so a directive there stays in place.
         if (!IsInStatementList(target) && target.ContainsDirectives)
             return null;
 
+        return new ReadTarget(invocation, memberAccess.Expression, variableSymbol, recordType, target);
+    }
+
+    private static ExpressionStatementSyntax BuildSetLoadFieldsStatement(
+        ReadTarget read, SemanticModel semanticModel, CancellationToken cancellationToken)
+    {
         // Collect accessed field names from the method body
         var fieldNames = CollectAccessedFields(
-            invocation, variableSymbol, recordType, semanticModel, cancellationToken);
+            read.Invocation, read.Variable, read.RecordType, semanticModel, cancellationToken);
 
         // Reuse the read's receiver expression, so the inserted call keeps the source spelling
         // (quotes and casing) instead of the symbol name. The elastic marker makes the CodeAction
         // formatter indent the inserted statement; source nodes lack the elastic trivia that
         // factory tokens carry.
-        var setLoadFieldsStatement = BuildSetLoadFieldsStatement(
-            memberAccess.Expression.WithoutTrivia().WithLeadingTrivia(SyntaxFactory.ElasticMarker),
+        return BuildSetLoadFieldsStatement(
+            read.Receiver.WithoutTrivia().WithLeadingTrivia(SyntaxFactory.ElasticMarker),
             fieldNames);
-
-        return new SetLoadFieldsEdit(target, variableSymbol, setLoadFieldsStatement);
     }
 
     private static List<string> CollectAccessedFields(
@@ -352,8 +365,8 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
     /// begin..end after the SetLoadFields calls. The block takes over the leading trivia and, when the
     /// statement ended with one, the semicolon that separates it from what follows.
     /// </summary>
-    private static BlockSyntax WrapInBlock(
-        StatementSyntax original, StatementSyntax statement, List<SetLoadFieldsEdit> edits)
+    private static BlockSyntax WrapInBlock(StatementSyntax original, StatementSyntax statement,
+        List<SetLoadFieldsEdit> edits, SyntaxTrivia documentLineBreak)
     {
         // The end keyword needs a real line break before it: an elastic one (the factory default)
         // makes the formatter leave a blank line after the wrapped statement. The trailing trivia ends
@@ -365,7 +378,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         SyntaxTrivia lineBreak = trailingTrivia.Count > 0 ? trailingTrivia[trailingTrivia.Count - 1] : default;
         bool statementEndsLine = lineBreak.Kind == EnumProvider.SyntaxKind.EndOfLineTrivia;
         if (!statementEndsLine)
-            lineBreak = FindLineBreak(original);
+            lineBreak = documentLineBreak;
 
         var innerStatement = statement.WithLeadingTrivia(SyntaxFactory.ElasticMarker);
         if (!statementEndsLine)
@@ -393,9 +406,9 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
     }
 
     /// <summary>The document's own line break, so the fix does not mix line endings.</summary>
-    private static SyntaxTrivia FindLineBreak(SyntaxNode node)
+    private static SyntaxTrivia FindLineBreak(SyntaxNode root)
     {
-        SyntaxTrivia lineBreak = node.SyntaxTree.GetRoot().DescendantTrivia()
+        SyntaxTrivia lineBreak = root.DescendantTrivia()
             .FirstOrDefault(trivia => trivia.Kind == EnumProvider.SyntaxKind.EndOfLineTrivia);
         return lineBreak.Kind == EnumProvider.SyntaxKind.EndOfLineTrivia
             ? lineBreak
@@ -409,15 +422,32 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
     private static IfStatementSyntax JoinElseToEnd(IfStatementSyntax ifStatement) =>
         ifStatement.WithElseKeywordToken(ifStatement.ElseKeywordToken.WithLeadingTrivia(SyntaxFactory.ElasticMarker));
 
+    private sealed class ReadTarget
+    {
+        public InvocationExpressionSyntax Invocation { get; }
+        public CodeExpressionSyntax Receiver { get; }
+        public IVariableSymbol Variable { get; }
+        public IRecordTypeSymbol RecordType { get; }
+        public StatementSyntax Target { get; }
+
+        public ReadTarget(InvocationExpressionSyntax invocation, CodeExpressionSyntax receiver,
+            IVariableSymbol variable, IRecordTypeSymbol recordType, StatementSyntax target)
+        {
+            Invocation = invocation;
+            Receiver = receiver;
+            Variable = variable;
+            RecordType = recordType;
+            Target = target;
+        }
+    }
+
     private sealed class SetLoadFieldsEdit
     {
-        public StatementSyntax Target { get; }
         public IVariableSymbol Variable { get; }
         public ExpressionStatementSyntax Statement { get; }
 
-        public SetLoadFieldsEdit(StatementSyntax target, IVariableSymbol variable, ExpressionStatementSyntax statement)
+        public SetLoadFieldsEdit(IVariableSymbol variable, ExpressionStatementSyntax statement)
         {
-            Target = target;
             Variable = variable;
             Statement = statement;
         }
