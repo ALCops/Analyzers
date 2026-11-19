@@ -75,17 +75,14 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
     private static async Task<Document?> FixAllAsync(FixAllContext fixAllContext, Document document,
         Optional<ImmutableArray<TextSpan>> fixAllSpans)
     {
-        // The spans can be present but empty for a document-scope Fix All: fix every diagnostic then.
-        ImmutableArray<TextSpan> spans;
-        if (fixAllSpans.HasValue && !fixAllSpans.Value.IsDefaultOrEmpty)
-        {
-            spans = fixAllSpans.Value;
-        }
-        else
-        {
-            var diagnostics = await fixAllContext.GetDocumentDiagnosticsAsync(document).ConfigureAwait(false);
-            spans = diagnostics.Select(d => d.Location.SourceSpan).ToImmutableArray();
-        }
+        // The SDK passes empty spans for every Fix All scope. Non-empty spans would restrict the fix
+        // to a region rather than name the diagnostics, so they only filter the document's diagnostics.
+        var diagnostics = await fixAllContext.GetDocumentDiagnosticsAsync(document).ConfigureAwait(false);
+        ImmutableArray<TextSpan> regions = fixAllSpans.HasValue ? fixAllSpans.Value : default;
+        ImmutableArray<TextSpan> spans = diagnostics
+            .Select(diagnostic => diagnostic.Location.SourceSpan)
+            .Where(span => regions.IsDefaultOrEmpty || regions.Any(region => region.IntersectsWith(span)))
+            .ToImmutableArray();
 
         return await ApplyEditsAsync(document, spans, fixAllContext.CancellationToken).ConfigureAwait(false);
     }
@@ -197,6 +194,11 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         // outside the statement that a wrap replaces is the whitespace before a following else, and
         // only when it is plain whitespace (JoinsElse), so a directive there stays in place.
         if (!IsInStatementList(target) && target.ContainsDirectives)
+            return null;
+
+        // An insert lands before the statement's leading trivia, so a directive there (an #if that
+        // guards the read, the #endif of a preceding block) would leave the call on the wrong side.
+        if (target.GetFirstToken().ContainsDirectives)
             return null;
 
         return new ReadTarget(invocation, memberAccess.Expression, variableSymbol, recordType, target);
