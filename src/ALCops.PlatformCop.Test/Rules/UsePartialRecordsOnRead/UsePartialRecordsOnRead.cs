@@ -159,6 +159,10 @@ namespace ALCops.PlatformCop.Test
         [TestCase("RepeatBodyDirect")]
         [TestCase("WhileBodyWithoutBlock")]
         [TestCase("ForBodyWithoutBlock")]
+        [TestCase("SameLineElse")]
+        [TestCase("AssertErrorStatement")]
+        [TestCase("ElseAfterConditionalDirective")]
+        [TestCase("RegionAroundEmbeddedStatement")]
         public async Task HasFix(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -209,6 +213,8 @@ namespace ALCops.PlatformCop.Test
 
         [Test]
         [TestCase("WrapAroundConditionalDirective")]
+        [TestCase("WrapAroundInactiveConditionalDirective")]
+        [TestCase("WrapAroundPragma")]
         public async Task NoFix(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoFix), $"{testCase}.al"))
