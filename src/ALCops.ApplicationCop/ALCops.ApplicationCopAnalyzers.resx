@@ -151,7 +151,7 @@
     <value>Duplicate ToolTip between page and table field.</value>
   </data>
   <data name="DuplicateToolTipBetweenPageAndTableMessageFormat" xml:space="preserve">
-    <value>The ToolTip property of page field '{0}'' and it's table field '{1}'' have the same value and therefore the page field's ToolTip can be removed.</value>
+    <value>The ToolTip property of page field '{0}' and its table field '{1}' have the same value and therefore the page field's ToolTip can be removed.</value>
   </data>
   <data name="DuplicateToolTipBetweenPageAndTableDescription" xml:space="preserve">
     <value>Informs the user that it is better to only apply the ToolTip property on the table field when the page fields ToolTip is the same.</value>
