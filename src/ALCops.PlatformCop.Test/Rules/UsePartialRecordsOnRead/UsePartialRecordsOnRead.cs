@@ -148,6 +148,17 @@ namespace ALCops.PlatformCop.Test
         [TestCase("MixedFilterAndConsume")]
         [TestCase("QuotedLocalReceiver")]
         [TestCase("ThisQualifiedGlobalFieldExcluded")]
+        [TestCase("IfThenWithoutBlock")]
+        [TestCase("IfThenElseWithoutBlock")]
+        [TestCase("EmbeddedStatementTrailingComment")]
+        [TestCase("ThenBranchTrailingCommentBeforeElse")]
+        [TestCase("ReadInIfConditionEmbedded")]
+        [TestCase("ElseIfChain")]
+        [TestCase("CaseLineWithoutBlock")]
+        [TestCase("CaseElseList")]
+        [TestCase("RepeatBodyDirect")]
+        [TestCase("WhileBodyWithoutBlock")]
+        [TestCase("ForBodyWithoutBlock")]
         public async Task HasFix(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -169,6 +180,47 @@ namespace ALCops.PlatformCop.Test
                 });
 
             fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.UsePartialRecordsOnRead);
+        }
+
+        [Test]
+        [TestCase("NestedEmbedded")]
+        [TestCase("SameVariableTwiceInStatement")]
+        public async Task HasFixAll(string testCase)
+        {
+            var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFixAll), testCase, "current.al"))
+                .ConfigureAwait(false);
+
+            var expectedCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFixAll), testCase, "expected.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<UsePartialRecordsOnReadCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.TestFixAll(
+                currentCode,
+                expectedCode,
+                DiagnosticIds.UsePartialRecordsOnRead,
+                codeFixIndex: 0,
+                equivalenceKey: nameof(UsePartialRecordsOnReadCodeFixProvider));
+        }
+
+        [Test]
+        [TestCase("WrapAroundConditionalDirective")]
+        public async Task NoFix(string testCase)
+        {
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoFix), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<UsePartialRecordsOnReadCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.NoCodeFix(code, DiagnosticDescriptors.UsePartialRecordsOnRead);
         }
     }
 }
