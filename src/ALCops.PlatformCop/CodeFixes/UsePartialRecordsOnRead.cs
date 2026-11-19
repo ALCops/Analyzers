@@ -7,6 +7,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeFixes;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces.Formatting;
 #if NETSTANDARD2_1
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 #endif
@@ -36,7 +37,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         ImmutableArray.Create(DiagnosticDescriptors.UsePartialRecordsOnRead.Id);
 
     public sealed override FixAllProvider GetFixAllProvider() =>
-         WellKnownFixAllProviders.BatchFixer;
+        FixAllProvider.Create(FixAllAsync);
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
@@ -47,63 +48,147 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        SyntaxNode node = syntaxRoot.FindNode(span);
-        if (node is not InvocationExpressionSyntax invocation)
-            return;
-
-        if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
-            return;
-
-        // Only offer fix for Record types (not RecordRef)
         SemanticModel semanticModel = await document.GetSemanticModelAsync(cancellationToken)
             .ConfigureAwait(false);
         if (semanticModel is null)
             return;
 
-        var symbolInfo = semanticModel.GetSymbolInfo(memberAccess.Expression, cancellationToken);
-        if (symbolInfo.Symbol is not IVariableSymbol variableSymbol)
-            return;
-
-        if (variableSymbol.Type is not IRecordTypeSymbol)
+        if (TryCreateEdit(syntaxRoot.FindNode(span, getInnermostNodeForTie: true), semanticModel, cancellationToken) is null)
             return;
 
         context.RegisterCodeFix(
-            CreateCodeAction(node, document, generateFixAll: true),
+            CreateCodeAction(span, document, generateFixAll: true),
             context.Diagnostics[0]);
     }
 
     private static UsePartialRecordsOnReadCodeAction CreateCodeAction(
-        SyntaxNode node, Document document, bool generateFixAll)
+        TextSpan span, Document document, bool generateFixAll)
     {
         return new UsePartialRecordsOnReadCodeAction(
             PlatformCopAnalyzers.UsePartialRecordsOnReadCodeAction,
-            ct => InsertSetLoadFields(document, node, ct),
+            ct => ApplyEditsAsync(document, ImmutableArray.Create(span), ct),
             nameof(UsePartialRecordsOnReadCodeFixProvider),
             generateFixAll);
     }
 
-    private static async Task<Document> InsertSetLoadFields(
-        Document document, SyntaxNode node, CancellationToken cancellationToken)
+    private static async Task<Document?> FixAllAsync(FixAllContext fixAllContext, Document document,
+        Optional<ImmutableArray<TextSpan>> fixAllSpans)
     {
-        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
-        Task<SemanticModel> semanticModelTask = document.GetSemanticModelAsync(cancellationToken);
+        // The spans can be present but empty for a document-scope Fix All: fix every diagnostic then.
+        ImmutableArray<TextSpan> spans;
+        if (fixAllSpans.HasValue && !fixAllSpans.Value.IsDefaultOrEmpty)
+        {
+            spans = fixAllSpans.Value;
+        }
+        else
+        {
+            var diagnostics = await fixAllContext.GetDocumentDiagnosticsAsync(document).ConfigureAwait(false);
+            spans = diagnostics.Select(d => d.Location.SourceSpan).ToImmutableArray();
+        }
 
-        if (node is not InvocationExpressionSyntax invocation)
+        return await ApplyEditsAsync(document, spans, fixAllContext.CancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Resolves every read against the original tree, then applies all edits in one bottom-up rewrite.
+    /// Nested reads produce nested edits (an outer begin..end wrap contains an inner one), which
+    /// independent per-diagnostic fixes cannot merge; single fixes take the same path for identical output.
+    /// </summary>
+    private static async Task<Document> ApplyEditsAsync(
+        Document document, ImmutableArray<TextSpan> spans, CancellationToken cancellationToken)
+    {
+        if (spans.IsDefaultOrEmpty)
             return document;
+
+        SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+        SemanticModel? semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
+        if (root is null || semanticModel is null)
+            return document;
+
+        // One SetLoadFields per variable per target statement, in source order of the reads.
+        var editsByTarget = new Dictionary<StatementSyntax, List<SetLoadFieldsEdit>>();
+        foreach (TextSpan span in spans.OrderBy(span => span.Start))
+        {
+            SetLoadFieldsEdit? edit = TryCreateEdit(root.FindNode(span, getInnermostNodeForTie: true), semanticModel, cancellationToken);
+            if (edit is null)
+                continue;
+
+            if (!editsByTarget.TryGetValue(edit.Target, out var edits))
+            {
+                edits = new List<SetLoadFieldsEdit>();
+                editsByTarget.Add(edit.Target, edits);
+            }
+
+            if (!edits.Any(existing => existing.Variable.Equals(edit.Variable)))
+                edits.Add(edit);
+        }
+
+        if (editsByTarget.Count == 0)
+            return document;
+
+        // An insert rebuilds the statement list that owns the target; a wrap replaces the target itself,
+        // and its if statement too when an else follows, so that the else can join the new end.
+        var nodesToReplace = new HashSet<SyntaxNode>();
+        foreach (StatementSyntax target in editsByTarget.Keys)
+        {
+            if (IsInStatementList(target))
+            {
+                nodesToReplace.Add(target.Parent);
+                continue;
+            }
+
+            nodesToReplace.Add(target);
+            if (JoinsElse(target))
+                nodesToReplace.Add(target.Parent);
+        }
+
+        SyntaxNode newRoot = root.ReplaceNodes(nodesToReplace, (original, rewritten) =>
+        {
+            SyntaxNode result = InsertIntoStatementList(original, rewritten, editsByTarget);
+            if (original is IfStatementSyntax ifStatement && result is IfStatementSyntax rewrittenIf
+                && ifStatement.Statement is { } thenStatement
+                && editsByTarget.ContainsKey(thenStatement) && JoinsElse(thenStatement))
+            {
+                result = JoinElseToEnd(rewrittenIf);
+            }
+
+            if (original is StatementSyntax statement && !IsInStatementList(statement)
+                && editsByTarget.TryGetValue(statement, out var edits))
+            {
+                result = WrapInBlock(statement, (StatementSyntax)result, edits);
+            }
+
+            return result;
+        });
+
+        return document.WithSyntaxRoot(newRoot);
+    }
+
+    private static SetLoadFieldsEdit? TryCreateEdit(
+        SyntaxNode node, SemanticModel semanticModel, CancellationToken cancellationToken)
+    {
+        if (node is not InvocationExpressionSyntax invocation)
+            return null;
 
         if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
-            return document;
+            return null;
 
-        var semanticModel = await semanticModelTask.ConfigureAwait(false);
-        if (semanticModel is null)
-            return document;
-
+        // Only offer fix for Record types (not RecordRef)
         var symbolInfo = semanticModel.GetSymbolInfo(memberAccess.Expression, cancellationToken);
         if (symbolInfo.Symbol is not IVariableSymbol variableSymbol)
-            return document;
+            return null;
 
         if (variableSymbol.Type is not IRecordTypeSymbol recordType)
-            return document;
+            return null;
+
+        StatementSyntax? target = FindTargetStatement(invocation);
+        if (target is null)
+            return null;
+
+        // Wrapping rebuilds the statement and moves its trivia, which could unbalance or misplace
+        // a compiler directive; offer no fix rather than risk changing what compiles.
+        if (!IsInStatementList(target) && target.ContainsDirectives)
+            return null;
 
         // Collect accessed field names from the method body
         var fieldNames = CollectAccessedFields(
@@ -117,17 +202,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
             memberAccess.Expression.WithoutTrivia().WithLeadingTrivia(SyntaxFactory.ElasticMarker),
             fieldNames);
 
-        // Find the statement containing the read operation
-        var containingStatement = FindContainingStatement(invocation);
-        if (containingStatement is null)
-            return document;
-
-        var root = await syntaxRootTask.ConfigureAwait(false);
-        if (root is null)
-            return document;
-
-        var newRoot = root.InsertNodesBefore(containingStatement, new[] { setLoadFieldsStatement });
-        return document.WithSyntaxRoot(newRoot);
+        return new SetLoadFieldsEdit(target, variableSymbol, setLoadFieldsStatement);
     }
 
     private static List<string> CollectAccessedFields(
@@ -198,16 +273,154 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
             SyntaxFactory.Token(EnumProvider.SyntaxKind.SemicolonToken));
     }
 
-    private static StatementSyntax? FindContainingStatement(SyntaxNode node)
+    /// <summary>
+    /// The statement that receives the SetLoadFields call: the nearest statement around the read that
+    /// either sits in a statement list (insert before it) or is the single statement embedded in an
+    /// if/else branch, case line or loop body (wrap it in begin..end). A read inside asserterror climbs
+    /// past it, so the call stays outside the statement that is expected to fail.
+    /// </summary>
+    private static StatementSyntax? FindTargetStatement(SyntaxNode node)
     {
-        var current = node.Parent;
-        while (current != null)
+        foreach (StatementSyntax statement in node.Ancestors().OfType<StatementSyntax>())
         {
-            if (current is StatementSyntax statement && current.Parent is BlockSyntax)
+            if (IsInStatementList(statement) || IsEmbeddedStatement(statement))
                 return statement;
-            current = current.Parent;
         }
+
         return null;
+    }
+
+    private static bool IsInStatementList(StatementSyntax statement) =>
+        statement.Parent is BlockSyntax or RepeatStatementSyntax or CaseElseSyntax;
+
+    private static bool IsEmbeddedStatement(StatementSyntax statement) =>
+        statement.Parent is IfStatementSyntax or CaseLineSyntax or WhileStatementSyntax
+            or ForStatementSyntax or ForEachStatementSyntax or WithStatementSyntax;
+
+    private static SyntaxList<StatementSyntax> GetStatementList(SyntaxNode node) => node switch
+    {
+        BlockSyntax block => block.Statements,
+        RepeatStatementSyntax repeat => repeat.Statements,
+        CaseElseSyntax caseElse => caseElse.ElseStatements,
+        _ => default,
+    };
+
+    private static SyntaxNode InsertIntoStatementList(SyntaxNode original, SyntaxNode rewritten,
+        Dictionary<StatementSyntax, List<SetLoadFieldsEdit>> editsByTarget)
+    {
+        // Rewriting nested nodes replaces statements one-for-one, so the indexes still line up.
+        SyntaxList<StatementSyntax> originalStatements = GetStatementList(original);
+        SyntaxList<StatementSyntax> rewrittenStatements = GetStatementList(rewritten);
+        if (originalStatements.Count == 0 || originalStatements.Count != rewrittenStatements.Count)
+            return rewritten;
+
+        var statements = new List<StatementSyntax>();
+        for (int i = 0; i < originalStatements.Count; i++)
+        {
+            if (editsByTarget.TryGetValue(originalStatements[i], out var edits))
+                statements.AddRange(edits.Select(edit => edit.Statement));
+
+            statements.Add(rewrittenStatements[i]);
+        }
+
+        SyntaxList<StatementSyntax> newStatements = SyntaxFactory.List(statements);
+        return rewritten switch
+        {
+            BlockSyntax block => block.WithStatements(newStatements),
+            RepeatStatementSyntax repeat => repeat.WithStatements(newStatements),
+            CaseElseSyntax caseElse => caseElse.WithElseStatements(newStatements),
+            _ => rewritten,
+        };
+    }
+
+    /// <summary>
+    /// Whether the else after a wrapped then-branch moves onto the line of the new end keyword
+    /// (end else). Only when nothing but whitespace separates them, so no comment or directive moves.
+    /// </summary>
+    private static bool JoinsElse(StatementSyntax statement) =>
+        statement.Parent is IfStatementSyntax ifStatement
+            && ifStatement.Statement == statement
+            && ifStatement.ElseStatement is not null
+            && IsWhitespace(statement.GetTrailingTrivia())
+            && IsWhitespace(ifStatement.ElseKeywordToken.LeadingTrivia);
+
+    private static bool IsWhitespace(SyntaxTriviaList triviaList) =>
+        triviaList.All(trivia => trivia.ToString().All(char.IsWhiteSpace));
+
+    /// <summary>
+    /// Wraps <paramref name="statement"/> (the rewritten form of <paramref name="original"/>) in
+    /// begin..end after the SetLoadFields calls. The block takes over the leading trivia and, when the
+    /// statement ended with one, the semicolon that separates it from what follows.
+    /// </summary>
+    private static BlockSyntax WrapInBlock(
+        StatementSyntax original, StatementSyntax statement, List<SetLoadFieldsEdit> edits)
+    {
+        // The end keyword needs a real line break before it: an elastic one (the factory default)
+        // makes the formatter leave a blank line after the wrapped statement. The trailing trivia ends
+        // with that break unless a line comment ends it (the lexer then leaves the break to the next
+        // token) or the next token shares the line. In those cases the trailing trivia moves behind
+        // the block, so a comment ends up after the end keyword instead of swallowing it, and the end
+        // keyword gets a line break of its own.
+        SyntaxTriviaList trailingTrivia = statement.GetTrailingTrivia();
+        SyntaxTrivia lineBreak = trailingTrivia.Count > 0 ? trailingTrivia[trailingTrivia.Count - 1] : default;
+        bool statementEndsLine = lineBreak.Kind == EnumProvider.SyntaxKind.EndOfLineTrivia;
+        if (!statementEndsLine)
+            lineBreak = FindLineBreak(original);
+
+        var innerStatement = statement.WithLeadingTrivia(SyntaxFactory.ElasticMarker);
+        if (!statementEndsLine)
+            innerStatement = innerStatement.WithoutTrailingTrivia();
+
+        BlockSyntax block = SyntaxFactory.Block(SyntaxFactory.List(
+            edits.Select(edit => (StatementSyntax)edit.Statement).Append(innerStatement)));
+
+        block = block.WithEndKeywordToken(statementEndsLine
+            ? block.EndKeywordToken.WithLeadingTrivia()
+            : block.EndKeywordToken.WithLeadingTrivia(lineBreak));
+
+        if (statement.GetLastToken().Kind == EnumProvider.SyntaxKind.SemicolonToken)
+            block = block.WithSemicolonToken(SyntaxFactory.Token(EnumProvider.SyntaxKind.SemicolonToken));
+
+        // A following else stays on the line of the end keyword (JoinElseToEnd).
+        if (!statementEndsLine)
+            block = block.WithTrailingTrivia(trailingTrivia);
+        else if (!JoinsElse(original))
+            block = block.WithTrailingTrivia(lineBreak);
+
+        return block
+            .WithLeadingTrivia(statement.GetLeadingTrivia())
+            .WithAdditionalAnnotations(Formatter.Annotation);
+    }
+
+    /// <summary>The document's own line break, so the fix does not mix line endings.</summary>
+    private static SyntaxTrivia FindLineBreak(SyntaxNode node)
+    {
+        SyntaxTrivia lineBreak = node.SyntaxTree.GetRoot().DescendantTrivia()
+            .FirstOrDefault(trivia => trivia.Kind == EnumProvider.SyntaxKind.EndOfLineTrivia);
+        return lineBreak.Kind == EnumProvider.SyntaxKind.EndOfLineTrivia
+            ? lineBreak
+            : SyntaxFactory.CarriageReturnLinefeed;
+    }
+
+    /// <summary>
+    /// Replaces the whitespace before the else (see <see cref="JoinsElse"/>) with elastic trivia,
+    /// so the formatter puts it on the line of the new end keyword.
+    /// </summary>
+    private static IfStatementSyntax JoinElseToEnd(IfStatementSyntax ifStatement) =>
+        ifStatement.WithElseKeywordToken(ifStatement.ElseKeywordToken.WithLeadingTrivia(SyntaxFactory.ElasticMarker));
+
+    private sealed class SetLoadFieldsEdit
+    {
+        public StatementSyntax Target { get; }
+        public IVariableSymbol Variable { get; }
+        public ExpressionStatementSyntax Statement { get; }
+
+        public SetLoadFieldsEdit(StatementSyntax target, IVariableSymbol variable, ExpressionStatementSyntax statement)
+        {
+            Target = target;
+            Variable = variable;
+            Statement = statement;
+        }
     }
 
     private sealed class FieldAccessCollector : OperationWalker
