@@ -90,13 +90,24 @@ public sealed class MandatoryFieldMissingOnApiPageCodeFix : CodeFixProvider
         if (repeaterGroup is null)
             return document;
 
+        // Decide which mandatory controls exist from the page symbol, as the analyzer does, not from the
+        // source text: an existing control may be written as Rec.SystemId, this.Rec.SystemId,
+        // Rec."SystemId" or a bare SystemId, and may sit outside the repeater.
+        var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
+        if (semanticModel?.GetDeclaredSymbol(node, cancellationToken) is not IPageTypeSymbol pageTypeSymbol)
+            return document;
+
+        var fieldControls = pageTypeSymbol.FlattenedControls
+            .Where(c => c.ControlKind == EnumProvider.ControlKind.Field && c.RelatedFieldSymbol is not null)
+            .ToArray();
+
         var existingFields = repeaterGroup.Controls.OfType<PageFieldSyntax>().ToArray();
         var missing = new List<(string RecField, string ControlName)>(capacity: MandatoryFields.Length);
         foreach (var mandatoryField in MandatoryFields)
         {
-            bool exists = existingFields.Any(f =>
-                f.Name.Identifier.ValueText.IsSameName(mandatoryField.ControlName) &&
-                SemanticFacts.IsSameName(f.Expression.ToString(), $"Rec.{mandatoryField.RecField}"));
+            bool exists = fieldControls.Any(c =>
+                SemanticFacts.IsSameName(c.RelatedFieldSymbol!.Name, mandatoryField.RecField) &&
+                SemanticFacts.IsSameName(c.Name, mandatoryField.ControlName));
 
             if (!exists)
                 missing.Add(mandatoryField);

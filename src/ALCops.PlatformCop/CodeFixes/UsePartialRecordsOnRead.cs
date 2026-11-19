@@ -105,14 +105,17 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         if (variableSymbol.Type is not IRecordTypeSymbol recordType)
             return document;
 
-        var variableName = variableSymbol.Name;
-
         // Collect accessed field names from the method body
         var fieldNames = CollectAccessedFields(
             invocation, variableSymbol, recordType, semanticModel, cancellationToken);
 
-        // Build SetLoadFields invocation statement
-        var setLoadFieldsStatement = BuildSetLoadFieldsStatement(variableName, fieldNames);
+        // Reuse the read's receiver expression, so the inserted call keeps the source spelling
+        // (quotes and casing) instead of the symbol name. The elastic marker makes the CodeAction
+        // formatter indent the inserted statement; source nodes lack the elastic trivia that
+        // factory tokens carry.
+        var setLoadFieldsStatement = BuildSetLoadFieldsStatement(
+            memberAccess.Expression.WithoutTrivia().WithLeadingTrivia(SyntaxFactory.ElasticMarker),
+            fieldNames);
 
         // Find the statement containing the read operation
         var containingStatement = FindContainingStatement(invocation);
@@ -172,12 +175,10 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
     }
 
     private static ExpressionStatementSyntax BuildSetLoadFieldsStatement(
-        string variableName, List<string> fieldNames)
+        CodeExpressionSyntax receiver, List<string> fieldNames)
     {
-        var variableIdentifier = SyntaxFactory.IdentifierName(variableName);
-
         var setLoadFieldsAccess = SyntaxFactory.MemberAccessExpression(
-            variableIdentifier,
+            receiver,
             SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
             SyntaxFactory.IdentifierName("SetLoadFields"));
 

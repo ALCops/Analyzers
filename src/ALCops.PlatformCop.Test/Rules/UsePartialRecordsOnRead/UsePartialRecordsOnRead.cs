@@ -146,6 +146,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("TestFieldIncluded")]
         [TestCase("SetCurrentKeyExcluded")]
         [TestCase("MixedFilterAndConsume")]
+        [TestCase("QuotedLocalReceiver")]
         [TestCase("ThisQualifiedGlobalFieldExcluded")]
         public async Task HasFix(string testCase)
         {

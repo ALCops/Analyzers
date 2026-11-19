@@ -50,8 +50,17 @@ namespace ALCops.PlatformCop.Test
         [TestCase("MissingFields")]
         [TestCase("MissingSystemId")]
         [TestCase("MissingSystemModifiedAt")]
+        [TestCase("ExistingIdThisQualified")]
+        [TestCase("ExistingIdQuotedField")]
+        [TestCase("ExistingIdImplicitRec")]
         public async Task HasFix(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["ExistingIdThisQualified"],
+                testCase,
+                "14.0",
+                "The 'this' self-reference keyword requires runtime version 14.0 (BC 2024 wave 2).");
+
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
                 .ConfigureAwait(false);
 
