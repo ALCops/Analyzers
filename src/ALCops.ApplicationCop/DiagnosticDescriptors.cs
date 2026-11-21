@@ -35,6 +35,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.ConfirmImplementConfirmManagementDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.ConfirmImplementConfirmManagement));
 
+    public static readonly DiagnosticDescriptor DuplicatePropertyBetweenActionAndRunObject = new(
+        id: DiagnosticIds.DuplicatePropertyBetweenActionAndRunObject,
+        title: ApplicationCopAnalyzers.DuplicatePropertyBetweenActionAndRunObjectTitle,
+        messageFormat: ApplicationCopAnalyzers.DuplicatePropertyBetweenActionAndRunObjectMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: ApplicationCopAnalyzers.DuplicatePropertyBetweenActionAndRunObjectDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.DuplicatePropertyBetweenActionAndRunObject));
+
     public static readonly DiagnosticDescriptor DuplicateToolTipBetweenPageAndTable = new(
         id: DiagnosticIds.DuplicateToolTipBetweenPageAndTable,
         title: ApplicationCopAnalyzers.DuplicateToolTipBetweenPageAndTableTitle,

@@ -147,6 +147,15 @@
   <data name="ConfirmImplementConfirmManagementDescriptionCodeAction" xml:space="preserve">
     <value>ALCops: Refactor to use "Confirm Management" codeunit</value>
   </data>
+  <data name="DuplicatePropertyBetweenActionAndRunObjectTitle" xml:space="preserve">
+    <value>Action property duplicates the value of its RunObject target</value>
+  </data>
+  <data name="DuplicatePropertyBetweenActionAndRunObjectMessageFormat" xml:space="preserve">
+    <value>The {0} of action '{1}' has the same value as the {0} of its RunObject {2} '{3}' and can be removed</value>
+  </data>
+  <data name="DuplicatePropertyBetweenActionAndRunObjectDescription" xml:space="preserve">
+    <value>An action with a page or report RunObject uses the target's Caption, ToolTip, AboutTitle and AboutText when it does not set its own. A copy with the same value is redundant and creates a second translation unit.</value>
+  </data>
   <data name="DuplicateToolTipBetweenPageAndTableTitle" xml:space="preserve">
     <value>Duplicate ToolTip between page and table field.</value>
   </data>
