@@ -15,8 +15,9 @@ public static class StatementSyntaxExtensions
     /// <summary>
     /// Whether the statement is the single statement of an if/else branch, a case line or a
     /// <c>while</c>/<c>for</c>/<c>foreach</c>/<c>with</c> body, so inserting before it needs a <c>begin..end</c> wrap.
-    /// The body of <c>asserterror</c> is deliberately not one: a statement inserted there would run under
-    /// <c>asserterror</c>, so callers climb on to the <c>asserterror</c> statement itself.
+    /// <c>asserterror</c> is deliberately not an embedding parent: a single embedded body is never wrapped
+    /// (the new statement would run under <c>asserterror</c>), so the climb continues to the
+    /// <c>asserterror</c> statement. A body that is already a block takes an insert inside it like any block.
     /// </summary>
     public static bool IsEmbeddedStatement(this StatementSyntax statement) =>
         statement.Parent is IfStatementSyntax or CaseLineSyntax or WhileStatementSyntax
@@ -40,7 +41,9 @@ public static class StatementSyntaxExtensions
 
     /// <summary>
     /// Whether a compiler directive makes inserting before <paramref name="target"/> unsafe, so the fix
-    /// should not be offered (preserve-or-bail directive policy).
+    /// should not be offered (preserve-or-bail directive policy). Any directive (<c>#if</c>, <c>#pragma</c>,
+    /// <c>#region</c>, ...) in the leading trivia of the target's first token blocks insertion, and so does
+    /// any directive inside a target that would be wrapped.
     /// </summary>
     public static bool BlocksStatementInsertion(this StatementSyntax target)
     {

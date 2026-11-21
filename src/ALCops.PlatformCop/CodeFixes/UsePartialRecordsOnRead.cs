@@ -127,7 +127,8 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
 
         var editor = new SyntaxEditor(root);
         SyntaxTrivia lineBreak = root.GetLineBreak();
-        foreach (var (target, edits) in editsByTarget)
+        // Source order of the targets, so the edit sequence does not depend on dictionary enumeration.
+        foreach (var (target, edits) in editsByTarget.OrderBy(pair => pair.Key.SpanStart))
             editor.InsertStatementsBefore(target, edits.Select(edit => edit.Statement).ToList(), lineBreak);
 
         return document.WithSyntaxRoot(editor.GetChangedRoot());
@@ -154,8 +155,8 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         if (variableSymbol.Type is not IRecordTypeSymbol recordType)
             return null;
 
-        // A read inside asserterror climbs past it, so the call stays outside the statement that is
-        // expected to fail.
+        // asserterror is not an embedding parent: a single-statement body is never wrapped and the
+        // climb continues to the asserterror statement; a block body takes the insert inside it.
         StatementSyntax? target = invocation.FindStatementInsertionTarget();
         if (target is null || target.BlocksStatementInsertion())
             return null;

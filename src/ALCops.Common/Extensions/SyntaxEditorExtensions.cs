@@ -38,11 +38,9 @@ public static class SyntaxEditorExtensions
         // becomes elastic, so the formatter also lays out the else branch as it would in new code.
         if (JoinsElse(target, out IfStatementSyntax? ifStatement))
         {
-            editor.ReplaceNode(ifStatement, current =>
-            {
-                var currentIf = (IfStatementSyntax)current;
-                return currentIf.WithElseKeywordToken(currentIf.ElseKeywordToken.WithLeadingTrivia(SyntaxFactory.ElasticMarker));
-            });
+            editor.ReplaceNode(ifStatement, current => current is IfStatementSyntax currentIf
+                ? currentIf.WithElseKeywordToken(currentIf.ElseKeywordToken.WithLeadingTrivia(SyntaxFactory.ElasticMarker))
+                : current);
         }
     }
 
