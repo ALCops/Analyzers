@@ -23,7 +23,10 @@ public sealed class UseParenthesisForFunctionCall : DiagnosticAnalyzer
     private void AnalyzeInvocationExpression(OperationAnalysisContext ctx)
     {
         if (ctx.Operation is not IInvocationExpression { Arguments.Length: 0 } invocation ||
-            invocation.TargetMethod is not IMethodSymbol { MethodKind: MethodKind.BuiltInMethod } method)
+            invocation.TargetMethod is not IMethodSymbol method)
+            return;
+
+        if (method.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
             return;
 
         // Exclude using methodes like IsolationLevel::UpdLock and/or TextEncoding::Windows

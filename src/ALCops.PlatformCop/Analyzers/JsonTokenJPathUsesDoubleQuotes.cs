@@ -43,7 +43,7 @@ public sealed class JsonTokenJPathUsesDoubleQuotes : DiagnosticAnalyzer
         IMethodSymbol method = invocation.TargetMethod;
 
         // Cheapest gates first
-        if (method.MethodKind != MethodKind.BuiltInMethod)
+        if (method.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
             return;
 
         if (!MethodNames.Contains(method.Name))

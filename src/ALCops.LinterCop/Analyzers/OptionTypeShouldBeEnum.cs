@@ -79,7 +79,7 @@ public sealed class OptionTypeShouldBeEnum : DiagnosticAnalyzer
                 fieldCalculation.Field is QualifiedNameSyntax qualifiedNameSyntax)
             {
                 var fieldSymbol = ctx.SemanticModel.GetSymbolInfo(qualifiedNameSyntax, ctx.CancellationToken).Symbol;
-                if (fieldSymbol?.GetTypeSymbol().GetNavTypeKindSafe() == NavTypeKind.Option)
+                if (fieldSymbol?.GetTypeSymbol().GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Option)
                 {
                     return true;
                 }
@@ -95,7 +95,7 @@ public sealed class OptionTypeShouldBeEnum : DiagnosticAnalyzer
         if (ctx.IsObsolete() || ctx.Symbol is not IVariableSymbol variable)
             return;
 
-        if (variable.Type.GetNavTypeKindSafe() != NavTypeKind.Option)
+        if (variable.Type.GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Option)
             return;
 
         bool? HasVariablesNotInSource = null;
