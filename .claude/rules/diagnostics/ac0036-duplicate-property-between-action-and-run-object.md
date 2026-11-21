@@ -40,6 +40,7 @@ Registers `RegisterSymbolAction` on `Action` and `Change` (modify blocks); main 
 
 - An action in a referenced app's report target reads About* from the request page, which `ReferenceReportTypeSymbol.GetMembers()` omits, so About* duplicates against a report consumed as a symbol package are not reported. A report from another project in the same workspace binds as a source symbol and is reported. The test harness only offers workspace dependency projects, so the symbol-package case has no fixture.
 - A `modify` of an action that another page extension added is not reported: `IPageBaseTypeSymbol.FlattenedActions` of the base page lists only the page's own actions.
+- The base-action guard looks at the base action only. When two page extensions modify the same property of the same action, the one that equals the target's value is reported although removing it would reveal the other extension's value, not the target's; accepted because it needs two extensions on one action property.
 
 ## SDK facts
 
