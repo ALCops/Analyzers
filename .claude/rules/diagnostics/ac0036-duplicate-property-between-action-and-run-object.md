@@ -56,3 +56,4 @@ Registers `RegisterSymbolAction` on `Action` and `Change` (modify blocks); main 
 
 - Every test method calls `RequireMinimumVersion("18.0", ...)`: the harness cannot set the app runtime, so it compiles at the SDK's current release, and the 18.0 gate makes the analyzer inert on the 12.0 and 16.0 SDK legs.
 - `NoDiagnosticBelowRuntimeGate` sets `ParseOptions` to runtime 17.0 to prove the gate; its fixture must not use a page-object `ToolTip`, which needs 18.0.
+- The `ActionGroup` and `ActionRef` NoDiagnostic fixtures mark a property the rule never compares: a group has no `RunObject` and an `actionref` has no label property, so no stronger fixture can be built for them.

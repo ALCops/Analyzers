@@ -33,6 +33,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("RequestPageAction")]
         [TestCase("PageExtensionAddedAction")]
         [TestCase("PageExtensionModifyCaption")]
+        [TestCase("PageExtensionModifyToolTipWhenBaseHasCaption")]
         [TestCase("NamespacedObjects")]
         public async Task HasDiagnostic(string testCase)
         {
@@ -50,14 +51,18 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("EmptyValue")]
         [TestCase("TargetWithoutProperty")]
         [TestCase("CodeunitTarget")]
+        [TestCase("QueryTarget")]
         [TestCase("ObsoleteAction")]
         [TestCase("ObsoleteTarget")]
+        [TestCase("ObsoletePage")]
+        [TestCase("ObsoleteBaseAction")]
         [TestCase("ActionCaptionML")]
         [TestCase("TargetCaptionML")]
         [TestCase("ActionGroup")]
         [TestCase("ActionRef")]
         [TestCase("ModifyWhenBaseActionHasCaption")]
         [TestCase("ModifyWhenBaseActionHasCaptionML")]
+        [TestCase("ModifyWhenBaseActionHasToolTipML")]
         [TestCase("ModifyWhenBaseActionHasNoRunObject")]
         [TestCase("PageCustomizationModify")]
         public async Task NoDiagnostic(string testCase)
