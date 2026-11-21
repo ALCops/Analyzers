@@ -33,7 +33,7 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
         { EnumProvider.NavTypeKind.Text, new HashSet<NavTypeKind> { EnumProvider.NavTypeKind.Code } },
 
         // String(literal) can be converted to Text and/or Code
-        { NavTypeKind.String, new HashSet<NavTypeKind> { NavTypeKind.Text, NavTypeKind.Code } },
+        { EnumProvider.NavTypeKind.String, new HashSet<NavTypeKind> { EnumProvider.NavTypeKind.Text, EnumProvider.NavTypeKind.Code } },
 
         // Explicity set Enum can not be converted
         { EnumProvider.NavTypeKind.Enum, new HashSet<NavTypeKind>() }
@@ -139,12 +139,12 @@ public sealed class RecordGetProcedureArguments : DiagnosticAnalyzer
         var argumentNavType = argumentType.GetNavTypeKindSafe();
         var fieldNavType = fieldType.GetNavTypeKindSafe();
 
-        if (argumentNavType == NavTypeKind.Enum && fieldNavType == NavTypeKind.Enum)
+        if (argumentNavType == EnumProvider.NavTypeKind.Enum && fieldNavType == EnumProvider.NavTypeKind.Enum)
             return argumentType.OriginalDefinition.Equals(fieldType.OriginalDefinition);
 
         if ((argumentNavType == fieldNavType && argumentType.Length <= fieldType.Length) ||
-           argumentNavType == NavTypeKind.None ||
-           argumentNavType == NavTypeKind.Joker)
+           argumentNavType == EnumProvider.NavTypeKind.None ||
+           argumentNavType == EnumProvider.NavTypeKind.Joker)
             return true;
 
         if (ImplicitConversions.TryGetValue(argumentNavType, out var compatibleTypes) && !compatibleTypes.Contains(fieldNavType))

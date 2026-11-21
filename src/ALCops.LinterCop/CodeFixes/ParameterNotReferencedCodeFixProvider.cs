@@ -245,7 +245,7 @@ public sealed class ParameterNotReferencedCodeFixProvider : CodeFixProvider
             .Skip(pragmaIndex)
             .TakeWhile(trivia => trivia == directive.ParentTrivia
                 || trivia.ToString().All(char.IsWhiteSpace)
-                || trivia.IsKind(SyntaxKind.EndOfLineTrivia))
+                || trivia.IsKind(EnumProvider.SyntaxKind.EndOfLineTrivia))
             .ToList();
 
         if (!directive.ParentTrivia.Token.IsKind(EnumProvider.SyntaxKind.CloseParenToken))
