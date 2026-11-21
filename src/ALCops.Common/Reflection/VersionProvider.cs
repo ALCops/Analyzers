@@ -11,10 +11,10 @@ namespace ALCops.Common.Reflection;
 /// - The VersionCompatibility class gains new static fields with each Business Central release
 /// - Direct field references would break compilation when using older dependency versions
 /// - Using reflection maintains backward compatibility across dependency versions
-/// - When a field doesn't exist, returns VersionCompatibility.Parse(fallbackRange) if a range is given,
-///   otherwise a "never supported" VersionCompatibility. A range is given for fields whose version is
-///   known: an SDK can ship the runtime version before the matching *OrGreater field (SDK 18.0 has
-///   RuntimeVersion.Fall2026 but no Fall2026OrGreater), and never-supported would disable those rules there.
+/// - The SDK adds an *OrGreater field one or more releases after the runtime version it describes
+///   (Fall2025OrGreater, runtime 16.0, first appears in SDK 18.0; SDK 18.0 has RuntimeVersion.Fall2026
+///   but no Fall2026OrGreater). A missing field therefore resolves to VersionCompatibility.Parse of its
+///   runtime version, so a rule is never disabled on an SDK that supports its runtime version.
 /// 
 /// USAGE:
 /// Use VersionProvider.VersionCompatibility.* instead of Microsoft.Dynamics.Nav.CodeAnalysis.VersionCompatibility.*
@@ -23,24 +23,15 @@ namespace ALCops.Common.Reflection;
 public static class VersionProvider
 {
     /// <summary>
-    /// A VersionCompatibility that never matches any version.
-    /// Used as fallback when a requested version field doesn't exist.
-    /// This effectively disables the analyzer for all BC versions.
-    /// </summary>
-    private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _neverSupported =
-        new(() => new NavCodeAnalysis.VersionCompatibility([]),
-            LazyThreadSafetyMode.PublicationOnly);
-
-    /// <summary>
     /// Internal method for getting VersionCompatibility values with caching.
     /// DO NOT call this directly - use the nested VersionCompatibility class instead.
     /// 
     /// This method uses reflection to access static fields from strings, providing
     /// backward compatibility when new version fields are added in newer dependency versions.
-    /// A missing field resolves to <paramref name="fallbackRange"/> parsed by
-    /// VersionCompatibility.Parse (e.g. "18.0" = 18.0 or greater), or to never-supported without one.
+    /// A missing field resolves to <paramref name="runtimeVersion"/> parsed by VersionCompatibility.Parse
+    /// ("18.0" = 18.0 or greater, the same range the SDK's own *OrGreater fields use).
     /// </summary>
-    private static NavCodeAnalysis.VersionCompatibility GetVersionCompatibility(string fieldName, string? fallbackRange = null)
+    private static NavCodeAnalysis.VersionCompatibility GetVersionCompatibility(string fieldName, string runtimeVersion)
     {
         var lazy = new Lazy<NavCodeAnalysis.VersionCompatibility>(() =>
         {
@@ -50,9 +41,7 @@ public static class VersionProvider
             if (field?.GetValue(null) is NavCodeAnalysis.VersionCompatibility value)
                 return value;
 
-            return fallbackRange is null
-                ? _neverSupported.Value
-                : NavCodeAnalysis.VersionCompatibility.Parse(fallbackRange);
+            return NavCodeAnalysis.VersionCompatibility.Parse(runtimeVersion);
         }, LazyThreadSafetyMode.PublicationOnly);
 
         return lazy.Value;
@@ -61,27 +50,26 @@ public static class VersionProvider
     /// <summary>
     /// Provides reflection-based access to VersionCompatibility static fields.
     /// Mirrors the Microsoft.Dynamics.Nav.CodeAnalysis.VersionCompatibility API.
-    /// When a field doesn't exist in the current version, returns the field's fallback range
-    /// if it has one, otherwise a VersionCompatibility that never matches (disabling the analyzer).
+    /// When a field doesn't exist in the loaded SDK, returns the range of its runtime version instead.
     /// </summary>
     public static class VersionCompatibility
     {
         private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _fall2019OrGreater =
-            new(() => GetVersionCompatibility("Fall2019OrGreater"));
+            new(() => GetVersionCompatibility("Fall2019OrGreater", "4.0"));
         private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _spring2021OrGreater =
-            new(() => GetVersionCompatibility("Spring2021OrGreater"));
+            new(() => GetVersionCompatibility("Spring2021OrGreater", "7.0"));
         private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _fall2022OrGreater =
-            new(() => GetVersionCompatibility("Fall2022OrGreater"));
+            new(() => GetVersionCompatibility("Fall2022OrGreater", "10.0"));
         private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _spring2023OrGreater =
-            new(() => GetVersionCompatibility("Spring2023OrGreater"));
+            new(() => GetVersionCompatibility("Spring2023OrGreater", "11.0"));
         private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _fall2023OrGreater =
-            new(() => GetVersionCompatibility("Fall2023OrGreater"));
+            new(() => GetVersionCompatibility("Fall2023OrGreater", "12.0"));
         private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _spring2024OrGreater =
-            new(() => GetVersionCompatibility("Spring2024OrGreater"));
+            new(() => GetVersionCompatibility("Spring2024OrGreater", "13.0"));
         private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _fall2024OrGreater =
-            new(() => GetVersionCompatibility("Fall2024OrGreater"));
+            new(() => GetVersionCompatibility("Fall2024OrGreater", "14.0"));
         private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _fall2025OrGreater =
-            new(() => GetVersionCompatibility("Fall2025OrGreater"));
+            new(() => GetVersionCompatibility("Fall2025OrGreater", "16.0"));
         private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _fall2026OrGreater =
             new(() => GetVersionCompatibility("Fall2026OrGreater", "18.0"));
 
