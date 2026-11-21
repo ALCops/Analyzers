@@ -95,4 +95,4 @@ public static class VersionProvider
         public static NavCodeAnalysis.VersionCompatibility Fall2025OrGreater => _fall2025OrGreater.Value;
         public static NavCodeAnalysis.VersionCompatibility Fall2026OrGreater => _fall2026OrGreater.Value;
     }
-}
+}
