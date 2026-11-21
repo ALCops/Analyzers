@@ -22,7 +22,7 @@ Every CodeFix provider:
 Required overrides:
 
 - `FixableDiagnosticIds` (property, `ImmutableArray<string>`) - the diagnostic IDs this provider handles
-- `GetFixAllProvider()` (method) - normally returns `WellKnownFixAllProviders.BatchFixer`. Use a custom `FixAllProvider.Create(FixAllAsync)` when multiple diagnostics in the same document may resolve to edits on a **shared ancestor node** (e.g. removing multiple entries from the same `ParameterListSyntax` / `PropertyListSyntax` / any `SeparatedSyntaxList`). See "Custom FixAllProvider" below.
+- `GetFixAllProvider()` (method) - normally returns `WellKnownFixAllProviders.BatchFixer`. Use a custom `FixAllProvider.Create(FixAllAsync)` when multiple diagnostics in the same document may resolve to edits on a **shared ancestor node** (e.g. removing multiple entries from the same `ParameterListSyntax` or any `SeparatedSyntaxList`), or when one fix's edit depends on what the other fixes remove. See "Custom FixAllProvider" below.
 - `RegisterCodeFixesAsync(CodeFixContext ctx)` (method) - entry point that registers fix actions
 
 ## Diagnostic ID linkage
@@ -55,12 +55,14 @@ Canonical provider template (class layout, inner `CodeAction`, `RegisterCodeFixe
 
 Default to `WellKnownFixAllProviders.BatchFixer`. It runs the single-diagnostic fix path once per diagnostic and merges the resulting document edits.
 
-**Exception — use a custom `FixAllProvider` when multiple diagnostics may produce edits on a shared ancestor node.** BatchFixer merges the produced `Document`s using a diff strategy that assumes independent edits. When two or more diagnostics translate into `ReplaceNode(sameAncestor, …)` calls (e.g. removing multiple `ParameterSyntax` entries from the same `ParameterListSyntax`, or two properties from the same `PropertyListSyntax`), only one edit survives the merge and the rest are silently dropped. Symptom: FixAll actions that fix "1 of N" occurrences.
+**Exception — use a custom `FixAllProvider` when multiple diagnostics may produce edits on a shared ancestor node.** BatchFixer merges the produced `Document`s using a diff strategy that assumes independent edits. When two or more diagnostics translate into `ReplaceNode(sameAncestor, …)` calls (e.g. removing multiple `ParameterSyntax` entries from the same `ParameterListSyntax`), only one edit survives the merge and the rest are silently dropped. Symptom: FixAll actions that fix "1 of N" occurrences.
 
 Trigger conditions:
 
-- The fix removes or replaces a node inside a `SeparatedSyntaxList` (parameters, properties, arguments, variables in a `var` section, permission entries).
-- Multiple diagnostics from the same rule can point at siblings in the same list within one document.
+- The fix removes or replaces a node inside a `SeparatedSyntaxList` (parameters, arguments, variables in a `var` section, permission entries) and multiple diagnostics from the same rule can point at siblings in the same list within one document.
+- One fix's result depends on what the other fixes remove: a parent that must go when its last child goes (`DuplicatePropertyBetweenActionAndRunObject` removes an emptied `modify` block). Each batch-fixer run sees only its own diagnostic, so every single fix keeps the parent.
+
+Not a trigger: removing siblings from a plain `SyntaxList`, such as `PropertyListSyntax.Properties`. The tree diff records one deletion per removed sibling, and `TextChangeMerger` keeps touching deletions (it only rejects overlapping overwrites and pure insertions that touch another change), so `BatchFixer` removes two adjacent properties correctly.
 
 Pattern — one syntax rewrite per document, executed in `FixAllAsync`:
 

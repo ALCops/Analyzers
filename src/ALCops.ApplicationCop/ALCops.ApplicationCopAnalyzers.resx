@@ -156,6 +156,9 @@
   <data name="DuplicatePropertyBetweenActionAndRunObjectDescription" xml:space="preserve">
     <value>An action with a page or report RunObject uses the target's Caption, ToolTip, AboutTitle and AboutText when it does not set its own. A copy with the same value is redundant and creates a second translation unit.</value>
   </data>
+  <data name="DuplicatePropertyBetweenActionAndRunObjectCodeAction" xml:space="preserve">
+    <value>ALCops: Remove the {0} property duplicated from the RunObject target</value>
+  </data>
   <data name="DuplicateToolTipBetweenPageAndTableTitle" xml:space="preserve">
     <value>Duplicate ToolTip between page and table field.</value>
   </data>

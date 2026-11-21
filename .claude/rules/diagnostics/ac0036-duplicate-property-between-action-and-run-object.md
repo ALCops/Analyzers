@@ -24,7 +24,7 @@ Registers `RegisterSymbolAction` on `Action` and `Change` (modify blocks); main 
 | `modify` blocks in page extensions are reported only when the base action sets neither the property nor its ML variant | When the base action sets its own value, the modify replaces that value; removing the modify would bring back the base value, not the target's. |
 | Page customizations are excluded | Customizations are not translated, so a copy there adds no trans-unit; their action `Caption` and `ToolTip` are not even customization-modifiable. |
 | A report's About* values come from its request page, found through the public `GetMembers()` | `IReportTypeSymbol` exposes no public request page; the emitter also reads report About* from the request page. |
-| No CodeFix | Removing the property is trivial in the editor, and the rule is informational. |
+| CodeFix removes the reported property | The value the runtime shows stays the same, because the action falls back to its target; see the CodeFix section. |
 
 ## Deliberate non-reports
 
@@ -58,3 +58,17 @@ Registers `RegisterSymbolAction` on `Action` and `Change` (modify blocks); main 
 - Every test method calls `RequireMinimumVersion("18.0", ...)`: the harness cannot set the app runtime, so it compiles at the SDK's current release, and the 18.0 gate makes the analyzer inert on the 12.0 and 16.0 SDK legs.
 - `NoDiagnosticBelowRuntimeGate` sets `ParseOptions` to runtime 17.0 to prove the gate; its fixture must not use a page-object `ToolTip`, which needs 18.0.
 - The `ActionGroup` and `ActionRef` NoDiagnostic fixtures mark a property the rule never compares: a group has no `RunObject` and an `actionref` has no label property, so no stronger fixture can be built for them.
+- `NoFixStillReported` runs every `NoFix` fixture through the analyzer, because `NoCodeFix` synthesises a diagnostic at the marker when none is reported and would pass on a fixture that never triggers AC0036.
+- `FixedCodeCompiles` compiles every `expected.al`, because the code fix harness only compares them as text; it is what caught the AL0403 on an emptied `modify` block.
+
+## CodeFix: DuplicatePropertyBetweenActionAndRunObjectCodeFixProvider
+
+| Decision | Rationale |
+|---|---|
+| `RemoveNode` with `KeepNoTrivia` | A property's full span is its indentation, its text and its end of line, so the removal deletes exactly its line, first after `{` and last before `}` included. A `//` comment line above the property is leading trivia and goes with it. A same-line `//` comment after `;` goes too, but the lexer ends trailing trivia right after a line comment, so that line break leads the next token and the fix leaves an empty line; accepted as cosmetic. |
+| No fix when the removed node `ContainsDirectives` | `KeepNoTrivia` drops every directive in the removed trivia. A directive line is leading trivia of the next token, so this also skips a property directly below a directive that belongs to the preceding sibling (the `#endif` of an inactive `#if`, or the `#pragma warning restore` of a suppressed neighbour). A directive around the following sibling is that sibling's trivia, so it survives and the fix applies. Known limitation. |
+| A `modify` block whose every property is removed is removed as a whole | The compiler rejects a `modify` without properties or triggers (AL0403), so leaving it empty would not compile. A block with a trigger or another property stays. An emptied `actions` section of the page extension stays; it compiles. |
+| Custom `FixAllProvider` (one `RemoveNodes` pass per document) | Each per-diagnostic fix decides on its own whether its `modify` block becomes empty, so the batch fixer would keep a block emptied by two separate fixes and produce AL0403. The single pass sees every property being removed. The batch fixer itself merges adjacent property deletions correctly: `PropertyListSyntax.Properties` is a plain `SyntaxList`, so the deletions are touching, non-overlapping text changes. |
+| One constant equivalence key | Every fix is the same kind of deletion; Fix All covers all four properties. |
+| No analyzer data needed | The reported `PropertySyntax` carries everything the fix needs. |
+| The `Caption` fix is offered although AC0011 does not accept a caption inherited through `RunObject` | Removing the `Caption` then raises AC0011 on the action until that rule accepts the inherited caption; a follow-up issue tracks it. |
