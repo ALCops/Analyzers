@@ -149,6 +149,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("AllFourProperties")]
         [TestCase("TwoActionsInDocument")]
         [TestCase("ModifyEmptiedByTwoFixes")]
+        [TestCase("MixedDirectiveAndCleanProperties")]
         public async Task HasFixAll(string testCase)
         {
             RequireMinimumVersion("18.0", RuntimeGateReason);
@@ -172,6 +173,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("InactiveConditionalOnPrecedingProperty")]
         [TestCase("PragmaDirective")]
         [TestCase("RegionDirective")]
+        [TestCase("ModifyBlockDirectiveBeforeClosingBrace")]
         public async Task NoFix(string testCase)
         {
             RequireMinimumVersion("18.0", RuntimeGateReason);
@@ -189,6 +191,7 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("InactiveConditionalOnPrecedingProperty")]
         [TestCase("PragmaDirective")]
         [TestCase("RegionDirective")]
+        [TestCase("ModifyBlockDirectiveBeforeClosingBrace")]
         public async Task NoFixStillReported(string testCase)
         {
             RequireMinimumVersion("18.0", RuntimeGateReason);

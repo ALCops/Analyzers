@@ -66,7 +66,7 @@ public sealed class DuplicatePropertyBetweenActionAndRunObjectCodeFixProvider : 
     {
         var title = string.Format(
             ApplicationCopAnalyzers.DuplicatePropertyBetweenActionAndRunObjectCodeAction,
-            property.Name?.Identifier.ValueText);
+            property.Name.Identifier.ValueText);
 
         return new DuplicatePropertyBetweenActionAndRunObjectCodeAction(
             title,
@@ -140,7 +140,8 @@ public sealed class DuplicatePropertyBetweenActionAndRunObjectCodeFixProvider : 
             .OfType<PropertySyntax>()
             .FirstOrDefault();
 
-        return property is null || property.ContainsDirectives ? null : property;
+        // A property without a name is a parse error and has no name for the fix title.
+        return property?.Name is null || property.ContainsDirectives ? null : property;
     }
 
     // The compiler rejects a modify block without properties or triggers (AL0403), so when every property
