@@ -84,6 +84,18 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         }
     }
 
+    private sealed class AddAllPermissionsCodeAction : CodeAction.DocumentChangeAction
+    {
+        public override CodeActionKind Kind => CodeActionKind.Refactor;
+        public override bool SupportsFixAll => false;
+
+        public AddAllPermissionsCodeAction(string title,
+            Func<CancellationToken, Task<Document>> createChangedDocument, string equivalenceKey)
+            : base(title, createChangedDocument, equivalenceKey)
+        {
+        }
+    }
+
     /// <summary>
     /// The permission chars one table needs, merged in canonical order so a table reported
     /// several times (one diagnostic per char) is edited and named once.
@@ -157,6 +169,15 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
                 generateFixAll: true),
             ctx.Diagnostics);
 
+        if (objectIdentity.Name is null)
+            return;
+
+        ctx.RegisterCodeFix(
+            new AddAllPermissionsCodeAction(
+                string.Format(ApplicationCopAnalyzers.TableDataAccessRequiresPermissionsObjectCodeAction, objectIdentity.Name),
+                ct => ApplyObjectWideFix(document, objectIdentity, ct),
+                nameof(TableDataAccessRequiresPermissionsCodeFixProvider) + "ObjectWide"),
+            ctx.Diagnostics);
     }
 
     private static List<TablePermissionFix> CollectFixes(IEnumerable<Diagnostic> diagnostics,
@@ -218,6 +239,47 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         }
 
         return document;
+    }
+
+    /// <summary>
+    /// Re-runs the AC0031 analyzer and keeps the diagnostics inside the object's span in this document,
+    /// so the object-wide action fixes exactly what the rule reports (pragma suppressions included)
+    /// without duplicating its detection. It runs only when the action is applied, never while registering.
+    /// </summary>
+    private static async Task<Document> ApplyObjectWideFix(Document document,
+        (SyntaxKind Kind, string? Name) objectIdentity, CancellationToken cancellationToken)
+    {
+        var semanticModel = await document.GetSemanticModelAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (semanticModel is null)
+            return document;
+
+        var root = await semanticModel.SyntaxTree.GetRootAsync(cancellationToken).ConfigureAwait(false);
+        var objectSyntax = FindObjectByIdentity(root, objectIdentity);
+        if (objectSyntax is null)
+            return document;
+
+        var compilationWithAnalyzers = new CompilationWithAnalyzers(
+            semanticModel.Compilation,
+            ImmutableArray.Create<DiagnosticAnalyzer>(new Analyzers.TableDataAccessRequiresPermissions()),
+            document.Project.AnalyzerOptions,
+            cancellationToken);
+
+        // The whole compilation is analyzed: the per-tree GetAnalyzerSemanticDiagnosticsAsync returns
+        // no diagnostics at all for an AL compilation (with or without a filter span).
+        var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var objectDiagnostics = diagnostics.Where(d =>
+            d.Id == DiagnosticDescriptors.TableDataAccessRequiresPermissions.Id
+            && d.Location.SourceTree == semanticModel.SyntaxTree
+            && objectSyntax.Span.Contains(d.Location.SourceSpan));
+
+        var fixes = CollectFixes(objectDiagnostics, objectSyntax.FirstAncestorOrSelf<CompilationUnitSyntax>());
+        if (fixes.Count == 0)
+            return document;
+
+        return await ApplyFixes(document, objectIdentity, fixes, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task<Document> ApplyFix(Document document,
