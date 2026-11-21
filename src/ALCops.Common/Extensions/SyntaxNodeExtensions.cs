@@ -162,4 +162,17 @@ public static class SyntaxNodeExtensions
 
         return null;
     }
+
+    /// <summary>
+    /// The line break the document already uses (its first end-of-line trivia), so an edit does not mix
+    /// line endings; CRLF when the document has none.
+    /// </summary>
+    public static SyntaxTrivia GetLineBreak(this SyntaxNode root)
+    {
+        SyntaxTrivia lineBreak = root.DescendantTrivia()
+            .FirstOrDefault(trivia => trivia.Kind == EnumProvider.SyntaxKind.EndOfLineTrivia);
+        return lineBreak.Kind == EnumProvider.SyntaxKind.EndOfLineTrivia
+            ? lineBreak
+            : SyntaxFactory.CarriageReturnLinefeed;
+    }
 }

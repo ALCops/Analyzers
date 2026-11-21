@@ -1,3 +1,4 @@
+using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 
@@ -20,5 +21,26 @@ public static class SyntaxFactoryHelper
         for (int i = 1; i < segments.Length; i++)
             result = SyntaxFactory.QualifiedName(result, SyntaxFactory.IdentifierName(segments[i]));
         return result;
+    }
+
+    /// <summary>
+    /// Builds the statement <c>receiver.MethodName(arguments);</c>. The receiver and arguments are used as
+    /// given, so pass source nodes to keep their spelling; factory tokens make the call elastic for the formatter.
+    /// </summary>
+    public static ExpressionStatementSyntax MemberInvocationStatement(
+        CodeExpressionSyntax receiver, string methodName, IEnumerable<CodeExpressionSyntax> arguments)
+    {
+        var memberAccess = SyntaxFactory.MemberAccessExpression(
+            receiver,
+            SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
+            SyntaxFactory.IdentifierName(methodName));
+
+        var argumentList = new SeparatedSyntaxList<CodeExpressionSyntax>();
+        foreach (CodeExpressionSyntax argument in arguments)
+            argumentList = argumentList.Add(argument);
+
+        return SyntaxFactory.ExpressionStatement(
+            SyntaxFactory.InvocationExpression(memberAccess, SyntaxFactory.ArgumentList(argumentList)),
+            SyntaxFactory.Token(EnumProvider.SyntaxKind.SemicolonToken));
     }
 }

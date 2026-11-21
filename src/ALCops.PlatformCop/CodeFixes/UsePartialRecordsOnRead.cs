@@ -1,10 +1,12 @@
 using System.Collections.Immutable;
 using ALCops.Common.Extensions;
+using ALCops.Common.Helpers;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeFixes;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Editing;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
 #if NETSTANDARD2_1
@@ -36,7 +38,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         ImmutableArray.Create(DiagnosticDescriptors.UsePartialRecordsOnRead.Id);
 
     public sealed override FixAllProvider GetFixAllProvider() =>
-         WellKnownFixAllProviders.BatchFixer;
+        FixAllProvider.Create(FixAllAsync);
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
@@ -47,87 +49,137 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         SyntaxNode syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        SyntaxNode node = syntaxRoot.FindNode(span);
-        if (node is not InvocationExpressionSyntax invocation)
-            return;
-
-        if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
-            return;
-
-        // Only offer fix for Record types (not RecordRef)
         SemanticModel semanticModel = await document.GetSemanticModelAsync(cancellationToken)
             .ConfigureAwait(false);
         if (semanticModel is null)
             return;
 
-        var symbolInfo = semanticModel.GetSymbolInfo(memberAccess.Expression, cancellationToken);
-        if (symbolInfo.Symbol is not IVariableSymbol variableSymbol)
-            return;
-
-        if (variableSymbol.Type is not IRecordTypeSymbol)
+        // Applicability only; the field list is collected when the action runs.
+        if (TryResolveRead(syntaxRoot.FindNode(span, getInnermostNodeForTie: true), semanticModel, cancellationToken) is null)
             return;
 
         context.RegisterCodeFix(
-            CreateCodeAction(node, document, generateFixAll: true),
+            CreateCodeAction(span, document, generateFixAll: true),
             context.Diagnostics[0]);
     }
 
     private static UsePartialRecordsOnReadCodeAction CreateCodeAction(
-        SyntaxNode node, Document document, bool generateFixAll)
+        TextSpan span, Document document, bool generateFixAll)
     {
         return new UsePartialRecordsOnReadCodeAction(
             PlatformCopAnalyzers.UsePartialRecordsOnReadCodeAction,
-            ct => InsertSetLoadFields(document, node, ct),
+            ct => ApplyEditsAsync(document, ImmutableArray.Create(span), ct),
             nameof(UsePartialRecordsOnReadCodeFixProvider),
             generateFixAll);
     }
 
-    private static async Task<Document> InsertSetLoadFields(
-        Document document, SyntaxNode node, CancellationToken cancellationToken)
+    private static async Task<Document?> FixAllAsync(FixAllContext fixAllContext, Document document,
+        Optional<ImmutableArray<TextSpan>> fixAllSpans)
     {
-        Task<SyntaxNode> syntaxRootTask = document.GetSyntaxRootAsync(cancellationToken);
-        Task<SemanticModel> semanticModelTask = document.GetSemanticModelAsync(cancellationToken);
+        // The SDK passes empty spans for every Fix All scope. Non-empty spans would restrict the fix
+        // to a region rather than name the diagnostics, so they only filter the document's diagnostics.
+        var diagnostics = await fixAllContext.GetDocumentDiagnosticsAsync(document).ConfigureAwait(false);
+        ImmutableArray<TextSpan> regions = fixAllSpans.HasValue ? fixAllSpans.Value : default;
+        ImmutableArray<TextSpan> spans = diagnostics
+            .Select(diagnostic => diagnostic.Location.SourceSpan)
+            .Where(span => regions.IsDefaultOrEmpty || regions.Any(region => region.IntersectsWith(span)))
+            .ToImmutableArray();
 
-        if (node is not InvocationExpressionSyntax invocation)
+        // Returns the unchanged document when every read bails out, as the house Fix All template does.
+        return await ApplyEditsAsync(document, spans, fixAllContext.CancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Resolves every read against the original tree, then applies all edits through one
+    /// <see cref="SyntaxEditor"/>, which composes nested edits (an outer begin..end wrap around an inner
+    /// one) that independent per-diagnostic fixes cannot merge; single fixes take the same path.
+    /// </summary>
+    private static async Task<Document> ApplyEditsAsync(
+        Document document, ImmutableArray<TextSpan> spans, CancellationToken cancellationToken)
+    {
+        if (spans.IsDefaultOrEmpty)
             return document;
+
+        SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+        SemanticModel? semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
+        if (root is null || semanticModel is null)
+            return document;
+
+        // One SetLoadFields per variable per target statement, in source order of the reads.
+        var editsByTarget = new Dictionary<StatementSyntax, List<SetLoadFieldsEdit>>();
+        foreach (TextSpan span in spans.OrderBy(span => span.Start))
+        {
+            ReadTarget? read = TryResolveRead(root.FindNode(span, getInnermostNodeForTie: true), semanticModel, cancellationToken);
+            if (read is null)
+                continue;
+
+            if (!editsByTarget.TryGetValue(read.Target, out var edits))
+            {
+                edits = new List<SetLoadFieldsEdit>();
+                editsByTarget.Add(read.Target, edits);
+            }
+
+            if (!edits.Any(existing => existing.Variable.Equals(read.Variable)))
+                edits.Add(new SetLoadFieldsEdit(read.Variable, BuildSetLoadFieldsStatement(read, semanticModel, cancellationToken)));
+        }
+
+        if (editsByTarget.Count == 0)
+            return document;
+
+        var editor = new SyntaxEditor(root);
+        SyntaxTrivia lineBreak = root.GetLineBreak();
+        // Source order of the targets, so the edit sequence does not depend on dictionary enumeration.
+        foreach (var (target, edits) in editsByTarget.OrderBy(pair => pair.Key.SpanStart))
+            editor.InsertStatementsBefore(target, edits.Select(edit => edit.Statement).ToList(), lineBreak);
+
+        return document.WithSyntaxRoot(editor.GetChangedRoot());
+    }
+
+    /// <summary>
+    /// The read at <paramref name="node"/> and the statement that receives its SetLoadFields call,
+    /// or null when no fix applies. Cheap enough for <see cref="RegisterCodeFixesAsync"/>.
+    /// </summary>
+    private static ReadTarget? TryResolveRead(
+        SyntaxNode node, SemanticModel semanticModel, CancellationToken cancellationToken)
+    {
+        if (node is not InvocationExpressionSyntax invocation)
+            return null;
 
         if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
-            return document;
+            return null;
 
-        var semanticModel = await semanticModelTask.ConfigureAwait(false);
-        if (semanticModel is null)
-            return document;
-
+        // Only offer fix for Record types (not RecordRef)
         var symbolInfo = semanticModel.GetSymbolInfo(memberAccess.Expression, cancellationToken);
         if (symbolInfo.Symbol is not IVariableSymbol variableSymbol)
-            return document;
+            return null;
 
         if (variableSymbol.Type is not IRecordTypeSymbol recordType)
-            return document;
+            return null;
 
-        // Collect accessed field names from the method body
+        // asserterror is not an embedding parent: a single-statement body is never wrapped and the
+        // climb continues to the asserterror statement; a block body takes the insert inside it.
+        StatementSyntax? target = invocation.FindStatementInsertionTarget();
+        if (target is null || target.BlocksStatementInsertion())
+            return null;
+
+        return new ReadTarget(invocation, memberAccess.Expression, variableSymbol, recordType, target);
+    }
+
+    private static ExpressionStatementSyntax BuildSetLoadFieldsStatement(
+        ReadTarget read, SemanticModel semanticModel, CancellationToken cancellationToken)
+    {
         var fieldNames = CollectAccessedFields(
-            invocation, variableSymbol, recordType, semanticModel, cancellationToken);
+            read.Invocation, read.Variable, read.RecordType, semanticModel, cancellationToken);
 
         // Reuse the read's receiver expression, so the inserted call keeps the source spelling
         // (quotes and casing) instead of the symbol name. The elastic marker makes the CodeAction
         // formatter indent the inserted statement; source nodes lack the elastic trivia that
         // factory tokens carry.
-        var setLoadFieldsStatement = BuildSetLoadFieldsStatement(
-            memberAccess.Expression.WithoutTrivia().WithLeadingTrivia(SyntaxFactory.ElasticMarker),
-            fieldNames);
-
-        // Find the statement containing the read operation
-        var containingStatement = FindContainingStatement(invocation);
-        if (containingStatement is null)
-            return document;
-
-        var root = await syntaxRootTask.ConfigureAwait(false);
-        if (root is null)
-            return document;
-
-        var newRoot = root.InsertNodesBefore(containingStatement, new[] { setLoadFieldsStatement });
-        return document.WithSyntaxRoot(newRoot);
+        return SyntaxFactoryHelper.MemberInvocationStatement(
+            read.Receiver.WithoutTrivia().WithLeadingTrivia(SyntaxFactory.ElasticMarker),
+            "SetLoadFields",
+            fieldNames.Select(fieldName => (CodeExpressionSyntax)SyntaxFactory.IdentifierName(
+                SyntaxFactory.Identifier(fieldName.QuoteIdentifierIfNeededWithReflection()))));
     }
 
     private static List<string> CollectAccessedFields(
@@ -174,40 +226,35 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
         return result;
     }
 
-    private static ExpressionStatementSyntax BuildSetLoadFieldsStatement(
-        CodeExpressionSyntax receiver, List<string> fieldNames)
+    private sealed class ReadTarget
     {
-        var setLoadFieldsAccess = SyntaxFactory.MemberAccessExpression(
-            receiver,
-            SyntaxFactory.Token(EnumProvider.SyntaxKind.DotToken),
-            SyntaxFactory.IdentifierName("SetLoadFields"));
+        public InvocationExpressionSyntax Invocation { get; }
+        public CodeExpressionSyntax Receiver { get; }
+        public IVariableSymbol Variable { get; }
+        public IRecordTypeSymbol RecordType { get; }
+        public StatementSyntax Target { get; }
 
-        var arguments = new SeparatedSyntaxList<CodeExpressionSyntax>();
-        foreach (var fieldName in fieldNames)
+        public ReadTarget(InvocationExpressionSyntax invocation, CodeExpressionSyntax receiver,
+            IVariableSymbol variable, IRecordTypeSymbol recordType, StatementSyntax target)
         {
-            var fieldIdentifier = SyntaxFactory.IdentifierName(
-                SyntaxFactory.Identifier(fieldName.QuoteIdentifierIfNeededWithReflection()));
-
-            arguments = arguments.Add(fieldIdentifier);
+            Invocation = invocation;
+            Receiver = receiver;
+            Variable = variable;
+            RecordType = recordType;
+            Target = target;
         }
-
-        var argumentList = SyntaxFactory.ArgumentList(arguments);
-        var invocationExpr = SyntaxFactory.InvocationExpression(setLoadFieldsAccess, argumentList);
-
-        return SyntaxFactory.ExpressionStatement(invocationExpr,
-            SyntaxFactory.Token(EnumProvider.SyntaxKind.SemicolonToken));
     }
 
-    private static StatementSyntax? FindContainingStatement(SyntaxNode node)
+    private sealed class SetLoadFieldsEdit
     {
-        var current = node.Parent;
-        while (current != null)
+        public IVariableSymbol Variable { get; }
+        public ExpressionStatementSyntax Statement { get; }
+
+        public SetLoadFieldsEdit(IVariableSymbol variable, ExpressionStatementSyntax statement)
         {
-            if (current is StatementSyntax statement && current.Parent is BlockSyntax)
-                return statement;
-            current = current.Parent;
+            Variable = variable;
+            Statement = statement;
         }
-        return null;
     }
 
     private sealed class FieldAccessCollector : OperationWalker
