@@ -1,6 +1,6 @@
 page 50100 MyPage
 {
-    ToolTip = [|'Runs my report.'|];
+    ToolTip = [|'Runs my page.'|];
 
     layout
     {
