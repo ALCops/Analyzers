@@ -194,6 +194,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("SameVariableInTwoStatements")]
         [TestCase("WrapInsideWrap")]
         [TestCase("InsertInsideWrap")]
+        [TestCase("WrapInsideWrapWithElse")]
         public async Task HasFixAll(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFixAll), testCase, "current.al"))
