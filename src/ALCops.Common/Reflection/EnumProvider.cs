@@ -635,6 +635,14 @@ public static class EnumProvider
         public static readonly Lazy<ImmutableDictionary<string, string>> CanonicalNames =
             CreateEnumDictionary<NavCodeAnalysis.PropertyKind>();
 
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _aboutText =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.AboutText)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _aboutTextMl =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.AboutTextML)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _aboutTitle =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.AboutTitle)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _aboutTitleMl =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.AboutTitleML)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _access =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Access)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _accessByPermission =
@@ -687,6 +695,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.OptionCaption)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _permissions =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Permissions)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _runObject =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.RunObject)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _scope =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.Scope)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _showAs =
@@ -709,9 +719,15 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.TestPermissions)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _toolTip =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ToolTip)));
+        private static readonly Lazy<NavCodeAnalysis.PropertyKind> _toolTipMl =
+            new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.ToolTipML)));
         private static readonly Lazy<NavCodeAnalysis.PropertyKind> _useTemporary =
             new(() => ParseEnum<NavCodeAnalysis.PropertyKind>(nameof(NavCodeAnalysis.PropertyKind.UseTemporary)));
 
+        public static NavCodeAnalysis.PropertyKind AboutText => _aboutText.Value;
+        public static NavCodeAnalysis.PropertyKind AboutTextML => _aboutTextMl.Value;
+        public static NavCodeAnalysis.PropertyKind AboutTitle => _aboutTitle.Value;
+        public static NavCodeAnalysis.PropertyKind AboutTitleML => _aboutTitleMl.Value;
         public static NavCodeAnalysis.PropertyKind Access => _access.Value;
         public static NavCodeAnalysis.PropertyKind AccessByPermission => _accessByPermission.Value;
         public static NavCodeAnalysis.PropertyKind Assignable => _assignable.Value;
@@ -738,6 +754,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind ODataKeyFields => _oDataKeyFields.Value;
         public static NavCodeAnalysis.PropertyKind OptionCaption => _optionCaption.Value;
         public static NavCodeAnalysis.PropertyKind Permissions => _permissions.Value;
+        public static NavCodeAnalysis.PropertyKind RunObject => _runObject.Value;
         public static NavCodeAnalysis.PropertyKind Scope => _scope.Value;
         public static NavCodeAnalysis.PropertyKind ShowAs => _showAs.Value;
         public static NavCodeAnalysis.PropertyKind ShowCaption => _showCaption.Value;
@@ -749,6 +766,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.PropertyKind TableRelation => _tableRelation.Value;
         public static NavCodeAnalysis.PropertyKind TestPermissions => _testPermissions.Value;
         public static NavCodeAnalysis.PropertyKind ToolTip => _toolTip.Value;
+        public static NavCodeAnalysis.PropertyKind ToolTipML => _toolTipMl.Value;
         public static NavCodeAnalysis.PropertyKind UseTemporary => _useTemporary.Value;
     }
 
