@@ -38,6 +38,31 @@ namespace ALCops.LinterCop.Test
             </xliff>
             """);
 
+        // Object-level ToolTip trans-units for page MyPage and report MyReport: the object segment
+        // followed by the hashed canonical property name ("ToolTip" hashes to 1295455071).
+        private static readonly byte[] TranslatedObjectToolTipXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="da-DK" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="Page 2931038265 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>Shows my page.</source>
+                      <target>Viser min side.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Property ToolTip</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>Runs my report.</source>
+                      <target>Kører min rapport.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - Property ToolTip</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
         // Trans-unit id for a table Caption in namespace "MyCompany.App" when the compiler feature
         // TranslationsWithNamespaces is enabled: namespace-prefixed, unhashed segments joined by " - ".
         private static readonly byte[] NamespaceTranslatedTableCaptionXliffContent = System.Text.Encoding.UTF8.GetBytes(
@@ -248,6 +273,21 @@ namespace ALCops.LinterCop.Test
                 });
         }
 
+        private static AnalyzerTestFixture CreateFixtureWithTranslatedObjectToolTipXliff()
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "Translations/TestApp.da-DK.xlf", TranslatedObjectToolTipXliffContent }
+            };
+            var fileSystem = new MemoryFileSystem(files);
+
+            return RoslynFixtureFactory.Create<Analyzers.TranslatableTextShouldBeTranslated>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = fileSystem
+                });
+        }
+
         private static AnalyzerTestFixture CreateFixtureWithTranslatedPageControlToolTipXliff()
         {
             var files = new Dictionary<string, byte[]>
@@ -319,7 +359,9 @@ namespace ALCops.LinterCop.Test
         [TestCase("EnumValueCaption")]
         [TestCase("PageControlToolTip")]
         [TestCase("PageAnalysisViewCaption")]
+        [TestCase("PageObjectToolTip")]
         [TestCase("ReportLabel")]
+        [TestCase("ReportObjectToolTip")]
         [TestCase("ObsoletePendingTableCaption")]
         [TestCase("ObsoletePendingTableFieldCaption")]
         [TestCase("ObsoletePendingPageControlToolTip")]
@@ -338,6 +380,13 @@ namespace ALCops.LinterCop.Test
                 "PageAnalysisView requires net10.0 SDK."
             );
 
+            SkipTestIfVersionIsTooLow(
+                ["PageObjectToolTip"],
+                testCase,
+                "18.0",
+                "ToolTip on a page object is not supported in versions lower than 18.0."
+            );
+
             var code = await File.ReadAllTextAsync(
                 Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
@@ -349,6 +398,8 @@ namespace ALCops.LinterCop.Test
         [Test]
         [TestCase("LockedLabel")]
         [TestCase("LockedReportLabel")]
+        [TestCase("LockedPageObjectToolTip")]
+        [TestCase("LockedReportObjectToolTip")]
         [TestCase("PageAnalysisViewLockedCaption")]
         [TestCase("ObsoleteRemovedTableCaption")]
         [TestCase("ObsoleteRemovedTableFieldCaption")]
@@ -364,6 +415,13 @@ namespace ALCops.LinterCop.Test
                 testCase,
                 "18.0.36",
                 "PageAnalysisView requires net10.0 SDK."
+            );
+
+            SkipTestIfVersionIsTooLow(
+                ["LockedPageObjectToolTip"],
+                testCase,
+                "18.0",
+                "ToolTip on a page object is not supported in versions lower than 18.0."
             );
 
             var code = await File.ReadAllTextAsync(
@@ -408,6 +466,29 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false);
 
             var fixture = CreateFixtureWithTranslatedReportLabelXliff();
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
+        [TestCase("TranslatedPageObjectToolTip")]
+        [TestCase("TranslatedReportObjectToolTip")]
+        public async Task NoDiagnosticTranslatedObjectToolTip(string testCase)
+        {
+            RequireMinimumVersion("16.0",
+                "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
+
+            SkipTestIfVersionIsTooLow(
+                ["TranslatedPageObjectToolTip"],
+                testCase,
+                "18.0",
+                "ToolTip on a page object is not supported in versions lower than 18.0."
+            );
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithTranslatedObjectToolTipXliff();
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
         }
 
