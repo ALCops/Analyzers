@@ -11,10 +11,11 @@ namespace ALCops.Common.Reflection;
 /// - The VersionCompatibility class gains new static fields with each Business Central release
 /// - Direct field references would break compilation when using older dependency versions
 /// - Using reflection maintains backward compatibility across dependency versions
-/// - The SDK adds an *OrGreater field one or more releases after the runtime version it describes
-///   (Fall2025OrGreater, runtime 16.0, first appears in SDK 18.0; SDK 18.0 has RuntimeVersion.Fall2026
-///   but no Fall2026OrGreater). A missing field therefore resolves to VersionCompatibility.Parse of its
-///   runtime version, so a rule is never disabled on an SDK that supports its runtime version.
+/// - The SDK can support a runtime version before it ships the matching *OrGreater field: early builds of
+///   SDK 13.0, 14.0 and 16.0 lack Spring2024OrGreater, Fall2024OrGreater and Fall2025OrGreater, and SDK 18.0
+///   has RuntimeVersion.Fall2026 but no Fall2026OrGreater. A missing field therefore resolves to
+///   VersionCompatibility.Parse of its runtime version, so a rule is never disabled on an SDK that supports
+///   its runtime version.
 /// 
 /// USAGE:
 /// Use VersionProvider.VersionCompatibility.* instead of Microsoft.Dynamics.Nav.CodeAnalysis.VersionCompatibility.*
