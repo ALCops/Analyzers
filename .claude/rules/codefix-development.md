@@ -132,12 +132,13 @@ Copy the nearest existing provider rather than inventing a transformation:
 | Plain text edit (`SourceText.WithChanges`) | `CasingMismatchKeyword` (the only one; prefer syntax rewrites) |
 | Add `Locked = true` to a label | `EmptyCaptionLocked`, `LabelWithTokSuffixMustBeLocked` |
 | Remove siblings from a `SeparatedSyntaxList` with FixAll | `ParameterNotReferencedCodeFixProvider` |
-| Insert a statement before another, using the semantic model | `UsePartialRecordsOnRead` |
-| Wrap an embedded statement (if/else branch, case line, loop body) in `begin..end`, with Fix All over nested wraps | `UsePartialRecordsOnRead` |
+| Insert a statement before another, wrapping an embedded statement (if/else branch, case line, loop body) in `begin..end`, with Fix All over nested edits | Common `SyntaxEditorExtensions.InsertStatementsBefore` with `FindStatementInsertionTarget` and `BlocksStatementInsertion` (`StatementSyntaxExtensions`); caller `UsePartialRecordsOnRead` |
 | Declare a codeunit variable and add its namespace `using` | `GlobalLanguageImplementTranslationHelper`, `RunPageImplementPageManagement` (Common: `FindCodeunitVariableName`, `AddLocalVariable`, `CodeunitVariableFactory`, `GetApplicationObjectNamespaceWithReflection`, `AddUsingDirectiveIfNeeded`) |
 | Move or remove nodes that may carry `#if` / `#pragma` / `#region` trivia | `PermissionDeclarationOrderCodeFixProvider`, `ParameterNotReferencedCodeFixProvider` |
 
 Always build the replacement from the existing nodes and tokens (`WithTriviaFrom`, keep the receiver expression) and guard every navigation step: a missing optional node returns the unchanged document instead of throwing.
+
+**SDK facts for statement edits.** `Microsoft.Dynamics.Nav.CodeAnalysis.Editing.SyntaxEditor` (Workspaces, public from the SDK 12 floor) composes nested edits: `GetChangedRoot` tracks every edited node and passes each `ReplaceNode` callback the already rewritten node, so an outer wrap and an inner insert need no index matching. `InsertBefore`/`InsertNodesBefore` only work on list members and throw for an embedded statement, which is why embedded targets are wrapped. `SyntaxFactory.Token(kind)` carries elastic trivia on both sides, and the elastic formatting rule turns an elastic gap before `end` into a blank line, so give `end` a real line break. The formatter never removes a line break: `end else` must come from the edit (the formatter gives `else` `PreserveLines(0)`), and the SDK's `SyntaxNormalizer` always breaks before `else`, so it cannot be used. A formatted span reaches from the token before an elastic trivia's token to the token after it.
 
 ## Compiler directives and disabled text
 
