@@ -135,6 +135,11 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("MergePermissionCharDottedName")]
         [TestCase("DeleteAllAddsRead")]
         [TestCase("ModifyAllAddsRead")]
+        [TestCase("DataTransferTwoTables")]
+        [TestCase("DataTransferSameTable")]
+        [TestCase("DeleteAllAddsReadAndDelete")]
+        [TestCase("ModifyAllAddsReadAndModify")]
+        [TestCase("DataTransferExistingPermissions")]
         public async Task HasFix(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(
@@ -152,6 +157,28 @@ namespace ALCops.ApplicationCop.Test
                 });
 
             fixture.TestCodeFix(currentCode, expectedCode, DiagnosticDescriptors.TableDataAccessRequiresPermissions);
+        }
+
+        [Test]
+        [TestCase("ObjectWideAddsAllTables", "MyCodeunit")]
+        public async Task HasFixObjectWide(string testCase, string objectName)
+        {
+            var currentCode = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasFix), testCase, "current.al"))
+                .ConfigureAwait(false);
+
+            var expectedCode = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasFix), testCase, "expected.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<TableDataAccessRequiresPermissionsCodeFixProvider>(
+                new CodeFixTestFixtureConfig
+                {
+                    AdditionalAnalyzers = [_analyzer]
+                });
+
+            fixture.TestCodeFix(currentCode, expectedCode, DiagnosticIds.TableDataAccessRequiresPermissions,
+                $"ALCops: Add all missing permissions to '{objectName}'");
         }
     }
 }
