@@ -35,7 +35,9 @@ public sealed class ToolTipPunctuation : DiagnosticAnalyzer
             EnumProvider.SyntaxKind.PageField,
             EnumProvider.SyntaxKind.PageAction,
             EnumProvider.SyntaxKind.Field,
-            EnumProvider.SyntaxKind.PageAnalysisView
+            EnumProvider.SyntaxKind.PageAnalysisView,
+            EnumProvider.SyntaxKind.PageObject,
+            EnumProvider.SyntaxKind.ReportObject
         ));
 
     private static void AnalyzeToolTipPunctuation(SyntaxNodeAnalysisContext ctx, Compilation compilation)
