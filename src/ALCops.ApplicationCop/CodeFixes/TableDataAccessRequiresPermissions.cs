@@ -84,12 +84,12 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         }
     }
 
-    private sealed class AddAllPermissionsCodeAction : CodeAction.DocumentChangeAction
+    private sealed class TableDataAccessRequiresPermissionsObjectCodeAction : CodeAction.DocumentChangeAction
     {
         public override CodeActionKind Kind => CodeActionKind.Refactor;
         public override bool SupportsFixAll => false;
 
-        public AddAllPermissionsCodeAction(string title,
+        public TableDataAccessRequiresPermissionsObjectCodeAction(string title,
             Func<CancellationToken, Task<Document>> createChangedDocument, string equivalenceKey)
             : base(title, createChangedDocument, equivalenceKey)
         {
@@ -173,7 +173,7 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
             return;
 
         ctx.RegisterCodeFix(
-            new AddAllPermissionsCodeAction(
+            new TableDataAccessRequiresPermissionsObjectCodeAction(
                 string.Format(ApplicationCopAnalyzers.TableDataAccessRequiresPermissionsObjectCodeAction, objectIdentity.Name),
                 ct => ApplyObjectWideFix(document, objectIdentity, ct),
                 nameof(TableDataAccessRequiresPermissionsCodeFixProvider) + "ObjectWide"),
@@ -270,8 +270,10 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        // The driver keeps pragma-suppressed diagnostics, flagged IsSuppressed; the editor hides them.
         var objectDiagnostics = diagnostics.Where(d =>
-            d.Id == DiagnosticDescriptors.TableDataAccessRequiresPermissions.Id
+            !d.IsSuppressed
+            && d.Id == DiagnosticDescriptors.TableDataAccessRequiresPermissions.Id
             && d.Location.SourceTree == semanticModel.SyntaxTree
             && objectSyntax.Span.Contains(d.Location.SourceSpan));
 

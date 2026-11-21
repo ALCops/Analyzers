@@ -161,6 +161,7 @@ namespace ALCops.ApplicationCop.Test
 
         [Test]
         [TestCase("ObjectWideAddsAllTables", "MyCodeunit")]
+        [TestCase("ObjectWidePragmaSuppressed", "MyCodeunit")]
         public async Task HasFixObjectWide(string testCase, string objectName)
         {
             var currentCode = await File.ReadAllTextAsync(
