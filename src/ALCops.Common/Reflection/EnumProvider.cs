@@ -211,6 +211,23 @@ public static class EnumProvider
         public static NavCodeAnalysis.BinaryOperationKind BooleanConditionalOr => _booleanConditionalOr.Value;
         public static NavCodeAnalysis.BinaryOperationKind BooleanOr => _booleanOr.Value;
     }
+
+    /// <summary>
+    /// ChangeKind enum values
+    /// </summary>
+    public static class ChangeKind
+    {
+        // default(ChangeKind) is Add, a real change kind, so a member missing from the loaded SDK must not
+        // resolve to it: a ChangeKind == Modify guard would then match every add block. The out-of-range
+        // sentinel matches no real kind and keeps every comparison false.
+        private const NavCodeAnalysis.Symbols.ChangeKind Unresolved = (NavCodeAnalysis.Symbols.ChangeKind)int.MaxValue;
+
+        private static readonly Lazy<NavCodeAnalysis.Symbols.ChangeKind> _modify =
+            new(() => ParseEnum(nameof(NavCodeAnalysis.Symbols.ChangeKind.Modify), Unresolved));
+
+        public static NavCodeAnalysis.Symbols.ChangeKind Modify => _modify.Value;
+    }
+
     /// <summary>
     /// CodeunitSubtypeKind enum values
     /// </summary>

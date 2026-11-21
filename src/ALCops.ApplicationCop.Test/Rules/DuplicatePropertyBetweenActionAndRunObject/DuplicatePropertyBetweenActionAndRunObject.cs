@@ -69,12 +69,14 @@ namespace ALCops.ApplicationCop.Test
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.DuplicatePropertyBetweenActionAndRunObject);
         }
 
-        // The RunObject target lives in a second workspace project, so the analyzer reads it as a
-        // reference symbol. NoException catches a crash on that symbol, which the marker assertion
-        // would hide behind the filtered AD0001.
+        // The RunObject target lives in a second workspace project. The workspace binds it as a source
+        // symbol, so a report's request page is reachable there too; an app consumed as a symbol package
+        // would bind reference symbols instead, which this harness cannot produce. NoException catches a
+        // crash on the foreign symbol, which the marker assertion would hide behind the filtered AD0001.
         [Test]
         [TestCase("DependencyPage")]
         [TestCase("DependencyReport")]
+        [TestCase("DependencyReportRequestPageAbout")]
         public async Task HasDiagnosticWithDependencyProject(string testCase)
         {
             RequireMinimumVersion("18.0", RuntimeGateReason);
@@ -85,20 +87,6 @@ namespace ALCops.ApplicationCop.Test
 
             fixture.NoException(code.Replace("[|", "").Replace("|]", ""));
             fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.DuplicatePropertyBetweenActionAndRunObject);
-        }
-
-        [Test]
-        [TestCase("DependencyReportRequestPageAbout")]
-        public async Task NoDiagnosticWithDependencyProject(string testCase)
-        {
-            RequireMinimumVersion("18.0", RuntimeGateReason);
-
-            var fixture = await CreateFixtureWithDependencyProject(testCase).ConfigureAwait(false);
-            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
-                .ConfigureAwait(false);
-
-            fixture.NoException(code.Replace("[|", "").Replace("|]", ""));
-            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.DuplicatePropertyBetweenActionAndRunObject);
         }
 
         // An explicit runtime below the gate: the SDK's VersionChecker then reads the runtime from the
