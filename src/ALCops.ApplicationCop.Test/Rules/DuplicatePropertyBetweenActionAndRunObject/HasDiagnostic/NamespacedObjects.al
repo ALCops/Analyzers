@@ -1,0 +1,21 @@
+namespace MyPublisher.MyExtension.MyAppDomain;
+
+page 50100 MyPage
+{
+    actions
+    {
+        area(Processing)
+        {
+            action(OpenCustomerList)
+            {
+                [|Caption = 'Customers';|]
+                RunObject = page MyPublisher.MyExtension.MyAppDomain.MyCustomerList;
+            }
+        }
+    }
+}
+
+page 50101 MyCustomerList
+{
+    Caption = 'Customers';
+}
