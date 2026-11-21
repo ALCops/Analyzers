@@ -11,7 +11,10 @@ namespace ALCops.Common.Reflection;
 /// - The VersionCompatibility class gains new static fields with each Business Central release
 /// - Direct field references would break compilation when using older dependency versions
 /// - Using reflection maintains backward compatibility across dependency versions
-/// - Returns a "never supported" VersionCompatibility when a field doesn't exist
+/// - When a field doesn't exist, returns VersionCompatibility.Parse(fallbackRange) if a range is given,
+///   otherwise a "never supported" VersionCompatibility. A range is given for fields whose version is
+///   known: an SDK can ship the runtime version before the matching *OrGreater field (SDK 18.0 has
+///   RuntimeVersion.Fall2026 but no Fall2026OrGreater), and never-supported would disable those rules there.
 /// 
 /// USAGE:
 /// Use VersionProvider.VersionCompatibility.* instead of Microsoft.Dynamics.Nav.CodeAnalysis.VersionCompatibility.*
@@ -34,15 +37,22 @@ public static class VersionProvider
     /// 
     /// This method uses reflection to access static fields from strings, providing
     /// backward compatibility when new version fields are added in newer dependency versions.
+    /// A missing field resolves to <paramref name="fallbackRange"/> parsed by
+    /// VersionCompatibility.Parse (e.g. "18.0" = 18.0 or greater), or to never-supported without one.
     /// </summary>
-    private static NavCodeAnalysis.VersionCompatibility GetVersionCompatibility(string fieldName)
+    private static NavCodeAnalysis.VersionCompatibility GetVersionCompatibility(string fieldName, string? fallbackRange = null)
     {
         var lazy = new Lazy<NavCodeAnalysis.VersionCompatibility>(() =>
         {
             var field = typeof(NavCodeAnalysis.VersionCompatibility)
                 .GetField(fieldName, BindingFlags.Public | BindingFlags.Static);
 
-            return field?.GetValue(null) as NavCodeAnalysis.VersionCompatibility ?? _neverSupported.Value;
+            if (field?.GetValue(null) is NavCodeAnalysis.VersionCompatibility value)
+                return value;
+
+            return fallbackRange is null
+                ? _neverSupported.Value
+                : NavCodeAnalysis.VersionCompatibility.Parse(fallbackRange);
         }, LazyThreadSafetyMode.PublicationOnly);
 
         return lazy.Value;
@@ -51,8 +61,8 @@ public static class VersionProvider
     /// <summary>
     /// Provides reflection-based access to VersionCompatibility static fields.
     /// Mirrors the Microsoft.Dynamics.Nav.CodeAnalysis.VersionCompatibility API.
-    /// When a field doesn't exist in the current version, returns a VersionCompatibility
-    /// that never matches, effectively disabling the analyzer.
+    /// When a field doesn't exist in the current version, returns the field's fallback range
+    /// if it has one, otherwise a VersionCompatibility that never matches (disabling the analyzer).
     /// </summary>
     public static class VersionCompatibility
     {
@@ -72,6 +82,8 @@ public static class VersionProvider
             new(() => GetVersionCompatibility("Fall2024OrGreater"));
         private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _fall2025OrGreater =
             new(() => GetVersionCompatibility("Fall2025OrGreater"));
+        private static readonly Lazy<NavCodeAnalysis.VersionCompatibility> _fall2026OrGreater =
+            new(() => GetVersionCompatibility("Fall2026OrGreater", "18.0"));
 
         public static NavCodeAnalysis.VersionCompatibility Fall2019OrGreater => _fall2019OrGreater.Value;
         public static NavCodeAnalysis.VersionCompatibility Spring2021OrGreater => _spring2021OrGreater.Value;
@@ -81,5 +93,6 @@ public static class VersionProvider
         public static NavCodeAnalysis.VersionCompatibility Spring2024OrGreater => _spring2024OrGreater.Value;
         public static NavCodeAnalysis.VersionCompatibility Fall2024OrGreater => _fall2024OrGreater.Value;
         public static NavCodeAnalysis.VersionCompatibility Fall2025OrGreater => _fall2025OrGreater.Value;
+        public static NavCodeAnalysis.VersionCompatibility Fall2026OrGreater => _fall2026OrGreater.Value;
     }
-}
+}
