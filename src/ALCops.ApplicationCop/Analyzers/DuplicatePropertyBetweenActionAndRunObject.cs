@@ -114,7 +114,8 @@ public sealed class DuplicatePropertyBetweenActionAndRunObject : DiagnosticAnaly
             return;
 
         var actionProperty = actionOrChange.GetProperty(kind);
-        if (actionProperty is null)
+        // An empty value (ToolTip = '') deliberately suppresses the inherited one; it is not a copy.
+        if (actionProperty is null || string.IsNullOrEmpty(actionProperty.ValueText))
             return;
 
         // A modify block that overrides a value the base action sets itself replaces that value, not the

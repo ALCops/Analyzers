@@ -47,6 +47,7 @@ namespace ALCops.ApplicationCop.Test
         [Test]
         [TestCase("DifferentValue")]
         [TestCase("DifferentCase")]
+        [TestCase("EmptyValue")]
         [TestCase("TargetWithoutProperty")]
         [TestCase("CodeunitTarget")]
         [TestCase("ObsoleteAction")]

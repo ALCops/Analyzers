@@ -20,6 +20,7 @@ Registers `RegisterSymbolAction` on `Action` and `Change` (modify blocks); main 
 | Severity Info, enabled by default | The BC w1 29 Base App has about 2,590 `Caption` duplicates; Info surfaces them without ever breaking a CI build. |
 | Label attributes (`Locked`, `Comment`, `MaxLength`) are ignored | Only the value decides what the runtime shows; comparing attributes would hide duplicates that differ in a translator comment. |
 | Ordinal, case-sensitive comparison of `ValueText` | A value that differs only in case is a different trans-unit and a different caption, so it is not a copy. |
+| Empty values are never reported | An empty override such as `ToolTip = ''` deliberately suppresses the inherited value; it is not a copy, even when the target is empty too. |
 | `modify` blocks in page extensions are reported only when the base action sets neither the property nor its ML variant | When the base action sets its own value, the modify replaces that value; removing the modify would bring back the base value, not the target's. |
 | Page customizations are excluded | Customizations are not translated, so a copy there adds no trans-unit; their action `Caption` and `ToolTip` are not even customization-modifiable. |
 | A report's About* values come from its request page, found through the public `GetMembers()` | `IReportTypeSymbol` exposes no public request page; the emitter also reads report About* from the request page. |
@@ -30,6 +31,7 @@ Registers `RegisterSymbolAction` on `Action` and `Change` (modify blocks); main 
 - Groups, areas, `actionref`s, custom actions, system actions and file-upload actions: only `ActionKind.Action` has a `RunObject` fallback.
 - `RunObject` targets other than pages and reports (codeunits, xmlports, queries): they have no caption fallback.
 - Obsolete actions, obsolete modify blocks, obsolete base actions and obsolete targets.
+- An action property with an empty value, whatever the target declares.
 - A target that does not declare the property, or declares only its ML variant: there is nothing to duplicate.
 - An action that sets only the ML variant: the compiler rejects `Caption` together with `CaptionML` (AL0428), so ML values are never compared.
 - `modify` of a page control: the base page's actions are searched by name, and AL rejects a control and an action with the same name on one page (AL0155), so a control modify finds no action.
