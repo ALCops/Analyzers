@@ -85,6 +85,7 @@ public sealed class UsePartialRecordsOnReadCodeFixProvider : CodeFixProvider
             .Where(span => regions.IsDefaultOrEmpty || regions.Any(region => region.IntersectsWith(span)))
             .ToImmutableArray();
 
+        // Returns the unchanged document when every read bails out, as the house Fix All template does.
         return await ApplyEditsAsync(document, spans, fixAllContext.CancellationToken).ConfigureAwait(false);
     }
 

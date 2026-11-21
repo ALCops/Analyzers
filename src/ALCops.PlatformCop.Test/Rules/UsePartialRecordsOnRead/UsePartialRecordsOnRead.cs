@@ -163,6 +163,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("WithBodyWithoutBlock")]
         [TestCase("SameLineElse")]
         [TestCase("AssertErrorStatement")]
+        [TestCase("ElseBranchOnly")]
+        [TestCase("AssertErrorEmbeddedIf")]
         [TestCase("ElseAfterConditionalDirective")]
         [TestCase("RegionAroundEmbeddedStatement")]
         public async Task HasFix(string testCase)
@@ -195,6 +197,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("WrapInsideWrap")]
         [TestCase("InsertInsideWrap")]
         [TestCase("WrapInsideWrapWithElse")]
+        [TestCase("BothBranchesWrapped")]
         public async Task HasFixAll(string testCase)
         {
             var currentCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasFixAll), testCase, "current.al"))
