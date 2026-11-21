@@ -363,6 +363,12 @@
   <data name="TableDataAccessRequiresPermissionsCodeAction" xml:space="preserve">
     <value>ALCops: Add missing permission '{0}' for table '{1}'</value>
   </data>
+  <data name="TableDataAccessRequiresPermissionsMultipleCodeAction" xml:space="preserve">
+    <value>ALCops: Add missing permissions '{0}'</value>
+  </data>
+  <data name="TableDataAccessRequiresPermissionsObjectCodeAction" xml:space="preserve">
+    <value>ALCops: Add all missing permissions to '{0}'</value>
+  </data>
   <data name="TableDataPerCompanyDeclarationTitle" xml:space="preserve">
     <value>DataPerCompany must be explicitly set on table objects</value>
   </data>

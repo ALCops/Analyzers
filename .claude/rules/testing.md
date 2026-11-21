@@ -123,6 +123,8 @@ HasFix files use current/expected pairs:
 
 `HasFix` / `HasFixAll` test methods and their `current.al` / `expected.al` layout: `.claude/skills/new-codefix/references/hasfix-tests.md` (used by `/new-codefix`). Key rule: `TestCodeFix` takes the `DiagnosticDescriptor` object, `TestFixAll` takes the ID string.
 
+From RoslynTestKit 1.7.0, `TestCodeFix` and `NoCodeFix` pass every fixable diagnostic on the located span to the `CodeFixContext` (descending severity, the located one first on ties), as the editor host does, so a provider that ignores `Diagnostics[1..]` fails its HasFix test. `TestFixAll` still passes one diagnostic per context, like the BatchFixer.
+
 ### Multi-document fixtures
 
 A fixture can hold several documents of one project, separated by a line containing exactly `/*EOD*/`. The first segment is the document under test; the others are extra project files, for example an object declared in another namespace that a fix resolves from the compilation. `expected.al` carries the same segments, because the harness appends the other documents after the fixed one when comparing. Each segment is trimmed, so put no blank lines around the separator and end the file without a trailing newline.
