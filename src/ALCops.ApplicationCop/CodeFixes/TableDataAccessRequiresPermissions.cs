@@ -6,6 +6,7 @@ using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeActions.Mef;
 using Microsoft.Dynamics.Nav.CodeAnalysis.CodeFixes;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces;
 
@@ -83,6 +84,29 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         }
     }
 
+    /// <summary>
+    /// The permission chars one table needs, merged in canonical order so a table reported
+    /// several times (one diagnostic per char) is edited and named once.
+    /// </summary>
+    private sealed class TablePermissionFix
+    {
+        public ResolvedTableName Resolved { get; }
+        public string RawTableName { get; }
+        public string TableNamespace { get; }
+        public string PermissionChars { get; set; } = string.Empty;
+
+        public TablePermissionFix(ResolvedTableName resolved, string rawTableName, string tableNamespace)
+        {
+            Resolved = resolved;
+            RawTableName = rawTableName;
+            TableNamespace = tableNamespace;
+        }
+
+        public string DisplayName => Resolved.QualifyingNamespace is not null
+            ? $"{Resolved.QualifyingNamespace}.{Resolved.TableName}"
+            : Resolved.TableName;
+    }
+
     public sealed override ImmutableArray<string> FixableDiagnosticIds =>
         ImmutableArray.Create(DiagnosticDescriptors.TableDataAccessRequiresPermissions.Id);
 
@@ -104,11 +128,6 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
     private static void RegisterInstanceCodeFix(CodeFixContext ctx, SyntaxNode syntaxRoot,
         TextSpan span, Document document)
     {
-        var diagnostic = ctx.Diagnostics[0];
-        var props = CodeFixProperties.TryParse(diagnostic.Properties);
-        if (props is null)
-            return;
-
         var node = syntaxRoot.FindNode(span);
         var objectSyntax = node.FirstAncestorOrSelf<ObjectSyntax>();
         if (objectSyntax is null)
@@ -122,34 +141,83 @@ public sealed class TableDataAccessRequiresPermissionsCodeFixProvider : CodeFixP
         // This is critical for FixAll: BatchFixer applies fixes sequentially, and each fix may
         // modify the tree. Using a stale objectSyntax reference causes ReplaceNode to fail silently.
         var objectIdentity = GetObjectIdentity(objectSyntax);
-
-        // Resolve table name using C#-like namespace resolution
         var compilationUnit = objectSyntax.FirstAncestorOrSelf<CompilationUnitSyntax>();
-        var resolved = ResolveTableNameForFix(props.TableName, props.TableNamespace, compilationUnit);
+
+        // The host hands every fixable diagnostic on one span to a single context: a DataTransfer
+        // executor reports one per table, DeleteAll and ModifyAll one per char. One action fixes them all.
+        var fixes = CollectFixes(ctx.Diagnostics, compilationUnit);
+        if (fixes.Count == 0)
+            return;
 
         ctx.RegisterCodeFix(
-            CreateCodeAction(objectIdentity, resolved, props.TableName, props.PermissionChar, document, generateFixAll: true),
-            diagnostic);
+            new TableDataAccessRequiresPermissionsCodeAction(
+                GetTitle(fixes),
+                ct => ApplyFixes(document, objectIdentity, fixes, ct),
+                nameof(TableDataAccessRequiresPermissionsCodeFixProvider),
+                generateFixAll: true),
+            ctx.Diagnostics);
+
     }
 
-    private static TableDataAccessRequiresPermissionsCodeAction CreateCodeAction(
-        (SyntaxKind Kind, string? Name) objectIdentity, ResolvedTableName resolved,
-        string rawTableName, char permissionChar, Document document, bool generateFixAll)
+    private static List<TablePermissionFix> CollectFixes(IEnumerable<Diagnostic> diagnostics,
+        CompilationUnitSyntax? compilationUnit)
     {
-        var displayName = resolved.QualifyingNamespace is not null
-            ? $"{resolved.QualifyingNamespace}.{resolved.TableName}"
-            : resolved.TableName;
+        var fixes = new List<TablePermissionFix>();
+        foreach (var diagnostic in diagnostics)
+        {
+            var props = CodeFixProperties.TryParse(diagnostic.Properties);
+            if (props is null)
+                continue;
 
-        var title = string.Format(
-            ApplicationCopAnalyzers.TableDataAccessRequiresPermissionsCodeAction,
-            permissionChar,
-            displayName);
+            var fix = fixes.Find(f =>
+                f.RawTableName.IsSameName(props.TableName) && f.TableNamespace.IsSameName(props.TableNamespace));
+            if (fix is null)
+            {
+                // Resolve table name using C#-like namespace resolution
+                var resolved = ResolveTableNameForFix(props.TableName, props.TableNamespace, compilationUnit);
+                fix = new TablePermissionFix(resolved, props.TableName, props.TableNamespace);
+                fixes.Add(fix);
+            }
 
-        return new TableDataAccessRequiresPermissionsCodeAction(
-            title,
-            ct => ApplyFix(document, objectIdentity, resolved, rawTableName, permissionChar, ct),
-            nameof(TableDataAccessRequiresPermissionsCodeFixProvider),
-            generateFixAll);
+            fix.PermissionChars = PermissionSyntaxHelper.NormalizePermissionString(fix.PermissionChars, props.PermissionChar);
+        }
+
+        return fixes;
+    }
+
+    private static string GetTitle(List<TablePermissionFix> fixes)
+    {
+        if (fixes.Count == 1 && fixes[0].PermissionChars.Length == 1)
+        {
+            return string.Format(
+                ApplicationCopAnalyzers.TableDataAccessRequiresPermissionsCodeAction,
+                fixes[0].PermissionChars,
+                fixes[0].DisplayName);
+        }
+
+        return string.Format(
+            ApplicationCopAnalyzers.TableDataAccessRequiresPermissionsMultipleCodeAction,
+            string.Join(", ", fixes.Select(f => $"{f.DisplayName} = {f.PermissionChars}")));
+    }
+
+    /// <summary>
+    /// Applies one char at a time on the evolving document: <see cref="ApplyFix"/> re-finds the
+    /// object and merges or inserts in canonical order, so the edits compose without new merge logic.
+    /// </summary>
+    private static async Task<Document> ApplyFixes(Document document,
+        (SyntaxKind Kind, string? Name) objectIdentity, List<TablePermissionFix> fixes,
+        CancellationToken cancellationToken)
+    {
+        foreach (var fix in fixes)
+        {
+            foreach (var permissionChar in fix.PermissionChars)
+            {
+                document = await ApplyFix(document, objectIdentity, fix.Resolved, fix.RawTableName,
+                    permissionChar, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        return document;
     }
 
     private static async Task<Document> ApplyFix(Document document,
