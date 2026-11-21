@@ -27,9 +27,23 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("PageAction")]
         [TestCase("PageAnalysisView")]
         [TestCase("PageField")]
+        [TestCase("PageObject")]
+        [TestCase("ReportObject")]
         [TestCase("TableField")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["PageObject"],
+                testCase,
+                "18.0",
+                "ToolTip on a page object is not supported in versions lower than 18.0."
+            );
+            SkipTestIfVersionIsTooLow(
+                ["ReportObject"],
+                testCase,
+                "15.0",
+                "ToolTip on a report object is not supported in versions lower than 15.0."
+            );
             SkipTestIfVersionIsTooLow(
                 ["TableField"],
                 testCase,
@@ -54,9 +68,23 @@ namespace ALCops.ApplicationCop.Test
         [TestCase("PageAction")]
         [TestCase("PageAnalysisView")]
         [TestCase("PageField")]
+        [TestCase("PageObject")]
+        [TestCase("ReportObject")]
         [TestCase("TableField")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["PageObject"],
+                testCase,
+                "18.0",
+                "ToolTip on a page object is not supported in versions lower than 18.0."
+            );
+            SkipTestIfVersionIsTooLow(
+                ["ReportObject"],
+                testCase,
+                "15.0",
+                "ToolTip on a report object is not supported in versions lower than 15.0."
+            );
             SkipTestIfVersionIsTooLow(
                 ["TableField"],
                 testCase,

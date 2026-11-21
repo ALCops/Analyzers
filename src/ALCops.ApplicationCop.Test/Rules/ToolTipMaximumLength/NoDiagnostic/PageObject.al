@@ -1,0 +1,30 @@
+page 50100 MyPage
+{
+    // Exactly within maximum length of 200 characters
+    ToolTip = [|'Lorem ipsum dolor sit amet invidunt sanctus eirmod accusam elitr eirmod elit invidunt aliquyam. Nonumy et at nonummy labore duo odio rebum sed sed sed. Amet lorem dolor. Amet ipsum dolor sit aliquip a'|];
+
+    layout
+    {
+        area(Content)
+        {
+            field(MyField; MyField)
+            {
+                ToolTip = 'Specifies the value.';
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(MyAction)
+            {
+                ToolTip = 'Runs the action.';
+            }
+        }
+    }
+
+    var
+        MyField: Text;
+}
