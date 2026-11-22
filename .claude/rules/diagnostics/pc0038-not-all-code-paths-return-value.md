@@ -14,7 +14,7 @@ The rule excludes TryFunction methods.
 
 Registers `RegisterSyntaxNodeAction` on `SyntaxKind.MethodDeclaration`; main type `NotAllCodePathsReturnValue`, with flow-terminating calls classified by `ALCops.Common.FlowTerminatingBuiltIns`.
 
-**References:** [#463](https://github.com/ALCops/Analyzers/issues/463) (`FieldError` false positive), [#468](https://github.com/ALCops/Analyzers/issues/468) (built-in name matching), [#471](https://github.com/ALCops/Analyzers/issues/471) (flow edge cases), [#596](https://github.com/ALCops/Analyzers/issues/596) (named record return).
+**References:** [#463](https://github.com/ALCops/Analyzers/issues/463) (`FieldError` false positive), [#468](https://github.com/ALCops/Analyzers/issues/468) (built-in name matching), [#471](https://github.com/ALCops/Analyzers/issues/471) (flow edge cases), [#596](https://github.com/ALCops/Analyzers/issues/596) (named record return), [#656](https://github.com/ALCops/Analyzers/issues/656) (interface default method bodies).
 
 ## Design decisions
 
@@ -36,12 +36,14 @@ Registers `RegisterSyntaxNodeAction` on `SyntaxKind.MethodDeclaration`; main typ
 | A `case` over an enum or option without `else` is exhaustive when every value visible in the current compilation is covered | Matches how the compiler sees the enum, including enum-extension values; a missing `else` on an exhaustive `case` is not a missing return |
 | Named-return target matching falls back to symbol kind `ReturnValue`, never to name alone | Name comparison misclassified member accesses sharing the return variable's name (`Buf.Result := 5;` with a field named `Result`) |
 | Loops conservatively include the non-executed path for optional loops; `break` is a loop exit, not body fallthrough | A loop body that may not run cannot guarantee a return, and a `repeat until` left through `break` never evaluates its condition |
+| Interface methods with a default body (runtime 18.0+) are analyzed like codeunit methods, including an empty default body with a return type | A fallthrough silently returns the type's default value in an interface exactly as in a codeunit, and a default body is the contract implementers read, so its neutral answer should be an explicit `exit(<value>)` such as `exit(false)`. Abstract interface members have no body and are skipped by the `Body is null` check |
 | Reported at the method name | User requirement |
 
 ## Deliberate non-reports
 
 - Triggers, even with a return type.
 - TryFunction methods.
+- Abstract interface members, even with a return type: they have no body.
 - Paths ending in a clean `Dialog.Error`, `Table.FieldError` or `FieldRef.FieldError` call, or in an incomplete call whose receiver binds to one of those types.
 - Named returns or their fields passed by `var` or used as a receiver: assumed assigned, even when the callee never writes.
 - Named record returns initialized only through field or property assignments, or only through view-state calls (`SetRange`, `SetFilter`, `SetCurrentKey`, `SetLoadFields`).
@@ -73,4 +75,5 @@ Registers `RegisterSyntaxNodeAction` on `SyntaxKind.MethodDeclaration`; main typ
 ## Test notes
 
 - Fixtures are gated with `SkipTestIfVersionIsTooLow`: an enum extension declared in the same module needs runtime `13.0`; the ternary conditional expression and `this` need `14.0`.
+- The interface fixtures are gated with `RequireMinimumVersion("18.0", ...)` in separate `*Interface` test methods: interface method default bodies need runtime 18.0.
 - Incomplete `Error`/`FieldError` calls are tested with a second fixture created with `ThrowsWhenInputDocumentContainsError = false`; those test methods are named `*InDocumentWithErrors`.

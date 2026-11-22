@@ -4,6 +4,9 @@ namespace ALCops.PlatformCop.Test;
 
 public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
 {
+    private const string DefaultInterfaceMethodGateReason =
+        "Default interface method bodies need runtime 18.0; the harness compiles at the SDK's current release.";
+
     private AnalyzerTestFixture _fixture;
     private AnalyzerTestFixture _errorTolerantFixture;
     private string _testCasePath;
@@ -132,6 +135,35 @@ public class NotAllCodePathsReturnValue : NavCodeAnalysisBase
             testCase,
             "11.0",
             "The ReadIsolation record property requires runtime version 11.0.");
+
+        var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+            .ConfigureAwait(false);
+
+        _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.NotAllCodePathsReturnValue);
+        _fixture.NoException(code.Replace("[|", "").Replace("|]", ""));
+    }
+
+    // An interface method with a default body (runtime 18.0) is analyzed like a codeunit method,
+    // including an empty body; an abstract member has no body and is never reported.
+    [Test]
+    [TestCase("InterfaceDefaultBodyMissingReturn")]
+    [TestCase("InterfaceDefaultBodyEmpty")]
+    public async Task HasDiagnosticInterface(string testCase)
+    {
+        RequireMinimumVersion("18.0", DefaultInterfaceMethodGateReason);
+
+        var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+            .ConfigureAwait(false);
+
+        _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.NotAllCodePathsReturnValue);
+    }
+
+    [Test]
+    [TestCase("InterfaceDefaultBodyAllPathsReturn")]
+    [TestCase("InterfaceAbstractWithReturnType")]
+    public async Task NoDiagnosticInterface(string testCase)
+    {
+        RequireMinimumVersion("18.0", DefaultInterfaceMethodGateReason);
 
         var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
             .ConfigureAwait(false);
