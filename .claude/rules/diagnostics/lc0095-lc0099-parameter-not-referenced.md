@@ -29,6 +29,7 @@ Registers `CodeBlockAction`; main type `ParameterNotReferenced` (descriptor sele
 
 - Local methods: CodeCop AA0137 already covers them; avoids duplicate diagnostics.
 - Interface implementations: the parameters are contractually required.
+- Default interface method bodies (runtime 18.0): the interface declares the contract for all implementers, and defaults are typically no-op hooks or overload bridges that ignore a parameter by design (Microsoft's PEPPOL Tax Info Provider interface, w1-29, ships one of each). A codeunit that overrides a default method is already covered by the interface-implementation exemption, also when the interface comes from a dependency app.
 - Handler functions (`MessageHandler`, `ConfirmHandler`, ...): platform-enforced signatures, detected through reflection on `MethodSymbol.IsHandler`.
 - ErrorInfo/Notification `AddAction` callbacks: a single `ErrorInfo`/`Notification` parameter on a public/internal codeunit method is required by the platform API.
 - Triggers: platform-defined signatures.
@@ -38,10 +39,12 @@ Registers `CodeBlockAction`; main type `ParameterNotReferenced` (descriptor sele
 ## SDK facts
 
 - `OperationWalker` does not descend into `IIsExpression`, `IAsExpression`, `IConditionalOperatorExpression` (SDK 14+), the test page accesses (`ITestPartAccess`, `ITestFilterAccess`, `ITestFilterFieldAccess`), `IPagePartAccess`, `IQueryElementAccess`, `IQueryDataItemAccess`, `ITableKeyAccess`, `ITableFieldGroupAccess`, the report accesses (`IReportLabelAccess`, `IReportDataItemAccess`, `IReportColumnAccess`, `IReportLayoutAccess`) or `IXmlPortNodeAccess`: they fall to `DefaultVisit`. `IOperation` has no `Children`. The access kinds have visit methods at the 12.0 floor, so the walker overrides them to visit their `Instance`. Is/as/conditional do not exist in the netstandard SDK the analyzer compiles against, so only they (and operand-free leaves) go through a `DefaultVisit` override that confirms candidates by name on the node's syntax.
+- A default-bodied interface method has the interface type symbol as its `ContainingSymbol` (the SDK's own `MethodSymbol.IsDefaultInterfaceMethod` tests `ContainingSymbol.Kind == SymbolKind.Interface`, nav-sdk-source v30.0.44.47290-prerelease `Microsoft.Dynamics.Nav.CodeAnalysis/net10.0/Microsoft.Dynamics.Nav.CodeAnalysis.Symbols/MethodSymbol.cs:96`), so the analyzer checks `ContainingSymbol is IInterfaceTypeSymbol`, which exists at the 12.0 floor. `IMethodSymbol.IsOptional` would say the same but is missing from the 12.0 (netstandard) SDK. Below runtime 18.0 an interface method has no body, so the check needs no runtime gate.
 
 ## Test notes
 
 - `RequireMinimumVersion("13.0")` on all tests: `IMethodSymbol.IsLocal` is only reliable from SDK v13.
+- The default-interface-method tests (`*DefaultInterfaceMethod`, `NoDiagnosticWithDependencyProject`) are gated at 18.0: default bodies need runtime 18.0 and the harness compiles at the SDK's current release. The dependency case puts the interface in a `DependencyProjects` workspace project.
 - Fixture sets include `HasFixAll/` (multi-parameter, comments, pragmas, mixed procedure kinds) and `NoFix/` (conditional-compilation parameter).
 
 ## CodeFix: ParameterNotReferencedCodeFixProvider

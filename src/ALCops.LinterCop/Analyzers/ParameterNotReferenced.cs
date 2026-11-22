@@ -169,6 +169,10 @@ public sealed class ParameterNotReferenced : DiagnosticAnalyzer
         if (method.MethodImplementsInterfaceMethod())
             return null;
 
+        // Default interface method bodies: the interface contract fixes the signature for every implementer
+        if (method.ContainingSymbol is IInterfaceTypeSymbol)
+            return null;
+
         return DiagnosticDescriptors.ParameterNotReferenced;
     }
 
