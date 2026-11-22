@@ -20,9 +20,24 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         VersionProvider.VersionCompatibility.Fall2025OrGreater;
 
     public override void Initialize(AnalysisContext context) =>
-        context.RegisterCompilationStartAction(start => start.RegisterCodeBlockAction(ctx => AnalyzeCodeBlock(ctx, start.Compilation)));
+        context.RegisterCompilationStartAction(start =>
+        {
+            // Keys declared in a tableextension are not part of the base table's Keys; they are only on
+            // the extension's AddedKeys. Built once per compilation, and only when a Guid field misses
+            // the table's own keys.
+            var tableExtensions = new Lazy<ImmutableArray<ITableExtensionTypeSymbol>>(
+                () => start.Compilation
+                    .GetApplicationObjectTypeSymbolsByKindAcrossModulesWithReflection(EnumProvider.SymbolKind.TableExtension)
+                    .OfType<ITableExtensionTypeSymbol>()
+                    .ToImmutableArray(),
+                LazyThreadSafetyMode.ExecutionAndPublication);
 
-    private static void AnalyzeCodeBlock(CodeBlockAnalysisContext context, Compilation compilation)
+            start.RegisterCodeBlockAction(ctx => AnalyzeCodeBlock(ctx, start.Compilation, tableExtensions));
+        });
+
+    private static void AnalyzeCodeBlock(
+        CodeBlockAnalysisContext context, Compilation compilation,
+        Lazy<ImmutableArray<ITableExtensionTypeSymbol>> tableExtensions)
     {
         if (context.IsObsolete() ||
             context.CodeBlock is not MethodOrTriggerDeclarationSyntax methodOrTrigger)
@@ -41,7 +56,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
             return;
 
         var walker = new CreateGuidFlowWalker(
-            context, flagAllGuidFields, context.CancellationToken);
+            context, flagAllGuidFields, tableExtensions, context.CancellationToken);
         walker.Visit(operation);
     }
 
@@ -90,14 +105,16 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
     {
         private readonly CodeBlockAnalysisContext _context;
         private readonly bool _flagAllGuidFields;
+        private readonly Lazy<ImmutableArray<ITableExtensionTypeSymbol>> _tableExtensions;
         private readonly CancellationToken _ct;
 
         public CreateGuidFlowWalker(
             CodeBlockAnalysisContext context, bool flagAllGuidFields,
-            CancellationToken ct)
+            Lazy<ImmutableArray<ITableExtensionTypeSymbol>> tableExtensions, CancellationToken ct)
         {
             _context = context;
             _flagAllGuidFields = flagAllGuidFields;
+            _tableExtensions = tableExtensions;
             _ct = ct;
         }
 
@@ -115,7 +132,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                 }
                 else if (operation.Target is IFieldAccess fieldAccess)
                 {
-                    var result = CheckFieldInKey(fieldAccess, _context.OwningSymbol);
+                    var result = CheckFieldInKey(fieldAccess, _tableExtensions, _context.OwningSymbol);
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
@@ -138,7 +155,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                         {
                             var result = TraceVariable(
                                 targetSymbol, bodyOp, _context.SemanticModel.Compilation,
-                                new HashSet<IMethodSymbol>(), _ct);
+                                _tableExtensions, new HashSet<IMethodSymbol>(), _ct);
                             if (result is not null)
                             {
                                 ReportDiagnostic(_context, createGuidInvocation,
@@ -181,7 +198,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                 // Validate(Field, CreateGuid())
                 if (IsValidateCall(operation) && i == 1 && operation.Arguments.Length >= 2)
                 {
-                    var result = CheckValidateTarget(operation, _context.OwningSymbol);
+                    var result = CheckValidateTarget(operation, _tableExtensions, _context.OwningSymbol);
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
@@ -196,7 +213,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                 {
                     var result = TraceParameter(
                         operation.TargetMethod, i, _context.SemanticModel.Compilation,
-                        new HashSet<IMethodSymbol>(), _ct);
+                        _tableExtensions, new HashSet<IMethodSymbol>(), _ct);
                     if (result is not null)
                     {
                         ReportDiagnostic(_context, createGuidInvocation,
@@ -233,7 +250,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                 var containing = _context.SemanticModel.GetDeclaredSymbol(member) as ISymbol;
                 var tracer = new SymbolFlowTracer(
                     globalVariable, _context.SemanticModel.Compilation,
-                    new HashSet<IMethodSymbol>(), _ct, containing);
+                    _tableExtensions, new HashSet<IMethodSymbol>(), _ct, containing);
                 tracer.Visit(bodyOp);
 
                 if (tracer.Result is not null)
@@ -266,15 +283,17 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
     private static KeyFieldResult? TraceVariable(
         ISymbol variable, IOperation methodBody, Compilation compilation,
+        Lazy<ImmutableArray<ITableExtensionTypeSymbol>> tableExtensions,
         HashSet<IMethodSymbol> visited, CancellationToken ct)
     {
-        var tracer = new SymbolFlowTracer(variable, compilation, visited, ct);
+        var tracer = new SymbolFlowTracer(variable, compilation, tableExtensions, visited, ct);
         tracer.Visit(methodBody);
         return tracer.Result;
     }
 
     private static KeyFieldResult? TraceParameter(
         IMethodSymbol method, int paramIndex, Compilation compilation,
+        Lazy<ImmutableArray<ITableExtensionTypeSymbol>> tableExtensions,
         HashSet<IMethodSymbol> visited, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -306,7 +325,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                 return null;
 
             var parameter = method.Parameters[paramIndex];
-            var tracer = new SymbolFlowTracer(parameter, compilation, visited, ct);
+            var tracer = new SymbolFlowTracer(parameter, compilation, tableExtensions, visited, ct);
             tracer.Visit(bodyOp);
             return tracer.Result;
         }
@@ -324,6 +343,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
     {
         private readonly ISymbol _tracked;
         private readonly Compilation _compilation;
+        private readonly Lazy<ImmutableArray<ITableExtensionTypeSymbol>> _tableExtensions;
         private readonly CancellationToken _ct;
         private readonly HashSet<IMethodSymbol> _visited;
         private readonly ISymbol? _containingSymbol;
@@ -332,11 +352,13 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
         public SymbolFlowTracer(
             ISymbol tracked, Compilation compilation,
+            Lazy<ImmutableArray<ITableExtensionTypeSymbol>> tableExtensions,
             HashSet<IMethodSymbol> visited, CancellationToken ct,
             ISymbol? containingSymbol = null)
         {
             _tracked = tracked;
             _compilation = compilation;
+            _tableExtensions = tableExtensions;
             _ct = ct;
             _visited = visited;
             _containingSymbol = containingSymbol ?? tracked.ContainingSymbol;
@@ -349,7 +371,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
 
             if (IsTrackedSymbol(operation.Value) && operation.Target is IFieldAccess fieldAccess)
             {
-                Result = CheckFieldInKey(fieldAccess, _containingSymbol);
+                Result = CheckFieldInKey(fieldAccess, _tableExtensions, _containingSymbol);
                 if (Result is not null) return;
             }
 
@@ -364,7 +386,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
             if (IsValidateCall(operation) && operation.Arguments.Length >= 2 &&
                 IsTrackedSymbol(operation.Arguments[1].Value))
             {
-                Result = CheckValidateTarget(operation, _containingSymbol);
+                Result = CheckValidateTarget(operation, _tableExtensions, _containingSymbol);
                 if (Result is not null) return;
             }
 
@@ -376,7 +398,7 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
                     if (IsTrackedSymbol(operation.Arguments[i].Value))
                     {
                         Result = TraceParameter(
-                            operation.TargetMethod, i, _compilation, _visited, _ct);
+                            operation.TargetMethod, i, _compilation, _tableExtensions, _visited, _ct);
                         if (Result is not null) return;
                     }
                 }
@@ -401,7 +423,9 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         invocation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod &&
         SemanticFacts.IsSameName(invocation.TargetMethod.Name, "Validate");
 
-    private static KeyFieldResult? CheckFieldInKey(IFieldAccess fieldAccess, ISymbol? containingSymbol = null)
+    private static KeyFieldResult? CheckFieldInKey(
+        IFieldAccess fieldAccess, Lazy<ImmutableArray<ITableExtensionTypeSymbol>> tableExtensions,
+        ISymbol? containingSymbol = null)
     {
         var fieldSymbol = fieldAccess.FieldSymbol;
         if (fieldSymbol is null)
@@ -417,12 +441,14 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         if (recordType is not null && recordType.Temporary)
             return null;
 
-        return IsFieldInAnyKey(fieldSymbol, tableType)
+        return IsFieldInAnyKey(fieldSymbol, tableType, tableExtensions)
             ? new KeyFieldResult(fieldSymbol.Name, tableType.Name)
             : null;
     }
 
-    private static KeyFieldResult? CheckValidateTarget(IInvocationExpression validateCall, ISymbol? containingSymbol = null)
+    private static KeyFieldResult? CheckValidateTarget(
+        IInvocationExpression validateCall, Lazy<ImmutableArray<ITableExtensionTypeSymbol>> tableExtensions,
+        ISymbol? containingSymbol = null)
     {
         var tableType = validateCall.GetReceiverTableType(containingSymbol, out var recordType);
         if (tableType is null || tableType.TableType != EnumProvider.TableTypeKind.Normal)
@@ -439,12 +465,13 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
         if (fieldSymbol.GetTypeSymbol().GetNavTypeKindSafe() != EnumProvider.NavTypeKind.Guid)
             return null;
 
-        return IsFieldInAnyKey(fieldSymbol, tableType)
+        return IsFieldInAnyKey(fieldSymbol, tableType, tableExtensions)
             ? new KeyFieldResult(fieldSymbol.Name, tableType.Name)
             : null;
     }
 
-    private static bool IsFieldInAnyKey(IFieldSymbol field, ITableTypeSymbol table)
+    private static bool IsFieldInAnyKey(
+        IFieldSymbol field, ITableTypeSymbol table, Lazy<ImmutableArray<ITableExtensionTypeSymbol>> tableExtensions)
     {
         // Keys holds declared keys only; a table without a keys section exposes
         // its synthesized primary key solely through PrimaryKey.
@@ -458,7 +485,23 @@ public sealed class UseSequentialGuid : DiagnosticAnalyzer
             }
         }
 
-        foreach (var key in table.Keys)
+        if (ContainsField(table.Keys, field))
+            return true;
+
+        // Keys declared in a tableextension (also mixed-origin keys over base and extension fields)
+        // exist only on that extension's AddedKeys, never on the base table's Keys.
+        foreach (var extension in tableExtensions.Value)
+        {
+            if (extension.Target.IsSameApplicationObject(table) && ContainsField(extension.AddedKeys, field))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool ContainsField(ImmutableArray<IKeySymbol> keys, IFieldSymbol field)
+    {
+        foreach (var key in keys)
         {
             foreach (var keyField in key.Fields)
             {
