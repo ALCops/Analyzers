@@ -52,6 +52,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("RecordRefNextLoopAfterOpen")]
         [TestCase("ResetBetweenSetLoadFieldsAndFindSet")]
         [TestCase("SetLoadFieldsAfterLoop")]
+        [TestCase("SetLoadFieldsBetweenReadAndLoop")]
         [TestCase("SetLoadFieldsNoArgsBetween")]
         [TestCase("SetupNamespaceAutoIncrementKey")]
         [TestCase("SetupNamespaceAutoIncrementLaterKeyField")]

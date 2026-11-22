@@ -59,12 +59,12 @@ public sealed class UsePartialRecordsForLoops : DiagnosticAnalyzer
         if (body is null)
             return;
 
-        var trackedVariables = CollectTrackedLocalVariables(methodSymbol);
-        if (trackedVariables.Count == 0)
+        // Without a Next call there is no loop read: skip the variable scan and the bind.
+        if (!ContainsNextIdentifier(body))
             return;
 
-        // Without a Next call there is no loop read; skip the bind.
-        if (!ContainsNextIdentifier(body))
+        var trackedVariables = CollectTrackedLocalVariables(methodSymbol);
+        if (trackedVariables.Count == 0)
             return;
 
         var operation = context.SemanticModel.GetOperation(body, context.CancellationToken);
