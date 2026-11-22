@@ -3,7 +3,7 @@ using RoslynTestKit;
 
 namespace ALCops.TestAutomationCop.Test
 {
-    public class MethodRequiresTestAttribute : NavCodeAnalysisBase
+    public class GlobalMethodRequiresTestAttribute : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
         private string _testCasePath;
@@ -16,7 +16,7 @@ namespace ALCops.TestAutomationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    "Rules", nameof(MethodRequiresTestAttribute));
+                    "Rules", nameof(GlobalMethodRequiresTestAttribute));
         }
 
         [Test]
