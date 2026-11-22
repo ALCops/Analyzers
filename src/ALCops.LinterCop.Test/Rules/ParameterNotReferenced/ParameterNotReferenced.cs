@@ -107,10 +107,27 @@ namespace ALCops.LinterCop.Test
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ParameterNotReferenced);
         }
 
+        // A codeunit that implements an interface with default methods still reports its own procedures.
+        [Test]
+        [TestCase("DefaultInterfaceMethodImplementerOwnProcedure")]
+        public async Task HasDiagnosticDefaultInterfaceMethod(string testCase)
+        {
+            RequireMinimumVersion("18.0", DefaultInterfaceMethodGateReason);
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.ParameterNotReferenced);
+        }
+
         // An interface method with a default body (runtime 18.0) is reached by the code block action like
         // any other method body; its parameters are part of the contract every implementer shares.
         [Test]
         [TestCase("DefaultInterfaceMethodUnusedParameter")]
+        [TestCase("DefaultInterfaceMethodEmptyBody")]
+        [TestCase("DefaultInterfaceMethodOverloadBridge")]
+        [TestCase("DefaultInterfaceMethodOverriddenInCodeunit")]
+        [TestCase("DefaultInterfaceMethodNamespaced")]
         public async Task NoDiagnosticDefaultInterfaceMethod(string testCase)
         {
             RequireMinimumVersion("18.0", DefaultInterfaceMethodGateReason);
@@ -120,6 +137,22 @@ namespace ALCops.LinterCop.Test
 
             _fixture.NoException(code.Replace("[|", "").Replace("|]", ""));
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ParameterNotReferenced);
+        }
+
+        // The interface with the default method lives in a second workspace project, so the overriding
+        // codeunit sees it through the referenced module rather than through its own declarations.
+        [Test]
+        [TestCase("DefaultInterfaceMethodOverriddenFromDependency")]
+        public async Task NoDiagnosticWithDependencyProject(string testCase)
+        {
+            RequireMinimumVersion("18.0", DefaultInterfaceMethodGateReason);
+
+            var fixture = await CreateFixtureWithDependencyProject(testCase).ConfigureAwait(false);
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            fixture.NoException(code.Replace("[|", "").Replace("|]", ""));
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ParameterNotReferenced);
         }
 
         [Test]
@@ -310,6 +343,18 @@ namespace ALCops.LinterCop.Test
                 DiagnosticIds.EventSubscriberParameterNotReferenced,
                 codeFixIndex: 0,
                 equivalenceKey: $"{nameof(ParameterNotReferencedCodeFixProvider)}.EventSubscriber");
+        }
+
+        private async Task<AnalyzerTestFixture> CreateFixtureWithDependencyProject(string testCase)
+        {
+            var dependencyCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, "DependencyProject", $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            return RoslynFixtureFactory.Create<Analyzers.ParameterNotReferenced>(
+                new AnalyzerTestFixtureConfig
+                {
+                    DependencyProjects = [new DependencyProject("DependencyApp", dependencyCode)]
+                });
         }
     }
 }
