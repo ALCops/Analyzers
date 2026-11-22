@@ -30,8 +30,15 @@ namespace ALCops.LinterCop.Test
         [TestCase("RecursionDirectPropertySyntaxThis")]
         [TestCase("RecursionIndirectPropertySyntax")]
         [TestCase("UserDefinedErrorMethodsAreNotGuardClauses")]
+        [TestCase("InterfaceDefaultBody")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["InterfaceDefaultBody"],
+                testCase,
+                "18.0",
+                "Default interface method bodies need runtime 18.0; the harness compiles at the SDK's current release.");
+
             SkipTestIfVersionIsTooLow(
                 ["ConditionalExpressionNested"],
                 testCase,
@@ -60,8 +67,15 @@ namespace ALCops.LinterCop.Test
         [TestCase("IfStatementGuardClauseContinue")]
         [TestCase("BuiltInFieldErrorGuardClauses")]
         [TestCase("NonRecursivePropertySyntax")]
+        [TestCase("InterfaceDefaultBody")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["InterfaceDefaultBody"],
+                testCase,
+                "18.0",
+                "Default interface method bodies need runtime 18.0; the harness compiles at the SDK's current release.");
+
             SkipTestIfVersionIsTooLow(
                 ["IfStatementGuardClauseContinue"],
                 testCase,

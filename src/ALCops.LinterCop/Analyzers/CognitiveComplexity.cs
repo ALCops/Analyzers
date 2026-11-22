@@ -98,8 +98,7 @@ public sealed class CognitiveComplexity : DiagnosticAnalyzer
             return;
 
         var containingObjectTypeSymbol = context.OwningSymbol.GetContainingObjectTypeSymbol();
-        if (containingObjectTypeSymbol.NavTypeKind == EnumProvider.NavTypeKind.Interface ||
-            containingObjectTypeSymbol.NavTypeKind == EnumProvider.NavTypeKind.ControlAddIn)
+        if (containingObjectTypeSymbol.NavTypeKind == EnumProvider.NavTypeKind.ControlAddIn)
             return;
 
         if (methodOrTrigger.Body is null ||
