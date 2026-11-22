@@ -136,6 +136,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("PageTemporarySourceTable")]
         [TestCase("ImplicitPrimaryKeyNonKeyField")]
         [TestCase("TableExtensionKeyOnNonGuidField")]
+        [TestCase("TableExtensionKeyOnOtherTable")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireMinimumVersion("16.0", "Available with runtime version 16.0.");
