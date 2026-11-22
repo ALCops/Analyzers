@@ -134,7 +134,7 @@ Copy the nearest existing provider rather than inventing a transformation:
 | Plain text edit (`SourceText.WithChanges`) | `CasingMismatchKeyword` (the only one; prefer syntax rewrites) |
 | Add `Locked = true` to a label | `EmptyCaptionLocked`, `LabelWithTokSuffixMustBeLocked` |
 | Remove siblings from a `SeparatedSyntaxList` with FixAll | `ParameterNotReferencedCodeFixProvider` |
-| Insert a statement before another, wrapping an embedded statement (if/else branch, case line, loop body) in `begin..end`, with Fix All over nested edits | Common `SyntaxEditorExtensions.InsertStatementsBefore` with `FindStatementInsertionTarget` and `BlocksStatementInsertion` (`StatementSyntaxExtensions`); caller `UsePartialRecordsOnRead` |
+| Insert a statement before another, wrapping an embedded statement (if/else branch, case line, loop body) in `begin..end`, with Fix All over nested edits | Common `SyntaxEditorExtensions.InsertStatementsBefore` with `FindStatementInsertionTarget` and `BlocksStatementInsertion` (`StatementSyntaxExtensions`); caller `UsePartialRecordsForLoops` |
 | Declare a codeunit variable and add its namespace `using` | `GlobalLanguageImplementTranslationHelper`, `RunPageImplementPageManagement` (Common: `FindCodeunitVariableName`, `AddLocalVariable`, `CodeunitVariableFactory`, `GetApplicationObjectNamespaceWithReflection`, `AddUsingDirectiveIfNeeded`) |
 | Move or remove nodes that may carry `#if` / `#pragma` / `#region` trivia | `PermissionDeclarationOrderCodeFixProvider`, `ParameterNotReferencedCodeFixProvider` |
 

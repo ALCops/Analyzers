@@ -43,7 +43,7 @@ if (fieldSymbol.Type?.NavTypeKind == EnumProvider.NavTypeKind.Blob)
 Existing examples:
 - `ALCops.PlatformCop/Analyzers/RecordGetProcedureArguments.cs`
 - `ALCops.PlatformCop/Analyzers/TransferFieldsSchemaCompatibility.cs`
-- `ALCops.PlatformCop/CodeFixes/UsePartialRecordsOnRead.cs` (FieldAccessCollector)
+- `ALCops.PlatformCop/CodeFixes/UsePartialRecordsForLoops.cs` (FieldAccessCollector)
 
 ## Required pattern for record types
 
@@ -84,7 +84,7 @@ Use `set` instead of `init` on netstandard2.1:
 | File | Pattern |
 |---|---|
 | `ALCops.LinterCop/Analyzers/CognitiveComplexityRecursionGraphService.cs` | `MethodDeclarationInfo` record struct |
-| `ALCops.PlatformCop/Analyzers/PartialRecordOperations.cs` | `ReadInfo` record struct |
+| `ALCops.PlatformCop/Analyzers/UsePartialRecordsForLoops.cs` | `ReadInfo` record struct |
 | `ALCops.PlatformCop/Analyzers/TransferFieldsRelations.cs` | `ObjectName` and `TableRelation` record structs |
 | `ALCops.Common/Helpers/AppSourceCopConfigurationProvider.cs` | `init` to `set` accessor |
 | `ALCops.LinterCop/CodeFixes/BuiltInDateTimeMethod.cs` | `CodeFixProperties` record |
