@@ -337,6 +337,7 @@ public sealed class UsePartialRecordsForLoops : DiagnosticAnalyzer
                 VisitConditionalLoopBody(operation.Body);
             }
             _loopDepth--;
+            DropReadsFromExitedLoop();
         }
 
         public override void VisitForLoopStatement(IForLoopStatement operation)
@@ -347,6 +348,7 @@ public sealed class UsePartialRecordsForLoops : DiagnosticAnalyzer
             _loopDepth++;
             VisitConditionalLoopBody(operation.Body);
             _loopDepth--;
+            DropReadsFromExitedLoop();
         }
 
         public override void VisitForEachLoopStatement(IForEachLoopStatement operation)
@@ -356,6 +358,19 @@ public sealed class UsePartialRecordsForLoops : DiagnosticAnalyzer
             _loopDepth++;
             VisitConditionalLoopBody(operation.Body);
             _loopDepth--;
+            DropReadsFromExitedLoop();
+        }
+
+        /// <summary>
+        /// A read made inside a loop is never the driver of a later loop: once that loop is left, its
+        /// pending reads must not be confirmed by a Next in another, more deeply nested loop.
+        /// Confirmed reads are kept.
+        /// </summary>
+        private void DropReadsFromExitedLoop()
+        {
+            var depth = _loopDepth;
+            foreach (var flags in _flowState.Values)
+                flags.PendingReads.RemoveAll(r => r.LoopDepth > depth);
         }
 
         /// <summary>
@@ -481,8 +496,9 @@ public sealed class UsePartialRecordsForLoops : DiagnosticAnalyzer
         }
 
         /// <summary>
-        /// A read repositions the cursor: earlier unconfirmed reads at this loop level or deeper no
-        /// longer drive a later loop. A read inside a loop body never discards the driver outside it.
+        /// A read repositions the cursor and discards earlier pending reads at its own loop depth or
+        /// deeper. It never discards a shallower read: in <c>V.FindSet(); repeat V.Get(..) until V.Next() = 0</c>
+        /// the loop still reads its rows through Next, so the FindSet stays the driver.
         /// </summary>
         private void HandleEntryRead(IInvocationExpression operation, FlowFlags flowFlags, string methodName)
         {
