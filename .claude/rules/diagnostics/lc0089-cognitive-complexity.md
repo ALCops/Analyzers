@@ -25,6 +25,7 @@ Registers `CompilationStartAction` (captures threshold, LC0089i enablement and t
 | Built-in error guards are recognized through the shared `FlowTerminatingBuiltIns` classifier (`Dialog.Error`, `Table.FieldError`, `FieldRef.FieldError`); user-defined procedures named `Error` or `FieldError` stay ordinary calls | One semantic definition of "terminates the procedure" shared with PC0038 and FC0007; a name match alone would discount a user procedure that merely happens to be called `Error`. |
 | Recursion detection (the per-method increment and the call-graph edges) falls back to `SemanticModel.GetMethodInvokedByAssignmentSyntax` when `GetSymbolInfo` on the call target returns a null `Symbol` | A property-style setter call (`Proc := Value`, `Obj.Proc := Value`, `this.Proc := Value`) leaves the target unresolved, so without the fallback recursion through it would not be seen, neither directly nor through the call graph (`.claude/rules/symbol-resolution.md`, Property-style setter calls). The operation bind happens only for assignment targets whose `GetSymbolInfo` symbol is null (setter calls, and unresolved targets in invalid code), not for resolved variable or field targets; this matters in the graph service because it walks every reachable method body. |
 | `CurrReport`/`CurrXMLport` `Break`, `Skip` and `Quit` keep their own syntax check instead of joining `FlowTerminatingBuiltIns` | They are valid guard exits for complexity but not general procedure terminators, so they must not leak into PC0038's flow analysis. |
+| Default interface method bodies (AL 18.0+) are measured like any other procedure; abstract interface members are excluded by the `Body is null` bail; ControlAddIn members stay skipped. `CyclomaticComplexityAndMaintainabilityIndex` (LC0007-LC0010) applies the same filter | A default body is real code that every implementer without an override runs, so its complexity is as relevant as a codeunit procedure's. The object kind needs no version gate: before 18.0 an interface member cannot have a body and is already excluded by `Body is null`. The ControlAddIn skip is unchanged. |
 
 ## Deliberate non-reports
 
@@ -39,6 +40,7 @@ Registers `CompilationStartAction` (captures threshold, LC0089i enablement and t
 ## Test notes
 
 - Fixtures are version-gated with `SkipTestIfVersionIsTooLow`: nested conditional expressions and `this` need `14.0`, `continue` needs `15.0`. The `*PropertySyntax` recursion fixtures avoid `this` so they run on every SDK; only `RecursionDirectPropertySyntaxThis` is gated.
+- `InterfaceDefaultBody` fixtures (here and in `CyclomaticComplexityMetric`/`MaintainabilityIndexMetric`) are gated on `18.0` with `SkipTestIfVersionIsTooLow`: default interface method bodies need runtime 18.0 and the harness compiles at the loaded SDK's release, so they run only on the net10.0 leg.
 - The shared-instance race has no regression fixture: it requires overlapping compilation passes against different `alcops.json` files, which unit tests cannot reproduce.
 
 ## Settings

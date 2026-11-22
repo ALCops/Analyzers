@@ -20,8 +20,15 @@ namespace ALCops.LinterCop.Test
 
         [Test]
         [TestCase("CyclomaticComplexityThreshold")]
+        [TestCase("InterfaceDefaultBody")]
         public async Task HasDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["InterfaceDefaultBody"],
+                testCase,
+                "18.0",
+                "Default interface method bodies need runtime 18.0; the harness compiles at the SDK's current release.");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                  .ConfigureAwait(false);
 
@@ -30,8 +37,15 @@ namespace ALCops.LinterCop.Test
 
         [Test]
         [TestCase("CyclomaticComplexityThreshold")]
+        [TestCase("InterfaceDefaultBody")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["InterfaceDefaultBody"],
+                testCase,
+                "18.0",
+                "Default interface method bodies need runtime 18.0; the harness compiles at the SDK's current release.");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 

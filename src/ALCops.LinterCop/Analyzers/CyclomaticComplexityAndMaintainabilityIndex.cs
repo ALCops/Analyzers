@@ -46,9 +46,7 @@ public sealed class CyclomaticComplexityAndMaintainabilityIndex : DiagnosticAnal
             return;
 
         var containingObjectTypeSymbol = context.OwningSymbol.GetContainingObjectTypeSymbol();
-        var navTypeKind = containingObjectTypeSymbol.NavTypeKind;
-        if (navTypeKind == EnumProvider.NavTypeKind.Interface ||
-            navTypeKind == EnumProvider.NavTypeKind.ControlAddIn)
+        if (containingObjectTypeSymbol.NavTypeKind == EnumProvider.NavTypeKind.ControlAddIn)
             return;
 
         var body = methodOrTrigger.Body;
