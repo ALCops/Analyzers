@@ -21,6 +21,8 @@ namespace ALCops.TestAutomationCop.Test
 
         [Test]
         [TestCase("GlobalTestMethodWithoutTestAttribute")]
+        [TestCase("InterfaceImplementationPlainHelper")]
+        [TestCase("InterfaceMemberNameDifferentSignature")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -33,6 +35,7 @@ namespace ALCops.TestAutomationCop.Test
         [TestCase("StandardCodeunit")]
         [TestCase("ConfirmHandler")]
         [TestCase("GlobalTestProcedure")]
+        [TestCase("InterfaceImplementation")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
