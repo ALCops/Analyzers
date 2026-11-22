@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ALCops.Common.Extensions;
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
@@ -30,6 +31,11 @@ public sealed class GlobalMethodRequiresTestAttribute : DiagnosticAnalyzer
             return;
 
         if (IsTestMethod(method) || IsHandlerMethod(method))
+            return;
+
+        // A codeunit that implements an interface must declare the interface members as global
+        // procedures, so they cannot be made local or carry a test attribute.
+        if (method.MethodImplementsInterfaceMethod())
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(

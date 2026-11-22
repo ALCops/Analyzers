@@ -3,7 +3,7 @@ using RoslynTestKit;
 
 namespace ALCops.TestAutomationCop.Test
 {
-    public class MethodRequiresTestAttribute : NavCodeAnalysisBase
+    public class GlobalMethodRequiresTestAttribute : NavCodeAnalysisBase
     {
         private AnalyzerTestFixture _fixture;
         private string _testCasePath;
@@ -16,11 +16,13 @@ namespace ALCops.TestAutomationCop.Test
             _testCasePath = Path.Combine(
                 Directory.GetParent(
                     Environment.CurrentDirectory)!.Parent!.Parent!.FullName,
-                    "Rules", nameof(MethodRequiresTestAttribute));
+                    "Rules", nameof(GlobalMethodRequiresTestAttribute));
         }
 
         [Test]
         [TestCase("GlobalTestMethodWithoutTestAttribute")]
+        [TestCase("InterfaceImplementationPlainHelper")]
+        [TestCase("InterfaceMemberNameDifferentSignature")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -33,6 +35,7 @@ namespace ALCops.TestAutomationCop.Test
         [TestCase("StandardCodeunit")]
         [TestCase("ConfirmHandler")]
         [TestCase("GlobalTestProcedure")]
+        [TestCase("InterfaceImplementation")]
         public async Task NoDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
