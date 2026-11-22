@@ -63,6 +63,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("XmlPortRecSelfViaRequestPage")]
         [TestCase("ReportDataItemNamed")]
         [TestCase("ReportDataItemBareSelf")]
+        [TestCase("TableExtensionKeyOnBaseGuidField")]
         public async Task HasDiagnostic(string testCase)
         {
             // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/guid/guid-createsequentialguid-method
@@ -72,6 +73,56 @@ namespace ALCops.PlatformCop.Test
                 .ConfigureAwait(false);
 
             _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.UseSequentialGuid);
+        }
+
+        // A tableextension key may combine a base-table field with an extension field.
+        [Test]
+        [TestCase("TableExtensionMixedOriginKey")]
+        public async Task HasDiagnosticMixedOriginKey(string testCase)
+        {
+            RequireMinimumVersion("18.0", "Mixed-origin keys in tableextensions require runtime 18.0.");
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            _fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.UseSequentialGuid);
+        }
+
+        // The base table lives in a second workspace project; the tableextension that declares the key
+        // and the CreateGuid() call live in the test project.
+        [Test]
+        [TestCase("TableExtensionKeyOnReferencedTable")]
+        public async Task HasDiagnosticWithDependencyProject(string testCase)
+        {
+            RequireMinimumVersion("16.0", "Available with runtime version 16.0.");
+
+            await AssertHasDiagnosticWithDependencyProject(testCase).ConfigureAwait(false);
+        }
+
+        [Test]
+        [TestCase("TableExtensionMixedOriginKeyOnReferencedTable")]
+        public async Task HasDiagnosticWithDependencyProjectMixedOriginKey(string testCase)
+        {
+            RequireMinimumVersion("18.0", "Mixed-origin keys in tableextensions require runtime 18.0.");
+
+            await AssertHasDiagnosticWithDependencyProject(testCase).ConfigureAwait(false);
+        }
+
+        private async Task AssertHasDiagnosticWithDependencyProject(string testCase)
+        {
+            var dependencyCode = await File.ReadAllTextAsync(Path.Combine(_testCasePath, "DependencyProject", $"{testCase}.al"))
+                .ConfigureAwait(false);
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = RoslynFixtureFactory.Create<Analyzers.UseSequentialGuid>(
+                new AnalyzerTestFixtureConfig
+                {
+                    DependencyProjects = [new DependencyProject("DependencyApp", dependencyCode)]
+                });
+
+            fixture.NoException(code.Replace("[|", "").Replace("|]", ""));
+            fixture.HasDiagnosticAtAllMarkers(code, DiagnosticIds.UseSequentialGuid);
         }
 
         [Test]
@@ -84,6 +135,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("GlobalVariableNotInKey")]
         [TestCase("PageTemporarySourceTable")]
         [TestCase("ImplicitPrimaryKeyNonKeyField")]
+        [TestCase("TableExtensionKeyOnNonGuidField")]
+        [TestCase("TableExtensionKeyOnOtherTable")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireMinimumVersion("16.0", "Available with runtime version 16.0.");
