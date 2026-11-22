@@ -135,6 +135,10 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
 
         // Table, TableExtension, XmlPort, Enum, EnumValue, Report, Profile, PermissionSet
         ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
+
+        // Of these kinds only a report object carries a ToolTip.
+        if (kind == EnumProvider.SymbolKind.Report)
+            ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
     }
 
     private static void AnalyzeLabelVariable(SymbolAnalysisContext ctx, ISymbol symbol, TranslationIndex translationIndex)
@@ -172,6 +176,8 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
     private static void AnalyzePageLikeSymbol(SymbolAnalysisContext ctx, ISymbol symbol, TranslationIndex translationIndex, bool useCanonicalPropertyName)
     {
         ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
+        // Only a page object has a ToolTip; GetProperty returns null for the other page-like kinds.
+        ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
 
         IEnumerable<IControlSymbol>? controls = GetFlattenedControls(symbol);
         if (controls is not null)
