@@ -9,6 +9,8 @@ namespace ALCops.LinterCop.Test
         private AnalyzerTestFixture _errorTolerantFixture;
         private static readonly Analyzers.ParameterNotReferenced _analyzer = new();
         private string _testCasePath;
+        private const string DefaultInterfaceMethodGateReason =
+            "Default interface method bodies need runtime 18.0; the harness compiles at the SDK's current release.";
 
         private static void RequireSdkV13Support()
         {
@@ -102,6 +104,21 @@ namespace ALCops.LinterCop.Test
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
+            _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ParameterNotReferenced);
+        }
+
+        // An interface method with a default body (runtime 18.0) is reached by the code block action like
+        // any other method body; its parameters are part of the contract every implementer shares.
+        [Test]
+        [TestCase("DefaultInterfaceMethodUnusedParameter")]
+        public async Task NoDiagnosticDefaultInterfaceMethod(string testCase)
+        {
+            RequireMinimumVersion("18.0", DefaultInterfaceMethodGateReason);
+
+            var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            _fixture.NoException(code.Replace("[|", "").Replace("|]", ""));
             _fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.ParameterNotReferenced);
         }
 
