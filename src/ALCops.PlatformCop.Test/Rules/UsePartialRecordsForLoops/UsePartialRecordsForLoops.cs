@@ -49,6 +49,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("NextLoopInCaseLine")]
         [TestCase("NextWithoutParentheses")]
         [TestCase("ReadInBothBranchesOneLoop")]
+        [TestCase("ReadInForEachExpressionThenLoop")]
         [TestCase("RecordRefNextLoopAfterOpen")]
         [TestCase("ResetBetweenSetLoadFieldsAndFindSet")]
         [TestCase("SetLoadFieldsAfterLoop")]
@@ -120,6 +121,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("PassedToFunction")]
         [TestCase("PassedToPageRun")]
         [TestCase("ReadInsideOwnLoopBody")]
+        [TestCase("RecordAssignedAfterRead")]
         [TestCase("RecordAssignedBeforeRead")]
         [TestCase("RecordAssignedToOther")]
         [TestCase("RecordAssignedToOtherQuotedName")]
@@ -245,6 +247,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("WrapAroundConditionalDirective")]
         [TestCase("WrapAroundInactiveConditionalDirective")]
         [TestCase("WrapAroundPragma")]
+        [TestCase("ReadWithoutParentheses")]
         [TestCase("InsertAfterConditionalDirective")]
         public async Task NoFix(string testCase)
         {

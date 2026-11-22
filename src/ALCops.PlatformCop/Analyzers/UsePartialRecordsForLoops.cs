@@ -211,7 +211,8 @@ public sealed class UsePartialRecordsForLoops : DiagnosticAnalyzer
         private readonly Dictionary<string, FlowFlags> _flowState;
 
         /// <summary>
-        /// Number of loops (repeat, while, for, foreach; condition and body) enclosing the current operation.
+        /// Number of loops enclosing the current operation: the body and the repeat/while condition, which run
+        /// every iteration; not the for bounds or the foreach collection, which run once before the loop.
         /// A Next call confirms only reads made outside the loop it runs in.
         /// </summary>
         private int _loopDepth;
@@ -252,6 +253,11 @@ public sealed class UsePartialRecordsForLoops : DiagnosticAnalyzer
                 flowFlags.ClearReads();
                 flowFlags.HasFullRecordAccess = true;
             }
+
+            // MyTable := OtherTable replaces the buffer and the cursor: like Clear, earlier reads
+            // can no longer drive a later loop, while loops that already ran stay findings.
+            if (TryGetFlowFlags(operation.Target, out var targetFlags))
+                targetFlags.PendingReads.Clear();
 
             base.VisitAssignmentStatement(operation);
         }
@@ -335,17 +341,19 @@ public sealed class UsePartialRecordsForLoops : DiagnosticAnalyzer
 
         public override void VisitForLoopStatement(IForLoopStatement operation)
         {
-            _loopDepth++;
+            // The bounds are evaluated once, before the loop.
             Visit(operation.InitialValue);
             Visit(operation.EndValue);
+            _loopDepth++;
             VisitConditionalLoopBody(operation.Body);
             _loopDepth--;
         }
 
         public override void VisitForEachLoopStatement(IForEachLoopStatement operation)
         {
-            _loopDepth++;
+            // The collection is evaluated once, before the loop.
             Visit(operation.Expression);
+            _loopDepth++;
             VisitConditionalLoopBody(operation.Body);
             _loopDepth--;
         }
