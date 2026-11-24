@@ -18,13 +18,13 @@ All properties are `ImmutableHashSet<string>` with `StringComparer.OrdinalIgnore
 | Property | Methods | Used by |
 |---|---|---|
 | `ReadMethods` | Find, FindFirst, FindLast, FindSet, Get, GetBySystemId, IsEmpty, Count | General read classification |
-| `SingleRecordReadMethods` | Find, FindFirst, FindLast, Get, GetBySystemId | AC0030 (return value check) |
+| `SingleRecordReadMethods` | Find, FindFirst, FindLast, Get, GetBySystemId | AC0030 (return value check), PC0031 (with FindSet: any read leaves a partial buffer) |
 | `InsertMethods` | Insert | General insert classification |
 | `ModifyMethods` | Modify, ModifyAll, Rename | General modify classification |
 | `DeleteMethods` | Delete, DeleteAll | General delete classification |
-| `WriteMethods` | Insert, Modify, ModifyAll, Delete, DeleteAll, Rename, TransferFields, Init, Copy | PC0030/PC0031 (partial records) |
+| `WriteMethods` | Insert, Modify, ModifyAll, Delete, DeleteAll, Rename, TransferFields, Init, Copy | PC0030 (clears loop reads), PC0031 (partial records) |
 | `LoadFieldsMethods` | SetLoadFields, AddLoadFields, SetBaseLoadFields | PC0030/PC0031 (partial records) |
-| `JitLoadWriteMethods` | Insert, Modify, Delete, Rename, TransferFields, Copy | PC0031 (JIT load detection) |
+| `JitLoadWriteMethods` | Insert, Delete, Rename, TransferFields, Copy | PC0031 (JIT load detection) |
 | `TriggerMethods` | Insert, Modify, Delete, DeleteAll, Validate, ModifyAll | PC0028 (temp record triggers) |
 | `RunTriggerParameterMethods` | Insert, Modify, ModifyAll, Delete, DeleteAll | LC0047 (explicit RunTrigger) |
 
@@ -37,7 +37,7 @@ All properties are `ImmutableHashSet<string>` with `StringComparer.OrdinalIgnore
 | WriteMethods includes non-RIMD methods | Yes (TransferFields, Init, Copy) | These mutate the record buffer even though they don't require RIMD permissions |
 | SingleRecordReadMethods excludes FindSet | Yes | FindSet is used with repeat..until Next loops; different return value semantics |
 | ReadMethods includes IsEmpty and Count | Yes | These perform SQL reads even though they don't load record buffers |
-| ReadMethods excludes Next, although `MethodOperationMap` maps it to Read | Yes, intentional divergence | The two classifications answer different questions. For permissions, `Next` reads the database and needs `r`. The consumers of `ReadMethods` reason about the record buffer a call *fills*: AC0030 inspects the read's return value, and the partial-record analysis matches a read against the fields loaded by it. Neither applies to `Next`, which continues a set positioned by an earlier read, so adding it here would produce false positives. Do not "synchronize" the two sets. |
+| ReadMethods excludes Next, although `MethodOperationMap` maps it to Read | Yes, intentional divergence | The two classifications answer different questions. For permissions, `Next` reads the database and needs `r`. The consumers of `ReadMethods` reason about the record buffer a call *fills*: AC0030 inspects the read's return value, and PC0031 matches a read against the fields loaded by it. PC0030 does recognise `Next`, but as the loop signal in its own walker, never as a read. Neither applies to `Next`, which continues a set positioned by an earlier read, so adding it here would produce false positives. Do not "synchronize" the two sets. |
 | `DeleteMethods` / `ModifyMethods` contain `DeleteAll` / `ModifyAll`, which need Read too for permissions | Intentional; `MethodOperationMap.ImpliesRead` carries that | The sets here describe behaviour, not permission letters; the extra Read is a permission fact handled in the permission model only. |
 | Case sensitivity | OrdinalIgnoreCase | AL method names are case-insensitive |
 

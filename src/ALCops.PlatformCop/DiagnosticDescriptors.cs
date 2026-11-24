@@ -275,15 +275,15 @@ public static class DiagnosticDescriptors
         description: PlatformCopAnalyzers.TransferFieldsTypeMismatchDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.TransferFieldsTypeMismatch));
 
-    public static readonly DiagnosticDescriptor UsePartialRecordsOnRead = new(
-        id: DiagnosticIds.UsePartialRecordsOnRead,
-        title: PlatformCopAnalyzers.UsePartialRecordsOnReadTitle,
-        messageFormat: PlatformCopAnalyzers.UsePartialRecordsOnReadMessageFormat,
+    public static readonly DiagnosticDescriptor UsePartialRecordsForLoops = new(
+        id: DiagnosticIds.UsePartialRecordsForLoops,
+        title: PlatformCopAnalyzers.UsePartialRecordsForLoopsTitle,
+        messageFormat: PlatformCopAnalyzers.UsePartialRecordsForLoopsMessageFormat,
         category: Category.Performance,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        description: PlatformCopAnalyzers.UsePartialRecordsOnReadDescription,
-        helpLinkUri: GetHelpUri(DiagnosticIds.UsePartialRecordsOnRead));
+        description: PlatformCopAnalyzers.UsePartialRecordsForLoopsDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.UsePartialRecordsForLoops));
 
     public static readonly DiagnosticDescriptor PartialRecordsCauseJitLoad = new(
         id: DiagnosticIds.PartialRecordsCauseJitLoad,

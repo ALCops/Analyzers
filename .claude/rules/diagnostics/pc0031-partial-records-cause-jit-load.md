@@ -10,7 +10,7 @@ paths:
 
 Detects `SetLoadFields`/`AddLoadFields`/`SetBaseLoadFields` calls on record variables that subsequently undergo full-field operations (Insert, Delete, Rename, TransferFields, Copy). These operations require all fields on the record to be loaded, so the platform will emit a JIT load if they're not already loaded. This makes the code strictly slower than not using partial records, and can cause "Inconsistent read of field(s)" or "JIT loading of field(s) failed" runtime errors under concurrent access.
 
-Registers `RegisterCodeBlockAction` on method/trigger bodies; main type `PartialRecordOperations` (shared with PC0030, see `pc0030-use-partial-records-on-read.md` for the shared flow analysis) with the `SetLoadFieldsWalker` operation walker.
+Registers `RegisterCodeBlockAction` on method/trigger bodies; main type `PartialRecordsCauseJitLoad` with the `SetLoadFieldsWalker` operation walker. PC0030 (`UsePartialRecordsForLoops`) has its own walker; the two rules share no code beyond `RecordMethodClassification`.
 
 **References:**
 - [Issue #264](https://github.com/ALCops/Analyzers/issues/264) (Control flow false positive)
@@ -35,8 +35,14 @@ Registers `RegisterCodeBlockAction` on method/trigger bodies; main type `Partial
 | Report at each `SetLoadFields`/`AddLoadFields`/`SetBaseLoadFields` call, naming the operations | Where the developer makes the change |
 | `SetLoadFields()` without arguments fully resets PC0031 state | No-argument `SetLoadFields` cancels partial records entirely; the next read loads all fields |
 | Mutually exclusive with PC0030 on the same variable | Full-field operations suppress PC0030 and are the trigger for PC0031, so a variable never gets both suggestions |
-| Local variables only | Same scope as PC0030; bound receivers must be `SymbolKind.LocalVariable`, so a `this.<Global>` sharing a local's name is not charged to the local (PC0030 design decisions) |
-| Version gate `Spring2021OrGreater` (runtime 6.0, BC17); full netstandard2.1 support | `SetLoadFields` was introduced with runtime 6.0; same gate as PC0030 |
+| Flow-sensitive forward dataflow with fork/merge at `if`/`case`/`while`/`for`/`foreach`; `while`/`for`/`foreach` merge the pre-loop state with the post-body state, `repeat-until` uses the post-body state directly | Positional flags gave wrong answers when `SetLoadFields`, `Clear` or the read sat in one branch only; a `repeat` body always runs once |
+| `HasLoadFields` merges with AND, `HasPartialRead` and the recorded write names with OR (union) | If any path lacks `SetLoadFields`, the read may load all fields; a partial read on any path can reach a later write |
+| `Clear(var)` and `var.Reset()` reset all flow state | Both reinitialize the partial-records state of the variable |
+| Every read kind (`Find*`, `Get`, `GetBySystemId`) marks a partial read; the set is the analyzer's own `ReadMethods`, not PC0030's loop-entry set | Any read after `SetLoadFields` leaves a partial buffer, whether or not a loop follows |
+| `RecordRef` variables are included, without temporary/table-type checks | The opened table is not statically determinable; `RecordRef.SetLoadFields` followed by a JIT-load operation is the same anti-pattern |
+| Single pass over loops, no fixed-point iteration | Acceptable approximation; fixed-point adds complexity for rare edge cases |
+| Local variables only; bound receivers must be `SymbolKind.LocalVariable` before the name-keyed map is consulted, text lookups (`Clear` arguments) stay name-based | `this.<Global>` and `this.<DataItem>` reach an object-scope symbol that may share a local's name, so without the kind check a global's operations were charged to the local. A bare identifier always binds innermost, so text lookups cannot alias. The synthesized `OnRun` `Rec` of a `TableNo` codeunit is a `LocalVariable` too |
+| Version gate `Spring2021OrGreater` (runtime 6.0, BC17); full netstandard2.1 support (`LoadFieldsInfo` has the `#if NETSTANDARD2_1` struct twin) | `SetLoadFields` was introduced with runtime 6.0; same gate as PC0030 |
 
 ## Deliberate non-reports
 

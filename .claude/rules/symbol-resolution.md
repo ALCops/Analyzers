@@ -56,7 +56,7 @@ Inside an operation tree prefer `IOperation.GetSymbolSafe()` (a type check) over
 
 **`GetSymbolSafe()` exists because the SDK's `GetSymbol()` throws.** `OperationExtensions.GetSymbol()` switches on `OperationKind.FieldAccess` and casts to `IFieldAccess`, but `BoundApplicationObjectAccess` (`DATABASE::X`, `CODEUNIT::X`, `TABLE::X`, and the other object-access forms) and the internal `BoundObjectAccess` report that kind without implementing the interface: `InvalidCastException`. `ALCops.Common/Extensions/OperationExtensions.cs` returns `IApplicationObjectAccess.ApplicationObjectTypeSymbol` for the first, null for any other `FieldAccess`-kind operation that is not an `IFieldAccess`, and delegates otherwise, with no try/catch on the happy path. Microsoft's CodeCop 243 sidesteps the same bug by casting to `IApplicationObjectAccess` directly.
 
-**Unwrap `IConversionExpression`.** Arguments are often wrapped in an implicit conversion whose own symbol is null; fall back to `conversion.Operand.GetSymbolSafe()` (`TransferFieldsSchemaCompatibility`, `PossibleOverflowAssigning`, `PartialRecordOperations`, `UnnecessaryRecordParameterInMethodCall`).
+**Unwrap `IConversionExpression`.** Arguments are often wrapped in an implicit conversion whose own symbol is null; fall back to `conversion.Operand.GetSymbolSafe()` (`TransferFieldsSchemaCompatibility`, `PossibleOverflowAssigning`, `UsePartialRecordsForLoops`, `UnnecessaryRecordParameterInMethodCall`).
 
 **Same-module check.** "Defined in the developer's own app" is `ctx.ContainingSymbol.ContainingModule == targetMethod.ContainingModule` (reference equality; the compiler creates one module object per app). Do not compare app ids or names.
 
