@@ -63,6 +63,139 @@ namespace ALCops.LinterCop.Test
             </xliff>
             """);
 
+        // Object-level translatable properties other than Caption and ToolTip, copied from the
+        // Translations/*.g.xlf the AL compiler generates for the matching fixtures (app.json with
+        // "features": ["TranslationFile"]). A page extension or profile extension in the same module
+        // as its target folds into the target, so its trans-units carry the target's ID ("Page MyPage",
+        // "Profile MyProfile"); a page customization keeps its own ID ("PageCustomization MyPageCust").
+        private static readonly byte[] TranslatedObjectPropertiesXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="da-DK" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="Page 2931038265 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My page explains itself.</source>
+                      <target>DA My page explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my page</source>
+                      <target>DA About my page</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Property 3863440606" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>my search terms</source>
+                      <target>DA my search terms</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Property AdditionalSearchTerms</note>
+                    </trans-unit>
+                    <trans-unit id="Page 904567593 - Property 3446740159" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Entity</source>
+                      <target>DA My Entity</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyApiPage - Property EntityCaption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 904567593 - Property 631549417" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Entities</source>
+                      <target>DA My Entities</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyApiPage - Property EntitySetCaption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Property 1968111052" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>Fill in my page.</source>
+                      <target>DA Fill in my page.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Property InstructionalText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Property 2019332006" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>New,Process,Report</source>
+                      <target>DA New,Process,Report</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Property PromotedActionCategories</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My customized page explains itself.</source>
+                      <target>DA My customized page explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my customized page</source>
+                      <target>DA About my customized page</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Property 2019332006" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>New,Process,Report</source>
+                      <target>DA New,Process,Report</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Property PromotedActionCategories</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - RequestPage 2516438534 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My request page explains itself.</source>
+                      <target>DA My request page explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - RequestPage RequestOptionsPage - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - RequestPage 2516438534 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my request page</source>
+                      <target>DA About my request page</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - RequestPage RequestOptionsPage - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - RequestPage 2516438534 - Property 1968111052" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>Fill in my request page.</source>
+                      <target>DA Fill in my request page.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - RequestPage RequestOptionsPage - Property InstructionalText</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - Property 3863440606" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>my report terms</source>
+                      <target>DA my report terms</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - Property AdditionalSearchTerms</note>
+                    </trans-unit>
+                    <trans-unit id="Query 3041816274 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My query explains itself.</source>
+                      <target>DA My query explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Query MyQuery - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Query 3041816274 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my query</source>
+                      <target>DA About my query</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Query MyQuery - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Query 3041816274 - Property 3446740159" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Query Entity</source>
+                      <target>DA My Query Entity</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Query MyQuery - Property EntityCaption</note>
+                    </trans-unit>
+                    <trans-unit id="Query 3041816274 - Property 631549417" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Query Entities</source>
+                      <target>DA My Query Entities</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Query MyQuery - Property EntitySetCaption</note>
+                    </trans-unit>
+                    <trans-unit id="Profile 1886450737 - Property 4111922599" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>Describes my profile.</source>
+                      <target>DA Describes my profile.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Profile MyProfile - Property ProfileDescription</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
+        // Compiler-generated trans-unit for page AboutTitle in namespace "MyCompany.App" when the
+        // TranslationsWithNamespaces feature is enabled.
+        private static readonly byte[] NamespaceTranslatedPageObjectAboutTitleXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="da-DK" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="Namespace MyCompany.App - Page MyPage - Property AboutTitle" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my page</source>
+                      <target>DA About my page</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Namespace MyCompany.App - Page MyPage - Property AboutTitle</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
         // Trans-unit id for a table Caption in namespace "MyCompany.App" when the compiler feature
         // TranslationsWithNamespaces is enabled: namespace-prefixed, unhashed segments joined by " - ".
         private static readonly byte[] NamespaceTranslatedTableCaptionXliffContent = System.Text.Encoding.UTF8.GetBytes(
@@ -288,6 +421,21 @@ namespace ALCops.LinterCop.Test
                 });
         }
 
+        private static AnalyzerTestFixture CreateFixtureWithTranslatedObjectPropertiesXliff()
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "Translations/TestApp.da-DK.xlf", TranslatedObjectPropertiesXliffContent }
+            };
+            var fileSystem = new MemoryFileSystem(files);
+
+            return RoslynFixtureFactory.Create<Analyzers.TranslatableTextShouldBeTranslated>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = fileSystem
+                });
+        }
+
         private static AnalyzerTestFixture CreateFixtureWithTranslatedPageControlToolTipXliff()
         {
             var files = new Dictionary<string, byte[]>
@@ -362,6 +510,31 @@ namespace ALCops.LinterCop.Test
         [TestCase("PageObjectToolTip")]
         [TestCase("ReportLabel")]
         [TestCase("ReportObjectToolTip")]
+        [TestCase("PageObjectInstructionalText")]
+        [TestCase("PageObjectPromotedActionCategories")]
+        [TestCase("PageObjectAdditionalSearchTerms")]
+        [TestCase("PageObjectEntityCaption")]
+        [TestCase("PageObjectEntitySetCaption")]
+        [TestCase("PageObjectAboutTitle")]
+        [TestCase("PageObjectAboutText")]
+        [TestCase("PageExtensionObjectInstructionalText")]
+        [TestCase("PageExtensionObjectPromotedActionCategories")]
+        [TestCase("PageExtensionObjectAdditionalSearchTerms")]
+        [TestCase("PageExtensionObjectAboutTitle")]
+        [TestCase("PageExtensionObjectAboutText")]
+        [TestCase("PageCustomizationObjectPromotedActionCategories")]
+        [TestCase("PageCustomizationObjectAboutTitle")]
+        [TestCase("PageCustomizationObjectAboutText")]
+        [TestCase("RequestPageObjectInstructionalText")]
+        [TestCase("RequestPageObjectAboutTitle")]
+        [TestCase("RequestPageObjectAboutText")]
+        [TestCase("ReportObjectAdditionalSearchTerms")]
+        [TestCase("QueryObjectEntityCaption")]
+        [TestCase("QueryObjectEntitySetCaption")]
+        [TestCase("QueryObjectAboutTitle")]
+        [TestCase("QueryObjectAboutText")]
+        [TestCase("ProfileObjectDescription")]
+        [TestCase("ProfileExtensionObjectDescription")]
         [TestCase("ObsoletePendingTableCaption")]
         [TestCase("ObsoletePendingTableFieldCaption")]
         [TestCase("ObsoletePendingPageControlToolTip")]
@@ -400,6 +573,31 @@ namespace ALCops.LinterCop.Test
         [TestCase("LockedReportLabel")]
         [TestCase("LockedPageObjectToolTip")]
         [TestCase("LockedReportObjectToolTip")]
+        [TestCase("LockedPageObjectInstructionalText")]
+        [TestCase("LockedPageObjectPromotedActionCategories")]
+        [TestCase("LockedPageObjectAdditionalSearchTerms")]
+        [TestCase("LockedPageObjectEntityCaption")]
+        [TestCase("LockedPageObjectEntitySetCaption")]
+        [TestCase("LockedPageObjectAboutTitle")]
+        [TestCase("LockedPageObjectAboutText")]
+        [TestCase("LockedPageExtensionObjectInstructionalText")]
+        [TestCase("LockedPageExtensionObjectPromotedActionCategories")]
+        [TestCase("LockedPageExtensionObjectAdditionalSearchTerms")]
+        [TestCase("LockedPageExtensionObjectAboutTitle")]
+        [TestCase("LockedPageExtensionObjectAboutText")]
+        [TestCase("LockedPageCustomizationObjectPromotedActionCategories")]
+        [TestCase("LockedPageCustomizationObjectAboutTitle")]
+        [TestCase("LockedPageCustomizationObjectAboutText")]
+        [TestCase("LockedRequestPageObjectInstructionalText")]
+        [TestCase("LockedRequestPageObjectAboutTitle")]
+        [TestCase("LockedRequestPageObjectAboutText")]
+        [TestCase("LockedReportObjectAdditionalSearchTerms")]
+        [TestCase("LockedQueryObjectEntityCaption")]
+        [TestCase("LockedQueryObjectEntitySetCaption")]
+        [TestCase("LockedQueryObjectAboutTitle")]
+        [TestCase("LockedQueryObjectAboutText")]
+        [TestCase("LockedProfileObjectDescription")]
+        [TestCase("LockedProfileExtensionObjectDescription")]
         [TestCase("PageAnalysisViewLockedCaption")]
         [TestCase("ObsoleteRemovedTableCaption")]
         [TestCase("ObsoleteRemovedTableFieldCaption")]
@@ -493,6 +691,45 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
+        [TestCase("TranslatedPageObjectInstructionalText")]
+        [TestCase("TranslatedPageObjectPromotedActionCategories")]
+        [TestCase("TranslatedPageObjectAdditionalSearchTerms")]
+        [TestCase("TranslatedPageObjectEntityCaption")]
+        [TestCase("TranslatedPageObjectEntitySetCaption")]
+        [TestCase("TranslatedPageObjectAboutTitle")]
+        [TestCase("TranslatedPageObjectAboutText")]
+        [TestCase("TranslatedPageExtensionObjectInstructionalText")]
+        [TestCase("TranslatedPageExtensionObjectPromotedActionCategories")]
+        [TestCase("TranslatedPageExtensionObjectAdditionalSearchTerms")]
+        [TestCase("TranslatedPageExtensionObjectAboutTitle")]
+        [TestCase("TranslatedPageExtensionObjectAboutText")]
+        [TestCase("TranslatedPageCustomizationObjectPromotedActionCategories")]
+        [TestCase("TranslatedPageCustomizationObjectAboutTitle")]
+        [TestCase("TranslatedPageCustomizationObjectAboutText")]
+        [TestCase("TranslatedRequestPageObjectInstructionalText")]
+        [TestCase("TranslatedRequestPageObjectAboutTitle")]
+        [TestCase("TranslatedRequestPageObjectAboutText")]
+        [TestCase("TranslatedReportObjectAdditionalSearchTerms")]
+        [TestCase("TranslatedQueryObjectEntityCaption")]
+        [TestCase("TranslatedQueryObjectEntitySetCaption")]
+        [TestCase("TranslatedQueryObjectAboutTitle")]
+        [TestCase("TranslatedQueryObjectAboutText")]
+        [TestCase("TranslatedProfileObjectDescription")]
+        [TestCase("TranslatedProfileExtensionObjectDescription")]
+        public async Task NoDiagnosticTranslatedObjectProperties(string testCase)
+        {
+            RequireMinimumVersion("16.0",
+                "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithTranslatedObjectPropertiesXliff();
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
         [TestCase("NoXliffFiles")]
         public async Task NoDiagnosticNoXliff(string testCase)
         {
@@ -539,6 +776,7 @@ namespace ALCops.LinterCop.Test
 
         [Test]
         [TestCase("NamespaceTableCaption")]
+        [TestCase("NamespacePageObjectAboutTitle")]
         public async Task HasDiagnosticWithNamespaces(string testCase)
         {
             RequireMinimumVersion("18.0.38.52553",
@@ -564,6 +802,21 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false);
 
             var fixture = CreateFixtureWithNamespaceFeature(NamespaceTranslatedTableCaptionXliffContent);
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
+        [TestCase("NamespacePageObjectAboutTitleTranslated")]
+        public async Task NoDiagnosticTranslatedObjectPropertiesWithNamespaces(string testCase)
+        {
+            RequireMinimumVersion("18.0.38.52553",
+                "Translations with namespaces (CompilerFeatures.TranslationsWithNamespaces) requires the 18.0.38.52553 SDK.");
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithNamespaceFeature(NamespaceTranslatedPageObjectAboutTitleXliffContent);
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
         }
 
