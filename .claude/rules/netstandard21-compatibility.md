@@ -109,6 +109,7 @@ When dropping netstandard2.1 and net8.0, grep for `COMPAT(netstandard2.1` to fin
 | `Reflection/StringHelper.cs` | Bypassed on net10.0 via `#if` in `StringExtensions.cs` | Delete file. Replace `QuoteIdentifierIfNeededWithReflection()` calls with `Microsoft.Dynamics.Nav.CodeAnalysis.Utilities.StringExtensions.QuoteIdentifierIfNeeded()`. |
 | `Reflection/SymbolHelper.cs` (`GetContainingNamespaceQualifiedName`) | Bypassed on net10.0 via `#if` in `SymbolInterfaceExtensions.cs` | Delete method. Replace `GetContainingNamespaceQualifiedNameWithReflection()` calls with `symbol.ContainingNamespace?.QualifiedName`. |
 | `Reflection/SymbolHelper.cs` (`ToDisplayStringWithReflection`) | Already `#if NETSTANDARD2_1` only | Delete method. Remove `ToDisplayStringWithReflection()` calls and use `symbol.ToDisplayString()` directly. |
+| `Reflection/InterfaceTypeSymbolHelper.cs` | Whole file `#if NETSTANDARD2_1`; net8.0+ calls `IInterfaceTypeSymbol.GetAllExtendedInterfaces()` directly in `InterfaceTypeSymbolExtensions.cs` (the member is absent from the 12.0 SDK and public from 14.0) | Delete file. Replace `GetAllExtendedInterfacesWithReflection()` calls with `GetAllExtendedInterfaces()`. |
 | `Reflection/CompilationHelper.cs` | Accesses non-public SDK internals | **Keep** (reflection needed on all TFMs). |
 | `Reflection/EnumProvider.cs` | Runtime compat for enum value changes | **Keep** (reflection needed on all TFMs). |
 | `Reflection/VersionProvider.cs` | Forward-compat for future version fields | **Keep** (reflection needed on all TFMs). |

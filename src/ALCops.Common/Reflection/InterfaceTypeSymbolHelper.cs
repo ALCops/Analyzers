@@ -1,15 +1,16 @@
+#if NETSTANDARD2_1
 using System.Collections.Immutable;
 using System.Reflection;
-using Microsoft.Dynamics.Nav.CodeAnalysis;
 using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 
 namespace ALCops.Common.Reflection;
 
 /// <summary>
 /// COMPAT(netstandard2.1): Reflection-based access to <c>IInterfaceTypeSymbol.GetAllExtendedInterfaces()</c>.
-/// Interface <c>extends</c> arrived with SDK 14.0, so the member is absent from the SDK the
-/// netstandard2.1 binary compiles against, while that binary also runs on SDKs that have it.
-/// The reflection call is used on every target framework to keep one code path.
+/// Interface <c>extends</c> arrived with SDK 14.0, so the member is absent from the 12.0 SDK the
+/// netstandard2.1 binary compiles against, while that binary also runs on SDK 14.0 and 15.x, where
+/// the member is public. On net8.0+, InterfaceTypeSymbolExtensions calls the SDK directly.
+/// TODO: Delete this file when netstandard2.1 is dropped.
 /// </summary>
 public static class InterfaceTypeSymbolHelper
 {
@@ -36,7 +37,7 @@ public static class InterfaceTypeSymbolHelper
     /// Returns every interface the given interface extends, directly or transitively, excluding
     /// the interface itself. Returns an empty array when the loaded SDK has no interface <c>extends</c>.
     /// </summary>
-    public static ImmutableArray<IInterfaceTypeSymbol> GetAllExtendedInterfacesWithReflection(IInterfaceTypeSymbol interfaceSymbol)
+    public static ImmutableArray<IInterfaceTypeSymbol> GetAllExtendedInterfaces(IInterfaceTypeSymbol interfaceSymbol)
     {
         var getAllExtendedInterfaces = _getAllExtendedInterfaces.Value;
         if (getAllExtendedInterfaces is null)
@@ -46,3 +47,4 @@ public static class InterfaceTypeSymbolHelper
         return extendedInterfaces.IsDefault ? ImmutableArray<IInterfaceTypeSymbol>.Empty : extendedInterfaces;
     }
 }
+#endif
