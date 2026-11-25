@@ -16,6 +16,7 @@ Registers `CompilationStartAction` (settings, AppSourceCop affixes, `NamingPatte
 - [BusinessCentral.LinterCop LC0092](https://github.com/StefanMaron/BusinessCentral.LinterCop/wiki/LC0092) (original rule, re-implemented)
 - [MS Docs: Best Practices for AL Code](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/compliance/apptest-bestpracticesforalcode)
 - [AL Guidelines: Naming Conventions](https://alguidelines.dev/docs/agentic-coding/vibe-coding-rules/al-naming-conventions/)
+- [#655](https://github.com/ALCops/Analyzers/issues/655) (interface members and interface implementers)
 
 ## Design decisions
 
@@ -38,12 +39,14 @@ Registers `CompilationStartAction` (settings, AppSourceCop affixes, `NamingPatte
 | `GetAppSourceCopConfiguration` wrapped in try-catch at compilation start, continuing with null affixes | It may throw in minimal (test) runtime environments. |
 | Settings loaded through the compilation snapshot with the callback's cancellation token | Retains virtual-file lookup and MemoryFileSystem tests while sharing one configuration with CM0001 and the other cops. |
 | Filter `SymbolKind.Action` by `ActionKind` and `SymbolKind.Control` by `ControlKind` instead of adding naming targets | Each of those two symbol kinds covers several AL constructs, only some of which carry a developer-chosen name; new targets (`ActionArea`, `SystemAction`, ...) would enlarge the settings schema for kinds nobody can rename. Ordinary groups stay under `Action` and every other control kind under `Control`. |
+| Interface members are checked fully (method name, parameters, named return value), abstract and default-bodied alike; a codeunit procedure that implements an interface method skips only the method-name check | The interface author picks every name the interface declares, so one interface must not get a different result per member kind. An implementer cannot rename the method, but parameter and return-value names are not part of the interface contract: AL matches an implementation by name and signature only, so the implementer picks its own parameter names and they follow the same convention as any procedure ([#655](https://github.com/ALCops/Analyzers/issues/655)). Methods inherited through `interface B extends A` count as implemented, so their names are skipped too. |
 | Independent of LC0098: a subscriber violating both rules receives two diagnostics | LC0092 constrains the character class of the first character, LC0098 the structural template; their settings are decoupled. Teams whose source objects start lowercase or non-letter (the LC0098 default emits a quoted identifier) should relax `NamingPatterns.EventSubscriber` to accept the leading quote. |
 
 ## Deliberate non-reports
 
 - Triggers: platform-defined names.
-- Interface implementations: the interface dictates the name.
+- The method name of an interface implementation (including one inherited through `extends`): the interface dictates it. Its parameters and named return value are still checked.
+- Control add-in procedures and events (`DeclareMethod` outside an interface): the JavaScript add-in fixes their names.
 - Event subscriber parameters: must match the publisher signature (AL0828), and platform trigger parameters (`xRec`, `BelowxRec`, `RunTrigger`, ...) cannot be renamed.
 - Controls on API pages/queries: AA0102 requires camelCase, which the default PascalCase pattern would always contradict.
 - Whitespace-only names such as `value(0; " ")`: a common "empty" enum value, not a naming issue.
@@ -59,12 +62,16 @@ Registers `CompilationStartAction` (settings, AppSourceCop affixes, `NamingPatte
 - Action and control names come from the source text (`syntax.Name.Unquoted()`), not from the canonical enum member, so `area(processing)` really is named `processing` and fails an uppercase-start pattern.
 - `ActionKind.SystemAction` is absent at the 12.0 SDK floor and present by 16.0, so `EnumProvider` resolves it through the string overload with an out-of-range sentinel: `default(ActionKind)` is `Area`, and falling back to it would make every action area read as a system action.
 - The predefined promoted-category test lives in Common as `IActionSymbol.IsPredefinedPromotedCategoryGroup()` and is shared with AC0011, so both cops skip exactly the same groups. It wraps `SyntaxFacts.PromotedCategoriesSynthesizedSymbolNames`, an `ImmutableHashSet<string>` the SDK already builds over `PromotedCategoryKind` with a case-insensitive comparer, so no local copy or lowercasing is needed.
+- A source method without a body has `MethodKind.DeclareMethod` (`SourceMethodSymbol.MethodKind`), so abstract interface members share the kind with control add-in procedures and events, so the analyzer accepts `DeclareMethod` only when `ContainingSymbol.Kind` is `SymbolKind.Interface`. A default-bodied member (runtime 18.0) has `MethodKind.Method` and the interface as its `ContainingSymbol`. Interface members cannot be `local`, so `ClassifyMethod` maps them to `GlobalProcedure`.
+- `ICodeunitTypeSymbol.ImplementedInterfaces` is the declared `implements` list without the interfaces those extend. The Common helper `MethodImplementsInterfaceMethod` therefore also walks `IInterfaceTypeSymbol.GetAllExtendedInterfaces()` (transitive, excluding the interface itself). That member arrived with interface `extends` in SDK 14.0 (`Feature.InterfaceExtends`, runtime Fall2024) and is absent from the 12.0 SDK the netstandard2.1 binary compiles against, so Common reaches it through a cached reflection delegate (`GetAllExtendedInterfacesWithReflection`) on every target framework; it returns empty on SDKs without `extends`.
 - The seven extension and customization `SymbolKind` members exist at the 12.0 SDK floor, so `EnumProvider` resolves them by name without a fallback sentinel.
 
 ## Test notes
 
 - Custom patterns are injected as `alcops.json` through a `MemoryFileSystem`; `NamingPatternSettings.cs` unit-tests the inheritance-chain resolution of `NamingPatternConfig` directly.
 - Extension object fixtures declare their target in the same file, which the compiler accepts only from SDK 13.0, so they are gated with `SkipTestIfVersionIsTooLow(..., "13.0", ...)`. The profileextension fixtures are also gated on `"14.0"`: `Feature.ProfileExtensions` requires runtime Fall2024. Profile extensions and page customizations have their own fixtures so those gates stay narrow.
+- `InterfaceDefaultMemberLowerCase` is gated at 18.0: default interface method bodies need runtime 18.0 and the harness compiles at the SDK's current release. It holds an abstract and a default-bodied member side by side, so it pins that both kinds get the same result.
+- `InterfaceExtendedImplementingMethod` is gated at 14.0, the first SDK that compiles interface `extends`. Its marker sits on a lowercase implementer method name inherited from the base interface, so it proves the name skip through `extends` (AL names are case-insensitive, so the lowercase name still implements the member).
 - The `systemaction` fixture is gated with `SkipTestIfVersionIsTooLow(..., "16.2.31", ...)`. `systemaction` itself is absent at the 12.0 SDK floor and present by 16.0, but the gate is set by the fixture's `ConfigurationDialog` page type: SDKs up to 16.2.28 reject it as a feature under development (AL0574), and 16.2.31 downgrades that to a public-preview warning. The gate therefore follows the first SDK that compiles the page type, not the parser or the action. The page also needs `Extensible = false` (AL0223) and a system-action name the page type supports (`Ok` or `Cancel`).
 
 ## Settings
