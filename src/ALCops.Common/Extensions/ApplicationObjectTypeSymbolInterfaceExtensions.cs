@@ -1,5 +1,6 @@
 using ALCops.Common.Reflection;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Symbols;
 
 namespace ALCops.Common.Extensions;
 
@@ -31,18 +32,27 @@ public static class ApplicationObjectTypeSymbolInterfaceExtensions
         if (objectSymbol is not ICodeunitTypeSymbol codeunitSymbol)
             return false;
 
+        // ImplementedInterfaces is the declared list; methods inherited through 'extends' live on the
+        // extended interfaces.
         foreach (var implementedInterface in codeunitSymbol.ImplementedInterfaces)
         {
-            if (implementedInterface.GetMembers()
-                                    .OfType<IMethodSymbol>()
-                                    .Any(methodSymbol.MethodImplementsInterfaceMethod))
-            {
+            if (DeclaresMethodImplementedBy(implementedInterface, methodSymbol))
                 return true;
+
+            foreach (var extendedInterface in implementedInterface.GetAllExtendedInterfacesWithReflection())
+            {
+                if (DeclaresMethodImplementedBy(extendedInterface, methodSymbol))
+                    return true;
             }
         }
 
         return false;
     }
+
+    private static bool DeclaresMethodImplementedBy(IInterfaceTypeSymbol interfaceSymbol, IMethodSymbol methodSymbol) =>
+        interfaceSymbol.GetMembers()
+                       .OfType<IMethodSymbol>()
+                       .Any(methodSymbol.MethodImplementsInterfaceMethod);
 
     /// <summary>
     /// Returns true if the object is a test codeunit with TestPermissions = Disabled.
