@@ -30,6 +30,22 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
 #else
     private static readonly XNamespace XliffNamespace = "urn:oasis:names:tc:xliff:document:1.2";
 
+    // Translatable properties a page, request page, query, page extension or page customization can
+    // declare at object level. Each object kind accepts a different subset; GetProperty returns null
+    // for the kinds the object does not declare.
+    private static readonly PropertyKind[] PageLikeObjectPropertyKinds =
+    [
+        EnumProvider.PropertyKind.Caption,
+        EnumProvider.PropertyKind.ToolTip,
+        EnumProvider.PropertyKind.InstructionalText,
+        EnumProvider.PropertyKind.AdditionalSearchTerms,
+        EnumProvider.PropertyKind.EntityCaption,
+        EnumProvider.PropertyKind.EntitySetCaption,
+        EnumProvider.PropertyKind.PromotedActionCategories,
+        EnumProvider.PropertyKind.AboutTitle,
+        EnumProvider.PropertyKind.AboutText,
+    ];
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.TranslatableTextShouldBeTranslated);
 
@@ -81,6 +97,8 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             EnumProvider.SymbolKind.EnumValue,
             EnumProvider.SymbolKind.Query,
             EnumProvider.SymbolKind.Profile,
+            EnumProvider.SymbolKind.ProfileExtension,
+            EnumProvider.SymbolKind.PageCustomization,
             EnumProvider.SymbolKind.PermissionSet,
             EnumProvider.SymbolKind.Field,
             EnumProvider.SymbolKind.GlobalVariable,
@@ -133,12 +151,26 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             return;
         }
 
-        // Table, TableExtension, XmlPort, Enum, EnumValue, Report, Profile, PermissionSet
+        // A page customization keeps its own translation root and carries object-level translatable
+        // properties; its modified controls and actions are not checked.
+        if (kind == EnumProvider.SymbolKind.PageCustomization)
+        {
+            ReportPageLikeObjectProperties(ctx, symbol, translationIndex, useCanonicalPropertyName);
+            return;
+        }
+
+        // Table, TableExtension, XmlPort, Enum, EnumValue, Report, Profile, ProfileExtension, PermissionSet
         ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
 
-        // Of these kinds only a report object carries a ToolTip.
+        // Of these kinds only a report object carries a ToolTip and AdditionalSearchTerms.
         if (kind == EnumProvider.SymbolKind.Report)
+        {
             ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
+            ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.AdditionalSearchTerms, translationIndex, useCanonicalPropertyName);
+        }
+
+        if (kind == EnumProvider.SymbolKind.Profile || kind == EnumProvider.SymbolKind.ProfileExtension)
+            ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.ProfileDescription, translationIndex, useCanonicalPropertyName);
     }
 
     private static void AnalyzeLabelVariable(SymbolAnalysisContext ctx, ISymbol symbol, TranslationIndex translationIndex)
@@ -175,9 +207,7 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
 
     private static void AnalyzePageLikeSymbol(SymbolAnalysisContext ctx, ISymbol symbol, TranslationIndex translationIndex, bool useCanonicalPropertyName)
     {
-        ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
-        // Only a page object has a ToolTip; GetProperty returns null for the other page-like kinds.
-        ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
+        ReportPageLikeObjectProperties(ctx, symbol, translationIndex, useCanonicalPropertyName);
 
         IEnumerable<IControlSymbol>? controls = GetFlattenedControls(symbol);
         if (controls is not null)
@@ -218,6 +248,12 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
                 ReportTranslatableProperty(ctx, analysisView, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
             }
         }
+    }
+
+    private static void ReportPageLikeObjectProperties(SymbolAnalysisContext ctx, ISymbol symbol, TranslationIndex translationIndex, bool useCanonicalPropertyName)
+    {
+        foreach (PropertyKind propertyKind in PageLikeObjectPropertyKinds)
+            ReportTranslatableProperty(ctx, symbol, propertyKind, translationIndex, useCanonicalPropertyName);
     }
 
     private static void ReportTranslatableProperty(SymbolAnalysisContext ctx, ISymbol symbol, PropertyKind propertyKind, TranslationIndex translationIndex, bool useCanonicalPropertyName)
