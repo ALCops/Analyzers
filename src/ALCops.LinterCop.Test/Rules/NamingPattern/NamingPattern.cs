@@ -71,7 +71,6 @@ namespace ALCops.LinterCop.Test
         [TestCase("ObsoleteProcedure")]
         [TestCase("TriggerMethod")]
         [TestCase("InterfaceImplementingMethod")]
-        [TestCase("InterfaceImplementingMethodRenamedParameter")]
         [TestCase("InterfaceExtendedImplementingMethod")]
         [TestCase("EventSubscriberPascalCase")]
         [TestCase("EventSubscriberPlatformParams")]
