@@ -176,6 +176,144 @@ namespace ALCops.LinterCop.Test
             </xliff>
             """);
 
+        // Control and action translatable properties (InstructionalText, AboutTitle, AboutText), copied
+        // from the Translations/*.g.xlf the AL compiler generates for the matching fixtures (app.json with
+        // "features": ["TranslationFile"]). A control or action a page extension adds in the same module
+        // as its target folds into the target's ID ("Page MyPage - Control MyExtField"), while the
+        // generator note keeps the extension's own name.
+        private static readonly byte[] TranslatedControlAndActionPropertiesXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="da-DK" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="Page 2931038265 - Action 1135900470 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My action explains itself.</source>
+                      <target>DA My action explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Action MyAction - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Action 1135900470 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my action</source>
+                      <target>DA About my action</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Action MyAction - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Action 3066929535 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My action group explains itself.</source>
+                      <target>DA My action group explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Action MyActionGroup - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Action 3066929535 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my action group</source>
+                      <target>DA About my action group</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Action MyActionGroup - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Action 3100184595 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My custom action explains itself.</source>
+                      <target>DA My custom action explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Action MyCustomAction - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Action 3100184595 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my custom action</source>
+                      <target>DA About my custom action</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Action MyCustomAction - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Action 2578960685 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My extension action explains itself.</source>
+                      <target>DA My extension action explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Action MyExtAction - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Control 979848377 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my extension field</source>
+                      <target>DA About my extension field</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Control MyExtField - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Control 1296262074 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My field explains itself.</source>
+                      <target>DA My field explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Control MyField - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Control 1296262074 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my field</source>
+                      <target>DA About my field</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Control MyField - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Control 1296262074 - Property 1968111052" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>Fill in my field.</source>
+                      <target>DA Fill in my field.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Control MyField - Property InstructionalText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Action 776543033 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My file upload action explains itself.</source>
+                      <target>DA My file upload action explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Action MyFileUploadAction - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Action 776543033 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my file upload action</source>
+                      <target>DA About my file upload action</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Action MyFileUploadAction - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Control 894378861 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My group explains itself.</source>
+                      <target>DA My group explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Control MyGroup - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Control 894378861 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my group</source>
+                      <target>DA About my group</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Control MyGroup - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Control 894378861 - Property 1968111052" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>Fill in my group.</source>
+                      <target>DA Fill in my group.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Control MyGroup - Property InstructionalText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Control 2443193653 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My part explains itself.</source>
+                      <target>DA My part explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Control MyPart - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Control 2443193653 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my part</source>
+                      <target>DA About my part</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Control MyPart - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - Action 1135900470 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My request page action explains itself.</source>
+                      <target>DA My request page action explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - Action MyAction - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - Control 3834966961 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my option</source>
+                      <target>DA About my option</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - Control MyOption - Property AboutTitle</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
+        // Compiler-generated trans-unit for a group control AboutTitle on page MyPage in namespace
+        // "MyCompany.App" when the TranslationsWithNamespaces feature is enabled.
+        private static readonly byte[] NamespaceTranslatedPageControlAboutTitleXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="da-DK" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="Namespace MyCompany.App - Page MyPage - Control MyGroup - Property AboutTitle" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my group</source>
+                      <target>DA About my group</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Namespace MyCompany.App - Page MyPage - Control MyGroup - Property AboutTitle</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
         // Compiler-generated trans-unit for page AboutTitle in namespace "MyCompany.App" when the
         // TranslationsWithNamespaces feature is enabled.
         private static readonly byte[] NamespaceTranslatedPageObjectAboutTitleXliffContent = System.Text.Encoding.UTF8.GetBytes(
@@ -436,6 +574,21 @@ namespace ALCops.LinterCop.Test
                 });
         }
 
+        private static AnalyzerTestFixture CreateFixtureWithTranslatedControlAndActionPropertiesXliff()
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "Translations/TestApp.da-DK.xlf", TranslatedControlAndActionPropertiesXliffContent }
+            };
+            var fileSystem = new MemoryFileSystem(files);
+
+            return RoslynFixtureFactory.Create<Analyzers.TranslatableTextShouldBeTranslated>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = fileSystem
+                });
+        }
+
         private static AnalyzerTestFixture CreateFixtureWithTranslatedPageControlToolTipXliff()
         {
             var files = new Dictionary<string, byte[]>
@@ -535,6 +688,26 @@ namespace ALCops.LinterCop.Test
         [TestCase("QueryObjectAboutText")]
         [TestCase("ProfileObjectDescription")]
         [TestCase("ProfileExtensionObjectDescription")]
+        [TestCase("PageFieldControlInstructionalText")]
+        [TestCase("PageFieldControlAboutTitle")]
+        [TestCase("PageFieldControlAboutText")]
+        [TestCase("PageGroupControlInstructionalText")]
+        [TestCase("PageGroupControlAboutTitle")]
+        [TestCase("PageGroupControlAboutText")]
+        [TestCase("PagePartControlAboutTitle")]
+        [TestCase("PagePartControlAboutText")]
+        [TestCase("PageActionAboutTitle")]
+        [TestCase("PageActionAboutText")]
+        [TestCase("PageActionGroupAboutTitle")]
+        [TestCase("PageActionGroupAboutText")]
+        [TestCase("PageCustomActionAboutTitle")]
+        [TestCase("PageCustomActionAboutText")]
+        [TestCase("PageFileUploadActionAboutTitle")]
+        [TestCase("PageFileUploadActionAboutText")]
+        [TestCase("PageExtensionControlAboutTitle")]
+        [TestCase("PageExtensionActionAboutText")]
+        [TestCase("RequestPageControlAboutTitle")]
+        [TestCase("RequestPageActionAboutText")]
         [TestCase("ObsoletePendingTableCaption")]
         [TestCase("ObsoletePendingTableFieldCaption")]
         [TestCase("ObsoletePendingPageControlToolTip")]
@@ -598,6 +771,26 @@ namespace ALCops.LinterCop.Test
         [TestCase("LockedQueryObjectAboutText")]
         [TestCase("LockedProfileObjectDescription")]
         [TestCase("LockedProfileExtensionObjectDescription")]
+        [TestCase("LockedPageFieldControlInstructionalText")]
+        [TestCase("LockedPageFieldControlAboutTitle")]
+        [TestCase("LockedPageFieldControlAboutText")]
+        [TestCase("LockedPageGroupControlInstructionalText")]
+        [TestCase("LockedPageGroupControlAboutTitle")]
+        [TestCase("LockedPageGroupControlAboutText")]
+        [TestCase("LockedPagePartControlAboutTitle")]
+        [TestCase("LockedPagePartControlAboutText")]
+        [TestCase("LockedPageActionAboutTitle")]
+        [TestCase("LockedPageActionAboutText")]
+        [TestCase("LockedPageActionGroupAboutTitle")]
+        [TestCase("LockedPageActionGroupAboutText")]
+        [TestCase("LockedPageCustomActionAboutTitle")]
+        [TestCase("LockedPageCustomActionAboutText")]
+        [TestCase("LockedPageFileUploadActionAboutTitle")]
+        [TestCase("LockedPageFileUploadActionAboutText")]
+        [TestCase("LockedPageExtensionControlAboutTitle")]
+        [TestCase("LockedPageExtensionActionAboutText")]
+        [TestCase("LockedRequestPageControlAboutTitle")]
+        [TestCase("LockedRequestPageActionAboutText")]
         [TestCase("PageAnalysisViewLockedCaption")]
         [TestCase("ObsoleteRemovedTableCaption")]
         [TestCase("ObsoleteRemovedTableFieldCaption")]
@@ -730,6 +923,40 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
+        [TestCase("TranslatedPageFieldControlInstructionalText")]
+        [TestCase("TranslatedPageFieldControlAboutTitle")]
+        [TestCase("TranslatedPageFieldControlAboutText")]
+        [TestCase("TranslatedPageGroupControlInstructionalText")]
+        [TestCase("TranslatedPageGroupControlAboutTitle")]
+        [TestCase("TranslatedPageGroupControlAboutText")]
+        [TestCase("TranslatedPagePartControlAboutTitle")]
+        [TestCase("TranslatedPagePartControlAboutText")]
+        [TestCase("TranslatedPageActionAboutTitle")]
+        [TestCase("TranslatedPageActionAboutText")]
+        [TestCase("TranslatedPageActionGroupAboutTitle")]
+        [TestCase("TranslatedPageActionGroupAboutText")]
+        [TestCase("TranslatedPageCustomActionAboutTitle")]
+        [TestCase("TranslatedPageCustomActionAboutText")]
+        [TestCase("TranslatedPageFileUploadActionAboutTitle")]
+        [TestCase("TranslatedPageFileUploadActionAboutText")]
+        [TestCase("TranslatedPageExtensionControlAboutTitle")]
+        [TestCase("TranslatedPageExtensionActionAboutText")]
+        [TestCase("TranslatedRequestPageControlAboutTitle")]
+        [TestCase("TranslatedRequestPageActionAboutText")]
+        public async Task NoDiagnosticTranslatedControlAndActionProperties(string testCase)
+        {
+            RequireMinimumVersion("16.0",
+                "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithTranslatedControlAndActionPropertiesXliff();
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
         [TestCase("NoXliffFiles")]
         public async Task NoDiagnosticNoXliff(string testCase)
         {
@@ -777,6 +1004,7 @@ namespace ALCops.LinterCop.Test
         [Test]
         [TestCase("NamespaceTableCaption")]
         [TestCase("NamespacePageObjectAboutTitle")]
+        [TestCase("NamespacePageControlAboutTitle")]
         public async Task HasDiagnosticWithNamespaces(string testCase)
         {
             RequireMinimumVersion("18.0.38.52553",
@@ -817,6 +1045,21 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false);
 
             var fixture = CreateFixtureWithNamespaceFeature(NamespaceTranslatedPageObjectAboutTitleXliffContent);
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
+        [TestCase("NamespacePageControlAboutTitleTranslated")]
+        public async Task NoDiagnosticTranslatedControlAndActionPropertiesWithNamespaces(string testCase)
+        {
+            RequireMinimumVersion("18.0.38.52553",
+                "Translations with namespaces (CompilerFeatures.TranslationsWithNamespaces) requires the 18.0.38.52553 SDK.");
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithNamespaceFeature(NamespaceTranslatedPageControlAboutTitleXliffContent);
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
         }
 
