@@ -36,8 +36,15 @@ namespace ALCops.TestAutomationCop.Test
         [TestCase("ConfirmHandler")]
         [TestCase("GlobalTestProcedure")]
         [TestCase("InterfaceImplementation")]
+        [TestCase("InterfaceExtendedImplementation")]
         public async Task NoDiagnostic(string testCase)
         {
+            SkipTestIfVersionIsTooLow(
+                ["InterfaceExtendedImplementation"],
+                testCase,
+                "14.0",
+                "Interface 'extends' is not supported before AL 14.0");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 

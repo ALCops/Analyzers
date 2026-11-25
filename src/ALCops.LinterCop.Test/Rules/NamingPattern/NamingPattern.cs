@@ -35,6 +35,10 @@ namespace ALCops.LinterCop.Test
         [TestCase("ObjectExtensionLowerCaseStart")]
         [TestCase("ProfileExtensionLowerCaseStart")]
         [TestCase("PageCustomizationLowerCaseStart")]
+        [TestCase("InterfaceAbstractMemberLowerCase")]
+        [TestCase("InterfaceDefaultMemberLowerCase")]
+        [TestCase("InterfaceImplementingMethodLowerCaseParameter")]
+        [TestCase("InterfaceExtendedImplementingMethodLowerCaseParameter")]
         public async Task HasDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
@@ -49,6 +53,18 @@ namespace ALCops.LinterCop.Test
                 "14.0",
                 "Profile extensions are not supported before AL 14.0");
 
+            SkipTestIfVersionIsTooLow(
+                ["InterfaceDefaultMemberLowerCase"],
+                testCase,
+                "18.0",
+                "Default interface method bodies need runtime 18.0; the harness compiles at the SDK's current release.");
+
+            SkipTestIfVersionIsTooLow(
+                ["InterfaceExtendedImplementingMethodLowerCaseParameter"],
+                testCase,
+                "14.0",
+                "Interface 'extends' is not supported before AL 14.0");
+
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
 
@@ -62,6 +78,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("ObsoleteProcedure")]
         [TestCase("TriggerMethod")]
         [TestCase("InterfaceImplementingMethod")]
+        [TestCase("InterfaceExtendedImplementingMethod")]
         [TestCase("EventSubscriberPascalCase")]
         [TestCase("EventSubscriberPlatformParams")]
         [TestCase("EventSubscriberUserParams")]
@@ -93,6 +110,12 @@ namespace ALCops.LinterCop.Test
                 testCase,
                 "14.0",
                 "Profile extensions are not supported before AL 14.0");
+
+            SkipTestIfVersionIsTooLow(
+                ["InterfaceExtendedImplementingMethod"],
+                testCase,
+                "14.0",
+                "Interface 'extends' is not supported before AL 14.0");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
