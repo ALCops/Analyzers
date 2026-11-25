@@ -35,7 +35,7 @@ Note: `HasFix` uses `DiagnosticDescriptors.{Name}` (the full descriptor object),
 
 ## HasFixAll
 
-Add a dedicated `HasFixAll` test method when the `CodeFixProvider` uses a custom `FixAllProvider` (see `.claude/rules/codefix-development.md` → "Custom FixAllProvider"). This is required for rules where multiple diagnostics can produce edits on a shared ancestor node (e.g. removing multiple parameters from the same signature), because `TestCodeFix` only exercises the single-diagnostic path and misses batching regressions.
+Every `CodeFixProvider`, `BatchFixer`-based ones included, gets two FixAll tests: a `HasFixAll` case at Document scope and a `HasFixAllInProject` case with two `/*EOD*/` documents at Project scope. `TestCodeFix` only exercises the single-diagnostic path and misses batching regressions, and only a Project-scope test runs the whole-compilation diagnostics the editor's "Fix All in Project" uses. A custom `FixAllProvider` (see `.claude/rules/codefix-development.md` → "Custom FixAllProvider") additionally needs cases where several diagnostics edit a shared ancestor node. Reference implementation: the `UseParenthesisForFunctionCall` test class in `ALCops.FormattingCop.Test`.
 
 Directory layout is identical to `HasFix`: place `current.al` (with multiple `[|...|]` markers, one per expected diagnostic) and `expected.al` under `HasFixAll/{TestCaseName}/`.
 
@@ -74,3 +74,16 @@ Key details:
 - `equivalenceKey` must exactly match the key assigned to the `CodeAction` in the provider. Passing the wrong key silently short-circuits FixAll.
 - Prefer at least **two markers** in `current.al` targeting sibling nodes in the same list (`ParameterListSyntax`, `PropertyListSyntax`, etc.). A single-marker FixAll test does not exercise the merge behavior and would pass even with `BatchFixer` on a broken provider.
 - Wrap the method in `RequireMinimumVersion(...)` if the underlying rule is version-scoped, same as `HasDiagnostic`.
+
+### HasFixAllInProject
+
+Same layout (`HasFixAll/{TestCaseName}/current.al` + `expected.al`), with the code split into two documents by a line containing exactly `/*EOD*/` and markers in both (see "Multi-document fixtures" in `.claude/rules/testing.md`). Add `using Microsoft.Dynamics.Nav.CodeAnalysis.CodeFixes;` for `FixAllScope`:
+
+```csharp
+fixture.TestFixAll(
+    currentCode,
+    expectedCode,
+    DiagnosticIds.{DiagnosticIdConstant},
+    equivalenceKey: nameof({CodeFixProviderClassName}),
+    scope: FixAllScope.Project);
+```
