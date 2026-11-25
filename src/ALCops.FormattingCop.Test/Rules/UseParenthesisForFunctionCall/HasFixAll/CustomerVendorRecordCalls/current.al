@@ -1,0 +1,36 @@
+codeunit 50100 "FormattingCop Test"
+{
+    procedure TestParentheses()
+    var
+        Customer: Record Customer;
+        Vendor: Record Vendor;
+    begin
+        [|Customer.Reset|];
+        Customer.SetCurrentKey("No.");
+        [|Customer.FindFirst|];
+        [|Customer.Next|];
+        [|Customer.Reset|];
+
+        [|Vendor.Reset|];
+        Vendor.SetCurrentKey("No.");
+        [|Vendor.FindFirst|];
+        [|Vendor.Next|];
+        [|Vendor.Reset|];
+    end;
+}
+
+table 50100 Customer
+{
+    fields
+    {
+        field(1; "No."; Code[20]) { }
+    }
+}
+
+table 50101 Vendor
+{
+    fields
+    {
+        field(1; "No."; Code[20]) { }
+    }
+}
