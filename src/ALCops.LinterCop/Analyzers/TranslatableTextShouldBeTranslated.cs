@@ -46,6 +46,28 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         EnumProvider.PropertyKind.AboutText,
     ];
 
+    // Translatable properties a page control (field, group, part, ...) can declare. Each control kind
+    // accepts a different subset; GetProperty returns null for the kinds the control does not declare.
+    private static readonly PropertyKind[] ControlPropertyKinds =
+    [
+        EnumProvider.PropertyKind.Caption,
+        EnumProvider.PropertyKind.ToolTip,
+        EnumProvider.PropertyKind.OptionCaption,
+        EnumProvider.PropertyKind.InstructionalText,
+        EnumProvider.PropertyKind.AboutTitle,
+        EnumProvider.PropertyKind.AboutText,
+    ];
+
+    // Translatable properties a page action (action, group, custom action, file-upload action, ...)
+    // can declare; GetProperty returns null for the kinds the action does not declare.
+    private static readonly PropertyKind[] ActionPropertyKinds =
+    [
+        EnumProvider.PropertyKind.Caption,
+        EnumProvider.PropertyKind.ToolTip,
+        EnumProvider.PropertyKind.AboutTitle,
+        EnumProvider.PropertyKind.AboutText,
+    ];
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.TranslatableTextShouldBeTranslated);
 
@@ -217,9 +239,8 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
                 if (control.IsRemoved())
                     continue;
 
-                ReportTranslatableProperty(ctx, control, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
-                ReportTranslatableProperty(ctx, control, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
-                ReportTranslatableProperty(ctx, control, EnumProvider.PropertyKind.OptionCaption, translationIndex, useCanonicalPropertyName);
+                foreach (PropertyKind propertyKind in ControlPropertyKinds)
+                    ReportTranslatableProperty(ctx, control, propertyKind, translationIndex, useCanonicalPropertyName);
             }
         }
 
@@ -231,8 +252,8 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
                 if (action.IsRemoved())
                     continue;
 
-                ReportTranslatableProperty(ctx, action, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
-                ReportTranslatableProperty(ctx, action, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
+                foreach (PropertyKind propertyKind in ActionPropertyKinds)
+                    ReportTranslatableProperty(ctx, action, propertyKind, translationIndex, useCanonicalPropertyName);
             }
         }
 
