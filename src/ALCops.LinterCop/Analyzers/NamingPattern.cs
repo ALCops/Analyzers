@@ -87,17 +87,20 @@ public sealed class NamingPattern : DiagnosticAnalyzer
         if (ctx.IsObsolete() || ctx.Symbol is not IMethodSymbol method)
             return;
 
-        // Skip triggers (platform-defined names)
-        if (method.MethodKind != EnumProvider.MethodKind.Method)
-            return;
-
-        // Skip interface-implementing methods (can't change name)
-        if (method.MethodImplementsInterfaceMethod())
+        // Skip triggers (platform-defined names). A source method without a body is DeclareMethod:
+        // abstract interface members are checked, control add-in procedures and events are not.
+        if (method.MethodKind != EnumProvider.MethodKind.Method &&
+            !(method.MethodKind == EnumProvider.MethodKind.DeclareMethod &&
+              method.ContainingSymbol?.Kind == EnumProvider.SymbolKind.Interface))
             return;
 
         // Classify the method to determine which naming target applies
         var target = ClassifyMethod(method);
-        CheckName(ctx, method.Name, target, config, GetKindDisplayName(target));
+
+        // An interface implementation can't change its name, but its parameter and return value
+        // names are not part of the interface contract.
+        if (!method.MethodImplementsInterfaceMethod())
+            CheckName(ctx, method.Name, target, config, GetKindDisplayName(target));
 
         // Skip parameter and return value checks for event subscribers.
         // Subscriber parameters must match the publisher signature (AL0828);
