@@ -19,9 +19,15 @@ jobs:
   report:
     runs-on: ubuntu-latest
     name: Report
+    # dorny attaches the check to the PR's current head SHA, not the tested commit, so
+    # a run for a commit the PR has since moved past would post stale results on the
+    # new head. Skip it. Fork PRs have an empty pull_requests list; dorny then falls
+    # back to workflow_run.head_sha, which is the tested commit, so they always pass.
     if: >-
-      github.event.workflow_run.conclusion == 'success'
-      || github.event.workflow_run.conclusion == 'failure'
+      (github.event.workflow_run.conclusion == 'success'
+       || github.event.workflow_run.conclusion == 'failure')
+      && (!github.event.workflow_run.pull_requests[0].head.sha
+          || github.event.workflow_run.pull_requests[0].head.sha == github.event.workflow_run.head_sha)
     steps:
       - name: Publish unified test report
         uses: dorny/test-reporter@v3
