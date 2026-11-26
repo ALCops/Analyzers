@@ -15,6 +15,7 @@ Registers `RegisterCodeBlockAction` on method/trigger bodies; main type `Partial
 **References:**
 - [Issue #264](https://github.com/ALCops/Analyzers/issues/264) (Control flow false positive)
 - [Issue #265](https://github.com/ALCops/Analyzers/issues/265) (Modify exclusion)
+- [Issue #517](https://github.com/ALCops/Analyzers/issues/517) (roadmap verdict: globals, parameters, cross-procedure, events)
 - [Discussion #155](https://github.com/ALCops/Analyzers/discussions/155)
 - [MS Docs: Using Partial Records](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-partial-records)
 - [MS Docs: Partial Records FAQ](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-partial-records-faq)
@@ -38,6 +39,7 @@ Registers `RegisterCodeBlockAction` on method/trigger bodies; main type `Partial
 | Flow-sensitive forward dataflow with fork/merge at `if`/`case`/`while`/`for`/`foreach`; `while`/`for`/`foreach` merge the pre-loop state with the post-body state, `repeat-until` uses the post-body state directly | Positional flags gave wrong answers when `SetLoadFields`, `Clear` or the read sat in one branch only; a `repeat` body always runs once |
 | `HasLoadFields` merges with AND, `HasPartialRead` and the recorded write names with OR (union) | If any path lacks `SetLoadFields`, the read may load all fields; a partial read on any path can reach a later write |
 | `Clear(var)` and `var.Reset()` reset all flow state | Both reinitialize the partial-records state of the variable |
+| Hand-offs that can change the instance's partial state reset it after committing the findings already made: `var` arguments to user procedures and event publishers, any argument of a built-in (`Clear`, `Codeunit.Run`, `Page.Run`, the `TransferFields`/`Copy` source), and non-built-in methods on the record; by-value arguments do not reset | The callee may call `SetLoadFields()`, `Reset` or a full read on the caller's instance, and a false positive is worse than a missed finding. A by-value argument is a copy with its own load selection and cannot change the caller's instance ([MS Docs: Using Partial Records](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-partial-records), "Iterating over records"). The commit step exists because a `var` publisher raised after the write (`Delete(); OnAfterDelete(MyTable)`) must not erase the finding; writes are recorded at branch depth 0 only, so committing early is sound |
 | Every read kind (`Find*`, `Get`, `GetBySystemId`) marks a partial read; the set is the analyzer's own `ReadMethods`, not PC0030's loop-entry set | Any read after `SetLoadFields` leaves a partial buffer, whether or not a loop follows |
 | `RecordRef` variables are included, without temporary/table-type checks | The opened table is not statically determinable; `RecordRef.SetLoadFields` followed by a JIT-load operation is the same anti-pattern |
 | Single pass over loops, no fixed-point iteration | Acceptable approximation; fixed-point adds complexity for rare edge cases |
@@ -49,11 +51,16 @@ Registers `RegisterCodeBlockAction` on method/trigger bodies; main type `Partial
 - Modify, ModifyAll, DeleteAll, Init and `:=` after a partial read: none of them needs all fields loaded.
 - Full-field operations that precede the first partial read, or sit between `SetLoadFields` and the next read.
 - Full-field operations inside conditional branches, including the not-found branch of `if not Rec.Get() then Insert()`.
-- Global variables and parameters.
+- Globals and parameters whose load state, read and write all sit in one body: no occurrence in the Base Application (0 same-body global hits, about one parameter hit in 1,663 load-fields call sites), not worth the extra bail-out on same-object calls a global would need.
+- Globals across procedures: whether a write JIT-loads depends on which procedure ran first on the instance and on the instance's lifetime (single-instance codeunits, pages, test codeunits), which is invisible statically.
+- Parameters whose partial state comes from the caller: the caller is unknown; 1,554 Base Application helpers take a `var` record and write it without reading it first, so reporting them would be noise.
+- Flows through other procedures: a dependency procedure symbol has no body (`ReferenceMethodSymbol.DeclaringSyntaxReference` is null) and same-app callees would cost a body bind per call site on every editor pass; the Base Application has one such flow.
+- Event subscribers: the publisher's load state is invisible to the subscriber, and the publishers raised with a partial record are deliberate extension points; the subscriber-side remedy is `AddLoadFields`.
 
 ## Known issues
 
 - Genuine JIT-load problems inside conditional branches are false negatives by design; straight-line and `repeat-until` cases are still caught.
+- A hand-off that only reads the record (a `var` helper that deletes without resetting) suppresses the finding: accepted false negative.
 
 ## Test notes
 

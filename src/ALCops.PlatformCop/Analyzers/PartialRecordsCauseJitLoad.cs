@@ -156,7 +156,7 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
         };
 
         /// <summary>
-        /// Resets the flow flags and LoadFieldsLocations (used by Clear/Reset operations).
+        /// Resets the flow flags and LoadFieldsLocations after a reset or hand-off (see CommitAndReset).
         /// </summary>
         public void ResetFlags()
         {
@@ -217,16 +217,29 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
                 if (!_trackedVariables.TryGetValue(kvp.Key, out var state))
                     continue;
 
-                var seenLF = new HashSet<int>();
-                foreach (var info in kvp.Value.LoadFieldsLocations)
-                {
-                    if (seenLF.Add(info.Location.SourceSpan.Start))
-                        state.LoadFieldsLocations.Add(info);
-                }
-
-                if (kvp.Value.WriteMethodNamesAfterPartialRead is not null)
-                    state.WriteMethodNames.UnionWith(kvp.Value.WriteMethodNamesAfterPartialRead);
+                Commit(state, kvp.Value);
             }
+        }
+
+        private static void Commit(VariableState state, FlowFlags flags)
+        {
+            foreach (var info in flags.LoadFieldsLocations)
+            {
+                if (!state.LoadFieldsLocations.Any(l => l.Location.SourceSpan.Start == info.Location.SourceSpan.Start))
+                    state.LoadFieldsLocations.Add(info);
+            }
+
+            if (flags.WriteMethodNamesAfterPartialRead is not null)
+                state.WriteMethodNames.UnionWith(flags.WriteMethodNamesAfterPartialRead);
+        }
+
+        // Writes are only recorded at branch depth 0, so a finding made before a reset is final.
+        private void CommitAndReset(string name, FlowFlags flags)
+        {
+            if (flags.WriteMethodNamesAfterPartialRead is not null)
+                Commit(_trackedVariables[name], flags);
+
+            flags.ResetFlags();
         }
 
         public override void VisitInvocationExpression(IInvocationExpression operation)
@@ -239,10 +252,10 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
             if (instanceSymbol?.Kind == EnumProvider.SymbolKind.LocalVariable &&
                 _flowState.TryGetValue(instanceSymbol.Name, out var flowFlags))
             {
-                ClassifyInstanceMethodCall(operation, flowFlags);
+                ClassifyInstanceMethodCall(operation, instanceSymbol.Name, flowFlags);
             }
 
-            CheckClearOfTrackedVariable(operation);
+            CheckArgumentsForTrackedVariables(operation);
 
             base.VisitInvocationExpression(operation);
         }
@@ -413,21 +426,25 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
 
         #region Method classification
 
-        private void ClassifyInstanceMethodCall(IInvocationExpression operation, FlowFlags flowFlags)
+        private void ClassifyInstanceMethodCall(IInvocationExpression operation, string name, FlowFlags flowFlags)
         {
             var methodName = operation.TargetMethod.Name;
 
+            // A table procedure runs on the same instance and may reset its load state.
             if (operation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
+            {
+                CommitAndReset(name, flowFlags);
                 return;
+            }
 
             if (ReadMethods.Contains(methodName))
                 HandleReadMethod(flowFlags);
             else if (LoadFieldsMethods.Contains(methodName))
-                HandleLoadFieldsMethod(operation, flowFlags, methodName);
+                HandleLoadFieldsMethod(operation, name, flowFlags, methodName);
             else if (WriteMethods.Contains(methodName))
                 HandleWriteMethod(flowFlags, methodName);
             else if (SemanticFacts.IsSameName(methodName, "Reset"))
-                flowFlags.ResetFlags();
+                CommitAndReset(name, flowFlags);
         }
 
         private static void HandleReadMethod(FlowFlags flowFlags)
@@ -437,17 +454,14 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
                 flowFlags.HasPartialRead = true;
         }
 
-        private static void HandleLoadFieldsMethod(IInvocationExpression operation,
+        private void HandleLoadFieldsMethod(IInvocationExpression operation, string name,
             FlowFlags flowFlags, string methodName)
         {
             if (SemanticFacts.IsSameName(methodName, "SetLoadFields")
                 && operation.Arguments.IsEmpty)
             {
                 // SetLoadFields() with no arguments resets partial records to "load all"
-                flowFlags.HasLoadFields = false;
-                flowFlags.HasPartialRead = false;
-                flowFlags.LoadFieldsLocations.Clear();
-                flowFlags.WriteMethodNamesAfterPartialRead = null;
+                CommitAndReset(name, flowFlags);
                 return;
             }
 
@@ -468,16 +482,20 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
                 flowFlags.AddWriteAfterPartialRead(methodName);
         }
 
-        private void CheckClearOfTrackedVariable(IInvocationExpression operation)
+        private void CheckArgumentsForTrackedVariables(IInvocationExpression operation)
         {
-            // Clear(variable) resets the flow state
-            if (operation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod
-                && SemanticFacts.IsSameName(operation.TargetMethod.Name, "Clear")
-                && operation.Arguments.Length >= 1)
+            var isBuiltIn = operation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod;
+
+            foreach (var argument in operation.Arguments)
             {
-                var clearVarName = GetVariableNameFromOperation(operation.Arguments[0].Value);
-                if (clearVarName != null && _flowState.TryGetValue(clearVarName, out var clearFlags))
-                    clearFlags.ResetFlags();
+                // Built-ins (Clear, Codeunit.Run, TransferFields source) reset or hand off the instance;
+                // a by-value argument is a copy with its own load selection.
+                if (!isBuiltIn && argument.Parameter is { IsVar: false })
+                    continue;
+
+                var name = GetVariableNameFromOperation(argument.Value);
+                if (name is not null && _flowState.TryGetValue(name, out var flags))
+                    CommitAndReset(name, flags);
             }
         }
 

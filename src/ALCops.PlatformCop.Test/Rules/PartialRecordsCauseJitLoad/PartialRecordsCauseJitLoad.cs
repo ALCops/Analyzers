@@ -27,6 +27,10 @@ namespace ALCops.PlatformCop.Test
         [TestCase("SetLoadFieldsThenCopy")]
         [TestCase("QualifiedSetLoadFields")]
         [TestCase("RepeatUntilWithWrite")]
+        [TestCase("ByValuePassedBetweenPartialReadAndWrite")]
+        [TestCase("VarPassedAfterWrite")]
+        [TestCase("ClearAfterWrite")]
+        [TestCase("NewSetLoadFieldsAfterHandOff")]
         public async Task HasDiagnostic(string testCase)
         {
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
@@ -59,6 +63,12 @@ namespace ALCops.PlatformCop.Test
         [TestCase("GetAsConditionThenDelete")]
         [TestCase("FindOrCreate")]
         [TestCase("ThisQualifiedGlobalWriteAfterLocalPartialRead")]
+        [TestCase("VarPassedBetweenPartialReadAndWrite")]
+        [TestCase("TableProcedureBetweenPartialReadAndWrite")]
+        [TestCase("PassedToCodeunitRunBetweenPartialReadAndWrite")]
+        [TestCase("EventPublisherBetweenPartialReadAndWrite")]
+        [TestCase("NamespacedVarPassedBetweenPartialReadAndWrite")]
+        [TestCase("FirstSetLoadFieldsBeforeHandOff")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
