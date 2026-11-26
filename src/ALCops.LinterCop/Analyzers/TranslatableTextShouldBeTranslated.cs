@@ -31,16 +31,6 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
 #else
     private static readonly XNamespace XliffNamespace = "urn:oasis:names:tc:xliff:document:1.2";
 
-    // Every property kind the compiler's XLIFF writer treats as translatable: LabelWriterVisitor filters
-    // each visited symbol's properties through PropertyKindExtensions.IsTranslatableProperty, so the set
-    // is read from the loaded SDK instead of being listed here. GetProperty returns null for the kinds a
-    // symbol does not declare, so the same set serves every symbol kind.
-    private static readonly Lazy<ImmutableArray<PropertyKind>> TranslatablePropertyKinds = new(() =>
-        Enum.GetValues<PropertyKind>()
-            .Distinct()
-            .Where(static propertyKind => propertyKind.IsTranslatableProperty())
-            .ToImmutableArray());
-
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.TranslatableTextShouldBeTranslated);
 
@@ -155,7 +145,7 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         // they are registered directly instead of walked from their object; walking them too would
         // report every property twice. A modify block is a Change symbol whose properties are the ones
         // the block sets; the Change wrapping an added member and a move carry no properties, so
-        // GetProperty finds nothing on them.
+        // the walk reports nothing on them.
         ReportTranslatableProperties(ctx, symbol, translationIndex, useCanonicalPropertyName);
     }
 
@@ -232,18 +222,20 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         }
     }
 
+    // The compiler's XLIFF writer walks each visited symbol's own properties and keeps the ones
+    // PropertyKindExtensions.IsTranslatableProperty accepts. The same walk here follows the compiler
+    // when a future SDK adds a translatable property, and visits only what the symbol declares.
     private static void ReportTranslatableProperties(SymbolAnalysisContext ctx, ISymbol symbol, TranslationIndex translationIndex, bool useCanonicalPropertyName)
     {
-        foreach (PropertyKind propertyKind in TranslatablePropertyKinds.Value)
-            ReportTranslatableProperty(ctx, symbol, propertyKind, translationIndex, useCanonicalPropertyName);
+        foreach (IPropertySymbol property in symbol.Properties)
+        {
+            if (property.PropertyKind.IsTranslatableProperty())
+                ReportTranslatableProperty(ctx, property, translationIndex, useCanonicalPropertyName);
+        }
     }
 
-    private static void ReportTranslatableProperty(SymbolAnalysisContext ctx, ISymbol symbol, PropertyKind propertyKind, TranslationIndex translationIndex, bool useCanonicalPropertyName)
+    private static void ReportTranslatableProperty(SymbolAnalysisContext ctx, IPropertySymbol property, TranslationIndex translationIndex, bool useCanonicalPropertyName)
     {
-        IPropertySymbol? property = symbol.GetProperty(propertyKind);
-        if (property is null)
-            return;
-
         if (IsLockedByCompiler(property.ContainingSymbol))
             return;
 
@@ -257,7 +249,7 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         // The compiler only applies this canonical form on runtime > Spring2020CU1 (5.1); on older
         // runtimes it hashes the source-cased symbol.Name. When useCanonicalPropertyName is false
         // we pass null so ComputeTranslationId falls back to symbol.Name, matching the compiler.
-        string? nameOverride = useCanonicalPropertyName ? propertyKind.ToString() : null;
+        string? nameOverride = useCanonicalPropertyName ? property.PropertyKind.ToString() : null;
         IRootTypeSymbol? rootSymbol = ExtensionObjectFoldingUtilities.GetTranslationRootSymbol(property);
         string? translationId = TranslationIdHelper.ComputeTranslationId(property, rootSymbol, isLabelConst: false, nameOverride: nameOverride);
 
