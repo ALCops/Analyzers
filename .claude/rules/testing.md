@@ -30,7 +30,7 @@ src/ALCops.{Cop}.Test/
             └── {TestCaseName}/
                 ├── current.al               # Code before the fix
                 └── expected.al              # Code after the fix
-        └── HasFixAll/                       # Only when a custom FixAllProvider exists
+        └── HasFixAll/                       # Every CodeFixProvider: Document and Project scope cases
             └── {TestCaseName}/
                 ├── current.al               # Code with multiple [|...|] markers
                 └── expected.al              # Code after batch fix
@@ -111,7 +111,7 @@ HasFix files use current/expected pairs:
 | `_fixture.HasDiagnosticAtAllMarkers(code, diagnosticId)` | Assert diagnostic reported at every `[|...|]` marker |
 | `_fixture.NoDiagnosticAtAllMarkers(code, diagnosticId)` | Assert NO diagnostic at any `[|...|]` marker |
 | `fixture.TestCodeFix(currentCode, expectedCode, diagnosticDescriptor)` | Assert single code fix transforms current into expected |
-| `fixture.TestFixAll(currentCode, expectedCode, diagnosticId, codeFixIndex, equivalenceKey)` | Assert `FixAllProvider` transforms current into expected across ALL `[|...|]` markers in one pass |
+| `fixture.TestFixAll(currentCode, expectedCode, diagnosticId, codeFixIndex, equivalenceKey, scope, hostVerification)` | Assert `FixAllProvider` transforms current into expected across ALL `[|...|]` markers in one pass. Optional `scope` (`FixAllScope`, default `Document`; `Project`/`Workspace` re-run the analyzers over the whole compilation like the editor's "Fix All in Project"). Optional `hostVerification` (`FixAllHostVerification`, default `TextEdits` also replays the editor's text-edit diff against the original documents; `None` opts out; `TextEditsOnReparsedText` forces the syntax-tree diff fallback) |
 
 ## What the harness does not catch
 
@@ -123,7 +123,9 @@ HasFix files use current/expected pairs:
 
 `HasFix` / `HasFixAll` test methods and their `current.al` / `expected.al` layout: `.claude/skills/new-codefix/references/hasfix-tests.md` (used by `/new-codefix`). Key rule: `TestCodeFix` takes the `DiagnosticDescriptor` object, `TestFixAll` takes the ID string.
 
-From RoslynTestKit 1.7.0, `TestCodeFix` and `NoCodeFix` pass every fixable diagnostic on the located span to the `CodeFixContext` (descending severity, the located one first on ties), as the editor host does, so a provider that ignores `Diagnostics[1..]` fails its HasFix test. `TestFixAll` still passes one diagnostic per context, like the BatchFixer.
+From RoslynTestKit 1.7.0, `TestCodeFix` and `NoCodeFix` pass every fixable diagnostic on the located span to the `CodeFixContext` (descending severity, the located one first on ties), as the editor host does, so a provider that ignores `Diagnostics[1..]` fails its HasFix test.
+
+From RoslynTestKit 1.7.1, `TestFixAll(..., scope: FixAllScope.Project)` tests "Fix All in Project" on a multi-document `/*EOD*/` fixture (see below). The markers of all documents are counted together against the diagnostics of the whole test project, and `expected.al` carries every segment. Every FixAll result is verified twice: by applying it to the workspace and by replaying the text edits the editor host would send. What the harness cannot model is drift between the editor's buffer and the server's workspace snapshot (unsaved edits, an earlier fix the server has not seen yet), so a green FixAll test does not prove the result in VS Code.
 
 ### Multi-document fixtures
 
@@ -313,6 +315,8 @@ The ruleset JSON resolves via the same source-tree absolute path as the `.al` fi
 | Test method (negative) | `NoDiagnostic` | Always this exact name |
 | Test method (code fix) | `HasFix` | Always this exact name |
 | Test method (fix all) | `HasFixAll` | Always this exact name |
+| Test method (fix all, project scope) | `HasFixAllInProject` | Always this exact name; same `HasFixAll/{TestCaseName}/current.al` + `expected.al` layout |
+| Test method (fix all, project scope, re-parsed diff base) | `HasFixAllInProjectOnReparsedText` | Always this exact name; same `HasFixAll/{TestCaseName}/` layout |
 | TestCase parameter | PascalCase, describes the scenario | `"RecordCountEqualsOne"` |
 | .al fixture file | `{TestCaseName}.al`, matching the TestCase value | `RecordCountEqualsOne.al` |
 | HasFix directory | `{TestCaseName}/current.al` + `expected.al` | `GlobalVariable/current.al` |
