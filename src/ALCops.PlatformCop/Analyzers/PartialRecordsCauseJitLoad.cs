@@ -429,8 +429,8 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
             foreach (var argument in operation.Arguments)
             {
                 // Built-ins (Clear, Codeunit.Run, TransferFields source) reset or hand off the instance;
-                // a by-value argument is a copy with its own load selection.
-                if (!isBuiltIn && argument.Parameter is { IsVar: false })
+                // a by-value Record argument is a copy with its own load selection, a RecordRef shares its instance.
+                if (!isBuiltIn && argument.Parameter is { IsVar: false, ParameterType: IRecordTypeSymbol })
                     continue;
 
                 var name = GetVariableNameFromOperation(argument.Value);

@@ -27,6 +27,7 @@ namespace ALCops.PlatformCop.Test
         [TestCase("SetLoadFieldsThenCopy")]
         [TestCase("QualifiedSetLoadFields")]
         [TestCase("RepeatUntilWithWrite")]
+        [TestCase("VarPassedInBranchBetweenPartialReadAndWrite")]
         [TestCase("ByValuePassedBetweenPartialReadAndWrite")]
         [TestCase("VarPassedAfterWrite")]
         [TestCase("ClearAfterWrite")]
@@ -71,6 +72,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("FirstSetLoadFieldsBeforeHandOff")]
         [TestCase("SecondSetLoadFieldsAfterHandOffWithoutWrite")]
         [TestCase("SecondSetLoadFieldsAfterWriteWithoutWrite")]
+        [TestCase("RecordRefByValuePassedBetweenPartialReadAndWrite")]
+        [TestCase("PassedToGetTableBetweenPartialReadAndWrite")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
