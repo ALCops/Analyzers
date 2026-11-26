@@ -1,4 +1,7 @@
+using System.Collections.Immutable;
 using Microsoft.Dynamics.Nav.CodeAnalysis;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Diagnostics;
+using Microsoft.Dynamics.Nav.CodeAnalysis.Syntax;
 using RoslynTestKit;
 
 namespace ALCops.LinterCop.Test
@@ -287,6 +290,131 @@ namespace ALCops.LinterCop.Test
                       <source>About my option</source>
                       <target>DA About my option</target>
                       <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - Control MyOption - Property AboutTitle</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
+        // Trans-units for the properties of field groups, page views, report columns, dataitems and
+        // layouts, query columns and filters, xmlport table elements, and a table field OptionCaption,
+        // copied from the Translations/*.g.xlf the AL compiler generates for the matching fixtures (app.json
+        // with "features": ["TranslationFile"]). A nested member hashes under its object only ("Report
+        // MyReport - ReportColumn MyColumn", no dataitem segment), and a view, dataitem, column or layout a
+        // same-module extension adds folds into the target's ID while the generator note keeps the
+        // extension's own name.
+        private static readonly byte[] TranslatedChildSymbolPropertiesXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="da-DK" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="Table 2328808854 - Field 3834966961 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>First,Second</source>
+                      <target>DA First,Second</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Table MyTable - Field MyOption - Property OptionCaption</note>
+                    </trans-unit>
+                    <trans-unit id="Table 2328808854 - FieldGroup 2253035989 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Drop Down</source>
+                      <target>DA My Drop Down</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Table MyTable - FieldGroup DropDown - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - View 415829955 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My View</source>
+                      <target>DA My View</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - View MyView - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - View 2298293404 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Extension View</source>
+                      <target>DA My Extension View</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - View MyExtView - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - ReportColumn 743061902 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Column</source>
+                      <target>DA My Column</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - ReportColumn MyColumn - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - ReportColumn 743061902 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>Specifies my column.</source>
+                      <target>DA Specifies my column.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - ReportColumn MyColumn - Property ToolTip</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - ReportColumn 1643583475 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>First,Second</source>
+                      <target>DA First,Second</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - ReportColumn MyOptionColumn - Property OptionCaption</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - ReportDataItem 2275679299 - Property 1806354803" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Data Item Filters</source>
+                      <target>DA My Data Item Filters</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - ReportDataItem MyDataItem - Property RequestFilterHeading</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - ReportLayout 2700067586 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Layout</source>
+                      <target>DA My Layout</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - ReportLayout MyLayout - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - ReportLayout 2700067586 - Property 2166945456" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>Summarizes my layout.</source>
+                      <target>DA Summarizes my layout.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Report MyReport - ReportLayout MyLayout - Property Summary</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - ReportColumn 3647812821 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Report 2858589782">
+                      <source>My Extension Column</source>
+                      <target>DA My Extension Column</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">ReportExtension MyReportExt - ReportColumn MyExtColumn - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - ReportDataItem 4453980 - Property 1806354803" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Report 2858589782">
+                      <source>My Extension Data Item Filters</source>
+                      <target>DA My Extension Data Item Filters</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">ReportExtension MyReportExt - ReportDataItem MyExtDataItem - Property RequestFilterHeading</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - ReportLayout 2429713769 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Report 2858589782">
+                      <source>My Extension Layout</source>
+                      <target>DA My Extension Layout</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">ReportExtension MyReportExt - ReportLayout MyExtLayout - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Query 3041816274 - QueryColumn 743061902 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Column</source>
+                      <target>DA My Column</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Query MyQuery - QueryColumn MyColumn - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Query 3041816274 - QueryColumn 743061902 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>Specifies my column.</source>
+                      <target>DA Specifies my column.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Query MyQuery - QueryColumn MyColumn - Property ToolTip</note>
+                    </trans-unit>
+                    <trans-unit id="Query 3041816274 - QueryFilter 3760788832 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Filter</source>
+                      <target>DA My Filter</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Query MyQuery - QueryFilter MyFilter - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="XmlPort 157304472 - XmlPortNode 3275933160 - Property 1806354803" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Table Element Filters</source>
+                      <target>DA My Table Element Filters</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">XmlPort MyXmlPort - XmlPortNode MyTableElement - Property RequestFilterHeading</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
+        // Compiler-generated trans-unit for a report column Caption in report MyReport in namespace
+        // "MyCompany.App" when the TranslationsWithNamespaces feature is enabled.
+        private static readonly byte[] NamespaceTranslatedReportColumnCaptionXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="da-DK" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="Namespace MyCompany.App - Report MyReport - ReportColumn MyColumn - Property Caption" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My Column</source>
+                      <target>DA My Column</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Namespace MyCompany.App - Report MyReport - ReportColumn MyColumn - Property Caption</note>
                     </trans-unit>
                   </group>
                 </body>
@@ -589,6 +717,21 @@ namespace ALCops.LinterCop.Test
                 });
         }
 
+        private static AnalyzerTestFixture CreateFixtureWithTranslatedChildSymbolPropertiesXliff()
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "Translations/TestApp.da-DK.xlf", TranslatedChildSymbolPropertiesXliffContent }
+            };
+            var fileSystem = new MemoryFileSystem(files);
+
+            return RoslynFixtureFactory.Create<Analyzers.TranslatableTextShouldBeTranslated>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = fileSystem
+                });
+        }
+
         private static AnalyzerTestFixture CreateFixtureWithTranslatedPageControlToolTipXliff()
         {
             var files = new Dictionary<string, byte[]>
@@ -708,6 +851,24 @@ namespace ALCops.LinterCop.Test
         [TestCase("PageExtensionActionAboutText")]
         [TestCase("RequestPageControlAboutTitle")]
         [TestCase("RequestPageActionAboutText")]
+        [TestCase("TableFieldOptionCaption")]
+        [TestCase("TableFieldGroupCaption")]
+        [TestCase("PageViewCaption")]
+        [TestCase("PageExtensionViewCaption")]
+        [TestCase("ReportColumnCaption")]
+        [TestCase("ReportColumnToolTip")]
+        [TestCase("ReportColumnOptionCaption")]
+        [TestCase("ReportDataItemRequestFilterHeading")]
+        [TestCase("ReportLayoutCaption")]
+        [TestCase("ReportLayoutSummary")]
+        [TestCase("ReportExtensionColumnCaption")]
+        [TestCase("ReportExtensionDataItemRequestFilterHeading")]
+        [TestCase("ReportExtensionLayoutCaption")]
+        [TestCase("QueryColumnCaption")]
+        [TestCase("QueryColumnToolTip")]
+        [TestCase("QueryFilterCaption")]
+        [TestCase("XmlPortTableElementRequestFilterHeading")]
+        [TestCase("TableFieldGroupCaptionInObsoleteRemovedTable")]
         [TestCase("ObsoletePendingTableCaption")]
         [TestCase("ObsoletePendingTableFieldCaption")]
         [TestCase("ObsoletePendingPageControlToolTip")]
@@ -791,6 +952,23 @@ namespace ALCops.LinterCop.Test
         [TestCase("LockedPageExtensionActionAboutText")]
         [TestCase("LockedRequestPageControlAboutTitle")]
         [TestCase("LockedRequestPageActionAboutText")]
+        [TestCase("LockedTableFieldOptionCaption")]
+        [TestCase("LockedTableFieldGroupCaption")]
+        [TestCase("LockedPageViewCaption")]
+        [TestCase("LockedPageExtensionViewCaption")]
+        [TestCase("LockedReportColumnCaption")]
+        [TestCase("LockedReportColumnToolTip")]
+        [TestCase("LockedReportColumnOptionCaption")]
+        [TestCase("LockedReportDataItemRequestFilterHeading")]
+        [TestCase("LockedReportLayoutCaption")]
+        [TestCase("LockedReportLayoutSummary")]
+        [TestCase("LockedReportExtensionColumnCaption")]
+        [TestCase("LockedReportExtensionDataItemRequestFilterHeading")]
+        [TestCase("LockedReportExtensionLayoutCaption")]
+        [TestCase("LockedQueryColumnCaption")]
+        [TestCase("LockedQueryColumnToolTip")]
+        [TestCase("LockedQueryFilterCaption")]
+        [TestCase("LockedXmlPortTableElementRequestFilterHeading")]
         [TestCase("PageAnalysisViewLockedCaption")]
         [TestCase("ObsoleteRemovedTableCaption")]
         [TestCase("ObsoleteRemovedTableFieldCaption")]
@@ -957,6 +1135,76 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
+        [TestCase("TranslatedTableFieldOptionCaption")]
+        [TestCase("TranslatedTableFieldGroupCaption")]
+        [TestCase("TranslatedPageViewCaption")]
+        [TestCase("TranslatedPageExtensionViewCaption")]
+        [TestCase("TranslatedReportColumnCaption")]
+        [TestCase("TranslatedReportColumnToolTip")]
+        [TestCase("TranslatedReportColumnOptionCaption")]
+        [TestCase("TranslatedReportDataItemRequestFilterHeading")]
+        [TestCase("TranslatedReportLayoutCaption")]
+        [TestCase("TranslatedReportLayoutSummary")]
+        [TestCase("TranslatedReportExtensionColumnCaption")]
+        [TestCase("TranslatedReportExtensionDataItemRequestFilterHeading")]
+        [TestCase("TranslatedReportExtensionLayoutCaption")]
+        [TestCase("TranslatedQueryColumnCaption")]
+        [TestCase("TranslatedQueryColumnToolTip")]
+        [TestCase("TranslatedQueryFilterCaption")]
+        [TestCase("TranslatedXmlPortTableElementRequestFilterHeading")]
+        public async Task NoDiagnosticTranslatedChildSymbolProperties(string testCase)
+        {
+            RequireMinimumVersion("16.0",
+                "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithTranslatedChildSymbolPropertiesXliff();
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        // A view, dataitem or column an extension adds is wrapped in a Change symbol that raises its own
+        // symbol event next to the event of the wrapped member. HasDiagnosticAtAllMarkers only checks that a
+        // diagnostic exists at each marker, so this test counts them: the single property must yield
+        // exactly one diagnostic, at its marker.
+        [Test]
+        [TestCase("PageExtensionViewCaption")]
+        [TestCase("ReportExtensionColumnCaption")]
+        [TestCase("ReportExtensionDataItemRequestFilterHeading")]
+        public async Task HasSingleDiagnosticForMemberAddedByExtension(string testCase)
+        {
+            RequireMinimumVersion("16.0",
+                "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
+
+            var markup = new CodeMarkup(await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false));
+
+            var compilation = Compilation.Create(
+                nameof(HasSingleDiagnosticForMemberAddedByExtension),
+                syntaxTrees: new[] { SyntaxTree.ParseObjectText(markup.Code) },
+                fileSystem: new MemoryFileSystem(new Dictionary<string, byte[]>
+                {
+                    { "Translations/TestApp.da-DK.xlf", EmptyXliffContent }
+                }));
+            var compilationWithAnalyzers = new CompilationWithAnalyzers(
+                compilation,
+                ImmutableArray.Create<DiagnosticAnalyzer>(new Analyzers.TranslatableTextShouldBeTranslated()),
+                options: null!,
+                cancellationToken: CancellationToken.None);
+
+            var diagnostics = (await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync().ConfigureAwait(false))
+                .Where(diagnostic => diagnostic.Id == DiagnosticIds.TranslatableTextShouldBeTranslated)
+                .ToArray();
+
+            Assert.That(markup.AllLocators, Has.Count.EqualTo(1));
+            Assert.That(diagnostics, Has.Length.EqualTo(1));
+            Assert.That(markup.AllLocators[0].Match(diagnostics[0].Location), Is.True);
+        }
+
+        [Test]
         [TestCase("NoXliffFiles")]
         public async Task NoDiagnosticNoXliff(string testCase)
         {
@@ -1005,6 +1253,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("NamespaceTableCaption")]
         [TestCase("NamespacePageObjectAboutTitle")]
         [TestCase("NamespacePageControlAboutTitle")]
+        [TestCase("NamespaceReportColumnCaption")]
         public async Task HasDiagnosticWithNamespaces(string testCase)
         {
             RequireMinimumVersion("18.0.38.52553",
@@ -1060,6 +1309,21 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false);
 
             var fixture = CreateFixtureWithNamespaceFeature(NamespaceTranslatedPageControlAboutTitleXliffContent);
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
+        [TestCase("NamespaceReportColumnCaptionTranslated")]
+        public async Task NoDiagnosticTranslatedChildSymbolPropertiesWithNamespaces(string testCase)
+        {
+            RequireMinimumVersion("18.0.38.52553",
+                "Translations with namespaces (CompilerFeatures.TranslationsWithNamespaces) requires the 18.0.38.52553 SDK.");
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithNamespaceFeature(NamespaceTranslatedReportColumnCaptionXliffContent);
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
         }
 

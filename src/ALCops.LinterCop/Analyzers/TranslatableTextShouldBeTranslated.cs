@@ -68,6 +68,18 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         EnumProvider.PropertyKind.AboutText,
     ];
 
+    // Translatable properties of the members below object level that raise their own symbol event:
+    // field groups, page views, report dataitems, columns and layouts, query columns and filters, and
+    // xmlport nodes. Each kind accepts a different subset; GetProperty returns null for the rest.
+    private static readonly PropertyKind[] MemberPropertyKinds =
+    [
+        EnumProvider.PropertyKind.Caption,
+        EnumProvider.PropertyKind.ToolTip,
+        EnumProvider.PropertyKind.OptionCaption,
+        EnumProvider.PropertyKind.RequestFilterHeading,
+        EnumProvider.PropertyKind.Summary,
+    ];
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
         ImmutableArray.Create(DiagnosticDescriptors.TranslatableTextShouldBeTranslated);
 
@@ -127,7 +139,15 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             EnumProvider.SymbolKind.LocalVariable,
             EnumProvider.SymbolKind.ReportLabel,
             EnumProvider.SymbolKind.RequestPage,
-            EnumProvider.SymbolKind.RequestPageExtension
+            EnumProvider.SymbolKind.RequestPageExtension,
+            EnumProvider.SymbolKind.FieldGroup,
+            EnumProvider.SymbolKind.View,
+            EnumProvider.SymbolKind.ReportDataItem,
+            EnumProvider.SymbolKind.ReportColumn,
+            EnumProvider.SymbolKind.ReportLayout,
+            EnumProvider.SymbolKind.QueryColumn,
+            EnumProvider.SymbolKind.QueryFilter,
+            EnumProvider.SymbolKind.XmlPortNode
         );
     }
 
@@ -160,6 +180,24 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         {
             ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.Caption, translationIndex, useCanonicalPropertyName);
             ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.ToolTip, translationIndex, useCanonicalPropertyName);
+            ReportTranslatableProperty(ctx, symbol, EnumProvider.PropertyKind.OptionCaption, translationIndex, useCanonicalPropertyName);
+            return;
+        }
+
+        // The driver raises a symbol event for each of these members, including the ones an extension
+        // adds, so they are registered directly instead of walked from their object; walking them as
+        // well would report every property twice.
+        if (kind == EnumProvider.SymbolKind.FieldGroup
+            || kind == EnumProvider.SymbolKind.View
+            || kind == EnumProvider.SymbolKind.ReportDataItem
+            || kind == EnumProvider.SymbolKind.ReportColumn
+            || kind == EnumProvider.SymbolKind.ReportLayout
+            || kind == EnumProvider.SymbolKind.QueryColumn
+            || kind == EnumProvider.SymbolKind.QueryFilter
+            || kind == EnumProvider.SymbolKind.XmlPortNode)
+        {
+            foreach (PropertyKind propertyKind in MemberPropertyKinds)
+                ReportTranslatableProperty(ctx, symbol, propertyKind, translationIndex, useCanonicalPropertyName);
             return;
         }
 
