@@ -1660,6 +1660,8 @@ namespace ALCops.LinterCop.Test
         [TestCase("PageExtensionViewModifyFieldAboutTitle")]
         [TestCase("TableExtensionModifyFieldCaption")]
         [TestCase("ReportExtensionModifyRequestPageFieldCaption")]
+        [TestCase("PageExtensionObjectPromotedActionCategories")]
+        [TestCase("PageCustomizationObjectPromotedActionCategories")]
         public async Task HasSingleDiagnosticPerMarker(string testCase)
         {
             RequireMinimumVersion("16.0",
