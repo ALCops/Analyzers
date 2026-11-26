@@ -21,6 +21,12 @@ on:
       - ".github/actions/**"
       - "!**/*.md"
 
+# A new push supersedes the run for the previous commit; cancelling it also keeps
+# test-report.yml (which skips cancelled runs) from reporting stale results.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   actions: read
