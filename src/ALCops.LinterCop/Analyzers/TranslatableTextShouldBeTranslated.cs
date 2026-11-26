@@ -108,7 +108,8 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
             EnumProvider.SymbolKind.ReportLayout,
             EnumProvider.SymbolKind.QueryColumn,
             EnumProvider.SymbolKind.QueryFilter,
-            EnumProvider.SymbolKind.XmlPortNode
+            EnumProvider.SymbolKind.XmlPortNode,
+            EnumProvider.SymbolKind.Change
         );
     }
 
@@ -148,11 +149,13 @@ public sealed class TranslatableTextShouldBeTranslated : DiagnosticAnalyzer
         }
 
         // Every other registered kind carries its translatable properties itself: the object kinds,
-        // table fields, page customizations (object level only; their modify blocks are not checked)
-        // and the members that raise a symbol event of their own (field groups, page views, report
-        // dataitems, columns and layouts, query columns and filters, xmlport nodes). The driver raises
-        // that event for the members an extension adds as well, so they are registered directly instead
-        // of walked from their object; walking them too would report every property twice.
+        // table fields, page customizations and the members that raise a symbol event of their own
+        // (field groups, page views, report dataitems, columns and layouts, query columns and filters,
+        // xmlport nodes). The driver raises that event for the members an extension adds as well, so
+        // they are registered directly instead of walked from their object; walking them too would
+        // report every property twice. A modify block is a Change symbol whose properties are the ones
+        // the block sets; the Change wrapping an added member and a move carry no properties, so
+        // GetProperty finds nothing on them.
         ReportTranslatableProperties(ctx, symbol, translationIndex, useCanonicalPropertyName);
     }
 
