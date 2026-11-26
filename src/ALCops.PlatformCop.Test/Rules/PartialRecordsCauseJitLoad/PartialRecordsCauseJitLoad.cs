@@ -31,6 +31,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("ByValuePassedBetweenPartialReadAndWrite")]
         [TestCase("VarPassedAfterWrite")]
         [TestCase("ClearAfterWrite")]
+        [TestCase("ResetAfterWrite")]
+        [TestCase("SetLoadFieldsNoArgsAfterWrite")]
         [TestCase("NewSetLoadFieldsAfterHandOff")]
         public async Task HasDiagnostic(string testCase)
         {
