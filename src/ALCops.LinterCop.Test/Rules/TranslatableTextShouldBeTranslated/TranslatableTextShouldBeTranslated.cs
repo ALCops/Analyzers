@@ -422,6 +422,296 @@ namespace ALCops.LinterCop.Test
             </xliff>
             """);
 
+        // Trans-units for the translatable properties set in modify blocks (and for the view a page customization
+        // adds), copied from the Translations/*.g.xlf the AL compiler generates for the matching fixtures
+        // (app.json with "features": ["TranslationFile"], runtime 16.0; runtime 17.0 for the analysis view).
+        // A modify block is a Change symbol named after its target: "<Root> - Change <target> - Property <name>".
+        // A same-module page, table or report extension folds into the target's root (al-object-target set,
+        // the generator note keeps the extension's name); a page customization keeps its own root. A modify
+        // inside a page view's layout hashes under the page, without a view segment.
+        private static readonly byte[] TranslatedModifyChangePropertiesXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="da-DK" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="PageCustomization 4276993442 - Change 1135900470 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified action explains itself.</source>
+                      <target>DA My modified action explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyAction - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Change 1135900470 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my modified action</source>
+                      <target>DA About my modified action</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyAction - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Change 3066929535 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified action group explains itself.</source>
+                      <target>DA My modified action group explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyActionGroup - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Change 3066929535 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my modified action group</source>
+                      <target>DA About my modified action group</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyActionGroup - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Change 3066929535 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Modified Action Group</source>
+                      <target>DA My Modified Action Group</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyActionGroup - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Change 1296262074 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified field explains itself.</source>
+                      <target>DA My modified field explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyField - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Change 1296262074 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my modified field</source>
+                      <target>DA About my modified field</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyField - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Change 894378861 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified group explains itself.</source>
+                      <target>DA My modified group explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyGroup - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Change 894378861 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my modified group</source>
+                      <target>DA About my modified group</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyGroup - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Change 2443193653 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified part explains itself.</source>
+                      <target>DA My modified part explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyPart - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Change 2443193653 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my modified part</source>
+                      <target>DA About my modified part</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyPart - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - Change 415829955 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Modified View</source>
+                      <target>DA My Modified View</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - Change MyView - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="PageCustomization 4276993442 - View 435948060 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Customization View</source>
+                      <target>DA My Customization View</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageCustomization MyPageCust - View MyCustView - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 1135900470 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified action explains itself.</source>
+                      <target>DA My modified action explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyAction - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 1135900470 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my modified action</source>
+                      <target>DA About my modified action</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyAction - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 1135900470 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Modified Action</source>
+                      <target>DA My Modified Action</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyAction - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 3066929535 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified action group explains itself.</source>
+                      <target>DA My modified action group explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyActionGroup - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 3066929535 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my modified action group</source>
+                      <target>DA About my modified action group</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyActionGroup - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 3066929535 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Modified Action Group</source>
+                      <target>DA My Modified Action Group</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyActionGroup - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 3066929535 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>Specifies my modified action group.</source>
+                      <target>DA Specifies my modified action group.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyActionGroup - Property ToolTip</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 1135900470 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>Specifies my modified action.</source>
+                      <target>DA Specifies my modified action.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyAction - Property ToolTip</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 342683653 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Modified Analysis View</source>
+                      <target>DA My Modified Analysis View</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyAnalysisView - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 1296262074 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified field explains itself.</source>
+                      <target>DA My modified field explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyField - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 1296262074 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my modified field</source>
+                      <target>DA About my modified field</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyField - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 1296262074 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Modified Field</source>
+                      <target>DA My Modified Field</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyField - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 1296262074 - Property 1968111052" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified field instructions.</source>
+                      <target>DA My modified field instructions.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyField - Property InstructionalText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 3834966961 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>Modified First,Modified Second</source>
+                      <target>DA Modified First,Modified Second</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyOption - Property OptionCaption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 1296262074 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>Specifies my modified field.</source>
+                      <target>DA Specifies my modified field.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyField - Property ToolTip</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 894378861 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified group explains itself.</source>
+                      <target>DA My modified group explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyGroup - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 894378861 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my modified group</source>
+                      <target>DA About my modified group</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyGroup - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 894378861 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Modified Group</source>
+                      <target>DA My Modified Group</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyGroup - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 894378861 - Property 1968111052" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified group instructions.</source>
+                      <target>DA My modified group instructions.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyGroup - Property InstructionalText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 2443193653 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My modified part explains itself.</source>
+                      <target>DA My modified part explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyPart - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 2443193653 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my modified part</source>
+                      <target>DA About my modified part</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyPart - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 2443193653 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Modified Part</source>
+                      <target>DA My Modified Part</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyPart - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 2443193653 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>Specifies my modified part.</source>
+                      <target>DA Specifies my modified part.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyPart - Property ToolTip</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 415829955 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Modified View</source>
+                      <target>DA My Modified View</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyView - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 4264782494 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My field in my extension view explains itself.</source>
+                      <target>DA My field in my extension view explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyExtViewField - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 4264782494 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>About my field in my extension view</source>
+                      <target>DA About my field in my extension view</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">PageExtension MyPageExt - Change MyExtViewField - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 170751117 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>My field in my view explains itself.</source>
+                      <target>DA My field in my view explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Change MyViewField - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Page 2931038265 - Change 170751117 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve">
+                      <source>About my field in my view</source>
+                      <target>DA About my field in my view</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Page MyPage - Change MyViewField - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - Change 3294024409 - Property 247559172" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Report 2858589782">
+                      <source>My modified request page field explains itself.</source>
+                      <target>DA My modified request page field explains itself.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">ReportExtension MyReportExt - Change MyRequestField - Property AboutText</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - Change 3294024409 - Property 1064389655" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Report 2858589782">
+                      <source>About my modified request page field</source>
+                      <target>DA About my modified request page field</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">ReportExtension MyReportExt - Change MyRequestField - Property AboutTitle</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - Change 3294024409 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Report 2858589782">
+                      <source>My Modified Request Page Field</source>
+                      <target>DA My Modified Request Page Field</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">ReportExtension MyReportExt - Change MyRequestField - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - Change 3294024409 - Property 1968111052" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Report 2858589782">
+                      <source>My modified request page field instructions.</source>
+                      <target>DA My modified request page field instructions.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">ReportExtension MyReportExt - Change MyRequestField - Property InstructionalText</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - Change 4233552106 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Report 2858589782">
+                      <source>Modified First,Modified Second</source>
+                      <target>DA Modified First,Modified Second</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">ReportExtension MyReportExt - Change MyRequestOption - Property OptionCaption</note>
+                    </trans-unit>
+                    <trans-unit id="Report 2858589782 - Change 3294024409 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Report 2858589782">
+                      <source>Specifies my modified request page field.</source>
+                      <target>DA Specifies my modified request page field.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">ReportExtension MyReportExt - Change MyRequestField - Property ToolTip</note>
+                    </trans-unit>
+                    <trans-unit id="Table 2328808854 - Change 1296262074 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2328808854">
+                      <source>My Modified Field</source>
+                      <target>DA My Modified Field</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">TableExtension MyTableExt - Change MyField - Property Caption</note>
+                    </trans-unit>
+                    <trans-unit id="Table 2328808854 - Change 3834966961 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2328808854">
+                      <source>Modified First,Modified Second</source>
+                      <target>DA Modified First,Modified Second</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">TableExtension MyTableExt - Change MyOption - Property OptionCaption</note>
+                    </trans-unit>
+                    <trans-unit id="Table 2328808854 - Change 1296262074 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2328808854">
+                      <source>Specifies my modified field.</source>
+                      <target>DA Specifies my modified field.</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">TableExtension MyTableExt - Change MyField - Property ToolTip</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
+        // Compiler-generated trans-unit for a field Caption modified by page extension MyPageExt in namespace
+        // "MyCompany.App" when the TranslationsWithNamespaces feature is enabled.
+        private static readonly byte[] NamespaceTranslatedPageExtensionModifyFieldCaptionXliffContent = System.Text.Encoding.UTF8.GetBytes(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+              <file datatype="xml" source-language="en-US" target-language="da-DK" original="TestApp">
+                <body>
+                  <group id="body">
+                    <trans-unit id="Namespace MyCompany.App - Page MyPage - Change MyField - Property Caption" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2931038265">
+                      <source>My Modified Field</source>
+                      <target>DA My Modified Field</target>
+                      <note from="Xliff Generator" annotates="general" priority="3">Namespace MyCompany.App - PageExtension MyPageExt - Change MyField - Property Caption</note>
+                    </trans-unit>
+                  </group>
+                </body>
+              </file>
+            </xliff>
+            """);
+
         // Compiler-generated trans-unit for a group control AboutTitle on page MyPage in namespace
         // "MyCompany.App" when the TranslationsWithNamespaces feature is enabled.
         private static readonly byte[] NamespaceTranslatedPageControlAboutTitleXliffContent = System.Text.Encoding.UTF8.GetBytes(
@@ -732,6 +1022,22 @@ namespace ALCops.LinterCop.Test
                 });
         }
 
+        private static AnalyzerTestFixture CreateFixtureWithTranslatedModifyChangePropertiesXliff()
+        {
+            var files = new Dictionary<string, byte[]>
+            {
+                { "Translations/TestApp.da-DK.xlf", TranslatedModifyChangePropertiesXliffContent },
+                { "MyAnalysisView.analysis.json", AnalysisViewDefinitionContent }
+            };
+            var fileSystem = new MemoryFileSystem(files);
+
+            return RoslynFixtureFactory.Create<Analyzers.TranslatableTextShouldBeTranslated>(
+                new AnalyzerTestFixtureConfig
+                {
+                    FileSystem = fileSystem
+                });
+        }
+
         private static AnalyzerTestFixture CreateFixtureWithTranslatedPageControlToolTipXliff()
         {
             var files = new Dictionary<string, byte[]>
@@ -868,6 +1174,59 @@ namespace ALCops.LinterCop.Test
         [TestCase("QueryColumnToolTip")]
         [TestCase("QueryFilterCaption")]
         [TestCase("XmlPortTableElementRequestFilterHeading")]
+        [TestCase("PageCustomizationModifyActionAboutText")]
+        [TestCase("PageCustomizationModifyActionAboutTitle")]
+        [TestCase("PageCustomizationModifyActionGroupAboutText")]
+        [TestCase("PageCustomizationModifyActionGroupAboutTitle")]
+        [TestCase("PageCustomizationModifyActionGroupCaption")]
+        [TestCase("PageCustomizationModifyFieldAboutText")]
+        [TestCase("PageCustomizationModifyFieldAboutTitle")]
+        [TestCase("PageCustomizationModifyGroupAboutText")]
+        [TestCase("PageCustomizationModifyGroupAboutTitle")]
+        [TestCase("PageCustomizationModifyPartAboutText")]
+        [TestCase("PageCustomizationModifyPartAboutTitle")]
+        [TestCase("PageCustomizationModifyViewCaption")]
+        [TestCase("PageCustomizationViewCaption")]
+        [TestCase("PageExtensionModifyActionAboutText")]
+        [TestCase("PageExtensionModifyActionAboutTitle")]
+        [TestCase("PageExtensionModifyActionCaption")]
+        [TestCase("PageExtensionModifyActionGroupAboutText")]
+        [TestCase("PageExtensionModifyActionGroupAboutTitle")]
+        [TestCase("PageExtensionModifyActionGroupCaption")]
+        [TestCase("PageExtensionModifyActionGroupToolTip")]
+        [TestCase("PageExtensionModifyActionToolTip")]
+        [TestCase("PageExtensionModifyAnalysisViewCaption")]
+        [TestCase("PageExtensionModifyFieldAboutText")]
+        [TestCase("PageExtensionModifyFieldAboutTitle")]
+        [TestCase("PageExtensionModifyFieldCaption")]
+        [TestCase("PageExtensionModifyFieldInstructionalText")]
+        [TestCase("PageExtensionModifyFieldOptionCaption")]
+        [TestCase("PageExtensionModifyFieldToolTip")]
+        [TestCase("PageExtensionModifyGroupAboutText")]
+        [TestCase("PageExtensionModifyGroupAboutTitle")]
+        [TestCase("PageExtensionModifyGroupCaption")]
+        [TestCase("PageExtensionModifyGroupInstructionalText")]
+        [TestCase("PageExtensionModifyPartAboutText")]
+        [TestCase("PageExtensionModifyPartAboutTitle")]
+        [TestCase("PageExtensionModifyPartCaption")]
+        [TestCase("PageExtensionModifyPartToolTip")]
+        [TestCase("PageExtensionModifyViewCaption")]
+        [TestCase("PageExtensionViewModifyFieldAboutText")]
+        [TestCase("PageExtensionViewModifyFieldAboutTitle")]
+        [TestCase("PageViewModifyFieldAboutText")]
+        [TestCase("PageViewModifyFieldAboutTitle")]
+        [TestCase("ReportExtensionModifyRequestPageFieldAboutText")]
+        [TestCase("ReportExtensionModifyRequestPageFieldAboutTitle")]
+        [TestCase("ReportExtensionModifyRequestPageFieldCaption")]
+        [TestCase("ReportExtensionModifyRequestPageFieldInstructionalText")]
+        [TestCase("ReportExtensionModifyRequestPageFieldOptionCaption")]
+        [TestCase("ReportExtensionModifyRequestPageFieldToolTip")]
+        [TestCase("TableExtensionModifyFieldCaption")]
+        [TestCase("TableExtensionModifyFieldOptionCaption")]
+        [TestCase("TableExtensionModifyFieldToolTip")]
+        [TestCase("PageExtensionAddAndModifyViewCaption")]
+        [TestCase("TableExtensionModifyFieldCaptionInObsoleteRemovedTable")]
+        [TestCase("TableExtensionModifyObsoletePendingFieldCaption")]
         [TestCase("TableFieldGroupCaptionInObsoleteRemovedTable")]
         [TestCase("ObsoletePendingTableCaption")]
         [TestCase("ObsoletePendingTableFieldCaption")]
@@ -881,7 +1240,7 @@ namespace ALCops.LinterCop.Test
                 "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
 
             SkipTestIfVersionIsTooLow(
-                ["PageAnalysisViewCaption"],
+                ["PageAnalysisViewCaption", "PageExtensionModifyAnalysisViewCaption"],
                 testCase,
                 "18.0.36",
                 "PageAnalysisView requires net10.0 SDK."
@@ -969,6 +1328,56 @@ namespace ALCops.LinterCop.Test
         [TestCase("LockedQueryColumnToolTip")]
         [TestCase("LockedQueryFilterCaption")]
         [TestCase("LockedXmlPortTableElementRequestFilterHeading")]
+        [TestCase("LockedPageCustomizationModifyActionAboutText")]
+        [TestCase("LockedPageCustomizationModifyActionAboutTitle")]
+        [TestCase("LockedPageCustomizationModifyActionGroupAboutText")]
+        [TestCase("LockedPageCustomizationModifyActionGroupAboutTitle")]
+        [TestCase("LockedPageCustomizationModifyActionGroupCaption")]
+        [TestCase("LockedPageCustomizationModifyFieldAboutText")]
+        [TestCase("LockedPageCustomizationModifyFieldAboutTitle")]
+        [TestCase("LockedPageCustomizationModifyGroupAboutText")]
+        [TestCase("LockedPageCustomizationModifyGroupAboutTitle")]
+        [TestCase("LockedPageCustomizationModifyPartAboutText")]
+        [TestCase("LockedPageCustomizationModifyPartAboutTitle")]
+        [TestCase("LockedPageCustomizationModifyViewCaption")]
+        [TestCase("LockedPageCustomizationViewCaption")]
+        [TestCase("LockedPageExtensionModifyActionAboutText")]
+        [TestCase("LockedPageExtensionModifyActionAboutTitle")]
+        [TestCase("LockedPageExtensionModifyActionCaption")]
+        [TestCase("LockedPageExtensionModifyActionGroupAboutText")]
+        [TestCase("LockedPageExtensionModifyActionGroupAboutTitle")]
+        [TestCase("LockedPageExtensionModifyActionGroupCaption")]
+        [TestCase("LockedPageExtensionModifyActionGroupToolTip")]
+        [TestCase("LockedPageExtensionModifyActionToolTip")]
+        [TestCase("LockedPageExtensionModifyAnalysisViewCaption")]
+        [TestCase("LockedPageExtensionModifyFieldAboutText")]
+        [TestCase("LockedPageExtensionModifyFieldAboutTitle")]
+        [TestCase("LockedPageExtensionModifyFieldCaption")]
+        [TestCase("LockedPageExtensionModifyFieldInstructionalText")]
+        [TestCase("LockedPageExtensionModifyFieldOptionCaption")]
+        [TestCase("LockedPageExtensionModifyFieldToolTip")]
+        [TestCase("LockedPageExtensionModifyGroupAboutText")]
+        [TestCase("LockedPageExtensionModifyGroupAboutTitle")]
+        [TestCase("LockedPageExtensionModifyGroupCaption")]
+        [TestCase("LockedPageExtensionModifyGroupInstructionalText")]
+        [TestCase("LockedPageExtensionModifyPartAboutText")]
+        [TestCase("LockedPageExtensionModifyPartAboutTitle")]
+        [TestCase("LockedPageExtensionModifyPartCaption")]
+        [TestCase("LockedPageExtensionModifyPartToolTip")]
+        [TestCase("LockedPageExtensionModifyViewCaption")]
+        [TestCase("LockedPageExtensionViewModifyFieldAboutText")]
+        [TestCase("LockedPageExtensionViewModifyFieldAboutTitle")]
+        [TestCase("LockedPageViewModifyFieldAboutText")]
+        [TestCase("LockedPageViewModifyFieldAboutTitle")]
+        [TestCase("LockedReportExtensionModifyRequestPageFieldAboutText")]
+        [TestCase("LockedReportExtensionModifyRequestPageFieldAboutTitle")]
+        [TestCase("LockedReportExtensionModifyRequestPageFieldCaption")]
+        [TestCase("LockedReportExtensionModifyRequestPageFieldInstructionalText")]
+        [TestCase("LockedReportExtensionModifyRequestPageFieldOptionCaption")]
+        [TestCase("LockedReportExtensionModifyRequestPageFieldToolTip")]
+        [TestCase("LockedTableExtensionModifyFieldCaption")]
+        [TestCase("LockedTableExtensionModifyFieldOptionCaption")]
+        [TestCase("LockedTableExtensionModifyFieldToolTip")]
         [TestCase("PageAnalysisViewLockedCaption")]
         [TestCase("ObsoleteRemovedTableCaption")]
         [TestCase("ObsoleteRemovedTableFieldCaption")]
@@ -980,7 +1389,7 @@ namespace ALCops.LinterCop.Test
                 "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
 
             SkipTestIfVersionIsTooLow(
-                ["PageAnalysisViewLockedCaption"],
+                ["PageAnalysisViewLockedCaption", "LockedPageExtensionModifyAnalysisViewCaption"],
                 testCase,
                 "18.0.36",
                 "PageAnalysisView requires net10.0 SDK."
@@ -1165,15 +1574,93 @@ namespace ALCops.LinterCop.Test
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
         }
 
+        [Test]
+        [TestCase("TranslatedPageCustomizationModifyActionAboutText")]
+        [TestCase("TranslatedPageCustomizationModifyActionAboutTitle")]
+        [TestCase("TranslatedPageCustomizationModifyActionGroupAboutText")]
+        [TestCase("TranslatedPageCustomizationModifyActionGroupAboutTitle")]
+        [TestCase("TranslatedPageCustomizationModifyActionGroupCaption")]
+        [TestCase("TranslatedPageCustomizationModifyFieldAboutText")]
+        [TestCase("TranslatedPageCustomizationModifyFieldAboutTitle")]
+        [TestCase("TranslatedPageCustomizationModifyGroupAboutText")]
+        [TestCase("TranslatedPageCustomizationModifyGroupAboutTitle")]
+        [TestCase("TranslatedPageCustomizationModifyPartAboutText")]
+        [TestCase("TranslatedPageCustomizationModifyPartAboutTitle")]
+        [TestCase("TranslatedPageCustomizationModifyViewCaption")]
+        [TestCase("TranslatedPageCustomizationViewCaption")]
+        [TestCase("TranslatedPageExtensionModifyActionAboutText")]
+        [TestCase("TranslatedPageExtensionModifyActionAboutTitle")]
+        [TestCase("TranslatedPageExtensionModifyActionCaption")]
+        [TestCase("TranslatedPageExtensionModifyActionGroupAboutText")]
+        [TestCase("TranslatedPageExtensionModifyActionGroupAboutTitle")]
+        [TestCase("TranslatedPageExtensionModifyActionGroupCaption")]
+        [TestCase("TranslatedPageExtensionModifyActionGroupToolTip")]
+        [TestCase("TranslatedPageExtensionModifyActionToolTip")]
+        [TestCase("TranslatedPageExtensionModifyAnalysisViewCaption")]
+        [TestCase("TranslatedPageExtensionModifyFieldAboutText")]
+        [TestCase("TranslatedPageExtensionModifyFieldAboutTitle")]
+        [TestCase("TranslatedPageExtensionModifyFieldCaption")]
+        [TestCase("TranslatedPageExtensionModifyFieldInstructionalText")]
+        [TestCase("TranslatedPageExtensionModifyFieldOptionCaption")]
+        [TestCase("TranslatedPageExtensionModifyFieldToolTip")]
+        [TestCase("TranslatedPageExtensionModifyGroupAboutText")]
+        [TestCase("TranslatedPageExtensionModifyGroupAboutTitle")]
+        [TestCase("TranslatedPageExtensionModifyGroupCaption")]
+        [TestCase("TranslatedPageExtensionModifyGroupInstructionalText")]
+        [TestCase("TranslatedPageExtensionModifyPartAboutText")]
+        [TestCase("TranslatedPageExtensionModifyPartAboutTitle")]
+        [TestCase("TranslatedPageExtensionModifyPartCaption")]
+        [TestCase("TranslatedPageExtensionModifyPartToolTip")]
+        [TestCase("TranslatedPageExtensionModifyViewCaption")]
+        [TestCase("TranslatedPageExtensionViewModifyFieldAboutText")]
+        [TestCase("TranslatedPageExtensionViewModifyFieldAboutTitle")]
+        [TestCase("TranslatedPageViewModifyFieldAboutText")]
+        [TestCase("TranslatedPageViewModifyFieldAboutTitle")]
+        [TestCase("TranslatedReportExtensionModifyRequestPageFieldAboutText")]
+        [TestCase("TranslatedReportExtensionModifyRequestPageFieldAboutTitle")]
+        [TestCase("TranslatedReportExtensionModifyRequestPageFieldCaption")]
+        [TestCase("TranslatedReportExtensionModifyRequestPageFieldInstructionalText")]
+        [TestCase("TranslatedReportExtensionModifyRequestPageFieldOptionCaption")]
+        [TestCase("TranslatedReportExtensionModifyRequestPageFieldToolTip")]
+        [TestCase("TranslatedTableExtensionModifyFieldCaption")]
+        [TestCase("TranslatedTableExtensionModifyFieldOptionCaption")]
+        [TestCase("TranslatedTableExtensionModifyFieldToolTip")]
+        public async Task NoDiagnosticTranslatedModifyChangeProperties(string testCase)
+        {
+            RequireMinimumVersion("16.0",
+                "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
+
+            SkipTestIfVersionIsTooLow(
+                ["TranslatedPageExtensionModifyAnalysisViewCaption"],
+                testCase,
+                "18.0.36",
+                "PageAnalysisView requires net10.0 SDK."
+            );
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithTranslatedModifyChangePropertiesXliff();
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
         // A view, dataitem or column an extension adds is wrapped in a Change symbol that raises its own
-        // symbol event next to the event of the wrapped member. HasDiagnosticAtAllMarkers only checks that a
-        // diagnostic exists at each marker, so this test counts them: the single property must yield
-        // exactly one diagnostic, at its marker.
+        // symbol event next to the event of the wrapped member, and a modify block is a Change symbol of its
+        // own. HasDiagnosticAtAllMarkers only checks that a diagnostic exists at each marker, so this test
+        // counts them: every marked property must yield exactly one diagnostic, at its marker.
         [Test]
         [TestCase("PageExtensionViewCaption")]
         [TestCase("ReportExtensionColumnCaption")]
         [TestCase("ReportExtensionDataItemRequestFilterHeading")]
-        public async Task HasSingleDiagnosticForMemberAddedByExtension(string testCase)
+        [TestCase("PageExtensionAddAndModifyViewCaption")]
+        [TestCase("PageCustomizationViewCaption")]
+        [TestCase("PageExtensionModifyFieldCaption")]
+        [TestCase("PageViewModifyFieldAboutTitle")]
+        [TestCase("PageExtensionViewModifyFieldAboutTitle")]
+        [TestCase("TableExtensionModifyFieldCaption")]
+        [TestCase("ReportExtensionModifyRequestPageFieldCaption")]
+        public async Task HasSingleDiagnosticPerMarker(string testCase)
         {
             RequireMinimumVersion("16.0",
                 "LC0091 requires net8.0 SDK APIs (ExtensionObjectFoldingUtilities, GetLabelTextConstLanguageSymbolId)");
@@ -1183,7 +1670,7 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false));
 
             var compilation = Compilation.Create(
-                nameof(HasSingleDiagnosticForMemberAddedByExtension),
+                nameof(HasSingleDiagnosticPerMarker),
                 syntaxTrees: new[] { SyntaxTree.ParseObjectText(markup.Code) },
                 fileSystem: new MemoryFileSystem(new Dictionary<string, byte[]>
                 {
@@ -1199,9 +1686,9 @@ namespace ALCops.LinterCop.Test
                 .Where(diagnostic => diagnostic.Id == DiagnosticIds.TranslatableTextShouldBeTranslated)
                 .ToArray();
 
-            Assert.That(markup.AllLocators, Has.Count.EqualTo(1));
-            Assert.That(diagnostics, Has.Length.EqualTo(1));
-            Assert.That(markup.AllLocators[0].Match(diagnostics[0].Location), Is.True);
+            Assert.That(diagnostics, Has.Length.EqualTo(markup.AllLocators.Count));
+            foreach (var locator in markup.AllLocators)
+                Assert.That(diagnostics.Count(diagnostic => locator.Match(diagnostic.Location)), Is.EqualTo(1));
         }
 
         [Test]
@@ -1254,6 +1741,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("NamespacePageObjectAboutTitle")]
         [TestCase("NamespacePageControlAboutTitle")]
         [TestCase("NamespaceReportColumnCaption")]
+        [TestCase("NamespacePageExtensionModifyFieldCaption")]
         public async Task HasDiagnosticWithNamespaces(string testCase)
         {
             RequireMinimumVersion("18.0.38.52553",
@@ -1324,6 +1812,21 @@ namespace ALCops.LinterCop.Test
                 .ConfigureAwait(false);
 
             var fixture = CreateFixtureWithNamespaceFeature(NamespaceTranslatedReportColumnCaptionXliffContent);
+            fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
+        }
+
+        [Test]
+        [TestCase("NamespacePageExtensionModifyFieldCaptionTranslated")]
+        public async Task NoDiagnosticTranslatedModifyChangePropertiesWithNamespaces(string testCase)
+        {
+            RequireMinimumVersion("18.0.38.52553",
+                "Translations with namespaces (CompilerFeatures.TranslationsWithNamespaces) requires the 18.0.38.52553 SDK.");
+
+            var code = await File.ReadAllTextAsync(
+                Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
+                .ConfigureAwait(false);
+
+            var fixture = CreateFixtureWithNamespaceFeature(NamespaceTranslatedPageExtensionModifyFieldCaptionXliffContent);
             fixture.NoDiagnosticAtAllMarkers(code, DiagnosticIds.TranslatableTextShouldBeTranslated);
         }
 
