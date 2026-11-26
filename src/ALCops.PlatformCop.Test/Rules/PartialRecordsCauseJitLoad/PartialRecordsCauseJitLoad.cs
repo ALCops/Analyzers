@@ -69,6 +69,8 @@ namespace ALCops.PlatformCop.Test
         [TestCase("EventPublisherBetweenPartialReadAndWrite")]
         [TestCase("NamespacedVarPassedBetweenPartialReadAndWrite")]
         [TestCase("FirstSetLoadFieldsBeforeHandOff")]
+        [TestCase("SecondSetLoadFieldsAfterHandOffWithoutWrite")]
+        [TestCase("SecondSetLoadFieldsAfterWriteWithoutWrite")]
         public async Task NoDiagnostic(string testCase)
         {
             SkipTestIfVersionIsTooLow(
