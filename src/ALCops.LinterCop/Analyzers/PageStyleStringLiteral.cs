@@ -30,16 +30,14 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
                 StringComparer.Ordinal),
             LazyThreadSafetyMode.PublicationOnly);
 
-    private static readonly Lazy<HashSet<NavTypeKind>> DataAccessNavTypeKinds = new(() =>
+    private static readonly Lazy<HashSet<SyntaxKind>> ComparisonKinds = new(() =>
     [
-        EnumProvider.NavTypeKind.Record,
-        EnumProvider.NavTypeKind.RecordRef,
-        EnumProvider.NavTypeKind.FieldRef,
-        EnumProvider.NavTypeKind.Query,
-        EnumProvider.NavTypeKind.Variant,
-        EnumProvider.NavTypeKind.DataTransfer,
-        EnumProvider.NavTypeKind.FilterPageBuilder,
-        EnumProvider.NavTypeKind.TableFilter,
+        EnumProvider.SyntaxKind.EqualsExpression,
+        EnumProvider.SyntaxKind.NotEqualsExpression,
+        EnumProvider.SyntaxKind.LessThanExpression,
+        EnumProvider.SyntaxKind.LessThanOrEqualExpression,
+        EnumProvider.SyntaxKind.GreaterThanExpression,
+        EnumProvider.SyntaxKind.GreaterThanOrEqualExpression,
     ], LazyThreadSafetyMode.PublicationOnly);
 
     public override void Initialize(AnalysisContext context) =>
@@ -53,11 +51,10 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
         if (ctx.IsObsolete() || ctx.Node is not StringLiteralValueSyntax stringLiteral)
             return;
 
-        // Suppress string literals used in Caption properties
-        // Captions are user-facing text and may legitimately contain words that coincidentally match PageStyle names
-        PropertyKind[] captionKinds = [EnumProvider.PropertyKind.Caption, EnumProvider.PropertyKind.OptionCaption];
+        if (stringLiteral.Value.Value is not string stringLiteralValue || stringLiteralValue.Length == 0)
+            return;
 
-        if (ctx.ContainingSymbol is IPropertySymbol ps && captionKinds.Contains(ps.PropertyKind))
+        if (!StyleKindCanonicalNames.Value.TryGetValue(stringLiteralValue, out string? styleKind))
             return;
 
         // Suppress enum and enum value contexts
@@ -69,32 +66,25 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
                 return;
         }
 
-        if (stringLiteral.Value.Value is not string stringLiteralValue || stringLiteralValue.Length == 0)
+        if (IsDeniedContext(stringLiteral))
             return;
 
-        if (!StyleKindCanonicalNames.Value.TryGetValue(stringLiteralValue, out string? styleKind))
-            return;
-
-        // Allow for Label which is not locked (Locked is missing or false)
+        // Report only the text of a locked Label or report label (Locked = true); the text of an unlocked label
+        // is translatable, and its other literals (Comment) are notes for translators.
+        // A report label wraps the same LabelSyntax node as a Label variable
         var labelSyntax = GetLabelSyntax(stringLiteral);
         if (labelSyntax is not null)
         {
+            if (labelSyntax.LabelText != stringLiteral)
+                return;
+
             bool isLocked = labelSyntax.GetBooleanPropertyValue(IdentifierProperty.Locked) == true;
             if (!isLocked)
                 return;
         }
 
-        // Suppress diagnostic on assigning StyleExpr property of a field
-        if (IsStyleExprAssignment(ctx))
-            return;
-
         // Suppress diagnostic on assignment of field on a table
         if (IsWritingToTableField(ctx))
-            return;
-
-        // Suppress diagnostic on string literals used as arguments to data-access method invocations
-        // Methods on Record, RecordRef, FieldRef, Query, etc. operate on data values, not styles
-        if (IsDataAccessMethodInvocationArgument(ctx))
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(
@@ -104,22 +94,57 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
             styleKind));
     }
 
+    // Contexts where a matching literal is data or text in every case, so the rule never reports there:
+    // property values (Caption, Description, StyleExpr itself), arguments of any method call or attribute,
+    // multilanguage text (TextConst and legacy report labels), case labels, and operands of comparisons and in-lists.
+    private static bool IsDeniedContext(StringLiteralValueSyntax stringLiteral)
+    {
+        // One walk for the ancestor contexts. A multilanguage list (ENU = '...', in TextConst and in the legacy
+        // label(Name; ENU = '...') report label) is translatable text and has no Locked option.
+        foreach (var ancestor in stringLiteral.Ancestors())
+        {
+            var kind = ancestor.Kind;
+            if (kind == EnumProvider.SyntaxKind.Property ||
+                kind == EnumProvider.SyntaxKind.ArgumentList ||
+                kind == EnumProvider.SyntaxKind.AttributeArgumentList ||
+                kind == EnumProvider.SyntaxKind.CommaSeparatedIdentifierEqualsStringList)
+                return true;
+        }
+
+        // In code the literal is wrapped in a LiteralExpression; parentheses, a range ('A'..'Z') and the branches
+        // of a ternary wrap that again. The ternary's condition starts at the ternary itself, its branches after it.
+        SyntaxNode? expression = stringLiteral.Parent;
+        while (expression?.Parent is { } wrapper &&
+            (wrapper.Kind == EnumProvider.SyntaxKind.ParenthesizedExpression ||
+             wrapper.Kind == EnumProvider.SyntaxKind.RangeExpression ||
+             (IsConditionalExpression(wrapper) && expression.SpanStart != wrapper.SpanStart)))
+            expression = wrapper;
+
+        if (expression?.Parent is not { } parent)
+            return false;
+
+        // Only the case line's values are its direct children; its statement is wrapped in a statement node
+        if (parent.Kind == EnumProvider.SyntaxKind.CaseLine)
+            return true;
+
+        if (ComparisonKinds.Value.Contains(parent.Kind))
+            return true;
+
+        return parent.Kind == EnumProvider.SyntaxKind.BracketedArgumentList &&
+            parent.Parent?.Kind == EnumProvider.SyntaxKind.InListExpression;
+    }
+
+    // The ternary kind does not exist before the 14.0 SDK; EnumProvider then resolves it to SyntaxKind.None
+    private static bool IsConditionalExpression(SyntaxNode node) =>
+        EnumProvider.SyntaxKind.ConditionalExpression != default &&
+        node.Kind == EnumProvider.SyntaxKind.ConditionalExpression;
+
     private static LabelSyntax? GetLabelSyntax(StringLiteralValueSyntax stringLiteralNode)
     {
         if (stringLiteralNode.GetFirstParent(EnumProvider.SyntaxKind.Label) is LabelSyntax parentNode)
             return parentNode;
 
         return null;
-    }
-
-    private static bool IsStyleExprAssignment(SyntaxNodeAnalysisContext ctx)
-    {
-        if (ctx.Node.GetFirstParent(EnumProvider.SyntaxKind.Property) is PropertySyntax propertyNode &&
-            propertyNode.Value is StyleExpressionPropertyValueSyntax)
-        {
-            return true;
-        }
-        return false;
     }
 
     private static bool IsWritingToTableField(SyntaxNodeAnalysisContext ctx)
@@ -139,37 +164,5 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
 
         var fieldSymbol = ctx.SemanticModel.GetSymbolInfo(fieldNameNode).Symbol as IFieldSymbol;
         return fieldSymbol is not null && fieldSymbol.ContainingType?.GetNavTypeKindSafe() == EnumProvider.NavTypeKind.Record;
-    }
-
-    private static bool IsDataAccessMethodInvocationArgument(SyntaxNodeAnalysisContext ctx)
-    {
-        if (ctx.Node.GetFirstParent(EnumProvider.SyntaxKind.InvocationExpression)
-            is not InvocationExpressionSyntax invocation)
-            return false;
-
-        if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
-        {
-            var instanceType = ctx.SemanticModel.GetSymbolInfo(memberAccess.Expression).Symbol?.GetTypeSymbol();
-
-            // Pre-14.2 compilers return no symbol from GetSymbolInfo for a `this` receiver,
-            // while the operation tree still binds it to the record type. Fall back to
-            // GetOperation only for non-identifier receivers the fast path could not resolve.
-            if (instanceType is null && memberAccess.Expression is not IdentifierNameSyntax)
-                instanceType = ctx.SemanticModel.GetOperation(memberAccess.Expression, ctx.CancellationToken)?.Type;
-
-            if (instanceType?.GetNavTypeKindSafe() is { } navTypeKind
-                && DataAccessNavTypeKinds.Value.Contains(navTypeKind))
-                return true;
-        }
-
-        if (invocation.Expression is IdentifierNameSyntax)
-        {
-            var containingType = ctx.ContainingSymbol?.ContainingType;
-            if (containingType?.GetNavTypeKindSafe() is { } selfKind
-                && DataAccessNavTypeKinds.Value.Contains(selfKind))
-                return true;
-        }
-
-        return false;
     }
 }
