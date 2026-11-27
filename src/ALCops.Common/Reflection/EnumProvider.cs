@@ -1294,6 +1294,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageActionSeparator)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _pageArea =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.PageArea)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _parenthesizedExpression =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ParenthesizedExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _parameter =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Parameter)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _whiteSpaceTrivia =
@@ -1350,6 +1352,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReportKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _reportLabel =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReportLabel)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _reportLabelMultilanguage =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReportLabelMultilanguage)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _reportLayout =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReportLayout)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _reportObject =
@@ -1518,6 +1522,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind PageActionGroup => _pageActionGroup.Value;
         public static NavCodeAnalysis.SyntaxKind PageActionSeparator => _pageActionSeparator.Value;
         public static NavCodeAnalysis.SyntaxKind PageArea => _pageArea.Value;
+        public static NavCodeAnalysis.SyntaxKind ParenthesizedExpression => _parenthesizedExpression.Value;
         public static NavCodeAnalysis.SyntaxKind Parameter => _parameter.Value;
         public static NavCodeAnalysis.SyntaxKind PermissionPropertyValue => _permissionPropertyValue.Value;
         public static NavCodeAnalysis.SyntaxKind PermissionSet => _permissionSet.Value;
@@ -1546,6 +1551,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind ReportExtensionObject => _reportExtensionObject.Value;
         public static NavCodeAnalysis.SyntaxKind ReportKeyword => _reportKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind ReportLabel => _reportLabel.Value;
+        public static NavCodeAnalysis.SyntaxKind ReportLabelMultilanguage => _reportLabelMultilanguage.Value;
         public static NavCodeAnalysis.SyntaxKind ReportLayout => _reportLayout.Value;
         public static NavCodeAnalysis.SyntaxKind ReportObject => _reportObject.Value;
         public static NavCodeAnalysis.SyntaxKind RequestPage => _requestPage.Value;

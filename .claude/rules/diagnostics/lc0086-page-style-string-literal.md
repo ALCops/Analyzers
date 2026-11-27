@@ -38,9 +38,9 @@ Registers `SyntaxNodeAction` on `SyntaxKind.StringLiteralValue`; main type `Page
 - Every property value (`Caption`, `OptionCaption`, `Description`, `ToolTip`, a direct `StyleExpr = 'Standard'`, ...): user-facing text or data; for `StyleExpr` the fix is the property value type, not the literal.
 - Arguments of any method call, built-in or user-defined (`SetRange(Field, 'None')`, `StrSubstNo('%1', 'Standard')`, `Assert.AreEqual('Strong', ...)`).
 - Case labels, including ranges (`'None':`, `'A'..'Z':`). A literal in the case line's statement is still reported.
-- Operands of `=`, `<>`, `<`, `<=`, `>`, `>=` and elements of an `in [...]` list.
+- Operands of `=`, `<>`, `<`, `<=`, `>`, `>=` and elements of an `in [...]` list, including parenthesized operands and ranges.
 - Literals inside Enum and EnumValue symbols: identifiers and captions, not style expressions.
-- Unlocked labels and unlocked report labels: translatable text (locked ones are flagged).
+- Unlocked labels and unlocked report labels, and legacy multilanguage report labels (`label(Name; ENU = '...')`), which have no `Locked` option: translatable text (locked labels and report labels are flagged).
 - Assignments to table fields (`MyRecord.MyField := 'Standard'`, including bare and `this` receivers): data writes, not styling.
 - Non-PascalCase spellings (`'STANDARD'`, `'standard'`) and obsolete symbols.
 
@@ -54,9 +54,9 @@ Still reported: assignment to a non-field variable (including array elements and
 ## SDK facts
 
 - No `PropertyValueSyntax` subclass contains statements or blocks, so a `Property` ancestor never swallows code in a trigger body; label variable declarations sit under `VariableDeclaration`, not `Property`. `Caption = 'x', Locked = true` is a `LabelPropertyValueSyntax` under the `PropertySyntax`. Verified against SDK 30.0 in `../nav-sdk-source` (`Microsoft.Dynamics.Nav.CodeAnalysis.Syntax/*PropertyValueSyntax.cs`).
-- `ReportLabelSyntax.Label` is a `LabelSyntax` of kind `Label` (`ObjectParser.ParseReportLabel`), so the label check covers report labels without a separate kind; the legacy `label(Name; ENU='...')` form is `ReportLabelMultilanguage` and is not treated as a label.
+- `ReportLabelSyntax.Label` is a `LabelSyntax` of kind `Label` (`ObjectParser.ParseReportLabel`), so the label check covers report labels without a separate kind; the legacy `label(Name; ENU = '...')` form is a separate `ReportLabelMultilanguage` node whose strings sit in a `CommaSeparatedIdentifierEqualsStringList` (language code = text pairs, the TextConst shape), so it has no `Locked` option and is denied through its own ancestor kind. It still compiles in the test harness.
 - Call arguments sit in an `ArgumentList`; `exit(...)` is an `ExitStatementSyntax` with its own parenthesis tokens and no `ArgumentList`, and `in [...]` uses a `BracketedArgumentList`.
-- A code literal is wrapped in a `LiteralExpression`; a case range is a `RangeExpression` (a `BinaryExpressionSyntax`). `CaseLineSyntax.Expressions` are its direct children, while its `Statement` wraps any literal in a statement node, so a `CaseLine` parent identifies a case value.
+- A code literal is wrapped in a `LiteralExpression`, and any parentheses around it in a `ParenthesizedExpression`; a case range is a `RangeExpression` (a `BinaryExpressionSyntax`). `CaseLineSyntax.Expressions` are its direct children, while its `Statement` wraps any literal in a statement node, so a `CaseLine` parent identifies a case value.
 - `SyntaxKind.ConditionalExpression` (the ternary) first appears in the 14.0 SDK (`v14.0.16.22338-prerelease`; absent at the `ns2.0 12.0` floor).
 
 ## Test notes

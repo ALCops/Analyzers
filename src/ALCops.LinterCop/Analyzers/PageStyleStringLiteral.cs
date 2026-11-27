@@ -92,17 +92,23 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
 
     // Contexts where a matching literal is data or text in every case, so the rule never reports there:
     // property values (Caption, Description, StyleExpr itself), arguments of any method call,
-    // case labels, and operands of comparisons and in-lists.
+    // legacy multilanguage report labels, case labels, and operands of comparisons and in-lists.
     private static bool IsDeniedContext(StringLiteralValueSyntax stringLiteral)
     {
         if (stringLiteral.GetFirstParent(EnumProvider.SyntaxKind.Property) is not null ||
             stringLiteral.GetFirstParent(EnumProvider.SyntaxKind.ArgumentList) is not null)
             return true;
 
-        // In code the literal is wrapped in a LiteralExpression; a range ('A'..'Z') wraps that again
+        // A legacy multilanguage report label (label(Name; ENU = '...')) is translatable text and has no Locked option
+        if (stringLiteral.GetFirstParent(EnumProvider.SyntaxKind.ReportLabelMultilanguage) is not null)
+            return true;
+
+        // In code the literal is wrapped in a LiteralExpression; parentheses and a range ('A'..'Z') wrap that again
         SyntaxNode? expression = stringLiteral.Parent;
-        if (expression?.Parent?.Kind == EnumProvider.SyntaxKind.RangeExpression)
-            expression = expression.Parent;
+        while (expression?.Parent is { } wrapper &&
+            (wrapper.Kind == EnumProvider.SyntaxKind.ParenthesizedExpression ||
+             wrapper.Kind == EnumProvider.SyntaxKind.RangeExpression))
+            expression = wrapper;
 
         if (expression?.Parent is not { } parent)
             return false;

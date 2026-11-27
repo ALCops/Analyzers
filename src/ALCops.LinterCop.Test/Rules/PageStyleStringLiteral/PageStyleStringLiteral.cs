@@ -52,6 +52,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("Page")]
         [TestCase("PropertyValue")]
         [TestCase("RecordMethodInvocation")]
+        [TestCase("ReportLabelMultilanguage")]
         [TestCase("ReportLabelUnlocked")]
         [TestCase("SetRangeArgumentBareSelf")]
         [TestCase("SetRangeArgumentThisSelf")]
