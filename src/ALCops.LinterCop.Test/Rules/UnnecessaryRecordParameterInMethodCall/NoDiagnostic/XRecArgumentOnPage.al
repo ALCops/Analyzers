@@ -26,9 +26,14 @@ page 50100 MyPage
                     trigger OnValidate()
                     begin
                         Rec.DoSomething([|xRec|]);
+                        CompareWith([|xRec|]);
                     end;
                 }
             }
         }
     }
+
+    local procedure CompareWith(Other: Record MyTable)
+    begin
+    end;
 }
