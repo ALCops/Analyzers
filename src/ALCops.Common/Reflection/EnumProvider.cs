@@ -1042,6 +1042,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ArrayIndexExpression)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _assignmentStatement =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.AssignmentStatement)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _attributeArgumentList =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.AttributeArgumentList)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _block =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.Block)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _booleanLiteralValue =
@@ -1078,6 +1080,8 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ControlAddInObject)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _commaSeparatedIdentifierEqualsLiteralList =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CommaSeparatedIdentifierEqualsLiteralList)));
+        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _commaSeparatedIdentifierEqualsStringList =
+            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CommaSeparatedIdentifierEqualsStringList)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _commaToken =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.CommaToken)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _colonColonToken =
@@ -1352,8 +1356,6 @@ public static class EnumProvider
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReportKeyword)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _reportLabel =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReportLabel)));
-        private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _reportLabelMultilanguage =
-            new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReportLabelMultilanguage)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _reportLayout =
             new(() => ParseEnum<NavCodeAnalysis.SyntaxKind>(nameof(NavCodeAnalysis.SyntaxKind.ReportLayout)));
         private static readonly Lazy<NavCodeAnalysis.SyntaxKind> _reportObject =
@@ -1412,6 +1414,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind ArgumentList => _argumentList.Value;
         public static NavCodeAnalysis.SyntaxKind ArrayIndexExpression => _arrayIndexExpression.Value;
         public static NavCodeAnalysis.SyntaxKind AssignmentStatement => _assignmentStatement.Value;
+        public static NavCodeAnalysis.SyntaxKind AttributeArgumentList => _attributeArgumentList.Value;
         public static NavCodeAnalysis.SyntaxKind Block => _block.Value;
         public static NavCodeAnalysis.SyntaxKind BooleanLiteralValue => _booleanLiteralValue.Value;
         public static NavCodeAnalysis.SyntaxKind BracketedArgumentList => _bracketedArgumentList.Value;
@@ -1426,6 +1429,7 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind ContinueKeyword => _continueKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind ControlAddInObject => _controlAddInObject.Value;
         public static NavCodeAnalysis.SyntaxKind CommaSeparatedIdentifierEqualsLiteralList => _commaSeparatedIdentifierEqualsLiteralList.Value;
+        public static NavCodeAnalysis.SyntaxKind CommaSeparatedIdentifierEqualsStringList => _commaSeparatedIdentifierEqualsStringList.Value;
         public static NavCodeAnalysis.SyntaxKind CommaToken => _commaToken.Value;
         public static NavCodeAnalysis.SyntaxKind ColonToken => _colonToken.Value;
         public static NavCodeAnalysis.SyntaxKind ColonColonToken => _colonColonToken.Value;
@@ -1551,7 +1555,6 @@ public static class EnumProvider
         public static NavCodeAnalysis.SyntaxKind ReportExtensionObject => _reportExtensionObject.Value;
         public static NavCodeAnalysis.SyntaxKind ReportKeyword => _reportKeyword.Value;
         public static NavCodeAnalysis.SyntaxKind ReportLabel => _reportLabel.Value;
-        public static NavCodeAnalysis.SyntaxKind ReportLabelMultilanguage => _reportLabelMultilanguage.Value;
         public static NavCodeAnalysis.SyntaxKind ReportLayout => _reportLayout.Value;
         public static NavCodeAnalysis.SyntaxKind ReportObject => _reportObject.Value;
         public static NavCodeAnalysis.SyntaxKind RequestPage => _requestPage.Value;

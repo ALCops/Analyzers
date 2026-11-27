@@ -91,23 +91,29 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
     }
 
     // Contexts where a matching literal is data or text in every case, so the rule never reports there:
-    // property values (Caption, Description, StyleExpr itself), arguments of any method call,
-    // legacy multilanguage report labels, case labels, and operands of comparisons and in-lists.
+    // property values (Caption, Description, StyleExpr itself), arguments of any method call or attribute,
+    // multilanguage text (TextConst and legacy report labels), case labels, and operands of comparisons and in-lists.
     private static bool IsDeniedContext(StringLiteralValueSyntax stringLiteral)
     {
-        if (stringLiteral.GetFirstParent(EnumProvider.SyntaxKind.Property) is not null ||
-            stringLiteral.GetFirstParent(EnumProvider.SyntaxKind.ArgumentList) is not null)
-            return true;
+        // One walk for the ancestor contexts. A multilanguage list (ENU = '...', in TextConst and in the legacy
+        // label(Name; ENU = '...') report label) is translatable text and has no Locked option.
+        foreach (var ancestor in stringLiteral.Ancestors())
+        {
+            var kind = ancestor.Kind;
+            if (kind == EnumProvider.SyntaxKind.Property ||
+                kind == EnumProvider.SyntaxKind.ArgumentList ||
+                kind == EnumProvider.SyntaxKind.AttributeArgumentList ||
+                kind == EnumProvider.SyntaxKind.CommaSeparatedIdentifierEqualsStringList)
+                return true;
+        }
 
-        // A legacy multilanguage report label (label(Name; ENU = '...')) is translatable text and has no Locked option
-        if (stringLiteral.GetFirstParent(EnumProvider.SyntaxKind.ReportLabelMultilanguage) is not null)
-            return true;
-
-        // In code the literal is wrapped in a LiteralExpression; parentheses and a range ('A'..'Z') wrap that again
+        // In code the literal is wrapped in a LiteralExpression; parentheses, a range ('A'..'Z') and the branches
+        // of a ternary wrap that again. The ternary's condition starts at the ternary itself, its branches after it.
         SyntaxNode? expression = stringLiteral.Parent;
         while (expression?.Parent is { } wrapper &&
             (wrapper.Kind == EnumProvider.SyntaxKind.ParenthesizedExpression ||
-             wrapper.Kind == EnumProvider.SyntaxKind.RangeExpression))
+             wrapper.Kind == EnumProvider.SyntaxKind.RangeExpression ||
+             (IsConditionalExpression(wrapper) && expression.SpanStart != wrapper.SpanStart)))
             expression = wrapper;
 
         if (expression?.Parent is not { } parent)
@@ -123,6 +129,11 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
         return parent.Kind == EnumProvider.SyntaxKind.BracketedArgumentList &&
             parent.Parent?.Kind == EnumProvider.SyntaxKind.InListExpression;
     }
+
+    // The ternary kind does not exist before the 14.0 SDK; EnumProvider then resolves it to SyntaxKind.None
+    private static bool IsConditionalExpression(SyntaxNode node) =>
+        EnumProvider.SyntaxKind.ConditionalExpression != default &&
+        node.Kind == EnumProvider.SyntaxKind.ConditionalExpression;
 
     private static LabelSyntax? GetLabelSyntax(StringLiteralValueSyntax stringLiteralNode)
     {

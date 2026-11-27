@@ -41,8 +41,10 @@ namespace ALCops.LinterCop.Test
         [TestCase("AssignToTableField")]
         [TestCase("AssignToTableFieldLocal")]
         [TestCase("AssignToTableFieldRec")]
+        [TestCase("AttributeArgument")]
         [TestCase("CaseLabel")]
         [TestCase("ComparisonOperators")]
+        [TestCase("ComparisonTernaryOperand")]
         [TestCase("Enum")]
         [TestCase("IfStatement")]
         [TestCase("Label")]
@@ -59,6 +61,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("TableFieldCaptions")]
         [TestCase("TableFieldWriteBareSelf")]
         [TestCase("TableFieldWriteThisSelf")]
+        [TestCase("TextConst")]
         public async Task NoDiagnostic(string testCase)
         {
             RequireMinimumVersion("14.0", "No support for PageStyle datatype in versions below 14.0.");
