@@ -65,32 +65,18 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
 
         var walker = new SetLoadFieldsWalker(trackedVariables, context.CancellationToken);
         walker.Visit(operation);
-        walker.FinalizeResults();
 
-        // SetLoadFields used on a variable that also has full-field operations
         foreach (var kvp in trackedVariables)
         {
-            var state = kvp.Value;
-
-            if (state.LoadFieldsLocations.Count == 0)
-                continue;
-
-            var jitOperations = state.WriteMethodNames
-                .Where(m => JitLoadWriteMethods.Contains(m))
-                .OrderBy(m => m, SemanticFacts.NameComparer)
-                .ToList();
-
-            if (jitOperations.Count == 0)
-                continue;
-
-            var operationsText = string.Join(", ", jitOperations);
-
-            foreach (var info in state.LoadFieldsLocations)
+            foreach (var finding in kvp.Value.Findings.Values)
             {
+                var operationsText = string.Join(", ",
+                    finding.WriteMethodNames.OrderBy(m => m, SemanticFacts.NameComparer));
+
                 context.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.PartialRecordsCauseJitLoad,
-                    info.Location,
-                    info.MethodName, operationsText, kvp.Key));
+                    finding.Info.Location,
+                    finding.Info.MethodName, operationsText, kvp.Key));
             }
         }
     }
@@ -131,7 +117,13 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
 
     private sealed class VariableState
     {
-        public List<LoadFieldsInfo> LoadFieldsLocations { get; } = new();
+        // Keyed by the span start of the load-fields call.
+        public Dictionary<int, Finding> Findings { get; } = new();
+    }
+
+    private sealed class Finding(LoadFieldsInfo info)
+    {
+        public LoadFieldsInfo Info { get; } = info;
         public HashSet<string> WriteMethodNames { get; } = new(SemanticFacts.NameEqualityComparer);
     }
 
@@ -143,33 +135,22 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
         public bool HasLoadFields { get; set; }
         public bool HasPartialRead { get; set; }
         public List<LoadFieldsInfo> LoadFieldsLocations { get; private set; } = new();
-        public HashSet<string>? WriteMethodNamesAfterPartialRead { get; set; }
 
         public FlowFlags Clone() => new()
         {
             HasLoadFields = HasLoadFields,
             HasPartialRead = HasPartialRead,
-            LoadFieldsLocations = new List<LoadFieldsInfo>(LoadFieldsLocations),
-            WriteMethodNamesAfterPartialRead = WriteMethodNamesAfterPartialRead is not null
-                ? new HashSet<string>(WriteMethodNamesAfterPartialRead, SemanticFacts.NameEqualityComparer)
-                : null
+            LoadFieldsLocations = new List<LoadFieldsInfo>(LoadFieldsLocations)
         };
 
         /// <summary>
-        /// Resets the flow flags and LoadFieldsLocations (used by Clear/Reset operations).
+        /// Resets the flow flags and LoadFieldsLocations after a reset or hand-off.
         /// </summary>
         public void ResetFlags()
         {
             HasLoadFields = false;
             HasPartialRead = false;
             LoadFieldsLocations.Clear();
-            WriteMethodNamesAfterPartialRead = null;
-        }
-
-        public void AddWriteAfterPartialRead(string methodName)
-        {
-            WriteMethodNamesAfterPartialRead ??= new(SemanticFacts.NameEqualityComparer);
-            WriteMethodNamesAfterPartialRead.Add(methodName);
         }
     }
 
@@ -205,30 +186,6 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
                 _flowState[key] = new FlowFlags();
         }
 
-        /// <summary>
-        /// Copies the final flow state into VariableState for reporting.
-        /// Deduplicates by source span start position (locations before a branch fork appear
-        /// in both branch copies and get unioned at merge).
-        /// </summary>
-        public void FinalizeResults()
-        {
-            foreach (var kvp in _flowState)
-            {
-                if (!_trackedVariables.TryGetValue(kvp.Key, out var state))
-                    continue;
-
-                var seenLF = new HashSet<int>();
-                foreach (var info in kvp.Value.LoadFieldsLocations)
-                {
-                    if (seenLF.Add(info.Location.SourceSpan.Start))
-                        state.LoadFieldsLocations.Add(info);
-                }
-
-                if (kvp.Value.WriteMethodNamesAfterPartialRead is not null)
-                    state.WriteMethodNames.UnionWith(kvp.Value.WriteMethodNamesAfterPartialRead);
-            }
-        }
-
         public override void VisitInvocationExpression(IInvocationExpression operation)
         {
             _cancellationToken.ThrowIfCancellationRequested();
@@ -239,10 +196,10 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
             if (instanceSymbol?.Kind == EnumProvider.SymbolKind.LocalVariable &&
                 _flowState.TryGetValue(instanceSymbol.Name, out var flowFlags))
             {
-                ClassifyInstanceMethodCall(operation, flowFlags);
+                ClassifyInstanceMethodCall(operation, instanceSymbol.Name, flowFlags);
             }
 
-            CheckClearOfTrackedVariable(operation);
+            CheckArgumentsForTrackedVariables(operation);
 
             base.VisitInvocationExpression(operation);
         }
@@ -391,41 +348,30 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
                     foreach (var info in bs[kvp.Key].LoadFieldsLocations)
                         if (seenLF.Add(info.Location.SourceSpan.Start))
                             kvp.Value.LoadFieldsLocations.Add(info);
-
-                MergeWriteMethodNames(kvp.Value,
-                    branchStates.Select(bs => bs[kvp.Key].WriteMethodNamesAfterPartialRead).ToArray());
             }
-        }
-
-        private static void MergeWriteMethodNames(FlowFlags target, params HashSet<string>?[] sets)
-        {
-            HashSet<string>? merged = null;
-            foreach (var set in sets)
-            {
-                if (set is null) continue;
-                merged ??= new HashSet<string>(SemanticFacts.NameEqualityComparer);
-                merged.UnionWith(set);
-            }
-            target.WriteMethodNamesAfterPartialRead = merged;
         }
 
         #endregion
 
         #region Method classification
 
-        private void ClassifyInstanceMethodCall(IInvocationExpression operation, FlowFlags flowFlags)
+        private void ClassifyInstanceMethodCall(IInvocationExpression operation, string name, FlowFlags flowFlags)
         {
             var methodName = operation.TargetMethod.Name;
 
+            // A table procedure runs on the same instance and may reset its load state.
             if (operation.TargetMethod.MethodKind != EnumProvider.MethodKind.BuiltInMethod)
+            {
+                flowFlags.ResetFlags();
                 return;
+            }
 
             if (ReadMethods.Contains(methodName))
                 HandleReadMethod(flowFlags);
             else if (LoadFieldsMethods.Contains(methodName))
                 HandleLoadFieldsMethod(operation, flowFlags, methodName);
             else if (WriteMethods.Contains(methodName))
-                HandleWriteMethod(flowFlags, methodName);
+                HandleWriteMethod(name, flowFlags, methodName);
             else if (SemanticFacts.IsSameName(methodName, "Reset"))
                 flowFlags.ResetFlags();
         }
@@ -444,10 +390,7 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
                 && operation.Arguments.IsEmpty)
             {
                 // SetLoadFields() with no arguments resets partial records to "load all"
-                flowFlags.HasLoadFields = false;
-                flowFlags.HasPartialRead = false;
-                flowFlags.LoadFieldsLocations.Clear();
-                flowFlags.WriteMethodNamesAfterPartialRead = null;
+                flowFlags.ResetFlags();
                 return;
             }
 
@@ -456,7 +399,7 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
                 new LoadFieldsInfo(operation.Syntax.GetLocation(), methodName));
         }
 
-        private void HandleWriteMethod(FlowFlags flowFlags, string methodName)
+        private void HandleWriteMethod(string name, FlowFlags flowFlags, string methodName)
         {
             // Only record writes for JIT-load detection when:
             // 1. A partial read has occurred on this flow path
@@ -464,20 +407,35 @@ public sealed class PartialRecordsCauseJitLoad : DiagnosticAnalyzer
             // 3. The write is at the top level (not inside a conditional branch)
             //    This avoids false positives where the write only executes on a path
             //    where the record wasn't actually loaded (e.g., if not Find then Insert).
-            if (flowFlags.HasPartialRead && JitLoadWriteMethods.Contains(methodName) && _branchDepth == 0)
-                flowFlags.AddWriteAfterPartialRead(methodName);
+            // Findings are recorded at the write, so a later reset or hand-off cannot erase them,
+            // and a load-fields call that no write follows is never reported.
+            if (!flowFlags.HasPartialRead || !JitLoadWriteMethods.Contains(methodName) || _branchDepth != 0)
+                return;
+
+            var findings = _trackedVariables[name].Findings;
+            foreach (var info in flowFlags.LoadFieldsLocations)
+            {
+                var start = info.Location.SourceSpan.Start;
+                if (!findings.TryGetValue(start, out var finding))
+                    findings[start] = finding = new Finding(info);
+                finding.WriteMethodNames.Add(methodName);
+            }
         }
 
-        private void CheckClearOfTrackedVariable(IInvocationExpression operation)
+        private void CheckArgumentsForTrackedVariables(IInvocationExpression operation)
         {
-            // Clear(variable) resets the flow state
-            if (operation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod
-                && SemanticFacts.IsSameName(operation.TargetMethod.Name, "Clear")
-                && operation.Arguments.Length >= 1)
+            var isBuiltIn = operation.TargetMethod.MethodKind == EnumProvider.MethodKind.BuiltInMethod;
+
+            foreach (var argument in operation.Arguments)
             {
-                var clearVarName = GetVariableNameFromOperation(operation.Arguments[0].Value);
-                if (clearVarName != null && _flowState.TryGetValue(clearVarName, out var clearFlags))
-                    clearFlags.ResetFlags();
+                // Built-ins (Clear, Codeunit.Run, TransferFields source) reset or hand off the instance;
+                // a by-value Record argument is a copy with its own load selection, a RecordRef shares its instance.
+                if (!isBuiltIn && argument.Parameter is { IsVar: false, ParameterType: IRecordTypeSymbol })
+                    continue;
+
+                var name = GetVariableNameFromOperation(argument.Value);
+                if (name is not null && _flowState.TryGetValue(name, out var flags))
+                    flags.ResetFlags();
             }
         }
 
