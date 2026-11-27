@@ -355,6 +355,16 @@ public static class DiagnosticDescriptors
         description: ApplicationCopAnalyzers.RestClientRequiresHttpClientHandlerDescription,
         helpLinkUri: GetHelpUri(DiagnosticIds.RestClientRequiresHttpClientHandler));
 
+    public static readonly DiagnosticDescriptor AppManifestPublisher = new(
+        id: DiagnosticIds.AppManifestPublisher,
+        title: ApplicationCopAnalyzers.AppManifestPublisherTitle,
+        messageFormat: ApplicationCopAnalyzers.AppManifestPublisherMessageFormat,
+        category: Category.Design,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: false,
+        description: ApplicationCopAnalyzers.AppManifestPublisherDescription,
+        helpLinkUri: GetHelpUri(DiagnosticIds.AppManifestPublisher));
+
     public static readonly DiagnosticDescriptor TelemetryRequiresTelemetryLogger = new(
         id: DiagnosticIds.TelemetryRequiresTelemetryLogger,
         title: ApplicationCopAnalyzers.TelemetryRequiresTelemetryLoggerTitle,

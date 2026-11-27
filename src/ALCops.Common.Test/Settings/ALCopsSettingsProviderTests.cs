@@ -128,6 +128,22 @@ public class ALCopsSettingsProviderTests
     }
 
     [Test]
+    public void GetSettings_NullManifestSettingsAreNormalizedToDefaults()
+    {
+        var appFolder = Path.Combine(_tempRoot, "NullManifestApp");
+        Directory.CreateDirectory(appFolder);
+        File.WriteAllText(
+            Path.Combine(appFolder, "alcops.json"),
+            """{"Manifest": null}""");
+
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
+
+        Assert.That(settings.Manifest, Is.Not.Null);
+        Assert.That(settings.Manifest.DisallowSuppressWarnings, Is.False);
+        Assert.That(settings.Manifest.VersionMajorMatchesApplication, Is.False);
+    }
+
+    [Test]
     public void GetSettings_ExtendsAbsoluteFileWithLocalOverrides()
     {
         var inheritedFile = Path.Combine(_tempRoot, "company.alcops.json");
@@ -185,6 +201,36 @@ public class ALCopsSettingsProviderTests
             Assert.That(settings.NamingPatterns["Procedure"].DisallowPattern, Is.EqualTo("Bad$"));
             Assert.That(settings.NamingPatterns["Procedure"].AllowDescription, Is.EqualTo("comes from the project"));
             Assert.That(settings.NamingPatterns["Procedure"].DisallowDescription, Is.EqualTo("comes from the base"));
+        });
+    }
+
+    [Test]
+    public void GetSettings_ExtendsMergesManifestSettingsPropertyByProperty()
+    {
+        var inheritedFile = Path.Combine(_tempRoot, "manifest-base.alcops.json");
+        File.WriteAllText(
+            inheritedFile,
+            """{"Manifest":{"Publisher":{"AllowPattern":"^Contoso"},"RequiredFeatures":["NoImplicitWith"]}}""");
+
+        var appFolder = Path.Combine(_tempRoot, "ManifestOverridesApp");
+        Directory.CreateDirectory(appFolder);
+        string serializedSource = JsonSerializer.Serialize(inheritedFile);
+        File.WriteAllText(
+            Path.Combine(appFolder, "alcops.json"),
+            $$"""
+            {
+              "Extends": { "Source": {{serializedSource}} },
+              "Manifest": { "VersionMajorMatchesApplication": true }
+            }
+            """);
+
+        var settings = ALCopsSettingsProvider.GetSettings(new RelativeFileSystem(appFolder));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(settings.Manifest.Publisher?.AllowPattern, Is.EqualTo("^Contoso"));
+            Assert.That(settings.Manifest.RequiredFeatures, Is.EqualTo(new[] { "NoImplicitWith" }));
+            Assert.That(settings.Manifest.VersionMajorMatchesApplication, Is.True);
         });
     }
 

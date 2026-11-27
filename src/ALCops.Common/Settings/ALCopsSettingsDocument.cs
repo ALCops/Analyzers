@@ -177,6 +177,7 @@ internal sealed class ALCopsSettingsDocument
         ALCopsSettings settings = DeserializeCore();
         // Explicit null restores the nested defaults for every consumer.
         settings.StatementBlockSpacing ??= new StatementBlockSpacingSettings();
+        settings.Manifest ??= new ManifestSettings();
         return settings;
     }
 

@@ -39,4 +39,5 @@ public static class DiagnosticIds
     public static readonly string TelemetryRequiresTelemetryLogger = "AC0034";
     public static readonly string RestClientInitializeWithHttpClientHandler = "AC0035";
     public static readonly string DuplicatePropertyBetweenActionAndRunObject = "AC0036";
+    public static readonly string AppManifestPublisher = "AC0037";
 }

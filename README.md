@@ -32,11 +32,20 @@ Analyzer-specific settings are configured in `alcops.json`. A project can inheri
   "Extends": {
     "Source": "https://example.com/company.alcops.json"
   },
-  "SubscriberNamingPattern": "{Event Source}_{Event Name}[_{Element Name}]"
+  "SubscriberNamingPattern": "{Event Source}_{Event Name}[_{Element Name}]",
+  "Manifest": {
+    "Publisher": { "AllowPattern": "^Contoso Ltd\\.$" },
+    "ContextSensitiveHelpUrl": { "AllowPattern": "^https://help\\.contoso\\.example/.+$" },
+    "RequiredFeatures": ["NoImplicitWith", "TranslationFile"],
+    "DisallowSuppressWarnings": true,
+    "VersionMajorMatchesApplication": true
+  }
 }
 ```
 
 Local scalar values and arrays replace inherited values. Nested objects are merged property by property. Inheritance chains are deliberately not supported. See the [configuration guide](https://alcops.dev/docs/getting-started/configuration/) for all settings and precedence rules.
+
+The opt-in ApplicationCop manifest checks are disabled by default and can be enabled individually in a ruleset. `Manifest.ResourceExposurePolicy` can specify any of the four expected boolean flags; unset flags are not compared. `Manifest.DisallowSuppressWarnings` and `Manifest.VersionMajorMatchesApplication` default to `false`.
 
 HTTP(S) sources must be anonymously accessible. URLs containing embedded credentials such as `https://user:pass@example.com/alcops.json` are rejected before network access, and their username/password are omitted from diagnostics. Committing `alcops.json` means trusting its referenced configuration source.
 

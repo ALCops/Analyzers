@@ -486,6 +486,15 @@
   <data name="RestClientInitializeWithHttpClientHandlerDescription" xml:space="preserve">
     <value>A "Rest Client" that is initialized without a handler, or with the System Application's default "Http Client Handler" codeunit, sends its requests through the System Application, so the external-call permission, outgoing web service telemetry and test mocking attribute the call to the System Application instead of the calling app. Pass a codeunit that implements "Http Client Handler" to Initialize or Create.</value>
   </data>
+  <data name="AppManifestPublisherTitle" xml:space="preserve">
+    <value>Use the configured app.json publisher pattern</value>
+  </data>
+  <data name="AppManifestPublisherMessageFormat" xml:space="preserve">
+    <value>app.json publisher value '{0}' does not satisfy the configured pattern.</value>
+  </data>
+  <data name="AppManifestPublisherDescription" xml:space="preserve">
+    <value>Enable this rule and configure Manifest.Publisher to require a consistent publisher value across apps. Exact values can be expressed with an anchored regular expression.</value>
+  </data>
   <data name="ZeroEnumValueReservedForEmptyTitle" xml:space="preserve">
     <value>Reserve Enum value zero (0) for empty value</value>
   </data>
