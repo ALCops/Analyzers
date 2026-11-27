@@ -19,18 +19,16 @@ namespace ALCops.LinterCop.Test
         }
 
         [Test]
+        [TestCase("ArrayElementAssignment")]
+        [TestCase("CaseLineStatement")]
+        [TestCase("ExitStatement")]
         [TestCase("Label")]
         [TestCase("Page")]
-        [TestCase("IfStatement")]
-        [TestCase("ExitStatement")]
+        [TestCase("ReportLabelLocked")]
+        [TestCase("TernaryAssignment")]
         public async Task HasDiagnostic(string testCase)
         {
-            SkipTestIfVersionIsTooLow(
-                ["Label", "Page", "IfStatement", "ExitStatement"],
-                testCase,
-                "14.0",
-                "No support for PageStyle datatype in versions below 14.0."
-            );
+            RequireMinimumVersion("14.0", "No support for PageStyle datatype in versions below 14.0.");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(HasDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
@@ -43,25 +41,26 @@ namespace ALCops.LinterCop.Test
         [TestCase("AssignToTableField")]
         [TestCase("AssignToTableFieldLocal")]
         [TestCase("AssignToTableFieldRec")]
+        [TestCase("CaseLabel")]
+        [TestCase("ComparisonOperators")]
         [TestCase("Enum")]
+        [TestCase("IfStatement")]
         [TestCase("Label")]
         [TestCase("LockedLabelLowercase")]
         [TestCase("LockedLabelUppercase")]
+        [TestCase("MethodArgument")]
         [TestCase("Page")]
+        [TestCase("PropertyValue")]
         [TestCase("RecordMethodInvocation")]
+        [TestCase("ReportLabelUnlocked")]
+        [TestCase("SetRangeArgumentBareSelf")]
+        [TestCase("SetRangeArgumentThisSelf")]
         [TestCase("TableFieldCaptions")]
         [TestCase("TableFieldWriteBareSelf")]
         [TestCase("TableFieldWriteThisSelf")]
-        [TestCase("SetRangeArgumentBareSelf")]
-        [TestCase("SetRangeArgumentThisSelf")]
         public async Task NoDiagnostic(string testCase)
         {
-            SkipTestIfVersionIsTooLow(
-                ["AssignToStyleExpr", "AssignToTableField", "AssignToTableFieldLocal", "AssignToTableFieldRec", "Enum", "Label", "LockedLabelLowercase", "LockedLabelUppercase", "Page", "RecordMethodInvocation", "TableFieldCaptions", "TableFieldWriteBareSelf", "TableFieldWriteThisSelf", "SetRangeArgumentBareSelf", "SetRangeArgumentThisSelf"],
-                testCase,
-                "14.0",
-                "No support for PageStyle datatype in versions below 14.0."
-            );
+            RequireMinimumVersion("14.0", "No support for PageStyle datatype in versions below 14.0.");
 
             var code = await File.ReadAllTextAsync(Path.Combine(_testCasePath, nameof(NoDiagnostic), $"{testCase}.al"))
                 .ConfigureAwait(false);
