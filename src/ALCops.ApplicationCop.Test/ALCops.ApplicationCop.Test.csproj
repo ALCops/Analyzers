@@ -77,6 +77,10 @@
             <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.CodeAnalysis.Workspaces.dll</HintPath>
             <Private>True</Private>
         </Reference>
+        <Reference Include="Microsoft.Dynamics.Nav.Analyzers.Common">
+            <HintPath>$(BcDevToolsDir)/$(TargetFramework)/Microsoft.Dynamics.Nav.Analyzers.Common.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
     </ItemGroup>
     <!-- Convention tests shared by every cop test project (source-linked from ALCops.Common.Test) -->
     <ItemGroup>

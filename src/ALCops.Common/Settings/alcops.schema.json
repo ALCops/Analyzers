@@ -113,6 +113,61 @@
       "uniqueItems": true,
       "description": "Additional acronyms whose canonical casing is used when generating identifier fragments from all-lowercase source words. Original casing wins for the preferred name: if the source word already contains any uppercase character, its casing is preserved and the CodeFix always suggests that spelling. Only all-lowercase source words fall back to the registry, resolving e.g. 'vat' -> 'VAT', 'odata' -> 'OData', 'acme' -> 'Acme'. When the source word already carries uppercase and an entry with a different casing on the same case-insensitive key is registered here (e.g. source 'LCY' + entry 'Lcy'), that entry is additionally accepted alongside the original spelling; the CodeFix continues to suggest the original casing. Entries are matched case-insensitively. Merged with the built-in default list; user entries override built-ins on identical case-insensitive keys. If multiple entries resolve to the same case-insensitive key, exactly one canonical form is kept and the last entry wins."
     },
+    "Manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Opt-in app.json consistency checks for teams managing manifest conventions across multiple apps. These checks are disabled by default and can be enabled individually in a ruleset.",
+      "properties": {
+        "Publisher": {
+          "$ref": "#/$defs/NamingPattern",
+          "description": "Regular-expression requirements for app.json publisher. Used by AC0037."
+        },
+        "ContextSensitiveHelpUrl": {
+          "$ref": "#/$defs/NamingPattern",
+          "description": "Regular-expression requirements for app.json contextSensitiveHelpUrl. Used by AC0038."
+        },
+        "ResourceExposurePolicy": {
+          "$ref": "#/$defs/ManifestResourceExposurePolicy",
+          "description": "Expected values for selected resourceExposurePolicy flags. Omitted flags are not compared. Used by AC0039."
+        },
+        "RequiredFeatures": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "AllowExtensionAndTargetInSameModule",
+              "AllTranslationItems",
+              "Configuration",
+              "EmitAsyncCode",
+              "ExcludeGeneratedTranslations",
+              "FullNamespaceScope",
+              "GenerateCaptions",
+              "GenerateLcgTranslationFile",
+              "GenerateLockedTranslations",
+              "NoImplicitWith",
+              "NoPromotedActionProperties",
+              "Personalization",
+              "SkipNonExecutableObjects",
+              "TranslationFile",
+              "TranslationsWithNamespaces",
+              "WordAddInCompatibleLayouts"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "Compiler feature names that must be enabled in app.json. Names unknown to the compiler version being used are ignored. Used by AC0040."
+        },
+        "DisallowSuppressWarnings": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether app.json suppressWarnings entries are prohibited by team policy. This is not a claim that suppressWarnings is deprecated. Used by AC0041. Default: false"
+        },
+        "VersionMajorMatchesApplication": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether app.json version major must match application major. Used by AC0042. Default: false"
+        }
+      }
+    },
     "StatementBlockSpacing": {
       "type": "object",
       "additionalProperties": false,
@@ -171,6 +226,16 @@
           "type": "string",
           "description": "A human-readable description shown in the diagnostic message when DisallowPattern is violated. Example: \"should not contain special characters\""
         }
+      }
+    },
+    "ManifestResourceExposurePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "AllowDebugging": { "type": "boolean" },
+        "AllowDownloadingSource": { "type": "boolean" },
+        "IncludeSourceInSymbolFile": { "type": "boolean" },
+        "ApplyToDevExtension": { "type": "boolean" }
       }
     },
     "Punctuation": {
