@@ -40,12 +40,13 @@ Registers `SyntaxNodeAction` on `SyntaxKind.StringLiteralValue`; main type `Page
 - Case labels, including ranges (`'None':`, `'A'..'Z':`). A literal in the case line's statement is still reported.
 - Operands of `=`, `<>`, `<`, `<=`, `>`, `>=` and elements of an `in [...]` list, including parenthesized operands, ranges and the branches of a ternary (`MyText = (IsOverdue ? 'Unfavorable' : 'Standard')`).
 - Literals inside Enum and EnumValue symbols: identifiers and captions, not style expressions.
-- Unlocked labels and unlocked report labels: translatable text (locked ones are flagged).
+- Unlocked labels and unlocked report labels: translatable text (the text of locked ones is flagged).
+- Other literals of any label or report label, such as `Comment = 'Standard'`: notes for translators, not the label's value.
 - Multilanguage text without a `Locked` option: `TextConst ENU = '...'` and the legacy `label(Name; ENU = '...')` report label.
 - Assignments to table fields (`MyRecord.MyField := 'Standard'`, including bare and `this` receivers): data writes, not styling.
 - Non-PascalCase spellings (`'STANDARD'`, `'standard'`) and obsolete symbols.
 
-Still reported: assignment to a non-field variable (including array elements and the branches of a ternary on the right-hand side), `exit('...')`, locked labels and locked report labels.
+Still reported: assignment to a non-field variable (including array elements and the branches of a ternary on the right-hand side), `exit('...')`, and the text of locked labels and locked report labels.
 
 ## Known issues
 
@@ -55,7 +56,7 @@ Still reported: assignment to a non-field variable (including array elements and
 ## SDK facts
 
 - No `PropertyValueSyntax` subclass contains statements or blocks, so a `Property` ancestor never swallows code in a trigger body; label variable declarations sit under `VariableDeclaration`, not `Property`. `Caption = 'x', Locked = true` is a `LabelPropertyValueSyntax` under the `PropertySyntax`. Verified against SDK 30.0 in `../nav-sdk-source` (`Microsoft.Dynamics.Nav.CodeAnalysis.Syntax/*PropertyValueSyntax.cs`).
-- `ReportLabelSyntax.Label` is a `LabelSyntax` of kind `Label` (`ObjectParser.ParseReportLabel`), so the label check covers report labels without a separate kind.
+- `ReportLabelSyntax.Label` is a `LabelSyntax` of kind `Label` (`ObjectParser.ParseReportLabel`), so the label check covers report labels without a separate kind. `LabelSyntax.LabelText` (present at `ns2.0 12.0`) is the label's own text; `Comment`, `MaxLength` and `Locked` sit in `LabelSyntax.Properties`.
 - `TextConstDataTypeSyntax.Multilanguage`, the legacy `ReportLabelMultilanguage` report label and multilanguage property values all parse through `ParseCommaSeparatedIdentifierEqualsStringList` (language code = text pairs, no `Locked` option), so one `CommaSeparatedIdentifierEqualsStringList` ancestor check covers TextConst and the legacy label. Both forms still compile in the test harness. Attribute arguments sit in an `AttributeArgumentList`, not an `ArgumentList`.
 - Call arguments sit in an `ArgumentList`; `exit(...)` is an `ExitStatementSyntax` with its own parenthesis tokens and no `ArgumentList`, and `in [...]` uses a `BracketedArgumentList`.
 - A code literal is wrapped in a `LiteralExpression`, and any parentheses around it in a `ParenthesizedExpression`; a case range is a `RangeExpression` (a `BinaryExpressionSyntax`). `CaseLineSyntax.Expressions` are its direct children, while its `Statement` wraps any literal in a statement node, so a `CaseLine` parent identifies a case value.
@@ -64,3 +65,4 @@ Still reported: assignment to a non-field variable (including array elements and
 ## Test notes
 
 - Fixtures are gated with `RequireMinimumVersion("14.0")` (no `PageStyle` datatype below that).
+- No compiling fixture puts a string literal directly in a ternary's condition: the condition must be Boolean, so a text literal or a style-producing ternary there is a compile error. The condition side is pinned indirectly: a literal compared inside the condition is denied as a comparison operand while the branches are still reported.

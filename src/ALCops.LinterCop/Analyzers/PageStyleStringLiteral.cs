@@ -69,11 +69,15 @@ public sealed class PageStyleStringLiteral : DiagnosticAnalyzer
         if (IsDeniedContext(stringLiteral))
             return;
 
-        // Allow for a Label or report label which is not locked (Locked is missing or false)
+        // Report only the text of a locked Label or report label (Locked = true); the text of an unlocked label
+        // is translatable, and its other literals (Comment) are notes for translators.
         // A report label wraps the same LabelSyntax node as a Label variable
         var labelSyntax = GetLabelSyntax(stringLiteral);
         if (labelSyntax is not null)
         {
+            if (labelSyntax.LabelText != stringLiteral)
+                return;
+
             bool isLocked = labelSyntax.GetBooleanPropertyValue(IdentifierProperty.Locked) == true;
             if (!isLocked)
                 return;

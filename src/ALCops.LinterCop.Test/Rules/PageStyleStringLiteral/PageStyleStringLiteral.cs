@@ -26,6 +26,7 @@ namespace ALCops.LinterCop.Test
         [TestCase("Page")]
         [TestCase("ReportLabelLocked")]
         [TestCase("TernaryAssignment")]
+        [TestCase("TernaryConditionComparison")]
         public async Task HasDiagnostic(string testCase)
         {
             RequireMinimumVersion("14.0", "No support for PageStyle datatype in versions below 14.0.");
@@ -43,11 +44,13 @@ namespace ALCops.LinterCop.Test
         [TestCase("AssignToTableFieldRec")]
         [TestCase("AttributeArgument")]
         [TestCase("CaseLabel")]
+        [TestCase("ComparisonNestedTernary")]
         [TestCase("ComparisonOperators")]
         [TestCase("ComparisonTernaryOperand")]
         [TestCase("Enum")]
         [TestCase("IfStatement")]
         [TestCase("Label")]
+        [TestCase("LockedLabelComment")]
         [TestCase("LockedLabelLowercase")]
         [TestCase("LockedLabelUppercase")]
         [TestCase("MethodArgument")]
